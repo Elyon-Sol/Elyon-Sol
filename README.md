@@ -1,16 +1,126 @@
-## Hi there 👋
+# Elyon-Sol
 
-<!--
-**Elyon-Sol/Elyon-Sol** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Pre-execution governance substrate.
 
-Here are some ideas to get you started:
+Determines whether an interaction is **eligible to exist** before execution.
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+---
+
+## Run (PEP Interception Layer v0.9.8.4)
+
+```bash
+python -m uvicorn IMPLEMENTATION.pep:app --reload
+```
+
+Server:
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## Endpoint
+
+```
+POST /governed-call
+```
+
+---
+
+## Request Format
+
+```json
+{
+  "target_url": "https://example.com/api",
+  "context": {
+    "AP": ["identity", "role"],
+    "OP": ["session", "request"],
+    "ccs_valid": true
+  }
+}
+```
+
+---
+
+## Behavior
+
+- Evaluator returns `ELIGIBLE` or `REFUSE`
+- `REFUSE` → HTTP 403 (upstream not called)
+- `ELIGIBLE` → request forwarded to `target_url`
+
+---
+
+## Example (REFUSE)
+
+```bash
+curl -X POST http://localhost:8000/governed-call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_url": "https://httpbin.org/post",
+    "context": {
+      "AP": [],
+      "OP": [],
+      "ccs_valid": false
+    }
+  }'
+```
+
+---
+
+## Example (ELIGIBLE)
+
+```bash
+curl -X POST http://localhost:8000/governed-call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_url": "https://httpbin.org/post",
+    "context": {
+      "AP": ["identity", "role"],
+      "OP": ["session", "request"],
+      "ccs_valid": true
+    }
+  }'
+```
+
+---
+
+## Tests
+
+```bash
+python -m pytest TESTS/test_pep.py -v
+```
+
+Expected:
+
+```
+3 passed
+```
+
+---
+
+## Guarantees
+
+- Fail-closed enforcement  
+- No retries  
+- No fallback execution  
+- Deterministic gating via evaluator  
+
+---
+
+## Repository Structure
+
+```
+CANON/
+IMPLEMENTATION/
+MANIFEST/
+TESTS/
+```
+
+---
+
+## Status
+
+- Canon: v0.9.8.4 (locked)
+- Phase: Implementation
+- Mode: Deterministic enforcement only
