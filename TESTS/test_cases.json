@@ -1,0 +1,29 @@
+[
+  {
+    "name": "positive_case",
+    "AP": ["identity", "role"],
+    "AR": ["identity", "role"],
+    "OP": ["session", "request"],
+    "R": ["session", "request"],
+    "ccs_valid": true,
+    "expected": "ELIGIBLE"
+  },
+  {
+    "name": "ccs_failure",
+    "AP": ["identity", "role"],
+    "AR": ["identity", "role"],
+    "OP": ["session", "request"],
+    "R": ["session", "request"],
+    "ccs_valid": false,
+    "expected": "REFUSE"
+  },
+  {
+    "name": "authority_failure",
+    "AP": ["identity"],
+    "AR": ["identity", "role"],
+    "OP": ["session", "request"],
+    "R": ["session", "request"],
+    "ccs_valid": true,
+    "expected": "REFUSE"
+  }
+]
