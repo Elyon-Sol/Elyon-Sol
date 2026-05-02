@@ -59,3 +59,27 @@ def test_governed_call_eligible_forwards_once(monkeypatch):
     assert len(calls) == 1
     assert calls[0]["url"] == "https://upstream.example/test"
     assert calls[0]["timeout"] == 10
+
+
+def test_governed_call_upstream_error_fails_closed(monkeypatch):
+    def fake_post(url, json, timeout):
+        raise TimeoutError("upstream timeout")
+
+    monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
+
+    response = client.post(
+        "/governed-call",
+        json={
+            "target_url": "https://upstream.example/timeout",
+            "context": {
+                "AP": ["identity", "role"],
+                "OP": ["session", "request"],
+                "ccs_valid": True
+            }
+        }
+    )
+
+    assert response.status_code == 403
+    body = response.json()
+    assert body["detail"]["terminal_state"] == "REFUSE"
+    assert body["detail"]["refusal_reason_code"] == "REF_PEP_FAIL_CLOSED"
