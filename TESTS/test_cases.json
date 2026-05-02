@@ -9,14 +9,15 @@
     "expected": "ELIGIBLE"
   },
   {
-    "name": "ccs_failure",
-    "AP": ["identity", "role"],
-    "AR": ["identity", "role"],
-    "OP": ["session", "request"],
-    "R": ["session", "request"],
-    "ccs_valid": false,
-    "expected": "REFUSE"
-  },
+  "name": "ccs_failure",
+  "AP": ["identity", "role"],
+  "AR": ["identity", "role"],
+  "OP": ["session", "request"],
+  "R": ["session", "request"],
+  "prev_manifest_version": "1.0",
+  "current_manifest_version": "2.0",
+  "expected": "REFUSE"
+},
   {
     "name": "authority_failure",
     "AP": ["identity"],
