@@ -1,4 +1,4 @@
-# Adversarial Validation — v0.9.8.4:wq
+
 
 Source:
 - Claude-generated adversarial test suite
