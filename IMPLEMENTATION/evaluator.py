@@ -52,3 +52,4 @@ if __name__ == "__main__":
     for t in tests:
         result = evaluate(t, manifest)
         print(f"{t['name']}: {result} (expected: {t['expected']})")
+
