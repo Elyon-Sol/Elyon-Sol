@@ -1,0 +1,8 @@
+# Elyon-Sol PoE SHA-256 Hashes — v0.9.8.5 Post-Enforcement
+# Generated from repository root artifacts
+
+33746103c65beded2ed2c819521d73b9b2d3fe0450a1db8a623c6003462d3360  EVIDENCE/interception_proof_002.md
+9d4dc70f088175a837b0b5f719b43c6467f6351bf4b2db0f3e541f02f9a32920  EVIDENCE/stability_proof_001.md
+a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8  MANIFEST/manifest.json
+f93e1a5f35477aeacbc545c45ddd8b01bbfa9fbc4e18535d5cb15d15b2fbfe8f  POE/POE_MANIFEST.md
+ea9765ec21e07def228ac7f1f08a074b058116893ef471decac84249e884120f  README.md
