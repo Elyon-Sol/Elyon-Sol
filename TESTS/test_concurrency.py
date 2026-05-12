@@ -64,3 +64,44 @@ def test_concurrent_authority_isolation():
     assert eligible == 50
     assert refuse == 50
     assert len(results) == 100
+
+from IMPLEMENTATION.replay.receipt import create_receipt, verify_receipt
+
+
+def make_receipt(request_id, ctx):
+    terminal_state = evaluate(ctx, TEST_MANIFEST)
+
+    return create_receipt(
+        request_id=request_id,
+        terminal_state=terminal_state,
+        manifest_version=TEST_MANIFEST["version"],
+        manifest_sha256=SHA,
+        refusal_reason_code=None if terminal_state == "ELIGIBLE" else "REF_CONCURRENT_AUTHORITY_GAP",
+        timestamp="2026-05-12T00:00:00+00:00",
+    )
+
+
+def test_concurrent_replay_receipts_match_isolated_receipts():
+    isolated_authorized = make_receipt("REQ-AUTH-001", AUTHORIZED_CTX)
+    isolated_unauthorized = make_receipt("REQ-UNAUTH-001", UNAUTHORIZED_CTX)
+
+    concurrent_receipts = {}
+
+    def run_receipt(request_id, ctx):
+        receipt = make_receipt(request_id, ctx)
+        with results_lock:
+            concurrent_receipts[request_id] = receipt
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(run_receipt, "REQ-AUTH-001", AUTHORIZED_CTX)
+        executor.submit(run_receipt, "REQ-UNAUTH-001", UNAUTHORIZED_CTX)
+
+    assert concurrent_receipts["REQ-AUTH-001"] == isolated_authorized
+    assert concurrent_receipts["REQ-UNAUTH-001"] == isolated_unauthorized
+
+    assert verify_receipt(concurrent_receipts["REQ-AUTH-001"]) is True
+    assert verify_receipt(concurrent_receipts["REQ-UNAUTH-001"]) is True
+
+    assert concurrent_receipts["REQ-AUTH-001"]["terminal_state"] == "ELIGIBLE"
+    assert concurrent_receipts["REQ-UNAUTH-001"]["terminal_state"] == "REFUSE"
+    assert concurrent_receipts["REQ-AUTH-001"]["receipt_sha256"] != concurrent_receipts["REQ-UNAUTH-001"]["receipt_sha256"]
