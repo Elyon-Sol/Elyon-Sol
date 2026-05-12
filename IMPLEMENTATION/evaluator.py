@@ -1,9 +1,17 @@
+import hashlib
 import json
+
+MANIFEST_PATH = "MANIFEST/manifest.json"
 
 
 def load_manifest():
-    with open("MANIFEST/manifest.json", "r", encoding="utf-8") as f:
+    with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def manifest_sha256(path=MANIFEST_PATH):
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
 
 
 def safe_set(value):
@@ -56,13 +64,25 @@ def ccs_valid(ctx, manifest):
     if ctx.get("ccs_valid") is not True:
         return False
 
-    expected = ctx.get("expected_manifest_version")
-    actual = manifest.get("version")
+    expected_version = ctx.get("expected_manifest_version")
+    actual_version = manifest.get("version")
 
-    if not isinstance(expected, str) or not isinstance(actual, str):
+    if not isinstance(expected_version, str) or not isinstance(actual_version, str):
         return False
 
-    return expected == actual
+    if expected_version != actual_version:
+        return False
+
+    expected_manifest_sha256 = ctx.get("expected_manifest_sha256")
+    actual_manifest_sha256 = manifest_sha256()
+
+    if (
+        not isinstance(expected_manifest_sha256, str)
+        or expected_manifest_sha256 != actual_manifest_sha256
+    ):
+        return False
+
+    return True
 
 
 def evaluate(ctx, manifest):

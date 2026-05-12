@@ -3,6 +3,8 @@ import pytest
 from IMPLEMENTATION.evaluator import evaluate, load_manifest
 
 
+SHA = "a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"
+
 CASES = [
     {"name": "ap_missing_key", "ctx": {"OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
     {"name": "op_missing_key", "ctx": {"AP": ["identity", "role"], "ccs_valid": True, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
@@ -20,12 +22,12 @@ CASES = [
     {"name": "ap_case_mismatch", "ctx": {"AP": ["Identity", "Role"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
     {"name": "ap_whitespace_padding", "ctx": {"AP": ["identity ", " role"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
     {"name": "ap_duplicate_collapse", "ctx": {"AP": ["identity", "identity", "identity"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
-    {"name": "ap_superset_extra_authority", "ctx": {"AP": ["identity", "role", "admin", "root"], "OP": ["session", "request", "extra"], "ccs_valid": True, "expected_manifest_version": "1.0"}, "expected": "ELIGIBLE"},
+    {"name": "ap_superset_extra_authority", "ctx": {"AP": ["identity", "role", "admin", "root"], "OP": ["session", "request", "extra"], "ccs_valid": True, "expected_manifest_version": "1.0", "expected_manifest_sha256": SHA}, "expected": "ELIGIBLE"},
     {"name": "ccs_flag_missing", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
     {"name": "ccs_flag_false", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": False, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
-    {"name": "ccs_flag_truthy_nonbool", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": "yes", "expected_manifest_version": "1.0"}, "expected": "ELIGIBLE"},
-    {"name": "ccs_flag_truthy_one", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": 1, "expected_manifest_version": "1.0"}, "expected": "ELIGIBLE"},
-    {"name": "ccs_version_drift", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "2.0"}, "expected": "REFUSE"},
+    {"name": "ccs_flag_truthy_nonbool", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": "yes", "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
+    {"name": "ccs_flag_truthy_one", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": 1, "expected_manifest_version": "1.0"}, "expected": "REFUSE"},
+    {"name": "ccs_version_drift", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "2.0", "expected_manifest_sha256": SHA}, "expected": "REFUSE"},
     {"name": "ccs_version_missing_in_ctx", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": True}, "expected": "REFUSE"},
     {"name": "ccs_version_type_mismatch", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": 1.0}, "expected": "REFUSE"},
     {"name": "ccs_version_whitespace", "ctx": {"AP": ["identity", "role"], "OP": ["session", "request"], "ccs_valid": True, "expected_manifest_version": "1.0 "}, "expected": "REFUSE"},
