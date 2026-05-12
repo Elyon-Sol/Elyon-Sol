@@ -105,3 +105,37 @@ def test_concurrent_replay_receipts_match_isolated_receipts():
     assert concurrent_receipts["REQ-AUTH-001"]["terminal_state"] == "ELIGIBLE"
     assert concurrent_receipts["REQ-UNAUTH-001"]["terminal_state"] == "REFUSE"
     assert concurrent_receipts["REQ-AUTH-001"]["receipt_sha256"] != concurrent_receipts["REQ-UNAUTH-001"]["receipt_sha256"]
+
+
+BAD_SHA_CTX = {
+    "AP": ["identity", "role", "doctor_authorized"],
+    "OP": ["session", "request", "patient_access"],
+    "ccs_valid": True,
+    "expected_manifest_version": "1.0",
+    "expected_manifest_sha256": "BAD_MANIFEST_SHA",
+}
+
+
+def run_bad_sha():
+    result = evaluate(BAD_SHA_CTX, TEST_MANIFEST)
+
+    with results_lock:
+        results.append(result)
+
+
+def test_concurrent_manifest_sha_fault_fails_closed():
+    results.clear()
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        for _ in range(50):
+            executor.submit(run_authorized)
+
+        for _ in range(50):
+            executor.submit(run_bad_sha)
+
+    eligible = results.count("ELIGIBLE")
+    refuse = results.count("REFUSE")
+
+    assert eligible == 50
+    assert refuse == 50
+    assert len(results) == 100
