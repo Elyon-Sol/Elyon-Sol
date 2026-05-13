@@ -139,3 +139,54 @@ def test_concurrent_manifest_sha_fault_fails_closed():
     assert eligible == 50
     assert refuse == 50
     assert len(results) == 100
+
+
+import copy
+import time
+
+
+MUTABLE_MANIFEST = {
+    "version": "1.0",
+    "interaction_type": "synthetic_ct_authorization",
+    "AR": ["identity", "role", "doctor_authorized"],
+    "R": ["session", "request", "patient_access"],
+}
+
+
+def run_mutating_authorized():
+    local_manifest = copy.deepcopy(MUTABLE_MANIFEST)
+
+    result = evaluate(AUTHORIZED_CTX, local_manifest)
+
+    with results_lock:
+        results.append(result)
+
+
+def mutate_manifest_during_execution():
+    time.sleep(0.001)
+
+    MUTABLE_MANIFEST["AR"] = ["identity"]
+
+
+def test_manifest_mutation_during_concurrent_evaluation():
+    results.clear()
+
+    MUTABLE_MANIFEST["AR"] = [
+        "identity",
+        "role",
+        "doctor_authorized",
+    ]
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+
+        for _ in range(50):
+            executor.submit(run_mutating_authorized)
+
+        executor.submit(mutate_manifest_during_execution)
+
+    eligible = results.count("ELIGIBLE")
+    refuse = results.count("REFUSE")
+
+    assert eligible == 50
+    assert refuse == 0
+    assert len(results) == 50
