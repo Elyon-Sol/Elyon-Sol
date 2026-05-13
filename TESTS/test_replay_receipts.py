@@ -39,3 +39,16 @@ def test_receipt_detects_tampering():
     receipt["terminal_state"] = "REFUSE"
 
     assert verify_receipt(receipt) is False
+
+
+def test_receipt_preserves_manifest_sha256():
+    receipt = create_receipt(
+        request_id="req-003",
+        terminal_state="ELIGIBLE",
+        manifest_version="1.0",
+        manifest_sha256=SHA,
+        timestamp="2026-05-12T00:00:00+00:00",
+    )
+
+    assert receipt["manifest_sha256"] == SHA
+    assert verify_receipt(receipt) is True

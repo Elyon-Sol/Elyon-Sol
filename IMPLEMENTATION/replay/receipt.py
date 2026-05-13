@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 def canonical_json(data):
     return json.dumps(
         data,
-        sort_keys=True,
+        sort_keys=False,
         separators=(",", ":"),
         ensure_ascii=False,
     )
