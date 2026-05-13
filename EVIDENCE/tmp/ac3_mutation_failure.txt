@@ -1,0 +1,56 @@
+..........................FF.........                                    [100%]
+================================== FAILURES ===================================
+_____________________ test_concurrent_authority_isolation _____________________
+
+    def test_concurrent_authority_isolation():
+        results.clear()
+    
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            for _ in range(50):
+                executor.submit(run_authorized)
+    
+            for _ in range(50):
+                executor.submit(run_unauthorized)
+    
+        eligible = results.count("ELIGIBLE")
+        refuse = results.count("REFUSE")
+    
+>       assert eligible == 50
+E       assert 100 == 50
+
+TESTS\test_concurrency.py:64: AssertionError
+___________ test_concurrent_replay_receipts_match_isolated_receipts ___________
+
+    def test_concurrent_replay_receipts_match_isolated_receipts():
+        isolated_authorized = make_receipt("REQ-AUTH-001", AUTHORIZED_CTX)
+        isolated_unauthorized = make_receipt("REQ-UNAUTH-001", UNAUTHORIZED_CTX)
+    
+        concurrent_receipts = {}
+    
+        def run_receipt(request_id, ctx):
+            receipt = make_receipt(request_id, ctx)
+            with results_lock:
+                concurrent_receipts[request_id] = receipt
+    
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            executor.submit(run_receipt, "REQ-AUTH-001", AUTHORIZED_CTX)
+            executor.submit(run_receipt, "REQ-UNAUTH-001", UNAUTHORIZED_CTX)
+    
+        assert concurrent_receipts["REQ-AUTH-001"] == isolated_authorized
+        assert concurrent_receipts["REQ-UNAUTH-001"] == isolated_unauthorized
+    
+        assert verify_receipt(concurrent_receipts["REQ-AUTH-001"]) is True
+        assert verify_receipt(concurrent_receipts["REQ-UNAUTH-001"]) is True
+    
+        assert concurrent_receipts["REQ-AUTH-001"]["terminal_state"] == "ELIGIBLE"
+>       assert concurrent_receipts["REQ-UNAUTH-001"]["terminal_state"] == "REFUSE"
+E       AssertionError: assert 'ELIGIBLE' == 'REFUSE'
+E         
+E         - REFUSE
+E         + ELIGIBLE
+
+TESTS\test_concurrency.py:106: AssertionError
+=========================== short test summary info ===========================
+FAILED TESTS/test_concurrency.py::test_concurrent_authority_isolation - asser...
+FAILED TESTS/test_concurrency.py::test_concurrent_replay_receipts_match_isolated_receipts
+2 failed, 35 passed in 0.98s
