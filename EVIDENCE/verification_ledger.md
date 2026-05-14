@@ -105,3 +105,42 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
 - Establishes governance rule GR-1: canon is corrected only by version
   increment, never by in-place edit. (To be recorded in the maintenance
   protocol artifact.)
+
+### VL-008 - Cross-model verification: task-to-source binding is the operative variable
+- Date: 2026-05-14
+- Event: OpenAI was asked three times to derive specification/implementation
+  fidelity from CANON/canon.md + IMPLEMENTATION/evaluator.py.
+- Attempts 1 and 2: NOT derivations. Both ranged outside the supplied
+  artifacts (referencing project history - "Claude's posture", prior
+  iterations, "compression" - none of which is derivable from the two files)
+  and characterized the code rather than checking it against the canon.
+  Attempt 1 located the CCS mismatch as code-vs-prose rather than code-vs-canon.
+  Attempt 2 transcribed canonical CCS(S_t, S_{t+1}, I) and then asserted the
+  implementation "collapses cleanly into the canonical function" - actively
+  smoothing over the gap.
+- Attempt 3: GENUINE INDEPENDENT DERIVATION. Given the same instruction but
+  with the model explicitly binding itself to the sources ("treat the canon
+  and evaluator as evidence, not terminology to preserve"), it identified that
+  CCS "does not fully model state transition consistency" - the G0 gap - and
+  independently reached the framing/mechanism gap (G3): "the strongest accurate
+  claim is narrower than the whitepaper language".
+- Finding: OpenAI's memory context was equally contaminated across all three
+  attempts. The variable that produced a real derivation was the model
+  honoring the scope of the task, not memory cleanliness. This is corroborated
+  by Grok's clean pass (VL-002): Grok also carried prior cross-model context,
+  yet derived G0 correctly when given the instruction "derive a conclusion
+  from canon.md and evaluator.py". The operative variable is task-to-source
+  binding - whether the task is scoped to primary sources AND the model stays
+  within that scope - not the cleanliness of the model's memory.
+- Status of G0: CONFIRMED by three independent derivations - Claude, Grok
+  (clean pass, VL-002), OpenAI (attempt 3). This strengthens VL-002.
+- Procedure established for future cross-model verification:
+    (a) Scope the task explicitly to the primary sources.
+    (b) Confirm the response stayed within that scope - any response
+        referencing material not derivable from the supplied artifacts is
+        discarded regardless of its conclusion.
+    (c) A model's prior exposure to the project does NOT disqualify it as a
+        verifier, provided (a) and (b) hold.
+- Note: ratings, verdicts, and approval-shaped language in any response
+  (present in all three OpenAI attempts to varying degrees) carry no
+  verification weight and are not recorded as confirmation - per ledger rules.
