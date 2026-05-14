@@ -3,6 +3,8 @@
 **This file is the entry point. A fresh session - the author, a new Claude
 session, Grok, or any collaborator - should read this file first.**
 
+**Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
+
 Last updated: 2026-05-14 (commit: see `git log` for STATE.md; last entry VL-008)
 
 ---
