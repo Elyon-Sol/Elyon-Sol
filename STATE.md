@@ -3,7 +3,7 @@
 **This file is the entry point. A fresh session - the author, a new Claude
 session, Grok, or any collaborator - should read this file first.**
 
-Last updated: 2026-05-14 (commit: see `git log` for STATE.md)
+Last updated: 2026-05-14 (commit: see `git log` for STATE.md; last entry VL-008)
 
 ---
 
@@ -47,20 +47,28 @@ manifest layer. CCS has drifted - see G0 below.
   source of record), `CANON/canon.md` (ASCII-safe transcription, verified
   against the PDF - see ledger VL-006), `CANON/canon.lock` (sha256 of canon.md).
 - **Verification ledger established.** `EVIDENCE/verification_ledger.md`,
-  entries VL-001 through VL-007.
+  entries VL-001 through VL-008.
 - **G0 confirmed (anchor finding).** Canonical CCS (whitepaper sections 12-13)
   is a temporal invariant over state transitions; the implemented `ccs_valid()`
   is a point-in-time manifest-integrity check. They are not the same invariant.
-  Confirmed by two independent derivations from primary sources (ledger VL-002).
-- **Method on record.** `scripts/establish_ledger.sh` and `scripts/lock_canon.sh`
-  - the scripts that built the ledger and the lock - are committed.
+  Confirmed by three independent derivations from primary sources: Claude,
+  Grok (clean pass), and OpenAI (ledger VL-002, VL-008).
+- **Method on record.** `scripts/establish_ledger.sh`, `scripts/lock_canon.sh`,
+  and `scripts/append_vl008.sh` - the scripts that built the ledger, the lock,
+  and the VL-008 entry - are committed.
+- **Cross-model verification procedure established (VL-008).** A valid
+  verification requires the task scoped to primary sources and confirmation the
+  response stayed within that scope. A model's prior exposure to the project
+  does not disqualify it, provided those hold. Two failed and one successful
+  OpenAI attempt are documented in VL-008.
 
 ## What is locked vs. open
 
 - **Locked:** canon v0.9.8.4. Corrected only by version increment, never by
   in-place edit (governance rule GR-1, ledger VL-007).
-- **Open:** the honest-base restructure is partially complete. The G0 build
-  (implementing canonical CCS) has not started. See next section.
+- **Open:** the honest-base track is in progress - canon locked, ledger
+  established (VL-001..008); the four remaining honest-base items are listed
+  under "Next open action". The G0 build track has not started. See next section.
 
 ---
 
