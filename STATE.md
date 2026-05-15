@@ -5,7 +5,7 @@ session, Grok, or any collaborator - should read this file first.**
 
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 
-Last updated: 2026-05-14 (commit: see `git log` for STATE.md; last entry VL-008)
+Last updated: 2026-05-15 (commit: see `git log` for STATE.md; last entry VL-009)
 
 ---
 
@@ -49,28 +49,34 @@ manifest layer. CCS has drifted - see G0 below.
   source of record), `CANON/canon.md` (ASCII-safe transcription, verified
   against the PDF - see ledger VL-006), `CANON/canon.lock` (sha256 of canon.md).
 - **Verification ledger established.** `EVIDENCE/verification_ledger.md`,
-  entries VL-001 through VL-008.
+  entries VL-001 through VL-009.
 - **G0 confirmed (anchor finding).** Canonical CCS (whitepaper sections 12-13)
   is a temporal invariant over state transitions; the implemented `ccs_valid()`
   is a point-in-time manifest-integrity check. They are not the same invariant.
   Confirmed by three independent derivations from primary sources: Claude,
   Grok (clean pass), and OpenAI (ledger VL-002, VL-008).
 - **Method on record.** `scripts/establish_ledger.sh`, `scripts/lock_canon.sh`,
-  and `scripts/append_vl008.sh` - the scripts that built the ledger, the lock,
-  and the VL-008 entry - are committed.
+  `scripts/append_vl008.sh`, and `scripts/append_vl009.sh` - the scripts that
+  built the ledger, the lock, and the VL-008/VL-009 entries - are committed.
 - **Cross-model verification procedure established (VL-008).** A valid
   verification requires the task scoped to primary sources and confirmation the
   response stayed within that scope. A model's prior exposure to the project
   does not disqualify it, provided those hold. Two failed and one successful
   OpenAI attempt are documented in VL-008.
+- **Rev. 2 restructure package committed.** The seven planning artifacts
+  (`00_README.md` through `06_spec_to_code_traceability.md`) are now in
+  `docs/restructure/`. The ASCII-safe standard (VL-006) has been applied
+  repo-wide; a pre-existing UTF-8 inconsistency in
+  `canon_transcription_verification_report.md` was caught and corrected (VL-009).
 
 ## What is locked vs. open
 
 - **Locked:** canon v0.9.8.4. Corrected only by version increment, never by
   in-place edit (governance rule GR-1, ledger VL-007).
 - **Open:** the honest-base track is in progress - canon locked, ledger
-  established (VL-001..008); the four remaining honest-base items are listed
-  under "Next open action". The G0 build track has not started. See next section.
+  established (VL-001..009), Rev. 2 package committed. The three remaining
+  honest-base items are listed under "Next open action". The G0 build track
+  has not started. See next section.
 
 ---
 
@@ -92,9 +98,6 @@ internally consistent first. In order:
    `EVIDENCE/archive/` per gaps G2/G7/G8/G9 (see `docs/restructure/04_current_vs_claimed.md`).
    The two interception proofs document a dead (flat-key) API and belong in
    `archive/` marked non-current.
-4. **Place the seven restructure-package artifacts** (`00`-`06`) into
-   `docs/restructure/`. They exist only as session output and must be committed
-   to the repository to be part of the continuity layer.
 
 Only after the honest-base track is complete: begin the **G0 build track** -
 implement canonical CCS via the admissibility envelope
