@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-15 (commit: see `git log` for STATE.md; honest-base step 1 done; last ledger entry VL-010)
+Last updated: 2026-05-15 (commit: see `git log` for STATE.md; honest-base track complete; last ledger entry VL-011)
 
 ---
 
@@ -78,33 +78,53 @@ manifest layer. CCS has drifted - see G0 below.
   manifest and the `.gitignore` correction landed at commit c0867a6;
   corrective ledger entry VL-010. VL-003's derivation is now reproducible
   from a fresh clone.
+- **EVIDENCE/ reorganized (VL-011).** Six proof-style files split into
+  `EVIDENCE/proofs/` (three current proofs plus the raw pytest log
+  backing the AC^3 mutation experiment) and `EVIDENCE/archive/` (two
+  interception proofs of the dead flat-key API, plus the truncated
+  stability proof). Each archived file carries a prepended NON-CURRENT
+  header citing the gaps that retired it (G2/G5/G9). `EVIDENCE/tmp/`
+  removed. `EVIDENCE/verification_ledger.md` is unchanged at
+  `EVIDENCE/` root. The honest-base track is now complete.
 
 ## What is locked vs. open
 
 - **Locked:** canon v0.9.8.4. Corrected only by version increment, never by
   in-place edit (governance rule GR-1, ledger VL-007).
-- **Open:** the honest-base track is in progress. Steps 1-2 are done
-  (artifact 01 reconciliation; maintenance-protocol artifact with GR-1).
-  The manifest sub-thread surfaced during step 1 is closed (VL-010). One
-  honest-base item remains (the EVIDENCE/ reorg). The G0 build track has
-  not started.
+- **Open:** the honest-base track is complete. The G0 build track has
+  not started. One known item is recorded but not yet scheduled: the
+  VL-009 ASCII-safe standard is violated by pre-existing content in
+  the three `EVIDENCE/archive/` files (VL-011 process finding);
+  resolution deferred to a follow-up decision (normalize / preserve
+  verbatim / repo-wide pass).
 
 ---
 
 ## Next open action
 
-Complete the **honest-base track** before beginning the G0 build track.
-Reproducibility and technical rigor require the repository to be clean and
-internally consistent first. One remaining item:
+Begin the **G0 build track**: implement canonical CCS via the admissibility
+envelope (`docs/restructure/05_admissibility_envelope_spec.md`), with
+canon-derived tests (G7).
 
-1. **Reorganize the six `EVIDENCE/*.md` docs** into `EVIDENCE/proofs/` and
-   `EVIDENCE/archive/` per gaps G2/G7/G8/G9 (see `docs/restructure/04_current_vs_claimed.md`).
-   The two interception proofs document a dead (flat-key) API and belong in
-   `archive/` marked non-current.
+The honest-base track is complete:
 
-Only after the honest-base track is complete: begin the **G0 build track** -
-implement canonical CCS via the admissibility envelope
-(`docs/restructure/05_admissibility_envelope_spec.md`), with canon-derived tests.
+1. **Artifact 01 reconciled against HEAD.** Done (commit 148e725).
+2. **Maintenance protocol artifact added with GR-1.** Done (commit 6f7f0e7).
+3. **MANIFEST/manifest.json committed** (sub-thread surfaced during step 1).
+   Done (VL-010, commit c0867a6).
+4. **EVIDENCE/ reorganized into proofs/ and archive/.** Done
+   (VL-011, commit e6345a5).
+
+Priority order for the G0 build track is in
+`docs/restructure/04_current_vs_claimed.md` under "Priority order."
+Suggested first move: the G0 rename + G6 + G10 disambiguation pass
+(priority item 3), since it unblocks honest claims in public framing (G3)
+and is a single naming-convention decision.
+
+One known item is open but not scheduled: the VL-011 process finding on
+pre-existing non-ASCII bytes in `EVIDENCE/archive/` files. Resolution is
+a decision (normalize / preserve verbatim / VL-009 repo-wide pass), not
+a blocking task on the G0 build track.
 
 ---
 
