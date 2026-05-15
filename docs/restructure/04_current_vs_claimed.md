@@ -14,7 +14,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 
 ## G0  -  CCS specification/implementation drift  *(ANCHOR GAP)*
 
-- **Canon (whitepaper section 12):** CCS is a **temporal invariant over state transitions**  - 
+- **Canon (whitepaper section 12):** CCS is a **temporal invariant over state transitions**  -
   `CCS(S_t, S_{t+1}, I)`. It requires authority transitions justified by AC^3, coverage
   transitions justified by T^26, and decision consistency `d_{t+1} = u_{t+1} AND c_{t+1}` across
   `S_t -> S_{t+1}`. section 13: "Eligibility does not persist across state transitions without
@@ -60,7 +60,8 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Claimed:** `interception_proof_001.md` / `_002.md` send flat top-level `AP`/`OP`.
 - **Delta:** Those two proofs document an API the code rejects.
 - **Action:** Rewrite both against the nested schema or move to `EVIDENCE/archive/` marked
-  NON-CURRENT. `SPEC/request_schema.md` becomes the single source of truth.
+  NON-CURRENT. `SPEC/request_schema.md` becomes the single source of truth. Per G10, the
+  schema must also document the `version` field's caller-assertion semantics.
 
 ### G3  -  Framing vs. mechanism  *(re-grounded against canon)*
 - **Canon:** The whitepaper is a legitimate formal specification  -  formal interaction model,
@@ -105,12 +106,14 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Action:** Remove the boolean (rely on SHA256 + version) **or** rename it to mark it
   clearly as a caller assertion. Resolve alongside the G0 rename so all three "ccs" names
   are disambiguated in one pass.
+- **Related:** G10 names the same caller-assertion pattern in the version-check code path.
+  Both gaps resolve under the same naming-convention decision; see Priority order item 3.
 
 ### G7  -  Tests are code-derived, not canon-derived
 - **Code:** `test_pep.py` asserts the *implemented* behavior  -  version drift, SHA256 match,
   fail-closed forwarding. All four pass.
 - **Canon:** No test in the repo is derived from a whitepaper section and cites it.
-- **Delta:** Code-derived tests confirm the code; they cannot detect drift *from canon*  - 
+- **Delta:** Code-derived tests confirm the code; they cannot detect drift *from canon*  -
   this is precisely how G0 went unnoticed. Green tests certified "CCS" that does not match section 12.
 - **Action:** Add `TESTS/adversarial/` with a distinct category of **canon-derived tests**,
   each citing the whitepaper section it verifies. A section 12 test should currently **fail or be
@@ -128,6 +131,23 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Delta:** The one stability proof contains no proof.
 - **Action:** Finish it or delete it.
 
+### G10  -  Manifest `version` field is caller-asserted  *(surfaced by VL-010)*
+- **Code:** `evaluator.py` (lines 67-73) pulls `ctx["expected_manifest_version"]` from the
+  caller's request context and compares it by string equality against
+  `manifest.get("version")`. Both values are caller-controlled  -  the request context is
+  the caller's input, and the manifest is the caller's environment.
+- **Delta:** The version check is internal consistency between two caller-controlled values,
+  not verification against any ground truth (such as the canon version, a signed manifest
+  registry, or a pinned hash). A caller that sends matched values passes regardless of
+  whether the manifest is legitimate. This is the same caller-assertion pattern G6 names
+  for `ctx["ccs_valid"]`, in a different code path.
+- **Action:** Two-part. (1) The `SPEC/request_schema.md` produced under G2 must document
+  the `version` field's caller-assertion semantics  -  its role as a caller-pinning tag,
+  independent of the canon version, should not require reading `evaluator.py` to discover.
+  (2) Resolve the naming convention together with G6 and the G0 rename, under the same
+  disambiguation pass (Priority order item 3). G10 does not propose its own convention;
+  whatever convention G6's resolution adopts, G10 inherits.
+
 ---
 
 ## Resolved gaps
@@ -140,7 +160,9 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 
 1. **G0**  -  the anchor. Everything else is hygiene; this is the substantive finding.
 2. **G7**  -  without canon-derived tests, the next G0 is invisible.
-3. **G6 + G0 rename**  -  done together: disambiguate all three "ccs" names in one pass.
+3. **G0 rename + G6 + G10**  -  done together: a single naming-convention decision covers
+   all three "ccs" names AND the manifest version field. Disambiguating only G6 would leave
+   G10's identically-shaped field with an inconsistent treatment.
 4. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete.
 5. G1, G2, G8, G9  -  bookkeeping; do in a batch.
 6. **G4, G5**  -  build-outward scope, after the base is honest.
