@@ -24,12 +24,14 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+# Note: `MANIFEST` (Python sdist build artifact) intentionally NOT ignored.
+# This repository has a domain directory MANIFEST/ holding manifest.json,
+# a primary source cited by the verification ledger (VL-003, VL-010).
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
 #   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
+# Note: `*.manifest` intentionally NOT ignored (same reasoning as MANIFEST above).
 *.spec
 
 # Installer logs
