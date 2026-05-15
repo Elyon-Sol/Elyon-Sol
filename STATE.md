@@ -4,8 +4,9 @@
 session, Grok, or any collaborator - should read this file first.**
 
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
+**Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-15 (commit: see `git log` for STATE.md; last entry VL-010)
+Last updated: 2026-05-15 (commit: see `git log` for STATE.md; honest-base step 1 done; last ledger entry VL-010)
 
 ---
 
@@ -82,10 +83,11 @@ manifest layer. CCS has drifted - see G0 below.
 
 - **Locked:** canon v0.9.8.4. Corrected only by version increment, never by
   in-place edit (governance rule GR-1, ledger VL-007).
-- **Open:** the honest-base track is in progress. Step 1 (artifact 01
-  reconciliation) is done; the manifest sub-thread surfaced during step 1 is
-  closed (VL-010). Two honest-base items remain (steps 2 and 3 below). The
-  G0 build track has not started.
+- **Open:** the honest-base track is in progress. Steps 1-2 are done
+  (artifact 01 reconciliation; maintenance-protocol artifact with GR-1).
+  The manifest sub-thread surfaced during step 1 is closed (VL-010). One
+  honest-base item remains (the EVIDENCE/ reorg). The G0 build track has
+  not started.
 
 ---
 
@@ -93,12 +95,9 @@ manifest layer. CCS has drifted - see G0 below.
 
 Complete the **honest-base track** before beginning the G0 build track.
 Reproducibility and technical rigor require the repository to be clean and
-internally consistent first. Two remaining items, in order:
+internally consistent first. One remaining item:
 
-1. **Build the maintenance-protocol artifact** containing governance rule GR-1.
-   VL-007 references GR-1; it currently has no home. This closes a dangling
-   reference in the committed ledger.
-2. **Reorganize the six `EVIDENCE/*.md` docs** into `EVIDENCE/proofs/` and
+1. **Reorganize the six `EVIDENCE/*.md` docs** into `EVIDENCE/proofs/` and
    `EVIDENCE/archive/` per gaps G2/G7/G8/G9 (see `docs/restructure/04_current_vs_claimed.md`).
    The two interception proofs document a dead (flat-key) API and belong in
    `archive/` marked non-current.
