@@ -1,3 +1,16 @@
+> **ARCHIVED -- NON-CURRENT**
+>
+> This proof is preserved for historical record. It does not reflect
+> the repository at HEAD.
+>
+> Reason(s): G2 (flat-key payload), G5 (dead webhook.site URL), G9 (truncated mid-JSON)
+> Archived: 2026-05-15
+> Ledger entry: VL-011 (see EVIDENCE/verification_ledger.md)
+>
+> See docs/restructure/04_current_vs_claimed.md for the gap citations.
+
+---
+
 
 ---
 
