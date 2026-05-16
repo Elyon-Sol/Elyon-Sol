@@ -20,15 +20,15 @@ v0.9.8.4. Sections not listed are narrative (Abstract, section 1, section 5) wit
 
 | Whitepaper section | What it specifies | Code construct | Status | Notes |
 |---|---|---|---|---|
-| section 2 Evaluation pipeline | AC^3 -> T^26 -> CCS -> ELIGIBLE/REFUSE | `evaluate()` ordering | **PARTIAL** | Pipeline order is correct; CCS stage is DRIFTED (see section 12). |
+| section 2 Evaluation pipeline | AC^3 -> T^26 -> CCS -> ELIGIBLE/REFUSE | `evaluate()` ordering | **PARTIAL** | Pipeline order is correct; the third stage in code is `manifest_integrity_valid()` (section 8.1 work, not section 12 CCS). Canonical CCS is UNIMPLEMENTED (G0 build half). |
 | section 3 AC^3  -  Authority | "all required authority present, identifiable, properly scoped" | `ac3_valid()` | **FULL** | `AP_set >= AR_set` with string-list type validation. Matches section 11.7. |
 | section 3 T^26  -  Coverage | "all required participants, roles, evidence present" | `t26_valid()` | **FULL** | `OP_set >= R_set` with type validation. Matches section 11.8. |
-| section 3 CCS  -  Continuity | "identity, structure, semantics consistent across transitions" | `ccs_valid()` | **DRIFTED** | **G0.** Code is point-in-time manifest integrity; canon (section 12) is a transition invariant. Not the same construct. |
+| section 3 CCS  -  Continuity | "identity, structure, semantics consistent across transitions" |  -  | **UNIMPLEMENTED** | **G0 (build half).** Canonical CCS is a transition invariant (section 12). No code implements it. The G0 build track (envelope, Deliverable 05) is scoped to implement it. The rename half of G0 was closed in VL-012: the function formerly mis-named `ccs_valid` no longer occupies this row. |
 | section 3 Evaluation Rule | "failure of any invariant -> immediate refusal" | `evaluate()` short-circuit returns | **FULL** | Each failed check returns `REFUSE` immediately. |
 | section 4 / section 15 Failure constructs | CDD, SAP, PAD, ILT  -  detection-layer descriptions |  -  | **UNIMPLEMENTED** | **Not a gap.** Canon explicitly states these "do not participate in admissibility determination." Implementation is optional/future. |
-| section 6 Lightweight formal model | `evaluate(ctx)` reference pseudocode | `evaluate()` | **PARTIAL** | Matches the pseudocode shape; the `ccs_valid` branch inherits section 12's DRIFTED status. |
+| section 6 Lightweight formal model | `evaluate(ctx)` reference pseudocode | `evaluate()` | **PARTIAL** | Matches the pseudocode shape, including the post-VL-012 rename to `manifest_integrity_valid()`. Remains PARTIAL because the pseudocode names `ccs_valid(ctx)` as the third check, while `evaluate()` now calls `manifest_integrity_valid()` plus the section 12 canonical CCS check is UNIMPLEMENTED. |
 | section 7 Regulatory alignment | EU AI Act Articles 5/9/10/14 support claims |  -  | **N/A  -  SPEC ONLY** | Positioning claim, not an implementable construct. Should be stated as "can support," not "provides." |
-| section 8.1 Manifest-bound authority | governance bound to a deterministic manifest | `load_manifest()`, `safe_manifest()`, `manifest_sha256()` | **FULL** | This is, accurately, what the current `ccs_valid()` mostly does  -  it belongs here, not under section 12. |
+| section 8.1 Manifest-bound authority | governance bound to a deterministic manifest | `load_manifest()`, `safe_manifest()`, `manifest_sha256()`, `manifest_integrity_valid()` | **FULL** | This is, accurately, what the formerly-named `ccs_valid()` was doing  -  it belongs here, not under section 12. VL-012 renamed it to `manifest_integrity_valid()` and made this attribution explicit in code. |
 | section 8.2 Proof-of-Existence (PoE) | optional artifact-integrity anchoring |  -  | **UNIMPLEMENTED** | Canon marks it "optional" and "implementation-dependent." Not a gap. Candidate build-outward item. |
 | section 8.4 GAE/ARL patterns | non-canonical implementation patterns |  -  | **N/A  -  SPEC ONLY** | Canon marks them non-canonical, introducing no new criteria. |
 | section 9 Reproducibility | deterministic derivation, identical results, fail-closed | `evaluate()` determinism; `safe_*` guards | **FULL** | No randomness/state/time in the gate; all invalid inputs fail closed. |
@@ -41,7 +41,7 @@ v0.9.8.4. Sections not listed are narrative (Abstract, section 1, section 5) wit
 | section 12.2 Decision variables | `u = AC^3`, `c = T^26`, `d = u AND c` | `evaluate()` computes the conjunction | **PARTIAL** | `d` is computed per-call but never *stored* for cross-transition comparison. |
 | section 12.3 Continuity constraint | transitions justified; `d_{t+1} = u_{t+1} AND c_{t+1}` |  -  | **UNIMPLEMENTED** | **G0 core.** Requires the envelope's `condition_results` + `reassert()`. |
 | section 12.4 Failure condition | invalid transition -> `CCS = 0` |  -  | **UNIMPLEMENTED** | Envelope `reassert()` -> `INVALIDATED` / `RE-EVALUATE-REQUIRED` is the planned mechanism. |
-| section 13 Evaluation function | `G(I) = AC^3 AND T^26 AND CCS`; eligibility not durable | `evaluate()` returns the conjunction | **PARTIAL** | The conjunction is implemented; the CCS operand is DRIFTED, and "eligibility not durable" (revalidation) is UNIMPLEMENTED. |
+| section 13 Evaluation function | `G(I) = AC^3 AND T^26 AND CCS`; eligibility not durable | `evaluate()` returns the conjunction | **PARTIAL** | The conjunction is implemented; the CCS operand is UNIMPLEMENTED (G0 build half), and "eligibility not durable" (revalidation) is UNIMPLEMENTED. |
 | section 14 Scope clarification | pre-execution, identity-agnostic, non-executing | `pep.py` runs `evaluate()` before forward | **PARTIAL** | Pre-execution: yes, *for routed calls* (bypassability  -  G4). Non-executing: yes. Identity-agnostic: yes. |
 | Appendix D.2 Positive case | worked ELIGIBLE example | `test_pep.py::test_governed_call_eligible_forwards_once` | **FULL** | The canon's positive case has a corresponding passing test. |
 | Appendix D.3 CCS-isolated failure | ELIGIBLE on AC^3+T^26 but `CCS=0` -> REFUSE |  -  | **UNIMPLEMENTED** | **Telling gap.** The canon has a worked CCS-isolated failure case. No test exercises it, because the code cannot produce a CCS-isolated failure in the section 12 sense. This is G0 visible from the canon's own examples. |
@@ -54,15 +54,18 @@ v0.9.8.4. Sections not listed are narrative (Abstract, section 1, section 5) wit
   Authority and Coverage are completely and faithfully implemented. Manifest binding is solid.
 - **PARTIAL (6):** section 2, section 6, section 11.1, section 12.2, section 13, section 14. Mostly the pipeline and the formal model  - 
   partial *because* they contain CCS or state/time as an operand.
-- **DRIFTED (1):** section 3 CCS. The single anchor gap (G0).
-- **UNIMPLEMENTED (6):** section 12.1, section 12.3, section 12.4, Appendix D.3 (all CCS-transition logic  -  the
+- **DRIFTED (0):** The rename half of G0 was closed in VL-012; the section 3 CCS row that was DRIFTED is now UNIMPLEMENTED (build half of G0). No remaining DRIFTED rows.
+- **UNIMPLEMENTED (7):** section 3 CCS (G0 build half), section 12.1, section 12.3, section 12.4, Appendix D.3 (all CCS-transition logic  -  the
   envelope's scope); section 8.2 PoE and section 4/section 15 failure constructs (canon marks both optional /
   non-participating  -  *not* gaps).
 - **N/A  -  SPEC ONLY (3):** section 7, section 8.4, section 10.
 
 **Read of the whole picture:** Two of three canonical invariants (AC^3, T^26) are FULL. The
-manifest layer is FULL. The drift is localized entirely to CCS and its dependent sections  - 
-and the envelope (Deliverable 05) is scoped to close exactly that cluster. This is a faithful
+manifest layer is FULL. CCS is UNIMPLEMENTED in its canonical (transition-invariant) sense; the
+dependent sections (12.1, 12.3, 12.4, Appendix D.3) follow. The envelope (Deliverable 05) is
+scoped to close exactly that cluster, and the G0 build track is the active work. Post-VL-012,
+the project no longer mis-attributes the manifest-integrity check to CCS; the gap is now
+honestly named as a missing invariant rather than a misnamed one. This is a faithful
 partial implementation of a real specification, with one well-defined missing invariant. That
 is an accurate, declarable description of the project.
 

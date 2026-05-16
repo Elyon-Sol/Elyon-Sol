@@ -604,3 +604,116 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   fully resolved. This finding documents the impossibility and
   proposes (b) as the cleanest convention.
 - Commit: 8ba88cf.
+### VL-013 - Planning artifacts 05 and 06 brought current to VL-012
+- Date: 2026-05-16
+- Event: Planning artifacts `docs/restructure/05_admissibility_envelope_spec.md`
+  and `docs/restructure/06_spec_to_code_traceability.md` contained
+  forward-tense references to `ccs_valid()` and a DRIFTED status for
+  canonical CCS - statements that were correct when the artifacts were
+  drafted (2026-05-14) but became false at VL-012 (2026-05-15, commit
+  8ba88cf), when `ccs_valid()` was renamed to `manifest_integrity_valid()`
+  and canonical CCS was reclassified from DRIFTED (wrong code in the slot)
+  to UNIMPLEMENTED (no code in the slot). This freshness pass corrects
+  the stale statements. No code change; no canon change; no test change.
+- Status: CORRECTED
+- Scope rule applied: edits restricted to statements about current state
+  that became false after VL-012. Substantive content of the artifacts
+  preserved. Specifically NOT touched:
+    - the "What changed from Rev. 1, and why" section of artifact 05,
+      including its `ccs_valid()` references on lines 6 and 14, because
+      the section is an explicit historical-narrative frame about Rev. 1
+      vs. Rev. 2 and the section header carries the temporal framing;
+    - artifact 05's "Open questions for review," which remain legitimately open;
+    - artifact 05's G7 reference and reassertion protocol;
+    - all FULL rows in artifact 06's table;
+    - artifact 06's "How this map is maintained" section.
+- Edits to 05 (3):
+    (1) Envelope-structure JSON block, `manifest_integrity` comment:
+        forward-tense "the renamed point-in-time check (was 'ccs_valid')"
+        replaced with past-tense citing VL-012 and the current function
+        name `manifest_integrity_valid`.
+    (2) Field rationale bullet for `condition_results`: forward-tense
+        "the renamed point-in-time check (formerly mis-named ccs_valid -
+        gap G6/G0)" replaced with past-tense citing VL-012, explicit
+        function name and source file, and an explicit note that
+        implementing canonical `ccs` is the G0 build track (open).
+    (3) Build-order step 2: appended "Done in VL-012 (commit 8ba88cf)"
+        to the rename-and-reserve step.
+- Edits to 06 (5):
+    (1) Section 2 Evaluation pipeline row Notes cell: replaced
+        "CCS stage is DRIFTED (see section 12)" with explicit current
+        state - third stage in code is `manifest_integrity_valid()`
+        (section 8.1 work), canonical CCS is UNIMPLEMENTED (G0 build half).
+    (2) Section 3 CCS row: replaced in place. Code-construct cell
+        changed from `ccs_valid()` to ` - ` (no implementing code);
+        status changed from DRIFTED to UNIMPLEMENTED; Notes cell
+        rewritten to name this as the G0 build half, cite VL-012's
+        closing of the rename half, and reference Deliverable 05.
+    (3) Section 6 Lightweight formal model row Notes cell: updated
+        to reflect the post-VL-012 rename and to record the residual
+        canon-vs-code naming tension (canon section 6 pseudocode
+        names `ccs_valid(ctx)`; `evaluate()` calls
+        `manifest_integrity_valid()`). The tension is real and now
+        explicitly named; it will resolve either by canon-version
+        event or by an implementation note. Not this pass's call.
+    (4) Section 8.1 row: code-construct cell extended to include
+        `manifest_integrity_valid()`. Notes cell updated to past
+        tense ("formerly-named `ccs_valid()` was doing") and to
+        cite VL-012 as making the section 8.1 attribution explicit
+        in code.
+    (5) Section 13 row Notes cell: replaced "the CCS operand is
+        DRIFTED" with "the CCS operand is UNIMPLEMENTED (G0 build
+        half)" - same staleness pattern as edits (1), (3), and the
+        section 3 CCS row, surfaced during the post-edit residual
+        scan rather than during planning, and folded into this pass
+        because the root cause is identical.
+- Edits to 06 summary block:
+    DRIFTED count: 1 -> 0, with an explanatory line replacing the
+    prior "section 3 CCS. The single anchor gap (G0)" entry.
+    UNIMPLEMENTED count: 6 -> 7, with section 3 CCS added as the
+    first item (G0 build half).
+    "Read of the whole picture" paragraph rewritten: the bottom-line
+    framing ("a faithful partial implementation of a real specification,
+    with one well-defined missing invariant") preserved verbatim. The
+    intermediate sentences updated to name CCS as UNIMPLEMENTED rather
+    than as "the drift," and to record the VL-012 framing shift:
+    post-VL-012, the gap is honestly named as a missing invariant
+    rather than a misnamed one.
+- Method: direct in-place edits via str_replace anchored on exact-byte
+  unique strings. No script. Both files re-verified ASCII-clean against
+  the VL-009 standard after edits. Both files re-scanned for residual
+  stale references (e.g., live-tense `ccs_valid()` or in-row DRIFTED
+  status notes) before commit; the residual scan surfaced edit (5) to 06
+  during execution and it was added to the pass under the same scope rule.
+- Process finding (residual scan caught one omission): The pre-edit
+  plan enumerated four edits to 06. The post-edit residual scan
+  (`grep -n "DRIFTED" 06_spec_to_code_traceability.md`) surfaced a
+  fifth occurrence on line 44 (section 13 row Notes cell) that the
+  plan had missed. The grep is the same shape as VL-009's lock_canon.sh
+  preconditions and VL-011's per-file disposition lesson: don't trust
+  the plan, scan the actual file. Adding the scan as a post-edit step
+  for any future freshness pass is the durable lesson.
+- Process finding (judgment call on historical-narrative sections):
+  Artifact 05 lines 6 and 14 contain forward-tense `ccs_valid()`
+  references inside the "What changed from Rev. 1, and why" section.
+  These are inside an explicit historical-narrative frame and were
+  preserved as-is by author decision. The freshness-pass scope rule
+  ("does this edit correct a statement that became false after
+  VL-012?") was applied with the section header as context: a
+  historical-narrative section's claims are scoped to the moment the
+  narrative is about, not to the present. Recorded as a precedent for
+  future freshness passes: section-level temporal framing dominates
+  individual-line tense.
+- Process finding (no self-referencing hash): Per VL-012's
+  self-referencing-hash finding, this entry deliberately avoids citing
+  its own commit hash. It cites VL-012's hash (8ba88cf) as the
+  triggering event, the dates of both artifacts' last substantive
+  edit, and the file paths. The commit hash for VL-013 itself is
+  reachable via `git log` and is implicit in the entry's position
+  in the ledger. This is convention (c) from VL-012's process
+  finding: drop the self-reference entirely.
+- Files changed:
+    docs/restructure/05_admissibility_envelope_spec.md
+    docs/restructure/06_spec_to_code_traceability.md
+    EVIDENCE/verification_ledger.md (this entry)
+- No code, canon, manifest, or test change.

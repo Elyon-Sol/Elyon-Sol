@@ -62,7 +62,7 @@ reassertion protocol is precisely the missing transition logic. So:
   "condition_results": {
     "ac3": true,            // u  -  section 12.2 decision variable
     "t26": true,            // c  -  section 12.2 decision variable
-    "manifest_integrity": true,   // the renamed point-in-time check (was "ccs_valid")
+    "manifest_integrity": true,   // point-in-time check (manifest_integrity_valid in code; renamed from ccs_valid in VL-012)
     "ccs": true             // d-consistency across transition  -  section 12.3; only meaningful on reassertion
   },
   "decision_sha256": "<hash over canonicalized envelope minus this field>",
@@ -79,10 +79,12 @@ reassertion protocol is precisely the missing transition logic. So:
   deterministic, versioned, and integrity-verifiable").
 - **`evaluator` block**  -  pins to the implementation. A changed evaluator hash means the
   decision logic itself moved (section 12.4-class transition).
-- **`condition_results`**  -  note the explicit split. `manifest_integrity` is the **renamed**
-  point-in-time check (formerly mis-named `ccs_valid`  -  gap G6/G0). `ccs` is the **true section 12
-  invariant**  -  decision consistency across a transition  -  and is only meaningfully
-  evaluable at *reassertion* time, because it is inherently about `S_t -> S_{t+1}`.
+- **`condition_results`**  -  note the explicit split. `manifest_integrity` is the point-in-time
+  check, implemented in `IMPLEMENTATION/evaluator.py` as `manifest_integrity_valid()` (renamed
+  from `ccs_valid` in VL-012; closes the rename half of G0 and resolves G6). `ccs` is the
+  **true section 12 invariant**  -  decision consistency across a transition  -  and is only
+  meaningfully evaluable at *reassertion* time, because it is inherently about `S_t -> S_{t+1}`.
+  Implementing it is the G0 build track (open).
 - **`decision_sha256`**  -  tamper-evidence. Canonical JSON (sorted keys, no whitespace),
   reusing the serialization discipline from the existing replay-receipt work.
 - **`timestamp_utc`**  -  audit only; **excluded** from `decision_sha256` so the same decision
@@ -119,7 +121,7 @@ re-evaluation. This is exactly section 13's requirement, made operational.
   envelope, the repo *claimed* CCS and *implemented* a point-in-time substitute (G0). The
   envelope closes that gap by building the thing the canon already specified.
 - If canon is ever revised, that is a canon-version event: every envelope under the old
-  `canon_sha256` is `INVALIDATED` automatically. Lock and envelope are mutually reinforcing  - 
+  `canon_sha256` is `INVALIDATED` automatically. Lock and envelope are mutually reinforcing  -
   the lock makes the envelope meaningful; the envelope makes the lock observable.
 
 ---
@@ -142,7 +144,7 @@ re-evaluation. This is exactly section 13's requirement, made operational.
 ## Build order
 
 1. `SPEC/request_schema.md`  -  lock the request shape (the envelope embeds it).
-2. Rename `ccs_valid()` -> `manifest_integrity_valid()`; reserve "CCS" (gaps G0/G6).
+2. Rename `ccs_valid()` -> `manifest_integrity_valid()`; reserve "CCS" (gaps G0/G6). **Done in VL-012 (commit 8ba88cf).**
 3. `IMPLEMENTATION/envelope.py`  -  `build_envelope(...)` and `reassert(...)`.
 4. `TESTS/adversarial/test_envelope.py`  -  construction determinism, the reassertion table,
    tamper detection. **Plus** a canon-derived `test_ccs_canonical.py` that cites section 12  -  it
