@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-15 (commit: see `git log` for STATE.md; G0/G6/G10 disambiguation pass complete; last ledger entry VL-012)
+Last updated: 2026-05-16 (commit: see `git log` for STATE.md; VL-013 freshness pass complete on planning artifacts 05 and 06; last ledger entry VL-013; next action remains G0 build track)
 
 ---
 
@@ -52,7 +52,7 @@ manifest layer. CCS has drifted - see G0 below.
   source of record), `CANON/canon.md` (ASCII-safe transcription, verified
   against the PDF - see ledger VL-006), `CANON/canon.lock` (sha256 of canon.md).
 - **Verification ledger established.** `EVIDENCE/verification_ledger.md`,
-  entries VL-001 through VL-010.
+  entries VL-001 through VL-013.
 - **G0 confirmed (anchor finding).** Canonical CCS (whitepaper sections 12-13)
   is a temporal invariant over state transitions; the implemented `ccs_valid()`
   is a point-in-time manifest-integrity check. They are not the same invariant.
@@ -71,8 +71,10 @@ manifest layer. CCS has drifted - see G0 below.
   (`00_README.md` through `06_spec_to_code_traceability.md`) are in
   `docs/restructure/`. The ASCII-safe standard (VL-006) has been applied
   repo-wide (VL-009). Artifact 01 has been revised to reconcile against the
-  real repository tree; artifact 04 has been updated through G11 (this
+  real repository tree; artifact 04 has been updated through G11 (VL-012
   session: G0 partially resolved, G6 and G10 resolved, G11 added).
+  Artifacts 05 and 06 brought current to VL-012 in the VL-013 freshness
+  pass.
 - **MANIFEST/manifest.json committed (VL-010).** Previously hidden by a
   `.gitignore` rule inherited from a Python-project template. Both the
   manifest and the `.gitignore` correction landed at commit c0867a6;
@@ -103,6 +105,18 @@ manifest layer. CCS has drifted - see G0 below.
   ledger entry was corrected from the pre-amend hash to the actual
   commit hash in follow-up commit f0df14c; process finding on
   self-referencing-hash workflow recorded there.
+- **Planning artifacts 05 and 06 brought current to VL-012 (VL-013,
+  commit 606ddc1).** Forward-tense references to `ccs_valid()` in
+  `docs/restructure/05_admissibility_envelope_spec.md` updated to
+  past tense citing VL-012. In
+  `docs/restructure/06_spec_to_code_traceability.md`, canonical CCS
+  reclassified from DRIFTED (one row, the function in the wrong slot)
+  to UNIMPLEMENTED (no code implements it; the rename half of G0
+  closed in VL-012; the build half is the G0 build track). DRIFTED
+  count: 1 -> 0. UNIMPLEMENTED count: 6 -> 7. The artifacts'
+  substantive content was preserved; only statements about current
+  state that became false after VL-012 were touched. No code, canon,
+  manifest, or test change.
 
 ## What is locked vs. open
 
@@ -142,6 +156,12 @@ The honest-base track is complete; the disambiguation pass is complete:
    (VL-011, commit e6345a5).
 5. **G0/G6/G10 disambiguation pass.** Done (VL-012, commit 8ba88cf;
    hash citation corrected in f0df14c).
+6. **Planning artifacts 05 and 06 brought current to VL-012.** Done
+   (VL-013, commit 606ddc1). Stale forward-tense references to
+   `ccs_valid()` and DRIFTED-status references to canonical CCS
+   updated to past tense citing VL-012; canonical CCS reclassified
+   from DRIFTED to UNIMPLEMENTED in artifact 06's status table. No
+   code, canon, manifest, or test change.
 
 Priority order for the G0 build track is in
 `docs/restructure/04_current_vs_claimed.md` under "Priority order."
@@ -161,6 +181,15 @@ Known items open but not scheduled (do not block the G0 build track):
 - VL-011 process finding on pre-existing non-ASCII bytes in
   `EVIDENCE/archive/` files.
 - VL-012 latent inconsistency on `receipt.py` `canonical_json`.
+- VL-013 commit 606ddc1 contains one incidental whitespace-only edit
+  to `docs/restructure/05_admissibility_envelope_spec.md` (the line
+  ending "Lock and envelope are mutually reinforcing -") introduced
+  by terminal-paste reconstruction during the session. VL-013
+  enumerates three semantic edits to artifact 05 but the commit
+  contains four diff-level changes. Same family as VL-012's em-dash
+  normalization in `manifest_integrity_001.md`. Acknowledged here
+  rather than as a new ledger entry because the ledger documents
+  verification claims, not cosmetic process artifacts. No action.
 
 ---
 
@@ -185,7 +214,7 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   `manifest_integrity_valid()` (surfaced by VL-012). Bookkeeping
   batch.
 
-Resolved this session: G6 (`ccs_valid` field removed), G10 (pinning
+Resolved in VL-012: G6 (`ccs_valid` field removed), G10 (pinning
 fields retained and documented). G0's rename half. See VL-012 and
 `docs/restructure/04_current_vs_claimed.md` Resolved gaps section.
 
