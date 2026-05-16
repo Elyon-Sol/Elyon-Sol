@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-15 (commit: see `git log` for STATE.md; honest-base track complete; last ledger entry VL-011)
+Last updated: 2026-05-15 (commit: see `git log` for STATE.md; G0/G6/G10 disambiguation pass complete; last ledger entry VL-012)
 
 ---
 
@@ -71,8 +71,8 @@ manifest layer. CCS has drifted - see G0 below.
   (`00_README.md` through `06_spec_to_code_traceability.md`) are in
   `docs/restructure/`. The ASCII-safe standard (VL-006) has been applied
   repo-wide (VL-009). Artifact 01 has been revised to reconcile against the
-  real repository tree (this session); artifact 04 has been updated with
-  gap G10 (this session).
+  real repository tree; artifact 04 has been updated through G11 (this
+  session: G0 partially resolved, G6 and G10 resolved, G11 added).
 - **MANIFEST/manifest.json committed (VL-010).** Previously hidden by a
   `.gitignore` rule inherited from a Python-project template. Both the
   manifest and the `.gitignore` correction landed at commit c0867a6;
@@ -86,17 +86,43 @@ manifest layer. CCS has drifted - see G0 below.
   header citing the gaps that retired it (G2/G5/G9). `EVIDENCE/tmp/`
   removed. `EVIDENCE/verification_ledger.md` is unchanged at
   `EVIDENCE/` root. The honest-base track is now complete.
+- **G0/G6/G10 disambiguation pass complete (VL-012, commit 8ba88cf).**
+  Function `ccs_valid()` renamed to `manifest_integrity_valid()`; the
+  redundant caller-asserted `ctx["ccs_valid"]` input removed; the load-
+  bearing pinning fields (`expected_manifest_version`,
+  `expected_manifest_sha256`) retained and their caller-assertion
+  semantics documented in the function docstring. The name "CCS" is
+  reserved in code and in test IDs until envelope.py implements
+  section 12. Test surface: four `ccs_flag_*` cases deleted; one new
+  `manifest_sha256_missing` added to preserve coverage; four
+  `ccs_version_*` renamed to `manifest_version_*`. Suite size: 37 -> 34.
+  EVIDENCE/proofs/manifest_integrity_continuity_001.md renamed to
+  manifest_integrity_001.md and body rewritten. New gap G11 surfaced
+  (manifest-source asymmetry: `manifest_sha256()` reads from disk,
+  ignoring the manifest argument). The hash citation in the VL-012
+  ledger entry was corrected from the pre-amend hash to the actual
+  commit hash in follow-up commit f0df14c; process finding on
+  self-referencing-hash workflow recorded there.
 
 ## What is locked vs. open
 
 - **Locked:** canon v0.9.8.4. Corrected only by version increment, never by
   in-place edit (governance rule GR-1, ledger VL-007).
-- **Open:** the honest-base track is complete. The G0 build track has
-  not started. One known item is recorded but not yet scheduled: the
-  VL-009 ASCII-safe standard is violated by pre-existing content in
-  the three `EVIDENCE/archive/` files (VL-011 process finding);
-  resolution deferred to a follow-up decision (normalize / preserve
-  verbatim / repo-wide pass).
+- **Open:** the honest-base track is complete and the disambiguation pass
+  (G0/G6/G10) is complete. The G0 build track has not started. Known
+  items recorded but not yet scheduled:
+    - VL-009 ASCII-safe standard is violated by pre-existing content
+      in the three `EVIDENCE/archive/` files (VL-011 process finding);
+      resolution deferred to a follow-up decision (normalize / preserve
+      verbatim / repo-wide pass).
+    - G11 (manifest-source asymmetry in `manifest_sha256()`) is queued
+      with G1, G2, G8, G9 in the bookkeeping batch per artifact 04's
+      priority order.
+    - Latent VL-009 inconsistency: `IMPLEMENTATION/replay/receipt.py`'s
+      `canonical_json` uses `ensure_ascii=False` (VL-012 process
+      finding); not a current problem (no receipt currently contains
+      non-ASCII bytes) but warrants documentation if scope-creep into
+      a follow-up is desired.
 
 ---
 
@@ -106,7 +132,7 @@ Begin the **G0 build track**: implement canonical CCS via the admissibility
 envelope (`docs/restructure/05_admissibility_envelope_spec.md`), with
 canon-derived tests (G7).
 
-The honest-base track is complete:
+The honest-base track is complete; the disambiguation pass is complete:
 
 1. **Artifact 01 reconciled against HEAD.** Done (commit 148e725).
 2. **Maintenance protocol artifact added with GR-1.** Done (commit 6f7f0e7).
@@ -114,17 +140,27 @@ The honest-base track is complete:
    Done (VL-010, commit c0867a6).
 4. **EVIDENCE/ reorganized into proofs/ and archive/.** Done
    (VL-011, commit e6345a5).
+5. **G0/G6/G10 disambiguation pass.** Done (VL-012, commit 8ba88cf;
+   hash citation corrected in f0df14c).
 
 Priority order for the G0 build track is in
 `docs/restructure/04_current_vs_claimed.md` under "Priority order."
-Suggested first move: the G0 rename + G6 + G10 disambiguation pass
-(priority item 3), since it unblocks honest claims in public framing (G3)
-and is a single naming-convention decision.
+With priority item 3 (G0 rename + G6 + G10) now resolved, the remaining
+order is: G0 build (canonical CCS via envelope), G7 (canon-derived tests),
+G3 (reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED
+picture concrete), then bookkeeping batch (G1, G2, G8, G9, G11), then
+build-outward scope (G4, G5).
 
-One known item is open but not scheduled: the VL-011 process finding on
-pre-existing non-ASCII bytes in `EVIDENCE/archive/` files. Resolution is
-a decision (normalize / preserve verbatim / VL-009 repo-wide pass), not
-a blocking task on the G0 build track.
+Suggested first move on the G0 build track: build out
+`SPEC/request_schema.md` (G2's anchor artifact, also referenced by
+G10's documentation requirement and by the envelope spec's build order
+step 1). This is the smallest unit of forward motion that unblocks
+multiple downstream items.
+
+Known items open but not scheduled (do not block the G0 build track):
+- VL-011 process finding on pre-existing non-ASCII bytes in
+  `EVIDENCE/archive/` files.
+- VL-012 latent inconsistency on `receipt.py` `canonical_json`.
 
 ---
 
@@ -132,20 +168,26 @@ a blocking task on the G0 build track.
 
 See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
 
-- **G0** - CCS specification/implementation drift (anchor gap; confirmed; the
-  G0 build track addresses it).
+- **G0** - CCS specification/implementation drift. **PARTIALLY RESOLVED**
+  (VL-012): rename half closed (function renamed; name reserved in code
+  and test IDs). Build half open (canonical CCS implementation is the
+  G0 build track).
 - **G1** - README test count stale / no commit-pinned source of truth.
 - **G2** - request schema drift (interception proofs document a dead API).
 - **G3** - public framing overclaims relative to implementation.
 - **G4** - the gate is bypassable (opt-in, not enforced).
 - **G5** - "external" verification is not durable (ephemeral webhook).
-- **G6** - `ccs_valid` input field is caller-asserted and circular.
 - **G7** - tests are code-derived, not canon-derived.
 - **G8** - evidence proofs are narrated, not executable.
 - **G9** - `stability_proof_001.md` is truncated.
-- **G10** - manifest `version` field is caller-asserted (surfaced by VL-010;
-  same pattern as G6; both resolve under a single naming-convention decision
-  in the G0/G6/G10 disambiguation pass).
+- **G11** - manifest-source asymmetry: `manifest_sha256()` reads from
+  disk via hardcoded path, ignoring the manifest argument passed to
+  `manifest_integrity_valid()` (surfaced by VL-012). Bookkeeping
+  batch.
+
+Resolved this session: G6 (`ccs_valid` field removed), G10 (pinning
+fields retained and documented). G0's rename half. See VL-012 and
+`docs/restructure/04_current_vs_claimed.md` Resolved gaps section.
 
 ---
 
