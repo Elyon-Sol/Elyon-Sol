@@ -14,7 +14,6 @@ def test_governed_call_refuse_blocks_upstream():
             "context": {
                 "AP": [],
                 "OP": [],
-                "ccs_valid": False,
                 "expected_manifest_version": "1.0",
                 "expected_manifest_sha256": SHA
             }
@@ -50,7 +49,6 @@ def test_governed_call_eligible_forwards_once(monkeypatch):
             "context": {
                 "AP": ["identity", "role"],
                 "OP": ["session", "request"],
-                "ccs_valid": True,
                 "expected_manifest_version": "1.0",
                 "expected_manifest_sha256": SHA
             }
@@ -74,7 +72,6 @@ def test_governed_call_upstream_error_fails_closed(monkeypatch):
             "context": {
                 "AP": ["identity", "role"],
                 "OP": ["session", "request"],
-                "ccs_valid": True,
                 "expected_manifest_version": "1.0",
                 "expected_manifest_sha256": SHA
             }
@@ -94,7 +91,6 @@ def test_governed_call_manifest_version_drift_refuses():
             "context": {
                 "AP": ["identity", "role"],
                 "OP": ["session", "request"],
-                "ccs_valid": True,
                 "expected_manifest_version": "2.0",
                 "expected_manifest_sha256": SHA
             }

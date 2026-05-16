@@ -382,3 +382,204 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   not headers. Lesson: disposition decisions about evidence files
   require the full file. Headers can invert under full reads when
   the file's narrative is structured as setup-observation-restoration.
+
+### VL-012 - G0 rename + G6 + G10 disambiguation pass; convention decided and applied
+- Date: 2026-05-15
+- Event: The G0/G6/G10 disambiguation pass (STATE.md "Next open action",
+  priority item 3 in docs/restructure/04_current_vs_claimed.md) was
+  performed. The pass renames the implemented point-in-time check away
+  from the drifted name "CCS"; removes one redundant caller-asserted
+  input field; documents the caller-assertion semantics of the
+  remaining load-bearing pinning fields; renames four test IDs to
+  honor the same reservation. Decisions were made before any file
+  was touched.
+- Status: CORRECTED.
+- Convention decided: caller-asserted fields are REMOVED if redundant
+  with system-verified checks; KEPT and DOCUMENTED if load-bearing.
+  This is asymmetric-by-function by design: G6's field is redundant
+  with the SHA256 + version match; G10's fields are load-bearing
+  (the pinning mechanism itself). Treating them under one symmetric
+  rule would paper over a real distinction.
+- Considered and rejected: (b) keep both fields, prefix both with
+  caller_asserts_*. Rejected because renaming a useless input field
+  does not give it meaning; it only adds verbosity.
+- Reservation of "CCS" name: extended in this pass to test IDs in
+  addition to code identifiers. Artifact 04's G0 action 2 reads
+  "unused in code"; this pass interprets that to include test IDs
+  on the rationale that a green pytest line citing ccs_version_*
+  perpetuates the same misclassification artifact 04 names.
+- Changes (commit 45bd181):
+    (1) IMPLEMENTATION/evaluator.py: function ccs_valid() renamed to
+        manifest_integrity_valid(); docstring added documenting the
+        caller-assertion semantics of expected_manifest_version and
+        expected_manifest_sha256, and explicitly distinguishing the
+        function from canonical CCS (whitepaper section 12). The
+        ctx.get("ccs_valid") guard at the top of the function was
+        removed (G6 - redundant with the SHA256 + version match
+        below it). Call site at line 97 updated.
+    (2) IMPLEMENTATION/pep.py: no change. pep.py imports evaluate
+        and load_manifest, not ccs_valid; the rename is transparent
+        across the module boundary.
+    (3) IMPLEMENTATION/replay/receipt.py: no change. Standalone
+        receipt module; no ccs_valid references.
+    (4) TESTS/test_pep.py: the inert "ccs_valid" key removed from
+        all four test context fixtures. test_governed_call_refuse_
+        blocks_upstream still refuses (over-determined: AC^3 refuses
+        on empty AP before manifest integrity is reached); the other
+        three tests pass unchanged.
+    (5) TESTS/test_adversarial_evaluator.py: 26 cases -> 23 cases.
+        Four ccs_flag_* cases deleted; one new manifest_sha256_missing
+        case added to preserve coverage of the SHA-missing REFUSE
+        path (would have been lost under naive deletion). Four
+        ccs_version_* cases renamed to manifest_version_*. Inert
+        "ccs_valid" keys removed from the 16 remaining ap_*/op_*
+        cases. The intentional Cyrillic byte in ap_lookalike_unicode
+        (rol-U+0435 at the second list element) expressed as a
+        \u-escape (rol\u0435) to preserve uniform ASCII postcheck
+        across all files; runtime-equivalent. This is the VL-006
+        representation-decision precedent ("ASCII forms denote the
+        identical constructs") applied to a test fixture.
+    (6) TESTS/test_concurrency.py: inert "ccs_valid": True line
+        removed from three context constants (AUTHORIZED_CTX,
+        UNAUTHORIZED_CTX, BAD_SHA_CTX). No behavior change.
+    (7) TESTS/test_replay_receipts.py: no change. Standalone
+        receipt-determinism tests.
+    (8) EVIDENCE/proofs/manifest_integrity_continuity_001.md renamed
+        via git mv to EVIDENCE/proofs/manifest_integrity_001.md and
+        body rewritten to remove the "CCS continuity" framing per
+        VL-011's deferred item. The historical commit citation
+        (8fddb4e) preserved with explanatory note. Em-dash in the
+        original commit line incidentally normalized to ASCII
+        hyphen by the rewrite. Stale "30/30 tests passing" count
+        left as-is and explicitly flagged as G1-scope, not this
+        pass's concern.
+    (9) docs/restructure/04_current_vs_claimed.md: G6 and G10
+        removed from open list; new "Resolved gaps" section populated
+        with the consolidated entry; G0 reworded as PARTIALLY
+        RESOLVED (rename half closed, build half open); priority
+        order item 3 marked RESOLVED. New gap G11 added (manifest-
+        source asymmetry, surfaced by this pass).
+    (10) EVIDENCE/verification_ledger.md: this entry appended.
+- VL-011 path reference (VL-011 names the proof file as
+  EVIDENCE/proofs/manifest_integrity_continuity_001.md): this is
+  the previous filename. VL-011 is unchanged - the ledger is
+  append-only; this entry records the rename to the new path
+  EVIDENCE/proofs/manifest_integrity_001.md.
+- Process finding (full-test-tree-read): Initial Phase 2 plan
+  was drafted against test_pep.py alone, on the strength of
+  artifact 04's citation of it for G1. Preflight pytest -v
+  surfaced 37 tests across four test files. The plan rewound
+  once. Subsequent reads of test_adversarial_evaluator.py and
+  test_concurrency.py surfaced (a) the ccs_flag_* coverage-loss
+  issue (resolved by adding manifest_sha256_missing) and (b)
+  the manifest-source asymmetry (recorded as G11). Lesson:
+  before drafting a multi-file pass, list every file the pass
+  plausibly touches and read all of them. The list here should
+  have started with `find IMPLEMENTATION TESTS EVIDENCE -type f`
+  before drafting Phase 2. Same family as VL-011's per-file
+  disposition lesson.
+- Process finding (ccs_flag_* discriminator-shift): Tests
+  named for one discriminator can pass post-edit via a different
+  discriminator, masking what they no longer test. Discovered
+  by trace, not by pytest output - pytest would have shown the
+  cases still passing post-G6 and that would have been the
+  wrong signal. Lesson: test name changes are real reviewable
+  events, not cosmetic; tests should name what they actually
+  test under current code, not what they tested historically.
+- Process finding (IMPLEMENTATION/replay/ subpackage not in
+  planning artifact set): The replay/receipt module was not
+  named in artifact 04 and was surfaced only by pytest -v's
+  test discovery. Subsystem is internally consistent and was
+  not touched by this pass, but its absence from the planning
+  artifacts represents the same blind spot the test-file count
+  did. Fix is the same: enumerate the real file set, not work
+  from artifact summaries.
+- Process finding (expected_manifest_sha256 caller-assertion):
+  Full read of evaluator.py surfaced that the SHA256 pinning
+  field is the same caller-assertion pattern as the version
+  field (G10) in the same function. Artifact 04 named only the
+  version field. The pattern applies identically; the convention
+  decided for G10 extends to it. The function docstring
+  documents both. Recorded as an extension of G10's scope under
+  the same convention, not a new gap, because the resolution is
+  identical.
+- Process finding (artifact-vs-code line-number discrepancy):
+  Artifact 04 cited lines 67-73 for the version-check code path.
+  Full read showed the comparison spans lines 63-73 (function
+  spans lines 62-84). Minor; not material. Recorded as a
+  VL-011-family lesson: prefer reading the file when acting on
+  it, even when an artifact summarizes it accurately.
+- Process finding (manifest-source asymmetry, G11): During
+  read of test_concurrency.py the inline TEST_MANIFEST and
+  MUTABLE_MANIFEST were observed to have different AR/R schemas
+  from MANIFEST/manifest.json on disk. evaluator.manifest_sha256()
+  ignores its manifest argument and always reads disk. The
+  concurrent tests pass because their expected_manifest_sha256
+  values happen to be the disk file's hash. Recorded as gap G11
+  in artifact 04. Not in this pass's scope.
+- Process finding (receipt.py canonical_json ensure_ascii=False):
+  IMPLEMENTATION/replay/receipt.py's canonical_json uses
+  ensure_ascii=False, allowing raw UTF-8 bytes in serialized
+  receipts. Current tests produce ASCII receipts only, so this
+  is not a current problem. Latent inconsistency with VL-009
+  ASCII-safe regime; warrants documentation rather than fix.
+  Not in this pass's scope.
+- Process finding (em-dash incidentally normalized): The em-dash
+  (U+2014) in the original manifest_integrity_continuity_001.md
+  line 7 was incidentally normalized to an ASCII hyphen by the
+  rewrite. Not a deliberate VL-009 enforcement step; consequence
+  of rewriting the line. Recorded for attribution. Same family
+  as VL-011's pre-existing non-ASCII findings in
+  EVIDENCE/archive/; those remain awaiting the VL-011 deferred
+  decision.
+- Process finding (Cyrillic byte preserved as \u-escape, not
+  allow-listed): The intentional Cyrillic 'e' (U+0435) in
+  test_adversarial_evaluator.py's ap_lookalike_unicode case was
+  expressed as a Python string-literal \u-escape (rol\u0435)
+  rather than allow-listed in the ASCII postcheck. Runtime
+  semantics preserved exactly; postcheck remains uniform across
+  all files. VL-006 representation-decision precedent applied
+  to a test fixture: ASCII forms denote the identical constructs.
+- Process finding (CRLF working-tree drift surfaced by exact-byte
+  matching): The pass script aborted at Edit 1 because
+  IMPLEMENTATION/evaluator.py was CRLF in the working tree while
+  the script's match patterns were LF-encoded. Investigation
+  revealed .gitattributes declared eol=lf for *.py, *.md, etc.,
+  but 10 working-tree files were CRLF; the index for all 10 was
+  already LF. Cause: .gitattributes was added to the repo after
+  these files were last checked out; git does not retroactively
+  renormalize the working tree on .gitattributes change. The
+  inconsistency was working-tree-only, not stored. Fixed by
+  rm + checkout HEAD -- <files> for the 10 affected files, as
+  a one-shot prerequisite immediately before the pass. The fix
+  produced no commit (the index was already correct); it is
+  recorded here as a prerequisite operation, not a separate
+  ledger entry. Same family as VL-010's MANIFEST/manifest.json
+  hidden-state finding: a state on the author's machine that
+  the repository's stored state did not reflect.
+- Process finding (git add --renormalize is the wrong operation
+  for working-tree-only EOL drift): `git add --renormalize .`
+  updates the index, not the working tree. When the index is
+  already LF (as it was here) --renormalize is a no-op. The
+  operation that actually refreshes the working tree to honor
+  .gitattributes is `rm <files>` followed by
+  `git checkout HEAD -- <files>`, which applies .gitattributes
+  rules at checkout time. Confirmed against a happy-path
+  fixture during script vetting; --renormalize left the
+  working tree CRLF, rm+checkout fixed it. Documented here so
+  the next pass encountering working-tree EOL drift does not
+  waste cycles on --renormalize first.
+- Process finding ("outside the repo tree" specification):
+  Phase 2 instructions said "run the script from outside the
+  repo tree" and showed `cp disambiguation_pass.sh ~/...`.
+  The user's home directory contains the repo as a
+  subdirectory, so copying to `~/` placed the script inside
+  the repo tree and Gate 4 refused on the untracked file.
+  "Outside the repo tree" must be specified as "not in any
+  subdirectory of the repo tree" - home directories are
+  commonly parents of repo directories. Caught by Gate 4
+  without harm; documenting for future fixup-script
+  instructions. Same family as VL-010's script-placement
+  finding and VL-011's session_start.sh finding: one-shot
+  scripts must live outside the tree they operate on.
+- Commit: 45bd181.

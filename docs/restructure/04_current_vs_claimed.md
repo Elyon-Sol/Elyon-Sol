@@ -28,14 +28,18 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   semantics in view; the shared name (input field `ccs_valid`, function `ccs_valid()`,
   invariant CCS) masked the gap; tests were written against the code, not the canon, so
   green tests created false confidence.
-- **Status: DRIFTED.**
+- **Status: PARTIALLY RESOLVED** - rename half closed (VL-012); build half open.
 - **Action:**
   1. Rename the implemented check to its true scope (e.g. `manifest_integrity_valid()`).
+     **DONE under VL-012.**
   2. **Reserve** the name "CCS"  -  unused in code  -  until section 12 is implemented.
+     **DONE under VL-012**; reservation extended to test IDs.
   3. Implement section 12 transition logic via the admissibility envelope (see Deliverable 05).
+     **OPEN** - this is the G0 build track.
   4. Add canon-derived tests for section 12 (see G7).
+     **OPEN.**
   5. Until step 3 lands, the project must claim only "manifest integrity is enforced," **not**
-     "CCS is implemented."
+     "CCS is implemented." **STANDING** - applies until step 3 lands.
 
 ---
 
@@ -98,17 +102,6 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Action:** Build a target-side logging receiver; commit its log to `EVIDENCE/proofs/`.
   Until then, downgrade the claim to "observable at the PEP."
 
-### G6  -  `ccs_valid` input field is caller-asserted and circular
-- **Code:** `ccs_valid()` checks `ctx["ccs_valid"] is True`  -  that the caller *claimed*
-  continuity is valid. The real enforcement is the SHA256 + version match.
-- **Delta:** The boolean is caller-controlled; it is not independent system verification.
-  Combined with G0, the field name is actively misleading on two axes.
-- **Action:** Remove the boolean (rely on SHA256 + version) **or** rename it to mark it
-  clearly as a caller assertion. Resolve alongside the G0 rename so all three "ccs" names
-  are disambiguated in one pass.
-- **Related:** G10 names the same caller-assertion pattern in the version-check code path.
-  Both gaps resolve under the same naming-convention decision; see Priority order item 3.
-
 ### G7  -  Tests are code-derived, not canon-derived
 - **Code:** `test_pep.py` asserts the *implemented* behavior  -  version drift, SHA256 match,
   fail-closed forwarding. All four pass.
@@ -131,28 +124,55 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Delta:** The one stability proof contains no proof.
 - **Action:** Finish it or delete it.
 
-### G10  -  Manifest `version` field is caller-asserted  *(surfaced by VL-010)*
-- **Code:** `evaluator.py` (lines 67-73) pulls `ctx["expected_manifest_version"]` from the
-  caller's request context and compares it by string equality against
-  `manifest.get("version")`. Both values are caller-controlled  -  the request context is
-  the caller's input, and the manifest is the caller's environment.
-- **Delta:** The version check is internal consistency between two caller-controlled values,
-  not verification against any ground truth (such as the canon version, a signed manifest
-  registry, or a pinned hash). A caller that sends matched values passes regardless of
-  whether the manifest is legitimate. This is the same caller-assertion pattern G6 names
-  for `ctx["ccs_valid"]`, in a different code path.
-- **Action:** Two-part. (1) The `SPEC/request_schema.md` produced under G2 must document
-  the `version` field's caller-assertion semantics  -  its role as a caller-pinning tag,
-  independent of the canon version, should not require reading `evaluator.py` to discover.
-  (2) Resolve the naming convention together with G6 and the G0 rename, under the same
-  disambiguation pass (Priority order item 3). G10 does not propose its own convention;
-  whatever convention G6's resolution adopts, G10 inherits.
+---
+
+### G11  -  Manifest-source asymmetry in SHA256 check  *(surfaced by VL-012)*
+- **Code:** `evaluator.manifest_integrity_valid()` (formerly `ccs_valid()`)
+  calls `manifest_sha256()` which reads `MANIFEST/manifest.json` from disk
+  via a hardcoded path, ignoring the `manifest` argument passed to the
+  function.
+- **Delta:** Tests in `TESTS/test_concurrency.py` define inline manifests
+  (`TEST_MANIFEST`, `MUTABLE_MANIFEST`) with different schemas from the
+  on-disk file. The tests pass because their `expected_manifest_sha256`
+  values happen to match the on-disk file, not the inline test fixtures.
+  The check is internally inconsistent: AC^3 and T^26 verify against the
+  passed manifest argument; SHA256 verifies against disk.
+- **Action:** Either (a) `manifest_sha256` should accept the manifest
+  argument and hash it in memory; or (b) the API contract should be
+  explicit that the manifest parameter is only consulted for AR/R/version
+  and the SHA is always read from disk. Resolution deferred; flagged for
+  scheduling.
+- **Related:** G6/G10 disambiguation pass (VL-012) surfaced this during
+  full read of `test_concurrency.py`; not in pass scope.
 
 ---
 
 ## Resolved gaps
 
-*(none yet  -  populated as gaps close)*
+### G6 / G10 / G0-rename - disambiguation pass complete
+- **Closed:** 2026-05-15 (VL-012).
+- **Convention adopted:** caller-asserted fields are REMOVED if redundant
+  with system-verified checks; KEPT and DOCUMENTED if load-bearing.
+  Asymmetric-by-function, by design.
+- **G6 outcome:** `ctx["ccs_valid"]` removed from `ccs_valid()` (renamed to
+  `manifest_integrity_valid()`). The field was redundant with the
+  SHA256 + version match.
+- **G10 outcome:** `ctx["expected_manifest_version"]` and
+  `ctx["expected_manifest_sha256"]` retained; caller-assertion semantics
+  documented in the `manifest_integrity_valid()` docstring. The G10
+  finding extended in scope to cover both pinning fields once full read
+  of `evaluator.py` surfaced the SHA256 field as the same pattern.
+- **G0-rename outcome:** function renamed; name "CCS" reserved in code
+  and in test IDs. G0's substantive (canonical CCS build) portion
+  remains open as the G0 build track.
+- **Test surface:** four `ccs_flag_*` cases deleted; four `ccs_version_*`
+  cases renamed to `manifest_version_*`; one new `manifest_sha256_missing`
+  case added to preserve coverage of the SHA-missing REFUSE path.
+  Net suite size: 37 -> 34.
+- **Related new gap G11:** the manifest-source asymmetry in
+  `evaluator.manifest_sha256()` (reads from disk, not from the manifest
+  argument) was surfaced by this pass and is recorded as G11 in the
+  Open gaps section.
 
 ---
 
@@ -160,9 +180,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 
 1. **G0**  -  the anchor. Everything else is hygiene; this is the substantive finding.
 2. **G7**  -  without canon-derived tests, the next G0 is invisible.
-3. **G0 rename + G6 + G10**  -  done together: a single naming-convention decision covers
-   all three "ccs" names AND the manifest version field. Disambiguating only G6 would leave
-   G10's identically-shaped field with an inconsistent treatment.
+3. **G0 rename + G6 + G10**  -  RESOLVED (VL-012). See Resolved gaps.
 4. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete.
-5. G1, G2, G8, G9  -  bookkeeping; do in a batch.
+5. G1, G2, G8, G9, G11  -  bookkeeping; do in a batch. (G11 added VL-012.)
 6. **G4, G5**  -  build-outward scope, after the base is honest.

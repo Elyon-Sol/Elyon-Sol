@@ -60,10 +60,25 @@ def t26_valid(ctx, R):
     return OP_set >= R_set
 
 
-def ccs_valid(ctx, manifest):
-    if ctx.get("ccs_valid") is not True:
-        return False
+def manifest_integrity_valid(ctx, manifest):
+    """
+    Point-in-time manifest integrity check.
 
+    Verifies that the caller's pinned manifest version and SHA256 match the
+    manifest currently loaded by the evaluator. Both expected_manifest_version
+    and expected_manifest_sha256 are caller-asserted pinning tags - they
+    express which manifest the caller expects to be evaluated against, not a
+    property derived from any ground truth (canon, signed registry, etc.).
+    The check is internal consistency between the caller's pins and the
+    evaluator's loaded manifest; it is load-bearing because it gives the
+    caller a mechanism to refuse evaluation against an unexpected manifest.
+
+    This is NOT canonical CCS (whitepaper section 12). Canonical CCS is a
+    temporal invariant over state transitions S_t -> S_{t+1}; this function
+    is point-in-time. The name "CCS" is reserved for the canonical
+    implementation (see docs/restructure/05_admissibility_envelope_spec.md;
+    gap G0 in docs/restructure/04_current_vs_claimed.md; ledger VL-012).
+    """
     expected_version = ctx.get("expected_manifest_version")
     actual_version = manifest.get("version")
 
@@ -97,7 +112,7 @@ def evaluate(ctx, manifest):
         if not t26_valid(ctx, manifest["R"]):
             return "REFUSE"
 
-        if not ccs_valid(ctx, manifest):
+        if not manifest_integrity_valid(ctx, manifest):
             return "REFUSE"
 
         return "ELIGIBLE"

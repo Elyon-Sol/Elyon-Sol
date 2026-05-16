@@ -20,7 +20,6 @@ results_lock = Lock()
 AUTHORIZED_CTX = {
     "AP": ["identity", "role", "doctor_authorized"],
     "OP": ["session", "request", "patient_access"],
-    "ccs_valid": True,
     "expected_manifest_version": "1.0",
     "expected_manifest_sha256": SHA,
 }
@@ -28,7 +27,6 @@ AUTHORIZED_CTX = {
 UNAUTHORIZED_CTX = {
     "AP": ["identity", "role"],
     "OP": ["session", "request", "patient_access"],
-    "ccs_valid": True,
     "expected_manifest_version": "1.0",
     "expected_manifest_sha256": SHA,
 }
@@ -110,7 +108,6 @@ def test_concurrent_replay_receipts_match_isolated_receipts():
 BAD_SHA_CTX = {
     "AP": ["identity", "role", "doctor_authorized"],
     "OP": ["session", "request", "patient_access"],
-    "ccs_valid": True,
     "expected_manifest_version": "1.0",
     "expected_manifest_sha256": "BAD_MANIFEST_SHA",
 }
