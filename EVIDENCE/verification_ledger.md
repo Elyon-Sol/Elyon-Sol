@@ -408,7 +408,7 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   "unused in code"; this pass interprets that to include test IDs
   on the rationale that a green pytest line citing ccs_version_*
   perpetuates the same misclassification artifact 04 names.
-- Changes (commit 45bd181):
+- Changes (commit 8ba88cf):
     (1) IMPLEMENTATION/evaluator.py: function ccs_valid() renamed to
         manifest_integrity_valid(); docstring added documenting the
         caller-assertion semantics of expected_manifest_version and
@@ -582,4 +582,25 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   instructions. Same family as VL-010's script-placement
   finding and VL-011's session_start.sh finding: one-shot
   scripts must live outside the tree they operate on.
-- Commit: 45bd181.
+- Process finding (self-referencing commit hash):
+  VL-012's entry was drafted with a `<hash>` placeholder for the
+  commit hash. The workflow was: commit, capture the new hash,
+  substitute into the ledger, amend. This is the same pattern
+  prior entries (VL-010, VL-011) used and that has worked. What
+  it missed: `git commit --amend` produces a new hash because the
+  tree content changes during the amend (the placeholder gets
+  replaced). The pre-amend hash captured is therefore the wrong
+  hash. A second amend changes the hash again because of timestamp
+  metadata. There is no fixed point for a commit that contains
+  its own hash. The correct workflow for self-referencing hash is
+  one of: (a) capture the post-amend hash and accept the drift
+  (the ledger lags by one amend); (b) commit once with `<hash>`,
+  then make a separate corrective commit citing the previous
+  commit's actual hash (this entry's approach); or (c) drop the
+  self-reference and cite the commit indirectly via date and
+  description only. Prior entries (VL-010, VL-011) likely
+  accepted small drift, since their cited hashes match the
+  reachable commits but the underlying chicken-and-egg cannot be
+  fully resolved. This finding documents the impossibility and
+  proposes (b) as the cleanest convention.
+- Commit: 8ba88cf.
