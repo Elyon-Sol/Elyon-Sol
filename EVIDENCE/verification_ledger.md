@@ -717,3 +717,164 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
     docs/restructure/06_spec_to_code_traceability.md
     EVIDENCE/verification_ledger.md (this entry)
 - No code, canon, manifest, or test change.
+
+### VL-014 - SPEC/request_schema.md drafted; G0 build track started
+- Date: 2026-05-17
+- Event: SPEC/request_schema.md authored as the first artifact of
+  the G0 build track (STATE.md "Next open action" after VL-013).
+  Derivation from locked canon v0.9.8.4 sections 11.1, 11.3-11.8,
+  11.9, 12.1, with cross-references to sections 12 and 13.
+  Build-order step 1 of
+  docs/restructure/05_admissibility_envelope_spec.md.
+- Status: SINGLE-SOURCE
+- Derived by: Claude, from CANON/canon.md (section 11 in particular),
+  docs/restructure/05_admissibility_envelope_spec.md, and
+  IMPLEMENTATION/pep.py (current request-handling surface).
+- Basis for SINGLE-SOURCE: one derivation pass; awaiting independent
+  re-derivation from primary sources (canon + envelope spec) for
+  CONFIRMED. Candidate re-deriver: Grok or OpenAI under the
+  task-scoping procedure established in VL-008 ("derive the
+  canonical request shape from CANON/canon.md sections 11, 12, 13;
+  the only other source is
+  docs/restructure/05_admissibility_envelope_spec.md for the
+  embedding context"). If the re-derivation produces the same field
+  set with the same canon-clause attributions, the entry becomes
+  CONFIRMED.
+- Scope of the artifact:
+    - Maps canonical interaction tuple I = (A, S, C, t) and the
+      caller-supplied sets AP(I), OP(I) to on-the-wire fields.
+    - Names AR(I) and R(I) as manifest-derived, NOT caller-supplied
+      (section 11.9 + section 11.3/11.4).
+    - Documents expected_manifest_version and
+      expected_manifest_sha256 as load-bearing caller-asserted
+      fields per VL-012's convention (closes the documentation
+      requirement of G10 at the schema layer; the function-level
+      documentation in manifest_integrity_valid()'s docstring is
+      already in place from VL-012).
+    - Reserves the name "CCS" per VL-012; defines a refusal rule
+      for caller attempts to assert it (REF_SCHEMA_RESERVED_CCS).
+    - Names the flat-key payload from EVIDENCE/archive/interception_*
+      as REFUSED (REF_SCHEMA_FLAT_KEYS). This is the schema-layer
+      half of G2.
+- What this artifact closes:
+    - Nothing fully, because no gap is closed by a spec alone.
+    - PARTIALLY ADVANCES G2: the schema names the rejected shape
+      and the accepting shape; G2 fully closes only when the code
+      enforces this at the PEP boundary (build-order step 4,
+      proposed VL-017).
+    - PARTIALLY ADVANCES G0 BUILD TRACK: schema is step 1 of the
+      envelope spec's build order. G0's build half closes when the
+      envelope's reassertion protocol is implemented (build-order
+      step 3 of artifact 05, separate work from this schema).
+    - PARTIALLY ADVANCES G10: at the schema layer, caller-assertion
+      semantics are now documented at the field. G10 was already
+      considered resolved at the function-docstring layer in
+      VL-012; this entry adds the schema-layer documentation as a
+      defensive duplicate.
+- What this artifact does NOT close:
+    - G0 build half (canonical CCS implementation; envelope still
+      unimplemented).
+    - G7 (canon-derived tests for invariants, distinct from the
+      schema-shape tests proposed in step 2 of the schema's build
+      order).
+    - G11 (manifest_sha256() reads from disk via hardcoded path;
+      noted under expected_manifest_sha256 with a forward reference
+      but not resolved).
+    - G4 (non-bypassability; out of scope for this artifact).
+    - G1, G3, G5, G8, G9 (no overlap with the schema).
+- Decision recorded - open question 5 accepted as proposed:
+  Artifact 05 will absorb `context` (canon's C, section 11.1) into
+  its `request_context` envelope block and grow `target_url` at
+  envelope top level. Scheduled as build-order step 6 of the schema
+  work, proposed VL-018. Recorded here so the decision is on the
+  ledger, not buried in chat history.
+- Open questions remaining (recorded in the artifact's "Open
+  questions for review" section):
+    (1) strictness on unknown keys inside interaction.context;
+    (2) versioning of the schema itself;
+    (3) where AP/OP get sorted (PEP vs caller);
+    (4) target_url manifest-derived allowlist (G4 deferral).
+  These are recorded as part of the SINGLE-SOURCE entry; they
+  become decided one way or the other before the entry transitions
+  to CONFIRMED, OR they are explicitly carried forward into the
+  CONFIRMED entry as still-open and tracked in
+  docs/restructure/04_current_vs_claimed.md.
+- Process finding (canon-vs-code naming tension surfaced rather
+  than smoothed): canon section 11.1 names context `C` as one
+  component of I; IMPLEMENTATION/pep.py's request model has a flat
+  outer `context: Dict[str, Any]` that bags everything together.
+  The schema renames the outer field to `interaction`
+  (canon-faithful) and reserves `context` for canonical `C` inside
+  it. The rename is in the spec; the code change is deferred to
+  build-order step 4 (proposed VL-017). Same pattern as VL-012's
+  ccs_valid -> manifest_integrity_valid rename: lock the name in
+  the spec layer first, ledger the convention, then move code.
+  This pattern is now recurring enough that it could be a candidate
+  governance rule (GR-2: spec-defines-the-rename; code change is a
+  separate commit citing the spec entry). Not proposing GR-2 here;
+  flagging that a second instance has emerged.
+- Process finding (schema commit landed ahead of this ledger
+  entry): SPEC/request_schema.md was committed in d7eddd5 ahead
+  of this ledger entry. The intended single-commit shape
+  (schema + ledger + STATE.md) was broken by a chat-pasted
+  multi-line `git commit -m "..."` block whose embedded newlines
+  and quotes collided with shell parsing; the schema commit
+  succeeded but the ledger append and STATE.md edits were not
+  staged and were not detected before `git push`. This entry and
+  the accompanying STATE.md edits are therefore a follow-up
+  commit citing d7eddd5, same pattern as VL-012 -> f0df14c
+  (which corrected a different self-referencing-hash issue, not
+  the same failure mode). The schema file content in d7eddd5
+  matches what was reviewed in this session; no rework needed.
+- Process finding (pasted-block collision; durable lesson): the
+  multi-line `git commit -m "..."` form pasted from chat into
+  Git Bash failed silently twice in the same session - the
+  second time landing the file commit but losing the ledger and
+  STATE.md edits. Failure mode: embedded newlines in a quoted
+  string trigger shell continuation; embedded double-quotes
+  terminate the string prematurely; either way, `git push`
+  runs with whatever arguments fall out the other side and may
+  push an incomplete commit. The first occurrence was caught
+  before any commit landed (the prior turn's
+  `git pushchange; canon/...` scramble); the second was not.
+  Durable lesson: open the editor for any multi-paragraph
+  commit message (`git commit` with no `-m`); stage files one
+  at a time and re-verify `git status` after each `git add`;
+  treat `1 file changed` after a multi-file intent as a signal
+  to stop, not as a clean commit. Same family as VL-010's
+  "trust git diff over diff -u on Windows checkouts" and
+  VL-011's "trust what git is about to commit, not what the
+  script appeared to do."
+- Process finding (ledger paste lost markdown structure): the
+  first attempt to append this entry pasted the entire
+  scratchpad `session_close_package.md` rather than just the
+  VL-014 entry, AND lost the ledger's markdown conventions
+  (`###` headers, `-` bullet markers, indented sub-bullets).
+  The combination was caught at `git diff` review before
+  staging and backed out via
+  `git checkout EVIDENCE/verification_ledger.md`. Cause not
+  fully diagnosed; likely a paste-buffer interaction between
+  the chat source and `vi` on Git Bash. Durable lesson: for
+  ledger appends, prepare the entry as a standalone file with
+  the exact byte layout intended, then append via
+  `cat entry.md >> EVIDENCE/verification_ledger.md` rather
+  than pasting into an editor. This entry is the first to use
+  that approach; if it lands cleanly, the convention is on
+  the record.
+- Files added:
+    SPEC/request_schema.md (in d7eddd5)
+- Files modified in the corrective commit:
+    EVIDENCE/verification_ledger.md (this entry)
+    STATE.md
+- Files unchanged (despite topical relevance):
+    CANON/canon.md - locked, untouched.
+    MANIFEST/manifest.json - untouched.
+    IMPLEMENTATION/pep.py - the rename to `interaction` is
+        build-order step 4 (proposed VL-017), not this commit.
+    IMPLEMENTATION/evaluator.py - untouched.
+    docs/restructure/05_admissibility_envelope_spec.md - the
+        feed-back is build-order step 6 (proposed VL-018), not
+        this commit.
+- Schema commit: d7eddd5 (file landed). Corrective commit (this
+  entry + STATE.md): per VL-012's self-referencing-hash
+  finding, deliberately not cited here; reachable via `git log`.
