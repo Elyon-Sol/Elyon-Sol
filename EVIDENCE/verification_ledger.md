@@ -1107,3 +1107,247 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   reinforcement of the same: this entry deliberately does
   not cite its own commit hash. The commit hash will be
   reachable via `git log`.
+
+### VL-016 - VL-014 corrections applied; premises cross-model-verified; VL-014 -> CORRECTED
+- Date: 2026-05-18
+- Event: The three decisions parked in VL-015 (1A, 2B, 3B) were
+  applied to `SPEC/request_schema.md` and gaps G12 and G13 were
+  recorded in `docs/restructure/04_current_vs_claimed.md`. Prior
+  to application, the *premises* beneath those decisions were
+  submitted for independent cross-model verification under the
+  procedure established in VL-008. The verification request was
+  prepared as a standalone artifact
+  (`verification_request_vl016_premises.md`, not yet committed
+  to the repo; see process finding below) bundling: (a) the
+  three premises to classify, (b) attached primary sources
+  (CANON/canon.md and
+  docs/restructure/05_admissibility_envelope_spec.md), and (c)
+  explicit instructions that the corrections themselves and
+  `SPEC/request_schema.md` were NOT to be shown to either
+  verifier (premise testing is upstream of correction review;
+  showing the corrections would let them anchor premise-
+  reading). Both Grok and OpenAI returned procedurally-clean
+  responses under VL-008 rules (a), (b), (c) with unanimous
+  classifications matching the project's expected reading on
+  all three premises.
+- Status of VL-014: DISPUTED -> CORRECTED
+- The three premises and unanimous classifications:
+    - Premise 1: Canon section 11.1 defines `I = (A, S, C, t)`
+      but does NOT specify whether `C` or `t` are
+      caller-supplied on the wire or system-derived.
+      Classification: **Under-specified.** Both verifiers cite
+      section 11.1's definitional-only treatment of the tuple
+      and confirm the silence across sections 11-13 and
+      Appendix D.
+    - Premise 2: Canon section 11.9 requires the manifest to
+      be "deterministic, versioned, and integrity-verifiable"
+      as a property of the manifest itself, but does NOT
+      require the *request* to carry caller-asserted fields
+      naming expected manifest version or expected manifest
+      hash. Classification: **Supported.** Both verifiers
+      cite section 11.9's property phrasing and confirm no
+      canon clause in sections 9, 11, 12, or 13 imposes a
+      wire-level requirement.
+    - Premise 3: Given premise 1's silence, the interpretive
+      choices "C caller-supplied required; t not caller-
+      supplied; manifest-pinning fields' wire-existence is
+      envelope-spec operationalization realizing section
+      11.9's properties" are not contradicted by canon
+      (i.e., canon permits these readings).
+      Classification: **Supported.** Both verifiers
+      enumerate the canon-side silence and cite the envelope
+      spec's explicit framing of manifest-pinning fields as
+      operationalizations rather than canon-native fields or
+      new invariants.
+- Procedure adherence (VL-008):
+    - Grok:
+        - Rule (a) scope-bound: response cites only canon.md
+          (sections 11.1, 11.9, 12, 13, Appendix D) and the
+          envelope spec (structure, field rationale, canon
+          mapping). Passed.
+        - Rule (b) scope-checkable: Scope check section
+          present; every term and claim enumerated with file
+          and section attribution; closing line affirms no
+          out-of-scope material used. Passed.
+        - Rule (c) prior exposure permitted: Grok has prior
+          project exposure (VL-002, VL-005, VL-015).
+          Permitted under rule (c) since (a) and (b) hold.
+        - Verdict: response carries verification weight.
+    - OpenAI:
+        - Rule (a) scope-bound: response cites canon.md
+          (sections 9, 11.1, 11.9, 13) and the envelope spec
+          (introduction, mapping section, envelope structure
+          section, relationship-to-canon section). Passed.
+        - Rule (b) scope-checkable: Scope check section
+          present; item-by-item citations; closing line
+          affirms "No concepts or claims used in the
+          derivation were sourced outside the attached
+          files." Passed.
+        - Rule (c) prior exposure permitted: OpenAI has prior
+          project exposure (VL-008, VL-015). Permitted under
+          rule (c) since (a) and (b) hold.
+        - Verdict: response carries verification weight.
+- Finding (strengthened framing carried forward from OpenAI's
+  premise 1 reasoning): Canon's silence on `C`/`t` wire-origin
+  is *meaningfully* under-specified, not merely silent.
+  OpenAI's response observed that canon section 11.9 (and
+  section 9) explicitly specifies derivation behavior when it
+  intends to ("derived exclusively from M") for AR(I) and R(I),
+  whereas no comparable wire-origin or derivation rule exists
+  for `C` or `t`. The argument-from-contrast strengthens G12
+  from "canon is silent" to "canon's silence is significant
+  against a backdrop of demonstrated capacity to specify."
+  This framing is incorporated into G12's entry in artifact 04
+  and into the rationale text applied to the schema.
+- Corrections applied to `SPEC/request_schema.md`:
+    - Decision 1A: the `interaction.context` field section was
+      augmented with a "RATIONALE AND CANON UNDER-SPECIFICATION
+      (G12)" paragraph appended after the existing NAMING NOTE.
+      The new paragraph names section 11.1's under-specification
+      explicitly, cites section 12.1's "interaction context" as
+      one of four drivers of state transition (the
+      implementation reasoning for keeping `C` caller-supplied),
+      and records the three-way divergence from VL-015. The
+      schema's outcome (`C` caller-supplied required) is
+      unchanged; the interpretive choice is now explicit.
+    - Decision 2B: a new section "Canon mapping - section 11.1
+      `t` (time) -> not in request" was added parallel to the
+      existing "Canon mapping - section 12 -> not in request"
+      section. The new section names section 11.1's
+      under-specification, makes the schema's choice (`t` NOT
+      caller-supplied; PEP records receipt timestamp) explicit,
+      and cites section 9 (reproducibility) and section 12.4
+      (invalid transitions) for the fail-closed reasoning. The
+      existing canon mapping table row for `t` was updated to
+      refer to this new section rather than repeating the
+      rationale inline. The schema's outcome (`t` not on the
+      wire) is unchanged.
+    - Decision 3B: the "Canon mapping - section 11.9 ->
+      manifest-pinning fields" section table was updated so
+      that the attribution column for `expected_manifest_version`
+      and `expected_manifest_sha256` reads "section 11.9
+      (required manifest properties) + section 12.4 (invalid
+      manifest transition) + envelope spec operationalization
+      (Deliverable 05)" rather than the prior pure-canon
+      citation. The prose under the table was expanded with a
+      "PROVENANCE NOTE (G13)" paragraph making the layered
+      provenance explicit: canon section 11.9 requires
+      manifest properties; the decision to surface those
+      properties as caller-asserted wire fields is the
+      envelope-spec operationalization. The schema's behavior
+      (caller-asserted required; gate refuses on mismatch per
+      VL-012 convention) is unchanged.
+- Gaps recorded in `docs/restructure/04_current_vs_claimed.md`:
+    - G12 (canon under-specifies wire-origins of `I`'s
+      components): added with status **PARTIALLY ADDRESSED**.
+      The schema's interpretive choices on `C` and `t` are
+      now explicit (closing the implementation-layer half of
+      the gap); the canon under-specification itself remains
+      open (canon-layer resolution would require a
+      canon-version event under GR-1; not part of this work).
+      Entry incorporates OpenAI's argument-from-contrast
+      framing.
+    - G13 (manifest-pinning field provenance is mixed canon +
+      envelope, not pure canon): added with status
+      **PARTIALLY ADDRESSED**. The schema's attribution now
+      makes the layered provenance explicit (closing the
+      attribution-layer half of the gap); the canon-layer
+      question of whether section 11.9 should be amended to
+      explicitly authorize wire-level operationalization
+      remains open.
+- Combined-entry rationale: the premise verification and the
+  corrections it justifies are recorded in this single entry
+  rather than split across two entries. Rationale: (1) the
+  corrections rest entirely on the premises whose verification
+  this entry records; splitting them would create two entries
+  citing each other in a tight loop; (2) the chat-paste split-
+  commit failure shape recorded in VL-014's process finding is
+  worth avoiding repetition of; (3) the "simplify" guidance in
+  the session handoff preferred a combined entry. The
+  premise-verification half could have been a standalone
+  entry; the choice to combine is recorded here for
+  precedent-setting.
+- VL-014 transitions to CORRECTED in this entry. CORRECTED is
+  distinct from CONFIRMED: it means the disputed loci have
+  been addressed by explicit-choice corrections, not that the
+  corrected schema has itself been independently re-derived.
+  A second verification round on the corrected schema could
+  transition CORRECTED -> CONFIRMED if all three derivations
+  converge on the (now-explicit) choices; that work is not
+  part of this entry and is not currently scheduled.
+- Build-order impact: the schema-work build order in
+  `SPEC/request_schema.md` ("Build order (schema-internal)")
+  reserved VL-015 for failing schema-shape tests; VL-015 was
+  consumed by the verification round. That work renumbers
+  again with this entry consuming VL-016: failing schema-shape
+  tests are now proposed VL-017, the request validator
+  proposed VL-018, the PEP wiring proposed VL-019, and the
+  artifact 05 freshness pass proposed VL-020. STATE.md's
+  "Suggested next move" is updated accordingly.
+- Deferred edit (schema build-order numbering text): the
+  "Build order (schema-internal)" section of
+  `SPEC/request_schema.md` (around lines 423-427 at HEAD) still
+  names the pre-VL-015 numbering ("VL-014 (this artifact),
+  VL-015 (failing tests), VL-016 (validator), VL-017 (PEP
+  wiring + G2 close), VL-018 (artifact 05 freshness pass)").
+  This text is stale post-VL-016 but is NOT updated in this
+  entry. Rationale: same shape as VL-013's freshness pass
+  (update numbering claims when the change that necessitates
+  the update lands, not in advance); VL-017's session-close
+  will naturally update the schema to read "VL-017 (this
+  entry's failing tests), VL-018 (validator), VL-019 (PEP
+  wiring), VL-020 (artifact 05 freshness pass)" since that
+  commit IS the renumbered VL-017. STATE.md and this ledger
+  entry are the authoritative numbering source in the interim.
+  Window of staleness: this commit to VL-017's commit.
+- Process finding (verification artifact not committed):
+  `verification_request_vl016_premises.md` was prepared in
+  chat and used directly without committing to the repository,
+  same shape as VL-015's process finding on
+  `verification_request_vl014.md`. The candidate action from
+  VL-015 (commit the verification request or a generalized
+  template to `docs/`) is now reinforced by the second
+  instance. The methodology has now been deliberately applied
+  in back-to-back rounds on related questions (schema
+  derivation in VL-015; premise classification in this entry);
+  four verifier-runs total (Grok x2, OpenAI x2); all
+  procedurally clean. The case for durability of the
+  methodology artifact is stronger than after VL-015 alone.
+  Recorded here, not actioned.
+- Process finding (premise-testing as a distinct verification
+  shape): VL-015 verified an artifact (the schema). This
+  entry verifies the *premises* beneath corrections to that
+  artifact, without showing the corrections. This is a
+  distinct verification shape from VL-015's: it tests the
+  reasoning upstream of corrections rather than the
+  corrections themselves. Both shapes are useful and both
+  fit under VL-008's procedure. The distinction is worth
+  naming because it expands the methodology's surface from
+  "verify an artifact" to "verify the reasoning beneath an
+  artifact." Candidate methodology-artifact addition; not
+  actioned.
+- Files affected:
+    - EVIDENCE/verification_ledger.md (this entry)
+    - SPEC/request_schema.md (decisions 1A, 2B, 3B applied)
+    - docs/restructure/04_current_vs_claimed.md (G12 and G13
+      rows added)
+    - STATE.md (reconciled to post-VL-016 reality)
+- Files NOT affected by this entry:
+    - CANON/canon.md (locked; G12 and G13 may eventually
+      warrant a canon-version event but not in this entry)
+    - MANIFEST/manifest.json (untouched)
+    - IMPLEMENTATION/* (untouched; G2 code-close is proposed
+      VL-018/VL-019)
+    - TESTS/* (untouched; failing schema-shape tests are
+      proposed VL-017)
+    - docs/restructure/05_admissibility_envelope_spec.md
+      (untouched; the envelope spec's operationalization role
+      is now cited from the schema, but the spec itself does
+      not need editing for this entry; freshness pass is
+      proposed VL-020)
+    - docs/MAINTENANCE_PROTOCOL.md (untouched; candidate
+      GR-2 from VL-014 remains deferred)
+- Per VL-012's self-referencing-hash finding and VL-014's
+  reinforcement of the same: this entry deliberately does
+  not cite its own commit hash. The commit hash will be
+  reachable via `git log`.

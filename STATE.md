@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-17 (commit: see `git log` for STATE.md; SPEC/request_schema.md committed in d7eddd5; VL-014 entry appended in the corrective commit alongside this update; last ledger entry VL-014; next action is G2 schema-shape tests, proposed VL-015)
+Last updated: 2026-05-18 (commit: see `git log` for STATE.md; this update lands in the VL-016 commit alongside the schema correction, artifact 04 G12/G13 rows, and the VL-016 ledger entry; last ledger entry VL-016; next action is failing schema-shape tests, proposed VL-017)
 
 ---
 
@@ -52,7 +52,7 @@ manifest layer. CCS has drifted - see G0 below.
   source of record), `CANON/canon.md` (ASCII-safe transcription, verified
   against the PDF - see ledger VL-006), `CANON/canon.lock` (sha256 of canon.md).
 - **Verification ledger established.** `EVIDENCE/verification_ledger.md`,
-  entries VL-001 through VL-014.
+  entries VL-001 through VL-016.
 - **G0 confirmed (anchor finding).** Canonical CCS (whitepaper sections 12-13)
   is a temporal invariant over state transitions; the implemented `ccs_valid()`
   is a point-in-time manifest-integrity check. They are not the same invariant.
@@ -67,14 +67,26 @@ manifest layer. CCS has drifted - see G0 below.
   response stayed within that scope. A model's prior exposure to the project
   does not disqualify it, provided those hold. Two failed and one successful
   OpenAI attempt are documented in VL-008.
+- **Cross-model verification method applied deliberately and repeatedly
+  (VL-014 -> VL-015 -> VL-016).** VL-014 drafted SPEC/request_schema.md as
+  SINGLE-SOURCE. VL-015 ran cross-model verification of the schema with
+  Grok and OpenAI (both procedurally clean), surfaced two new gaps (G12,
+  G13), and transitioned VL-014 to DISPUTED. VL-016 ran a second cross-
+  model verification on the *premises* beneath proposed corrections
+  (Grok and OpenAI both procedurally clean; all three premises classified
+  unanimously) and applied the resulting corrections, transitioning
+  VL-014 to CORRECTED. Four verifier-runs in back-to-back rounds, all
+  procedurally clean; methodology artifact recorded as candidate for
+  durability commit.
 - **Rev. 2 restructure package committed.** The seven planning artifacts
   (`00_README.md` through `06_spec_to_code_traceability.md`) are in
   `docs/restructure/`. The ASCII-safe standard (VL-006) has been applied
   repo-wide (VL-009). Artifact 01 has been revised to reconcile against the
-  real repository tree; artifact 04 has been updated through G11 (VL-012
-  session: G0 partially resolved, G6 and G10 resolved, G11 added).
+  real repository tree; artifact 04 has been updated through G13 (VL-016
+  session: G12 and G13 added with PARTIALLY ADDRESSED status).
   Artifacts 05 and 06 brought current to VL-012 in the VL-013 freshness
-  pass.
+  pass; artifact 05 freshness pass to absorb `context` and `target_url`
+  is proposed VL-020.
 - **MANIFEST/manifest.json committed (VL-010).** Previously hidden by a
   `.gitignore` rule inherited from a Python-project template. Both the
   manifest and the `.gitignore` correction landed at commit c0867a6;
@@ -127,16 +139,36 @@ manifest layer. CCS has drifted - see G0 below.
   defines a refusal rule for caller attempts to assert it
   (REF_SCHEMA_RESERVED_CCS); names the flat-key payload from
   EVIDENCE/archive/interception_* as REFUSED (REF_SCHEMA_FLAT_KEYS,
-  the schema-layer half of G2). Status SINGLE-SOURCE; transitions to
-  CONFIRMED on independent re-derivation from canon + envelope spec
-  per VL-008 procedure. The schema file landed in d7eddd5 ahead of
-  the VL-014 ledger entry due to a chat-pasted-block collision at
-  session close; the corrective commit (this STATE.md update + the
-  VL-014 entry) repairs the split. Schema-work build order proposed
-  in the artifact: VL-015 (failing schema-shape tests), VL-016
-  (request validator), VL-017 (PEP wiring + G2 close in code),
-  VL-018 (artifact 05 freshness pass to absorb `context` and
-  `target_url`).
+  the schema-layer half of G2). Status SINGLE-SOURCE at the time
+  of VL-014.
+- **VL-014 cross-model-verified (VL-015, commit 846b97a).** Grok and
+  OpenAI both ran procedurally-clean derivations under VL-008. Core
+  field set (AP, OP, manifest-pinning) agreed by all three
+  derivations. Three-way divergence at three loci surfaced two new
+  gap candidates: G12 (canon under-specifies wire-origins of `I`'s
+  components) and G13 (manifest-pinning field provenance is mixed
+  canon + envelope, not pure canon). VL-014 transitioned
+  SINGLE-SOURCE -> DISPUTED. Three corrective decisions parked for
+  VL-016 (1A, 2B, 3B), recorded in VL-015's entry.
+- **VL-014 corrections applied (VL-016).** The three decisions
+  parked in VL-015 (1A: `context` stays caller-supplied required
+  with G12 rationale; 2B: `t` stays NOT caller-supplied with G12
+  fail-closed rationale; 3B: manifest-pinning fields gain explicit
+  layered-provenance note with G13 rationale) were applied to
+  `SPEC/request_schema.md`. Prior to application, the *premises*
+  beneath the decisions were cross-model-verified (Grok and
+  OpenAI, both procedurally clean, unanimous classifications:
+  premise 1 Under-specified, premise 2 Supported, premise 3
+  Supported). OpenAI's argument-from-contrast framing of G12
+  (canon's silence is meaningful because canon elsewhere
+  demonstrates capacity to specify wire-origins for AR/R) was
+  carried forward into G12's artifact-04 entry. G12 and G13
+  added to artifact 04 with PARTIALLY ADDRESSED status (schema-
+  layer half closed; canon-layer half open pending canon-version
+  event under GR-1). VL-014 transitioned DISPUTED -> CORRECTED.
+  The premise verification and the corrections are recorded in
+  the single VL-016 entry; combined-entry rationale documented
+  there.
 
 ## What is locked vs. open
 
@@ -144,20 +176,36 @@ manifest layer. CCS has drifted - see G0 below.
   in-place edit (governance rule GR-1, ledger VL-007).
 - **Open:** the honest-base track is complete, the disambiguation pass
   (G0/G6/G10) is complete, and the G0 build track is underway with
-  the first artifact (SPEC/request_schema.md, VL-014) committed.
-  Known items recorded but not yet scheduled:
+  the first artifact (SPEC/request_schema.md) drafted (VL-014),
+  cross-model-verified (VL-015), and corrected (VL-016). Known
+  items recorded but not yet scheduled:
     - VL-009 ASCII-safe standard is violated by pre-existing content
       in the three `EVIDENCE/archive/` files (VL-011 process finding);
       resolution deferred to a follow-up decision (normalize / preserve
       verbatim / repo-wide pass).
     - G11 (manifest-source asymmetry in `manifest_sha256()`) is queued
-      with G1, G2, G8, G9 in the bookkeeping batch per artifact 04's
-      priority order.
+      with G1, G8, G9 in the bookkeeping batch per artifact 04's
+      priority order. (G2 was moved out of the bookkeeping batch in
+      VL-016's artifact 04 update; it now has its own active track
+      at priority item 4.)
+    - G12 and G13 (the canon-layer halves) remain open; both
+      require canon-version events under GR-1 to fully resolve.
+      Not currently scheduled.
     - Latent VL-009 inconsistency: `IMPLEMENTATION/replay/receipt.py`'s
       `canonical_json` uses `ensure_ascii=False` (VL-012 process
       finding); not a current problem (no receipt currently contains
       non-ASCII bytes) but warrants documentation if scope-creep into
       a follow-up is desired.
+    - VL-015 and VL-016 process findings on verification-request
+      artifact durability: `verification_request_vl014.md` and
+      `verification_request_vl016_premises.md` both prepared in
+      chat and used directly without committing. The candidate
+      action (commit a generalized verification-request template
+      to `docs/`) is reinforced by the second instance but not
+      actioned.
+    - VL-016 process finding on premise-testing as a distinct
+      verification shape (versus artifact verification). Worth
+      naming in a methodology-artifact addition; not actioned.
 
 ---
 
@@ -165,7 +213,8 @@ manifest layer. CCS has drifted - see G0 below.
 
 Continue the **G0 build track** via the schema-work sub-order
 proposed in `SPEC/request_schema.md` under "Build order
-(schema-internal)". The schema itself is done (d7eddd5, VL-014); the
+(schema-internal)". The schema itself is drafted, cross-model-
+verified, and corrected (VL-014 + VL-015 + VL-016). The
 remaining steps close G2 in code and reconcile the envelope spec.
 
 The honest-base track is complete; the disambiguation pass is complete;
@@ -181,16 +230,23 @@ the G0 build track is underway:
    hash citation corrected in f0df14c).
 6. **Planning artifacts 05 and 06 brought current to VL-012.** Done
    (VL-013, commit 606ddc1).
-7. **SPEC/request_schema.md drafted.** Done (d7eddd5, VL-014; this
-   STATE.md update and the VL-014 ledger entry land in the
-   corrective commit alongside).
+7. **SPEC/request_schema.md drafted.** Done (d7eddd5, VL-014; ledger
+   follow-up in bc83346).
+8. **VL-014 cross-model-verified.** Done (VL-015, commit 846b97a).
+   Result: SINGLE-SOURCE -> DISPUTED; G12 and G13 surfaced;
+   decisions 1A, 2B, 3B parked.
+9. **VL-014 corrections applied; premises cross-model-verified.**
+   Done (VL-016, this commit). Result: DISPUTED -> CORRECTED;
+   G12 and G13 entered in artifact 04 with PARTIALLY ADDRESSED
+   status.
 
 Priority order for the G0 build track is in
 `docs/restructure/04_current_vs_claimed.md` under "Priority order."
 With priority item 3 (G0 rename + G6 + G10) resolved and item
-4-start (SPEC/request_schema.md) committed, the remaining order is:
+4 (SPEC/request_schema.md drafted + verified + corrected) complete,
+the remaining order is:
 G2 code-close (failing tests then validator then PEP wiring; proposed
-VL-015/VL-016/VL-017), then G0 build (canonical CCS via envelope),
+VL-017/VL-018/VL-019), then G0 build (canonical CCS via envelope),
 G7 (canon-derived tests), G3 (reframe public materials once 06 makes
 the FULL/PARTIAL/DRIFTED picture concrete), then bookkeeping batch
 (G1, G8, G9, G11), then build-outward scope (G4, G5).
@@ -202,13 +258,16 @@ class in the schema's "Rejected shapes" section). These tests MUST
 fail against the current `IMPLEMENTATION/pep.py` (which performs no
 schema validation) - that failure is the honest G2 signal, same
 shape as the failing canon-derived test the envelope spec proposes
-for G7. Proposed ledger entry: VL-015.
+for G7. Tests should derive from the *corrected* schema (post-
+VL-016), not the disputed one (pre-VL-016). Proposed ledger entry:
+VL-017.
 
-Decisions parked for resolution before VL-014 becomes CONFIRMED:
-the four open questions in SPEC/request_schema.md ("Open questions
-for review"). Decision already recorded for open question 5
-(artifact 05 absorbs `context` and `target_url`); scheduled as
-VL-018.
+Decisions parked for resolution: open question 5 of
+SPEC/request_schema.md (artifact 05 absorbs `context` and
+`target_url`) remains scheduled as VL-020 (renumbered from VL-018
+to absorb the VL-015/VL-016 consumption of the prior numbering).
+The other four open questions from VL-014's draft are resolved by
+VL-016's corrections.
 
 Known items open but not scheduled (do not block the G0 build track):
 - VL-011 process finding on pre-existing non-ASCII bytes in
@@ -226,20 +285,24 @@ Known items open but not scheduled (do not block the G0 build track):
 - VL-014 process finding: the spec-defines-the-rename pattern has
   occurred twice now (VL-012 for `ccs_valid` ->
   `manifest_integrity_valid`; VL-014 for outer `context` ->
-  `interaction` rename, code change deferred to proposed VL-017).
+  `interaction` rename, code change deferred to proposed VL-019).
   Candidate governance rule GR-2 (spec-defines-the-rename; code
   change is a separate commit citing the spec entry) flagged in
   the VL-014 entry; not formally proposed and not added to
   `docs/MAINTENANCE_PROTOCOL.md` here. Decision deferred.
 - VL-014 process finding: chat-pasted multi-line `git commit -m`
-  blocks have now failed twice in the same session; the second
-  failure landed only the schema commit and lost the ledger and
-  STATE.md edits, requiring the corrective commit. Durable lesson
-  recorded in the VL-014 entry; future session-close work should
-  prefer `git commit` (no `-m`) for multi-paragraph messages and
-  the `cat entry.md >>` technique for ledger appends. Not a
-  governance rule, just an operational lesson; no action beyond
-  the lesson being on the record.
+  blocks have now failed twice. Operational lesson recorded in
+  the VL-014 entry; the VL-016 commit uses `git commit -F <file>`
+  per the handoff's lesson #1.
+- VL-015 and VL-016 process finding: verification-request
+  artifacts (`verification_request_vl014.md`,
+  `verification_request_vl016_premises.md`) prepared in chat,
+  used, not committed. Candidate action to commit a generalized
+  template to `docs/` is reinforced by the second instance.
+  Not actioned.
+- VL-016 process finding: premise-testing as a distinct
+  verification shape (vs. artifact verification). Worth a
+  methodology-artifact addition. Not actioned.
 
 ---
 
@@ -253,11 +316,12 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   G0 build track).
 - **G1** - README test count stale / no commit-pinned source of truth.
 - **G2** - request schema drift (interception proofs document a dead API).
-  **PARTIALLY ADVANCED** (VL-014, d7eddd5): SPEC/request_schema.md names
-  the rejected and accepting shapes at the schema layer. G2 fully closes
-  when `IMPLEMENTATION/pep.py` enforces the schema at the PEP boundary
-  (proposed VL-017, build-order step 4 of the schema's internal build
-  order).
+  **PARTIALLY ADVANCED** (VL-014 + VL-015 + VL-016): SPEC/request_schema.md
+  names the rejected and accepting shapes at the schema layer, has been
+  cross-model-verified, and the disputed interpretive loci have been
+  corrected. G2 fully closes when `IMPLEMENTATION/pep.py` enforces the
+  schema at the PEP boundary (proposed VL-019, build-order step 4 of
+  the schema's internal build order).
 - **G3** - public framing overclaims relative to implementation.
 - **G4** - the gate is bypassable (opt-in, not enforced).
 - **G5** - "external" verification is not durable (ephemeral webhook).
@@ -268,6 +332,16 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   disk via hardcoded path, ignoring the manifest argument passed to
   `manifest_integrity_valid()` (surfaced by VL-012). Bookkeeping
   batch.
+- **G12** - canon section 11.1 under-specifies wire-origins of
+  `I`'s components. **PARTIALLY ADDRESSED** (VL-016): schema-
+  layer interpretive choices for `C` and `t` made explicit with
+  rationale. Canon-layer half open; resolution would require a
+  canon-version event under GR-1.
+- **G13** - manifest-pinning field provenance is mixed canon +
+  envelope, not pure canon. **PARTIALLY ADDRESSED** (VL-016):
+  schema attribution corrected to make layered provenance
+  explicit. Canon-layer half open; section 11.9 specifies
+  manifest properties but does not specify wire operationalization.
 
 Resolved in VL-012: G6 (`ccs_valid` field removed), G10 (pinning
 fields retained and documented). G0's rename half. See VL-012 and
