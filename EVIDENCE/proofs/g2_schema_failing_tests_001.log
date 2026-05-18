@@ -1,0 +1,981 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\assist\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\assist\Elyon-Sol
+plugins: anyio-4.12.1
+collecting ... collected 27 items
+
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[top_level_missing_interaction] FAILED [  3%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[top_level_missing_target_url] FAILED [  7%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[top_level_interaction_wrong_type] FAILED [ 11%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[bad_url_relative] FAILED [ 14%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[bad_url_no_scheme] FAILED [ 18%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[bad_url_empty_string] FAILED [ 22%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[flat_keys_archived_proof_001_shape] FAILED [ 25%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[flat_keys_ap_at_top_level_with_interaction_present] FAILED [ 29%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[flat_keys_op_at_top_level_with_interaction_present] FAILED [ 33%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[manifest_pinning_version_missing] FAILED [ 37%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[manifest_pinning_sha256_missing] FAILED [ 40%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[manifest_pinning_both_missing] FAILED [ 44%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_ap_string] FAILED [ 48%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_ap_dict] FAILED [ 51%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_ap_mixed_types] FAILED [ 55%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_op_string] FAILED [ 59%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_context_string] FAILED [ 62%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_version_number] FAILED [ 66%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_sha256_wrong_length] FAILED [ 70%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_sha256_uppercase] FAILED [ 74%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_legacy_ccs_valid_at_top_level] FAILED [ 77%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_inside_interaction] FAILED [ 81%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_continuity_token] FAILED [ 85%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_prior_state_hash] FAILED [ 88%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_case_insensitive] FAILED [ 92%]
+TESTS/adversarial/test_request_schema.py::test_schema_rejects_parse_error FAILED [ 96%]
+TESTS/adversarial/test_request_schema.py::test_schema_accepts_valid_request FAILED [100%]
+
+================================== FAILURES ===================================
+_____________ test_schema_rejects[top_level_missing_interaction] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F79660050>
+upstream_guard = [], case_id = 'top_level_missing_interaction'
+body = {'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TOP_LEVEL'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [top_level_missing_interaction] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target"}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+______________ test_schema_rejects[top_level_missing_target_url] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F795D9950>
+upstream_guard = [], case_id = 'top_level_missing_target_url'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}}
+expected_code = 'REF_SCHEMA_TOP_LEVEL'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [top_level_missing_target_url] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","target_url"],"msg":"Field required","input":{"interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}},{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+____________ test_schema_rejects[top_level_interaction_wrong_type] ____________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C0A9A90>
+upstream_guard = [], case_id = 'top_level_interaction_wrong_type'
+body = {'interaction': 'not-an-object', 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TOP_LEVEL'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [top_level_interaction_wrong_type] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":"not-an-object"}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+____________________ test_schema_rejects[bad_url_relative] ____________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C0CDCD0>
+upstream_guard = [], case_id = 'bad_url_relative'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': '/target'}
+expected_code = 'REF_SCHEMA_BAD_URL'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [bad_url_relative] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+___________________ test_schema_rejects[bad_url_no_scheme] ____________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C0CE3F0>
+upstream_guard = [], case_id = 'bad_url_no_scheme'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': '127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_BAD_URL'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [bad_url_no_scheme] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+__________________ test_schema_rejects[bad_url_empty_string] __________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C158050>
+upstream_guard = [], case_id = 'bad_url_empty_string'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': ''}
+expected_code = 'REF_SCHEMA_BAD_URL'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [bad_url_empty_string] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+___________ test_schema_rejects[flat_keys_archived_proof_001_shape] ___________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C0DF8A0>
+upstream_guard = [], case_id = 'flat_keys_archived_proof_001_shape'
+body = {'AP': ['identity'], 'OP': ['session', 'request'], 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', 'expected_manifest_version': '1.0', ...}
+expected_code = 'REF_SCHEMA_FLAT_KEYS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [flat_keys_archived_proof_001_shape] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","AP":["identity"],"OP":["session","request"],"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+___ test_schema_rejects[flat_keys_ap_at_top_level_with_interaction_present] ___
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1C8D10>
+upstream_guard = []
+case_id = 'flat_keys_ap_at_top_level_with_interaction_present'
+body = {'AP': ['identity', 'role'], 'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, ...'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_FLAT_KEYS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [flat_keys_ap_at_top_level_with_interaction_present] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","AP":["identity","role"],"interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+___ test_schema_rejects[flat_keys_op_at_top_level_with_interaction_present] ___
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1E9450>
+upstream_guard = []
+case_id = 'flat_keys_op_at_top_level_with_interaction_present'
+body = {'OP': ['session', 'request'], 'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}...'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_FLAT_KEYS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [flat_keys_op_at_top_level_with_interaction_present] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","OP":["session","request"],"interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+____________ test_schema_rejects[manifest_pinning_version_missing] ____________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1EA950>
+upstream_guard = [], case_id = 'manifest_pinning_version_missing'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8'}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_MANIFEST_PINNING_MISSING'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [manifest_pinning_version_missing] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+____________ test_schema_rejects[manifest_pinning_sha256_missing] _____________
+
+client = <starlette.testclient.TestClient object at 0x0000026F79628B90>
+upstream_guard = [], case_id = 'manifest_pinning_sha256_missing'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_version': '1.0'}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_MANIFEST_PINNING_MISSING'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [manifest_pinning_sha256_missing] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_____________ test_schema_rejects[manifest_pinning_both_missing] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C16E210>
+upstream_guard = [], case_id = 'manifest_pinning_both_missing'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_MANIFEST_PINNING_MISSING'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [manifest_pinning_both_missing] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{}}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+________________ test_schema_rejects[type_mismatch_ap_string] _________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1BA7B0>
+upstream_guard = [], case_id = 'type_mismatch_ap_string'
+body = {'interaction': {'AP': 'identity,role', 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_ap_string] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":"identity,role","OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_________________ test_schema_rejects[type_mismatch_ap_dict] __________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1BA270>
+upstream_guard = [], case_id = 'type_mismatch_ap_dict'
+body = {'interaction': {'AP': {'identity': True, 'role': True}, 'OP': ['session', 'request'], 'context': {}, 'expected_manife...'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_ap_dict] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":{"identity":true,"role":true},"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+______________ test_schema_rejects[type_mismatch_ap_mixed_types] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1BB150>
+upstream_guard = [], case_id = 'type_mismatch_ap_mixed_types'
+body = {'interaction': {'AP': ['identity', 42, None], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_ap_mixed_types] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity",42,null],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+________________ test_schema_rejects[type_mismatch_op_string] _________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1B8E50>
+upstream_guard = [], case_id = 'type_mismatch_op_string'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': 'session,request', 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_op_string] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":"session,request","context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+______________ test_schema_rejects[type_mismatch_context_string] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1B8F30>
+upstream_guard = [], case_id = 'type_mismatch_context_string'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': 'not-an-object', 'expected_manif...'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_context_string] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":"not-an-object","expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+______________ test_schema_rejects[type_mismatch_version_number] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C13A430>
+upstream_guard = [], case_id = 'type_mismatch_version_number'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_version_number] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":1.0,"expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+___________ test_schema_rejects[type_mismatch_sha256_wrong_length] ____________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1B90F0>
+upstream_guard = [], case_id = 'type_mismatch_sha256_wrong_length'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'deadbeefdeadbeef', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_sha256_wrong_length] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"deadbeefdeadbeef"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_____________ test_schema_rejects[type_mismatch_sha256_uppercase] _____________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1D57F0>
+upstream_guard = [], case_id = 'type_mismatch_sha256_uppercase'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'A21DEA8B79D459BD700CA44A30C2CA4A6EFBEE1447708CBC12C0BBB322D823B8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_TYPE_MISMATCH'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [type_mismatch_sha256_uppercase] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"A21DEA8B79D459BD700CA44A30C2CA4A6EFBEE1447708CBC12C0BBB322D823B8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_______ test_schema_rejects[reserved_ccs_legacy_ccs_valid_at_top_level] _______
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1BA190>
+upstream_guard = [], case_id = 'reserved_ccs_legacy_ccs_valid_at_top_level'
+body = {'ccs_valid': True, 'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected...'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_RESERVED_CCS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [reserved_ccs_legacy_ccs_valid_at_top_level] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","ccs_valid":true,"interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+____________ test_schema_rejects[reserved_ccs_inside_interaction] _____________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1D49F0>
+upstream_guard = [], case_id = 'reserved_ccs_inside_interaction'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'ccs_valid': True, 'context': {}, ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_RESERVED_CCS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [reserved_ccs_inside_interaction] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8","ccs_valid":true}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_____________ test_schema_rejects[reserved_ccs_continuity_token] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1B90F0>
+upstream_guard = [], case_id = 'reserved_ccs_continuity_token'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'continuity_token': 'abc123', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_RESERVED_CCS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [reserved_ccs_continuity_token] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8","continuity_token":"abc123"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_____________ test_schema_rejects[reserved_ccs_prior_state_hash] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1D6A50>
+upstream_guard = [], case_id = 'reserved_ccs_prior_state_hash'
+body = {'interaction': {'AP': ['identity', 'role'], 'OP': ['session', 'request'], 'context': {}, 'expected_manifest_sha256': 'a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8', ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_RESERVED_CCS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [reserved_ccs_prior_state_hash] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8","prior_state_hash":"deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_____________ test_schema_rejects[reserved_ccs_case_insensitive] ______________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1BB150>
+upstream_guard = [], case_id = 'reserved_ccs_case_insensitive'
+body = {'interaction': {'AP': ['identity', 'role'], 'CCS_state': 'verified', 'OP': ['session', 'request'], 'context': {}, ...}, 'target_url': 'http://127.0.0.1:9000/target'}
+expected_code = 'REF_SCHEMA_RESERVED_CCS'
+
+    @pytest.mark.parametrize(
+        "case_id,body,expected_code",
+        NEGATIVE_CASES,
+        ids=[c[0] for c in NEGATIVE_CASES],
+    )
+    def test_schema_rejects(client, upstream_guard, case_id, body, expected_code):
+        """
+        Each schema-rejected request must:
+          1. return HTTP 403,
+          2. carry the schema-named refusal code in detail.refusal_reason_code,
+          3. not have reached requests.post (upstream not called).
+    
+        Against pep.py at HEAD, all three assertions fail for most cases.
+        That failure is the honest G2 signal that the validator (VL-018)
+        and the PEP wiring (VL-019) must close.
+        """
+        response = client.post("/governed-call", json=body)
+    
+>       assert response.status_code == 403, (
+            f"[{case_id}] expected 403, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: [reserved_ccs_case_insensitive] expected 403, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8","CCS_state":"verified"}}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:446: AssertionError
+_______________________ test_schema_rejects_parse_error _______________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1D6F90>
+upstream_guard = []
+
+    def test_schema_rejects_parse_error(client, upstream_guard):
+        """
+        Malformed JSON must REFUSE with REF_SCHEMA_PARSE_ERROR per PEP
+        boundary step 1. Sent as raw bytes so FastAPI's JSON parser
+        fails before any handler runs - currently FastAPI returns 422
+        (the Pydantic/JSON-decode default); the schema requires 403
+        with the schema-named code. The test fails today on both
+        status and code.
+        """
+        response = client.post(
+            "/governed-call",
+            content=b"this is not json",
+            headers={"Content-Type": "application/json"},
+        )
+    
+>       assert response.status_code == 403, (
+            f"expected 403 on parse error, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: expected 403 on parse error, got 422; body={"detail":[{"type":"json_invalid","loc":["body",0],"msg":"JSON decode error","input":{},"ctx":{"error":"Expecting value"}}]}
+E       assert 422 == 403
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:482: AssertionError
+______________________ test_schema_accepts_valid_request ______________________
+
+client = <starlette.testclient.TestClient object at 0x0000026F7C1D6350>
+upstream_guard = []
+
+    def test_schema_accepts_valid_request(client, upstream_guard):
+        """
+        A request that conforms to the schema in every respect must:
+          1. reach evaluate(),
+          2. return HTTP 200 with terminal_state=ELIGIBLE (assuming
+             AC^3 and T^26 are satisfied, which they are for the
+             AP/OP supplied here against the live manifest),
+          3. forward to target_url exactly once.
+    
+        Against pep.py at HEAD, this fails because GovernedCallRequest
+        has no `interaction` field; the request fails Pydantic
+        validation at the wire boundary with HTTP 422, never reaching
+        evaluate(). That failure is the honest signal that pep.py's
+        wire shape must change as part of VL-019.
+    
+        The upstream_guard returns a canned 200 response so no network
+        call is made; the assertion is on whether the call was
+        attempted, not on what came back.
+        """
+        response = client.post("/governed-call", json=_valid_request())
+    
+>       assert response.status_code == 200, (
+            f"expected 200 on valid request, got {response.status_code}; "
+            f"body={response.text}"
+        )
+E       AssertionError: expected 200 on valid request, got 422; body={"detail":[{"type":"missing","loc":["body","context"],"msg":"Field required","input":{"target_url":"http://127.0.0.1:9000/target","interaction":{"AP":["identity","role"],"OP":["session","request"],"context":{},"expected_manifest_version":"1.0","expected_manifest_sha256":"a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"}}}]}
+E       assert 422 == 200
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+TESTS\adversarial\test_request_schema.py:523: AssertionError
+=========================== short test summary info ===========================
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[top_level_missing_interaction]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[top_level_missing_target_url]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[top_level_interaction_wrong_type]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[bad_url_relative]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[bad_url_no_scheme]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[bad_url_empty_string]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[flat_keys_archived_proof_001_shape]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[flat_keys_ap_at_top_level_with_interaction_present]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[flat_keys_op_at_top_level_with_interaction_present]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[manifest_pinning_version_missing]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[manifest_pinning_sha256_missing]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[manifest_pinning_both_missing]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_ap_string]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_ap_dict]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_ap_mixed_types]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_op_string]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_context_string]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_version_number]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_sha256_wrong_length]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[type_mismatch_sha256_uppercase]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_legacy_ccs_valid_at_top_level]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_inside_interaction]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_continuity_token]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_prior_state_hash]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects[reserved_ccs_case_insensitive]
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_rejects_parse_error
+FAILED TESTS/adversarial/test_request_schema.py::test_schema_accepts_valid_request
+============================= 27 failed in 4.63s ==============================

@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-017a (methodology promotion: verification-request template and apply-script template committed to docs/methodology/) lands in this commit alongside the STATE.md update; last ledger entry is VL-017a; next action is failing schema-shape tests, still proposed VL-017 -- VL-017a does not consume a build-order ledger number)
+Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-017 (failing schema-shape tests at PEP boundary; 27/27 fail uniformly at Pydantic wire-shape gate; honest G2 signal per schema's build-order step 2) lands in this commit alongside the STATE.md update; last ledger entry is VL-017; next action is the schema validator, proposed VL-018)
 
 ---
 
@@ -181,9 +181,30 @@ manifest layer. CCS has drifted - see G0 below.
   CRLF-on-read normalization fix and the always-write-LF
   convention learned from VL-017a's first-run abort). Both
   artifacts close methodology-debt candidate actions from
-  VL-015 and the VL-016 follow-up. Classification: efficiency
+ VL-015 and the VL-016 follow-up. Classification: efficiency
   move, not trajectory move; recorded in VL-017a's entry with
   explicit framing of the distinction.
+- **Failing schema-shape tests committed (VL-017).**
+  `TESTS/adversarial/test_request_schema.py` adds 27 tests
+  derived from `SPEC/request_schema.md` (post-VL-016,
+  CORRECTED) - one per refusal class named in "Rejected
+  shapes" plus a positive accepting-shape case. Against
+  `IMPLEMENTATION/pep.py` at HEAD, all 27 fail. Uniform-422
+  finding: every test fails at the same Pydantic wire-shape
+  gate because the schema's `interaction` envelope is
+  incompatible with the current `context` top-level field.
+  The tests collectively prove wire-shape incompatibility
+  but do not, today, discriminate between refusal classes;
+  discrimination requires VL-019's wire-shape change.
+  Evidence committed as
+  `EVIDENCE/proofs/g2_schema_failing_tests_001.log` (raw
+  pytest) and `EVIDENCE/proofs/g2_schema_failing_tests_001.md`
+  (prose proof). Regression footprint clean:
+  `TESTS/test_adversarial_evaluator.py` still 23/23 passing.
+  The first artifact of the G2 build track's code half;
+  the honest G2 signal that the schema's build-order step
+  2 specifies. Classification: trajectory move per VL-017a's
+  distinction.
 
 ## What is locked vs. open
 
@@ -254,28 +275,35 @@ the G0 build track is underway:
    Done (VL-016, this commit). Result: DISPUTED -> CORRECTED;
    G12 and G13 entered in artifact 04 with PARTIALLY ADDRESSED
    status.
+10. **Failing schema-shape tests committed.** Done (VL-017, this
+    commit). 27 tests at `TESTS/adversarial/test_request_schema.py`,
+    all failing uniformly at the Pydantic wire-shape gate against
+    current pep.py. Evidence at
+    `EVIDENCE/proofs/g2_schema_failing_tests_001.log` and `.md`.
 
-Priority order for the G0 build track is in
-`docs/restructure/04_current_vs_claimed.md` under "Priority order."
-With priority item 3 (G0 rename + G6 + G10) resolved and item
+With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected) complete,
+and the failing-tests sub-step of item 4 done (VL-017),
 the remaining order is:
-G2 code-close (failing tests then validator then PEP wiring; proposed
-VL-017/VL-018/VL-019), then G0 build (canonical CCS via envelope),
+G2 code-close (validator then PEP wiring; proposed
+VL-018/VL-019), then G0 build (canonical CCS via envelope),
 G7 (canon-derived tests), G3 (reframe public materials once 06 makes
 the FULL/PARTIAL/DRIFTED picture concrete), then bookkeeping batch
 (G1, G8, G9, G11), then build-outward scope (G4, G5).
 
-Suggested next move: build the failing schema-shape tests proposed
-in SPEC/request_schema.md build-order step 2
-(`TESTS/adversarial/test_request_schema.py`, one test per refusal
-class in the schema's "Rejected shapes" section). These tests MUST
-fail against the current `IMPLEMENTATION/pep.py` (which performs no
-schema validation) - that failure is the honest G2 signal, same
-shape as the failing canon-derived test the envelope spec proposes
-for G7. Tests should derive from the *corrected* schema (post-
-VL-016), not the disputed one (pre-VL-016). Proposed ledger entry:
-VL-017.
+Suggested next move: build the schema validator
+`IMPLEMENTATION/request_validator.py` per SPEC/request_schema.md
+build-order step 3. The validator implements the boundary behavior
+in the order specified (parse, top-level, target_url, fields,
+types), emitting one of the seven schema-named refusal codes on
+rejection. The validator does NOT touch `pep.py`; wiring the
+validator into the PEP boundary is build-order step 4 (proposed
+VL-019), separate from the validator itself per VL-011's lesson
+that distinct concerns get distinct commits. Once the validator
+lands and is wired, the 27 failing tests committed in VL-017
+become discriminating diagnostic instruments rather than a
+collective wire-shape incompatibility proof. Proposed ledger
+entry: VL-018.
 
 Decisions parked for resolution: open question 5 of
 SPEC/request_schema.md (artifact 05 absorbs `context` and
@@ -331,8 +359,44 @@ Known items open but not scheduled (do not block the G0 build track):
   action items; paste the actual commands or one tool call
   per step; (b) stop signals require interactive pauses, not
   just printed warnings. Worth promoting the
-  session-mechanics-lessons file to `docs/` so these
+session-mechanics-lessons file to `docs/` so these
   accumulate durably. Not actioned.
+- VL-017 process findings (eight session friction points; false
+  stop signal on line count; ledger-entry blank-line stripping
+  in VL-017a's committed text). The session-mechanics-lessons
+  promotion candidate is now reinforced by a quantified
+  threshold per VL-017's entry: if VL-018's session opens with
+  three or more friction points in the first hour before
+  substantive work begins, pause trajectory work and promote
+  the session-mechanics-lessons file as that session's
+  deliverable. The threshold is the first attempt in this
+  project at making a process-finding candidate self-actuating
+  rather than perpetually-deferred.
+- VL-017 stale forward-reference in SPEC/request_schema.md.
+  The schema's "Build order (schema-internal)" closing
+  paragraph lists `VL-014 (this artifact), VL-015 (failing
+  tests), VL-016 (validator), VL-017 (PEP wiring + G2 close),
+  VL-018 (artifact 05 freshness pass)` but the actual
+  numbering, post VL-015's cross-model verification and
+  VL-016's corrections, is `VL-014 schema, VL-015 verify,
+  VL-016 corrections, VL-017 tests, VL-018 validator,
+  VL-019 PEP wiring, VL-020 artifact 05`. The schema's
+  closing paragraph is a stale forward reference. Worth one
+  focused commit to update; not blocking; not actioned in
+  VL-017 (which would muddy the test-file commit).
+- VL-017 process finding: inherited-`.gitignore` pattern,
+  second instance (after VL-010). The Python-template
+  `.gitignore` hid `EVIDENCE/proofs/g2_schema_failing_tests_001.log`
+  via the `*.log` rule at line 61; corrected with an explicit
+  un-ignore `!EVIDENCE/proofs/*.log` landing in the same commit
+  as the file it was hiding (structurally parallel to VL-010).
+  Two instances is a pattern. Candidate action: a focused
+  audit-commit of `.gitignore` against the repo's actual
+  domain directories (`CANON/`, `MANIFEST/`, `EVIDENCE/`,
+  `SPEC/`, `IMPLEMENTATION/`, `TESTS/`, `docs/`), adding
+  explicit un-ignore rules or comments for every name that
+  could collide with a template assumption. Efficiency move
+  per VL-017a's classification; not blocking. Not actioned.
 
 ---
 
@@ -346,13 +410,15 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   G0 build track).
 - **G1** - README test count stale / no commit-pinned source of truth.
 - **G2** - request schema drift (interception proofs document a dead API).
-  **PARTIALLY ADVANCED** (VL-014 + VL-015 + VL-016): SPEC/request_schema.md
-  names the rejected and accepting shapes at the schema layer, has been
-  cross-model-verified, and the disputed interpretive loci have been
-  corrected. G2 fully closes when `IMPLEMENTATION/pep.py` enforces the
-  schema at the PEP boundary (proposed VL-019, build-order step 4 of
-  the schema's internal build order).
-- **G3** - public framing overclaims relative to implementation.
+  **PARTIALLY ADVANCED** (VL-014 + VL-015 + VL-016 + VL-017):
+  SPEC/request_schema.md names the rejected and accepting shapes at
+  the schema layer, has been cross-model-verified, and the disputed
+  interpretive loci have been corrected. VL-017 added 27 failing
+  schema-shape tests at `TESTS/adversarial/test_request_schema.py`
+  per the schema's build-order step 2. G2 fully closes when the
+  schema validator (proposed VL-018) lands and is wired into
+  `IMPLEMENTATION/pep.py` at the PEP boundary (proposed VL-019,
+  build-order step 4 of the schema's internal build order).- **G3** - public framing overclaims relative to implementation.
 - **G4** - the gate is bypassable (opt-in, not enforced).
 - **G5** - "external" verification is not durable (ephemeral webhook).
 - **G7** - tests are code-derived, not canon-derived.

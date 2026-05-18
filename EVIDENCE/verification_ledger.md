@@ -1627,3 +1627,79 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   reinforcement: this entry deliberately does not cite its
   own commit hash. The commit hash will be reachable via
   `git log`.
+### VL-017 - Failing schema-shape tests at PEP boundary (G2 build track, build-order step 2)
+- Date: 2026-05-18
+- Event: `TESTS/adversarial/test_request_schema.py` added, derived from `SPEC/request_schema.md` (post-VL-016, CORRECTED). 27 tests, one per refusal class named in the schema's "Rejected shapes" and "PEP boundary behavior" sections, plus a positive accepting-shape case. Against `IMPLEMENTATION/pep.py` at HEAD (commit `572828e`), all 27 fail. This is the honest G2 signal that the schema's build-order step 2 specifies: schema-derived tests precede the validator (proposed VL-018) and PEP wiring (proposed VL-019). Evidence committed as `EVIDENCE/proofs/g2_schema_failing_tests_001.log` (raw pytest output) and `EVIDENCE/proofs/g2_schema_failing_tests_001.md` (prose proof).
+- Classification: **trajectory move** (per VL-017a's distinction). The test file is new capability surface that codifies what the validator must achieve. Contrast with VL-017a's pure-efficiency methodology promotion.
+
+#### The uniform-422 finding (honest framing)
+All 27 tests fail at the same wire-shape gate with HTTP 422 from Pydantic, `loc=["body","context"]`, message `Field required`. None reaches `evaluate()`. None reaches `requests.post()` (upstream_guard records zero calls across 27 cases). The failure is at the FastAPI/Pydantic boundary because `GovernedCallRequest` declares `context: Dict[str, Any]` at the top level, but every test request uses the new schema's `interaction` envelope.
+
+What this means honestly: the tests do not, at HEAD, discriminate between the seven refusal classes. They collectively prove that the current `pep.py` wire shape is incompatible with the corrected schema's wire shape. They will become genuinely discriminating between refusal classes only once VL-019 lands the new wire shape; before VL-019 they are effectively one test with 27 names.
+
+This is a property of the current code, not a defect in the tests. There is no way to write a test exercising the new wire shape against the current code without that test failing at the Pydantic gate. The tests' diagnostic value is post-VL-019; their G2-signal value is now.
+
+The pre-test prediction in this session was that failures would fall in three families (Pydantic-422, silent-accept-then-403, silent-accept-then-upstream). The actual result was 100% Family 1. Recording this prediction-vs-result delta because it's the cleanest possible characterization of how incompatible the wire shapes are: there is no overlap between the new schema's accepting shape and the old PEP's accepting shape, so no test of the new shape ever reaches the old handler logic.
+
+#### Decisions made during the session (recorded for repeatability)
+- **Test file location.** `TESTS/adversarial/test_request_schema.py` (subdirectory) rather than flat `TESTS/test_request_schema.py`. The schema's build-order step 2 names the subdirectory path explicitly; the existing flat-`TESTS/` convention is implicit. When implicit convention and explicit spec diverge, the spec wins. Subdirectory created in this commit. Future test files following the schema's prescriptions go to `TESTS/adversarial/`; older flat-layout test files are not migrated.
+- **Live manifest values reused.** `LIVE_MANIFEST_VERSION = "1.0"` and `LIVE_MANIFEST_SHA256 = "a21dea8b..."` taken from `TESTS/test_adversarial_evaluator.py`'s existing `SHA` constant. Rationale: the positive case must use values that *would* validate against the live manifest post-VL-019; copying from an existing passing test guarantees those values are current.
+- **`upstream_guard` fixture pattern.** Monkeypatches `IMPLEMENTATION.pep.requests.post` and records calls. Negative cases assert the list is empty (schema-layer refusal must not forward); positive case asserts exactly one call (validator allows ELIGIBLE through). The fixture is per-test (function scope), so each test gets a fresh empty list.
+- **Evidence convention: `.log` raw plus `.md` prose.** Matches the pattern of existing `EVIDENCE/proofs/` files. The `.log` is regenerable by re-running pytest; the `.md` is prose interpretation of what the log demonstrates. Splitting them keeps the raw evidence machine-comparable and the prose human-readable.
+
+#### What this entry does NOT close
+- G2 remains open. The validator (VL-018) and PEP wiring (VL-019) are the closure events; this entry is the failing-tests precursor.
+- G7 (canon-derived tests) is unaffected; schema-shape tests are at a different layer than canon-invariant tests.
+- G0 build track is unaffected; the schema is for the PEP boundary, not the canonical CCS implementation.
+- No canon change. No manifest change. No implementation change. No change to existing tests.
+
+#### Process findings
+
+**Friction-point density in this session.** Seven file-transfer or environment-mechanics failures occurred during a session that produced ~390 lines of substantive test code:
+1. Schema upload arrived with empty content (first attempt).
+2. Schema upload arrived with empty content (second attempt; succeeded only via inline `cat` paste).
+3. `present_files` tool call reported success but the file was not delivered to the user.
+4. Multi-line chat-paste produced garbled output during heredoc input.
+5. Initial `pytest` invocation failed: not on PATH; needed `python -m pytest` prefix.
+6. STATE.md's suggested next-move path (`TESTS/adversarial/`) didn't match repo convention (flat `TESTS/`); decision required.
+7. Typo `test_request_shema.py` created and renamed; brief confusion about whether content was preserved.
+
+Five distinct mechanisms, same family as VL-012/VL-014/VL-016-follow-up's `chat-paste-eats-content` findings: the file-transfer surface produces outputs that *appear* successful but are silently incomplete or wrong-shape. Two are uploads-without-payload; one is a tool reporting success without delivery; one is a paste-time character mangling; one is a PATH-discovery issue; one is a layout-assumption mismatch; one is a filename typo.
+
+The candidate action from VL-015 (commit a generalized verification-request template to `docs/methodology/`) was honored in VL-017a. The candidate action from VL-016-follow-up (promote session-mechanics-lessons file to `docs/`) is now reinforced by these seven instances and is the strongest unactioned candidate in the backlog.
+
+**Threshold-bearing process finding (new).** Process findings without explicit thresholds accumulate as "candidate actions, not actioned" indefinitely (precedent: the verification-request template took two ledger entries calling for it before VL-017a actioned it). For this session, recording an explicit threshold for the session-mechanics-lessons promotion:
+
+> If the next G2 build-track session (proposed VL-018) opens with **three or more** friction points in the first hour before substantive work begins, pause that session's trajectory work and promote the session-mechanics-lessons file to `docs/` as the session's deliverable. Otherwise, continue with trajectory work and the promotion remains a candidate.
+
+The threshold is explicit, falsifiable, and self-actuating. Whether it triggers is itself a measurement worth recording in VL-018's entry.
+
+**False stop signal on line count.** During the verification of `TESTS/adversarial/test_request_schema.py` content integrity (the `wc -l` showed 536 lines vs. my estimated ~390), I called a stop signal that turned out to be spurious; the file was structurally sound. My estimate had been computed without actually counting, treated as a hard bound, and used to gate progress. This is the exact failure mode stop signals are supposed to *prevent*, not produce.
+
+Generalized lesson: stop signals depend on the calibration of the expected-value reference. An uncalibrated estimate used as a hard bound erodes the protocol's signal-to-noise. When my predicted value is an estimate rather than a derivation, the appropriate response to a discrepancy is *diagnostic curiosity* (run grep/file/head to characterize the actual content), not *stop* (halt all forward motion). The diagnostic curiosity ultimately succeeded, but the initial framing as a stop signal cost a turn of unnecessary alarm.
+
+Worth promoting to the session-mechanics-lessons file (whenever that promotion happens): **calibrate the reference value before declaring a discrepancy a stop signal. An uncalibrated reference produces false stops.**
+
+**Inherited-`.gitignore` pattern (second instance).** The pytest evidence log `EVIDENCE/proofs/g2_schema_failing_tests_001.log` was initially hidden by a `.gitignore` rule `*.log` at line 61, inherited from the Python project template. This is structurally identical to VL-010, where `MANIFEST/manifest.json` was hidden by an inherited `MANIFEST` rule. Resolution paralleled VL-010's: explicit un-ignore line `!EVIDENCE/proofs/*.log` added to `.gitignore` with a comment citing this entry, landing in the same commit as the file it had been hiding.
+
+Two instances is a pattern. The inherited Python-template `.gitignore` makes assumptions about which file names are build/cache artifacts (`*.log`, `MANIFEST`, possibly others) that conflict with this repository's domain naming. The cost is corrective edits scattered across ledger entries.
+
+Candidate action (not actioned in VL-017): a focused commit auditing `.gitignore` against the repo's actual domain directories (`CANON/`, `MANIFEST/`, `EVIDENCE/`, `SPEC/`, `IMPLEMENTATION/`, `TESTS/`, `docs/`) and adding explicit un-ignore rules or comments for every name that could collide with a template assumption. This is methodology debt; per VL-017a's classification, an efficiency move. Promoted to "Known items open but not scheduled" in STATE.md alongside this finding.
+
+#### Files affected
+- `TESTS/adversarial/test_request_schema.py` (new; ~390 lines)
+- `EVIDENCE/proofs/g2_schema_failing_tests_001.log` (new; raw pytest output, ~58 KB)
+- `EVIDENCE/proofs/g2_schema_failing_tests_001.md` (new; prose proof, 78 lines)
+- `EVIDENCE/verification_ledger.md` (this entry)
+- `STATE.md` (reconciliation: VL-017 lands, next action becomes VL-018 validator)
+- `.gitignore` (corrective un-ignore for `EVIDENCE/proofs/*.log`; structurally parallel to VL-010; rationale in the Inherited-`.gitignore` pattern process finding above)
+
+#### Files NOT affected
+- `CANON/canon.md` (locked).
+- `MANIFEST/manifest.json` (untouched).
+- `SPEC/request_schema.md` (untouched in this commit; one stale forward-reference noted in the schema's "Build order" section listing `VL-014..VL-018` rather than the actual `VL-014, VL-015, VL-016, VL-017, VL-018, VL-019, VL-020` is a follow-up bookkeeping item, not actioned here).
+- `IMPLEMENTATION/*` (untouched; the wire-shape change is VL-019 work).
+- Existing `TESTS/test_*.py` files (untouched; regression confirmed: `TESTS/test_adversarial_evaluator.py` still 23/23 passing).
+- `docs/restructure/*` (untouched; artifact 04's G2 status update is part of the closure entry, not this precursor).
+
+Per VL-012's self-referencing-hash finding and subsequent reinforcement: this entry deliberately does not cite its own commit hash. The commit hash will be reachable via `git log`.

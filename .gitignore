@@ -59,6 +59,11 @@ cover/
 
 # Django stuff:
 *.log
+# Note: *.log is ignored by the Django template rule above, but
+# EVIDENCE/proofs/*.log files are evidence artifacts cited by the
+# verification ledger (e.g., VL-017's g2_schema_failing_tests_001.log).
+# Un-ignored explicitly, parallel to the MANIFEST/ note above.
+!EVIDENCE/proofs/*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
