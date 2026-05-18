@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-18 (commit: see `git log` for STATE.md; this update lands in the VL-016 commit alongside the schema correction, artifact 04 G12/G13 rows, and the VL-016 ledger entry; last ledger entry VL-016; next action is failing schema-shape tests, proposed VL-017)
+Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-016 landed in `20cd1a1` with only the ledger entry and STATE.md edits; the schema correction and artifact 04 G12/G13 rows landed in the corrective follow-up commit that carries this STATE.md update; last ledger entry is the VL-016 follow-up; next action is failing schema-shape tests, proposed VL-017)
 
 ---
 
@@ -303,6 +303,21 @@ Known items open but not scheduled (do not block the G0 build track):
 - VL-016 process finding: premise-testing as a distinct
   verification shape (vs. artifact verification). Worth a
   methodology-artifact addition. Not actioned.
+- VL-016 follow-up process finding: third instance of
+  chat-paste-eats-content failure (after VL-012's `git commit
+  -m` newline loss and VL-014's twice-failed `-m` block).
+  This instance: comment-only lines in a pasted execution
+  block were silently skipped, leaving the schema and
+  artifact-04 edits unapplied. `git status` between operations
+  correctly fired the stop signal (lesson 5) but the workflow
+  had no pause point for the human to act on it. Two
+  generalized lessons recorded in the VL-016 follow-up entry:
+  (a) never paste a multi-step block containing comment-form
+  action items; paste the actual commands or one tool call
+  per step; (b) stop signals require interactive pauses, not
+  just printed warnings. Worth promoting the
+  session-mechanics-lessons file to `docs/` so these
+  accumulate durably. Not actioned.
 
 ---
 

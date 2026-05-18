@@ -147,6 +147,77 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 
 ---
 
+### G12  -  Canon section 11.1 under-specifies wire-origins of `I`'s components  *(surfaced by VL-015)*
+- **Canon:** Section 11.1 defines the interaction tuple `I = (A, S, C, t)`
+  but does not specify whether `C` (context) or `t` (time) are
+  caller-supplied on the wire or system-derived. Section 11.9 explicitly
+  specifies that `AR(I)` and `R(I)` are "derived exclusively from M";
+  no comparable wire-origin clause exists for `C` or `t`. The silence
+  is *meaningful* (not merely absent) because canon elsewhere
+  demonstrates capacity to specify wire-origin when it intends to.
+- **Code:** `pep.py` accepts `context: Dict[str, Any]` opaquely; no time
+  field is on the wire. The interpretive choice (C caller-supplied, t
+  PEP-supplied) was made silently in the schema's pre-VL-016 draft.
+- **Delta:** Three procedurally-clean derivations (Claude, Grok, OpenAI)
+  diverged on `C` and `t` specifically, and only on those components.
+  The divergence traces to canon under-specification, not to verifier
+  error. VL-016 premise verification confirmed the under-specification
+  unanimously (premise 1 classified Under-specified by both Grok and
+  OpenAI). OpenAI's argument-from-contrast framing is incorporated.
+- **Status: PARTIALLY ADDRESSED** - schema-layer half closed (VL-016);
+  canon-layer half open.
+- **Action:**
+  1. Make the interpretive choices for `C` and `t` explicit in the
+     schema with rationale. **DONE under VL-016** (decision 1A:
+     context stays caller-supplied required with section-12.1 reasoning;
+     decision 2B: t stays NOT caller-supplied with section-9 +
+     section-12.4 fail-closed reasoning).
+  2. Resolve the canon-layer under-specification via a canon-version
+     event under GR-1 (e.g., v0.9.8.5 or v0.10 adding wire-origin
+     clauses for `A`, `S`, `C`, `t` analogous to section 11.9's
+     clause for `AR`/`R`). **OPEN** - not currently scheduled;
+     canon-version events are out of band per GR-1.
+
+### G13  -  Manifest-pinning field provenance is mixed canon + envelope  *(surfaced by VL-015)*
+- **Canon:** Section 11.9 requires the manifest to be "deterministic,
+  versioned, and integrity-verifiable" as a property of the manifest
+  itself. Section 12.4 lists manifest version change as an invalid
+  transition. Neither clause specifies that the *request* must carry
+  caller-asserted version/hash fields.
+- **Code:** `manifest_integrity_valid()` (VL-012) consumes
+  `expected_manifest_version` and `expected_manifest_sha256` as
+  caller-asserted fields and refuses on mismatch. The fields are
+  load-bearing per VL-012's convention.
+- **Delta:** The schema's pre-VL-016 attribution ("canon basis:
+  section 11.9 + section 12.4") implied pure-canon derivation. The
+  wire mechanism (caller assertion of expected version + expected hash)
+  is in fact an envelope-spec operationalization (Deliverable 05) that
+  realizes section 11.9's required manifest properties on the wire,
+  not a direct canon-clause requirement. VL-016 premise verification
+  confirmed this unanimously (premise 2 classified Supported: canon
+  requires manifest properties but does not require wire-level
+  caller-asserted fields; premise 3 classified Supported: the
+  envelope-spec operationalization is consistent with what canon does
+  and does not say).
+- **Status: PARTIALLY ADDRESSED** - schema-layer half closed (VL-016);
+  canon-layer half open.
+- **Action:**
+  1. Correct schema attribution for `expected_manifest_version` and
+     `expected_manifest_sha256` to make the layered provenance
+     explicit (canon required properties + envelope spec
+     operationalization). **DONE under VL-016** (decision 3B: both
+     the canon mapping table rows and the field-by-field sections
+     updated; PROVENANCE NOTE added to the section-11.9 mapping
+     section).
+  2. Either (a) promote the envelope spec to a status that makes
+     the layered provenance explicit in canon's framing, or
+     (b) amend canon section 11.9 to explicitly authorize wire-
+     level caller assertion of manifest properties. Both routes
+     require canon-version event under GR-1. **OPEN** - not
+     currently scheduled.
+
+---
+
 ## Resolved gaps
 
 ### G6 / G10 / G0-rename - disambiguation pass complete
@@ -181,6 +252,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 1. **G0**  -  the anchor. Everything else is hygiene; this is the substantive finding.
 2. **G7**  -  without canon-derived tests, the next G0 is invisible.
 3. **G0 rename + G6 + G10**  -  RESOLVED (VL-012). See Resolved gaps.
-4. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete.
-5. G1, G2, G8, G9, G11  -  bookkeeping; do in a batch. (G11 added VL-012.)
-6. **G4, G5**  -  build-outward scope, after the base is honest.
+4. **G2 + G12 + G13**  -  schema-layer work. PARTIALLY closed (VL-014 + VL-015 + VL-016: schema drafted, cross-model-verified, corrected). Full G2 closure pairs with proposed VL-017 (failing schema-shape tests), VL-018 (validator), VL-019 (PEP wiring). G12 and G13 canon-layer halves remain open pending canon-version event under GR-1.
+5. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete.
+6. G1, G8, G9, G11  -  bookkeeping; do in a batch. (G11 added VL-012; G2 removed from bookkeeping by VL-016 since it now has its own active track at item 4.)
+7. **G4, G5**  -  build-outward scope, after the base is honest.

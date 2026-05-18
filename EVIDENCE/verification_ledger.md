@@ -1351,3 +1351,133 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   reinforcement of the same: this entry deliberately does
   not cite its own commit hash. The commit hash will be
   reachable via `git log`.
+
+### VL-016 follow-up - schema and artifact 04 edits applied; split commit repaired
+- Date: 2026-05-18
+- Event: VL-016 commit `20cd1a1` was incomplete. The ledger
+  entry and STATE.md edits landed; the schema edits (decisions
+  1A, 2B, 3B applied to `SPEC/request_schema.md`) and the
+  artifact 04 edits (G12 and G13 rows + Priority order update
+  in `docs/restructure/04_current_vs_claimed.md`) did not.
+  This commit lands the missing edits. The split-commit
+  failure mode is recorded as a process finding below.
+- Status: VL-016 entry's "Files affected" claim in `20cd1a1`
+  is now accurate as of this commit. VL-014 status (CORRECTED,
+  as recorded in the VL-016 entry) is now actually
+  substantiated by the schema's content.
+- Failure shape: the chat-pasted execution block contained
+  comment-only lines for the multi-step edits:
+  ```
+  # apply the 8 str_replace operations from schema_insertions.md
+  # apply the 2 str_replace operations from artifact_04_rows.md
+  ```
+  These were instructions to perform actions, not the actions
+  themselves. The shell treated them as comments and executed
+  nothing. The only operations that ran were the `cp` (STATE.md)
+  and `cat` (ledger append). The `git status` between
+  operations correctly reported only two modified files; the
+  handoff's lesson 5 ("verify the file list matches intent
+  before staging") flagged this exact signal, but the commit
+  proceeded.
+- Files affected by this corrective commit:
+    - SPEC/request_schema.md (decisions 1A, 2B, 3B applied:
+      eight `str_replace` operations per
+      `schema_insertions.md`, covering the `interaction.context`
+      RATIONALE paragraph, the new "Canon mapping - section 11.1
+      `t` (time)" section, the canon mapping table row update
+      for `t`, the two manifest-pinning table row attribution
+      updates, the PROVENANCE NOTE paragraph, and the two
+      field-by-field attribution updates for
+      `expected_manifest_version` and `expected_manifest_sha256`)
+    - docs/restructure/04_current_vs_claimed.md (G12 and G13
+      entries added in long structured form matching G11's
+      style; Priority order updated to move G2 out of the
+      bookkeeping batch into its own active track at item 4,
+      paired with G12 and G13)
+    - EVIDENCE/verification_ledger.md (this corrective entry)
+    - STATE.md (small edit: Last-updated line updated; new
+      process-finding bullet under "Known items open but not
+      scheduled")
+- What this entry does NOT change:
+    - The substance of VL-016 (the corrections, the gap
+      classifications, the premise verification record) is
+      unchanged. `20cd1a1`'s VL-016 entry stands as written;
+      this is execution-layer corrective work, not a revision
+      of the decisions or the verification.
+    - VL-014's status (CORRECTED) is unchanged.
+    - The proposed renumbering of subsequent ledger entries
+      (VL-017 failing tests, VL-018 validator, VL-019 PEP
+      wiring, VL-020 artifact 05 freshness pass) is
+      unchanged. This corrective entry does NOT consume a new
+      ledger number; it is the third "follow-up" commit in
+      the project's history (after VL-012's hash-correction
+      `f0df14c` and VL-014's ledger-recovery `bc83346`).
+- Process finding (third instance of chat-paste-eats-content):
+  This is the third occurrence in the project's history of a
+  chat-pasted execution block failing to do what its narrative
+  said it would:
+    - VL-012: `git commit -m` with embedded newlines lost
+      paragraph breaks in the commit body. Lesson recorded;
+      `f0df14c` corrected the hash citation.
+    - VL-014: `git commit -m` failed twice in the same
+      session, the second failure landing only the schema
+      commit and losing the ledger + STATE.md edits;
+      `bc83346` repaired the split.
+    - VL-016 (this): comment-only lines in a pasted block
+      silently skipped the schema and artifact 04 edits;
+      this commit repairs the split.
+  The first two cases were `git commit -m` mechanics. This
+  third case is a different mechanism (comment lines treated
+  as no-ops) but the same family of failure: the chat-paste
+  surface produces a script that *reads* correct but *executes*
+  incomplete. The lesson generalizes: **never paste a multi-
+  step block that includes comment-form action items**; either
+  paste the actual commands (no `# apply ...` placeholders) or
+  break the work into one tool call per step. The handoff's
+  lessons 1 and 5 cover commit-message mechanics and
+  file-count verification respectively, but did not cover the
+  "comment lines silently skip" case. Candidate addition to
+  the project's session-mechanics lessons file (currently
+  living in the next-session handoff, not yet promoted to
+  `docs/`).
+- Process finding (combined-entry rationale was orthogonal to
+  the failure): the VL-016 entry argued that combining
+  premise verification and corrections in one ledger entry
+  was preferable to splitting because splitting would "repeat
+  the chat-paste split-commit failure shape." That argument
+  was correct about the *entry-structure* layer but did not
+  prevent failure at the *execution* layer. The two layers
+  are independent: an entry can be well-structured and still
+  fail to be enacted by the commit that carries it. The
+  combined-entry decision is not retracted; the failure mode
+  was not what that decision was guarding against. Worth
+  recording that ledger-entry structure and commit execution
+  are separate concerns, both of which can fail independently.
+- Process finding (handoff lesson 5 worked but was
+  overridden): the `git status` between operations correctly
+  showed "2 files changed" when intent was 4. Per lesson 5
+  ("the '1 file changed' diff stat after multi-file intent
+  is a signal to stop, not to commit"), this was the
+  designed-in stop signal. The signal fired; the commit
+  proceeded anyway. Lesson 5 is sound; the protocol gap is
+  one level higher: there is no mechanism for the stop signal
+  to be acted on in the chat-paste workflow, since the same
+  block that produces the bad state also commits it. The
+  lesson generalizes: **stop signals require an interactive
+  pause, not just a printed warning.** Break the work into
+  separate paste-points at every `git status` so the human-
+  in-the-loop can act on what they see.
+- Recovery path chosen: Option 3 of three options offered
+  (revert, reset+force-push, follow-up commit). Option 3 was
+  chosen for the methodology-lesson value of preserving the
+  failure-mode evidence in the public commit log. Option 2
+  (reset + force-push) would have produced a cleaner public
+  history but erased the evidence of the failure mode; Option
+  1 (revert) would have added more ceremony than help for a
+  single-author repository. Option 3 matches the precedent
+  set by `bc83346` (VL-014 follow-up) for exactly this shape
+  of failure.
+- Per VL-012's self-referencing-hash finding and VL-014's
+  reinforcement of the same: this entry deliberately does
+  not cite its own commit hash. The commit hash will be
+  reachable via `git log`.

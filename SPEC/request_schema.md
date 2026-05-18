@@ -50,7 +50,7 @@ this repository.
 | `A` (section 11.1) | actors | implicit in `AP` (section 11.5); caller need not name actors separately | n/a |
 | `S` (section 11.1) | system state | not caller-supplied; system property | n/a |
 | `C` (section 11.1) | context | `interaction.context` | yes |
-| `t` (section 11.1) | time | not caller-supplied; PEP records receipt timestamp | n/a |
+| `t` (section 11.1) | time | not caller-supplied; see "Canon mapping - section 11.1 `t` (time) -> not in request" below | n/a |
 | `AP(I)` (section 11.5) | present authorities | `interaction.AP` | yes |
 | `OP(I)` (section 11.6) | observed coverage | `interaction.OP` | yes |
 | `AR(I)` (section 11.3) | required authorities | NOT caller-supplied; derived from manifest `M` per section 11.9 | n/a |
@@ -69,8 +69,8 @@ drift, the request asserts which manifest the caller intended.
 
 | Canon basis | Schema field | Required? | Semantics |
 |---|---|---|---|
-| section 11.9 ("deterministic, versioned, and integrity-verifiable") | `expected_manifest_version` | yes | caller-asserted; compared by string equality against `manifest.version` |
-| section 11.9 + section 12.4 (manifest version change is an invalid transition) | `expected_manifest_sha256` | yes | caller-asserted; compared against the live manifest hash |
+| section 11.9 (required manifest property) + envelope spec operationalization (Deliverable 05) | `expected_manifest_version` | yes | caller-asserted; compared by string equality against `manifest.version` |
+| section 11.9 (required manifest property) + section 12.4 (invalid manifest transition) + envelope spec operationalization (Deliverable 05) | `expected_manifest_sha256` | yes | caller-asserted; compared against the live manifest hash |
 
 Both fields are CALLER-ASSERTED. The caller is naming the manifest
 they reasoned against. If the live manifest does not match, the gate
@@ -81,6 +81,51 @@ A request with these fields absent is REFUSED at the schema boundary
 (see "PEP boundary behavior" below). A request with these fields
 present but disagreeing with the live manifest is REFUSED inside
 `evaluate()` via `manifest_integrity_valid()`.
+
+PROVENANCE NOTE (G13): The wire-existence of these fields is
+NOT a direct canon clause derivation. Canon section 11.9
+requires the manifest to be "deterministic, versioned, and
+integrity-verifiable" - a property of the manifest itself,
+not a requirement that the request carry caller-asserted
+version/hash fields. The decision to surface these fields on
+the wire is an envelope-spec operationalization (Deliverable
+05) that realizes section 11.9's required manifest properties
+as enforceable on a per-request basis. Section 12.4 (manifest
+version change as invalid transition) reinforces the need for
+the gate to detect manifest drift, but section 12.4 likewise
+does not specify the mechanism. The mechanism (caller
+assertion of expected version + expected hash) is the
+envelope-spec choice. The cross-model verification round
+documented in VL-015 surfaced this layered provenance; OpenAI
+flagged the distinction explicitly. This rationale makes the
+layered provenance visible rather than collapsing it into a
+direct canon citation.
+
+## Canon mapping - section 11.1 `t` (time) -> not in request
+
+Canon section 11.1 defines `I = (A, S, C, t)` but does not
+specify whether `t` is caller-supplied or system-derived. This
+schema makes the explicit choice that `t` is NOT a caller-
+supplied wire field. The PEP records the receipt timestamp at
+request-handling time; this is the `t` used in any subsequent
+evaluation logic.
+
+RATIONALE (G12): Caller-supplied time is a time-spoofing
+surface. A malicious caller could assert arbitrary time
+values, which would interact badly with any future continuity
+logic (Deliverable 05's envelope reassertion protocol)
+comparing timestamps across transitions. Canon section 9's
+reproducibility requirements and section 12.4's invalid-
+transition handling both argue for fail-closed treatment of
+time. PEP-supplied receipt time is the safer default that the
+canon does not contradict.
+
+The cross-model verification round documented in VL-015
+surfaced this canon under-specification (G12). Claude's schema
+and OpenAI's derivation both treated `t` as not caller-
+supplied; Grok's derivation listed `t` as caller-supplied or
+system-derived (left open). This rationale makes the schema's
+previously-silent interpretive choice explicit.
 
 ## Canon mapping - section 12 -> not in request
 
@@ -166,19 +211,44 @@ It is NOT the same as the outer `context` field in the pre-schema PEP
 fields. This schema replaces that flat bag. Migration is part of the
 G2 closure work described under "PEP boundary behavior."
 
+RATIONALE AND CANON UNDER-SPECIFICATION (G12): Canon section
+11.1 defines `I = (A, S, C, t)` but does not specify whether
+`C` is caller-supplied or system-derived. This schema makes
+the explicit choice that `C` is caller-supplied as the
+canonical carrier of state-transition-material per section
+12.1, which names "interaction context" as one of four drivers
+of state transition. Without caller-supplied context on the
+wire, the gate has no way to distinguish context-class
+transitions from authority-class or coverage-class transitions.
+The cross-model verification round documented in VL-015
+surfaced this under-specification: Claude's schema and Grok's
+derivation both treated `C` as caller-supplied; OpenAI's
+stricter reading did not surface `C` as a caller-supplied wire
+field at all. The three-way divergence is recorded as G12.
+This rationale is the explicit interpretive choice the schema
+previously made silently.
+
 #### `interaction.expected_manifest_version` (string, required)
 
 Caller-asserted manifest version. Compared by string equality against
 `manifest.version` inside `manifest_integrity_valid()`
 (IMPLEMENTATION/evaluator.py). Caller-assertion semantics per VL-012;
-canon basis: section 11.9 + section 12.4.
+canon basis: section 11.9 (required manifest property) + section 12.4
+(invalid manifest transition) + envelope spec operationalization
+(Deliverable 05). See "Canon mapping - section 11.9 -> manifest-
+pinning fields" PROVENANCE NOTE for the layered-provenance
+rationale (G13).
 
 #### `interaction.expected_manifest_sha256` (string, required)
 
 Caller-asserted manifest hash. 64-character lowercase hex string.
 Compared against the live SHA256 of `MANIFEST/manifest.json` inside
 `manifest_integrity_valid()`. Caller-assertion semantics per VL-012;
-canon basis: section 11.9 + section 12.4.
+canon basis: section 11.9 (required manifest property) + section 12.4
+(invalid manifest transition) + envelope spec operationalization
+(Deliverable 05). See "Canon mapping - section 11.9 -> manifest-
+pinning fields" PROVENANCE NOTE for the layered-provenance
+rationale (G13).
 
 NOTE (G11): at HEAD, `manifest_sha256()` reads the manifest from a
 hardcoded path rather than hashing the manifest argument that
