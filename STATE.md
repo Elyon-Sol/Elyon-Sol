@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-016 landed in `20cd1a1` with only the ledger entry and STATE.md edits; the schema correction and artifact 04 G12/G13 rows landed in the corrective follow-up commit that carries this STATE.md update; last ledger entry is the VL-016 follow-up; next action is failing schema-shape tests, proposed VL-017)
+Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-017a (methodology promotion: verification-request template and apply-script template committed to docs/methodology/) lands in this commit alongside the STATE.md update; last ledger entry is VL-017a; next action is failing schema-shape tests, still proposed VL-017 -- VL-017a does not consume a build-order ledger number)
 
 ---
 
@@ -169,6 +169,21 @@ manifest layer. CCS has drifted - see G0 below.
   The premise verification and the corrections are recorded in
   the single VL-016 entry; combined-entry rationale documented
   there.
+- **Methodology artifacts promoted (VL-017a).** Two templates
+  extracted from proven session patterns now committed to
+  `docs/methodology/`: the verification-request template
+  (extracted from `verification_request_vl014.md` and
+  `verification_request_vl016_premises.md`; captures the
+  VL-008-procedure-bound common structure across both) and the
+  apply-script template (extracted from
+  `apply_vl016_followup.py`; captures the uniqueness-check +
+  atomic-write + per-edit-delta pattern, including the
+  CRLF-on-read normalization fix and the always-write-LF
+  convention learned from VL-017a's first-run abort). Both
+  artifacts close methodology-debt candidate actions from
+  VL-015 and the VL-016 follow-up. Classification: efficiency
+  move, not trajectory move; recorded in VL-017a's entry with
+  explicit framing of the distinction.
 
 ## What is locked vs. open
 

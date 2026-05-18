@@ -1481,3 +1481,149 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   reinforcement of the same: this entry deliberately does
   not cite its own commit hash. The commit hash will be
   reachable via `git log`.
+
+### VL-017a - Methodology artifacts promoted: verification-request template + apply-script template
+- Date: 2026-05-18
+- Event: Two methodology artifacts that were "candidate
+  actions, not actioned" since VL-015 are now committed to
+  `docs/methodology/` and reusable for future sessions:
+    - `docs/methodology/verification_request_template.md`:
+      parameterized template extracted from
+      `verification_request_vl014.md` and
+      `verification_request_vl016_premises.md`. Both source
+      artifacts produced procedurally-clean cross-model
+      responses under VL-008; the genuine common structure
+      across them is what this template captures.
+    - `docs/methodology/apply_script_template.py`:
+      parameterized template extracted from
+      `apply_vl016_followup.py` (the script that recovered the
+      VL-016 split commit; commit `ebcbc89`). Captures the
+      uniqueness-check + atomic-write + per-edit-delta
+      pattern. Includes the `newline="\n"` fix learned from
+      the VL-016 follow-up CRLF warnings.
+- Numbering: this entry is VL-017a, not VL-017. VL-017 remains
+  reserved for the failing schema-shape tests work named in
+  the schema's "Build order (schema-internal)". Methodology
+  promotion is efficiency work; it does not consume a
+  build-order ledger number. The `a` suffix follows the
+  established pattern (precedent: none in the ledger yet, but
+  consistent with how `f0df14c` and `bc83346` are recorded as
+  follow-up commits rather than as new VL-NNN entries).
+- Classification: this is an **efficiency move**, not a
+  **trajectory move**. The distinction is explicit in this
+  entry because it informs how future sessions should weigh
+  similar promotions:
+    - Efficiency moves lower the friction cost of future work
+      without changing the project's actual capability. They
+      are unbounded in supply (there is always more
+      methodology debt to close).
+    - Trajectory moves change what the project can do (closed
+      gaps, implemented invariants, executable evidence).
+      They are bounded by the actual open work in artifact 04.
+  This promotion is the efficiency analog of bringing
+  artifacts 05/06 current in VL-013: maintenance that
+  preserves rigor without advancing capability. The
+  trajectory work (VL-017 failing tests, VL-018 validator,
+  VL-019 PEP wiring, G0 build proper) is downstream.
+- Why this promotion is appropriate now:
+    - Both source artifacts have been used twice each (the
+      verification-request shape across VL-014 and VL-016
+      premises; the apply-script shape would have been used
+      in VL-016's original commit if it had existed). The
+      shape is proven, not speculative.
+    - Both have process-finding ledger entries (VL-015's
+      methodology-artifact-not-committed; VL-016's
+      verification-request-not-committed and the follow-up's
+      apply-script process finding) calling for promotion.
+      Two ledger entries calling for an action that hasn't
+      been taken is methodology debt.
+    - The promotion is small and low-risk: pure additions to
+      `docs/`, no canon change, no code change, no test
+      change, no implementation surface affected.
+- What the templates capture (and what they intentionally do
+  not):
+    - **Verification-request template:** the seven common
+      sections across VL-014 and VL-016 premises requests
+      (What you are being asked to do; Procedure; What VERB
+      means/does not mean; What outcome means what;
+      Submission format; Attached files; Ledger context).
+      Plus optional sections (out-of-scope boundaries,
+      clarifications) for when the verification question is
+      narrower than the artifact under verification. The
+      template does NOT prescribe the task verb, the outcome
+      categories, or the submission structure - those are
+      task-specific parameters. The procedure block (VL-008
+      rules a/b/c) is the only fixed content; everything
+      else is parameterized.
+    - **Apply-script template:** the per-edit uniqueness
+      check, the atomic write, the per-edit byte-delta
+      reporting, the CRLF-on-read normalization, and the
+      always-write-LF convention. CRLF normalization on read
+      lets old_str literals always use LF regardless of the
+      on-disk convention; always-writing-LF aligns with the
+      repo's VL-009 standard and surfaces line-ending
+      normalization in git diff where it's trackable. The
+      template does NOT prescribe which files to edit or
+      what edits to apply - those are filled in by the
+      caller. The example edit-list structure is included
+      as commented-out placeholder.
+- What this entry does NOT do:
+    - Add any implementation code.
+    - Close any open gap (G0/G2/G4/G5/G7/G8/G9/G11/G12/G13
+      all remain open at the same status as before).
+    - Change the substantive G0 build track.
+    - Reduce open-questions count in any artifact.
+    - Re-verify any previously-verified artifact.
+  This entry's contribution is purely on the efficiency
+  axis. It does not move the trajectory axis.
+- Process finding (the efficiency/trajectory distinction is
+  worth surfacing as part of the project's ongoing
+  self-assessment): a rigor-heavy project has a comfortable
+  failure mode where each session produces methodology
+  improvements without producing capability improvements. The
+  ratio of efficiency work to trajectory work, sustained over
+  multiple sessions, is a signal worth tracking. The VL-013
+  through VL-017a sessions have produced significant
+  methodology work and one substantive artifact (the schema);
+  the next 3-5 sessions should be predominantly trajectory
+  work (G2 code-close via VL-017/018/019; G0 build proper) to
+  maintain a healthy ratio. Not actioned as a rule or
+  governance change; recorded as project-level self-awareness.
+- Process finding (template-evolution during first use): the
+  apply-script template's first use in VL-017a aborted on
+  edit 2 because STATE.md on disk had CRLF line endings
+  (autocrlf artifact from the VL-016 follow-up checkout) and
+  the script's old_str literals used LF. The script's
+  atomic-write design correctly prevented partial application;
+  the abort was clean. The fix - normalize CRLF to LF on read
+  before matching, always write LF - was incorporated into the
+  template BEFORE committing it. This is the right shape for
+  template promotion: the first attempted use surfaces real
+  failure modes; those failures get folded into the template;
+  the template that lands has been hardened against at least
+  one cycle of real-world hostility. A template promoted
+  without first-use exercise would have shipped with the bug
+  baked in. Lesson: methodology promotions benefit from
+  going through one real application before being committed
+  to docs/, even when the underlying source artifact appears
+  proven. The source artifact (apply_vl016_followup.py) worked
+  in its specific run; the generalization to a template
+  surfaces edge cases the specific run didn't hit.
+- Files affected:
+    - docs/methodology/verification_request_template.md (new)
+    - docs/methodology/apply_script_template.py (new)
+    - EVIDENCE/verification_ledger.md (this entry)
+    - STATE.md (small reconciliation update)
+- Files NOT affected:
+    - CANON/canon.md (locked)
+    - MANIFEST/manifest.json (untouched)
+    - SPEC/* (untouched)
+    - IMPLEMENTATION/* (untouched)
+    - TESTS/* (untouched)
+    - docs/restructure/* (untouched; the methodology
+      directory is parallel to restructure, not a revision
+      of it)
+- Per VL-012's self-referencing-hash finding and subsequent
+  reinforcement: this entry deliberately does not cite its
+  own commit hash. The commit hash will be reachable via
+  `git log`.
