@@ -2028,7 +2028,7 @@ recording" provision.
 Per VL-012's self-referencing-hash finding and subsequent reinforcement:
 this entry deliberately does not cite its own commit hash. The commit
 hash will be reachable via `git log`.
-## VL-018 - 2026-05-18 - G2 build track: schema validator live build; three VL-017b candidates resolved with rationale; G14 surfaced
+### VL-018 - G2 build track: schema validator live build; three VL-017b candidates resolved with rationale; G14 surfaced
 
 **Status:** COMMITTED
 **Author:** Claude (working session with the project author)
@@ -2463,6 +2463,223 @@ is not. Claude almost recorded a false process finding about
 cat-append behavior; the project author's request for the diff
 caught the misdiagnosis before that finding landed. Recording
 this here as the actual finding to displace the false one.
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry deliberately does not cite its own
+commit hash. The commit hash will be reachable via `git log`.
+### VL-018 follow-up - header convention corrected; docs/methodology/session_mechanics_lessons.md promoted
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** Two distinct items combined in one commit per the
+established VL-016-follow-up precedent for correction-plus-record:
+(a) VL-018's ledger entry header is corrected in-place from
+`## VL-018 - 2026-05-18 - <summary>` to the convention-matching
+`### VL-018 - <summary>`; (b) `docs/methodology/session_mechanics_lessons.md`
+is promoted per VL-017's self-actuating-threshold provision.
+
+---
+
+### Background
+
+VL-018 (commit `cc08844`) landed the schema validator, resolved
+three VL-017b candidates, and surfaced G14. The trajectory work is
+correct and stands. The entry's prose, citation discipline, and
+artifact references are unchanged by this follow-up.
+
+Two divergences from convention were observed after the commit was
+pushed:
+
+1. **Header convention divergence.** All 17 prior ledger entries
+   (VL-001 through VL-017b) use `### VL-N - <summary>` as the entry
+   header. VL-018's entry used `## VL-018 - 2026-05-18 - <summary>`:
+   one level shallower (`##` vs `###`), with an embedded date the
+   prior convention does not use. The divergence was visible in
+   committed history via `grep -nE "^#+ VL-" EVIDENCE/verification_ledger.md`,
+   which showed every prior entry at `###` depth and VL-018's entry
+   as the sole `##` entry.
+
+2. **Five Claude-side verbosity-as-deflection instances and two
+   terminal-output-vs-file-content misdiagnoses** accumulated
+   across the VL-018 session, one of which (instance 5: the
+   skipped header check at entry delivery time) materialized as
+   the committed divergence above. The other four deflections were
+   retracted in chat without consequence; the two misdiagnoses
+   were caught before recovery action through `diff` and `cat -A`
+   primitives.
+
+### What this follow-up does
+
+**Correction (small).** The `## VL-018 - 2026-05-18 - ...` header
+in `EVIDENCE/verification_ledger.md` is changed in-place to
+`### VL-018 - <summary>` (matching the 17 prior entries'
+convention: three hashes, no embedded date). This is a one-line
+edit; entry content is otherwise unchanged.
+
+**Promotion (larger).** A new methodology artifact,
+`docs/methodology/session_mechanics_lessons.md`, is committed.
+Structure parallels VL-017a's verification-request template and
+VL-017b's build-resumption-request template: one file capturing
+patterns observed across multiple sessions, with each pattern
+recorded at the point where the second instance demonstrates the
+pattern is durable rather than session-specific. Four lessons
+land in the initial file:
+
+- Lesson 1: Verbosity-as-deflection in methodology questions
+  (six surface instances across VL-017b and VL-018).
+- Lesson 2: Terminal-output rendering is not file content (two
+  surface instances in VL-018).
+- Lesson 3: Source-first applies to Claude's own derivations
+  (three surface instances across VL-017b and VL-018, one of
+  which is the load-bearing example for this follow-up).
+- Lesson 4: Claude-side accumulated friction is its own
+  threshold category (extending VL-017's self-actuating-threshold
+  provision to cover patterns that VL-017's original calibration
+  did not detect).
+
+Each lesson follows the same structural template: surface events
+with citations, failure mode characterization, corrective rule,
+and an in-the-moment self-check Claude can run to detect the
+pattern before acting.
+
+### Why combine correction and promotion in one commit
+
+The two halves are causally linked: the correction is the symptom,
+the promotion is the lesson the symptom demonstrates. Combining
+them in one commit makes the citation chain self-contained - the
+file the lesson lives in can cite the commit that fixes the
+example, and the commit that fixes the example can cite the file
+that records the lesson. This matches VL-016 follow-up's precedent
+for combining correction-and-record where the two are causally
+inseparable.
+
+The alternative (two separate commits) was considered and rejected
+on procedural-clarity grounds: separating them would require
+either (i) the lesson file to cite a future commit (a
+forward-reference that the project's GR-1-spirit governance
+generally avoids), or (ii) the correction commit to land without
+citing the lesson it occasioned (leaving the lesson's source
+ambiguous).
+
+### Framing: correction vs. due diligence
+
+The trajectory work in VL-018 is net positive and stands on its
+own evidence. The schema validator is correct (26/27 in-container
+tests pass plus the positive case); the three candidates are
+resolved with rationale; G14 is surfaced and entered in artifact
+04 with citation chain; G2's code half is advanced. None of this
+is affected by the verbosity-as-deflection patterns observed in
+the session.
+
+The follow-up is therefore:
+
+- **Part correction (small):** the header divergence is in
+  committed history and must be repaired; the repair is
+  one line.
+- **Part due diligence (larger):** the session-mechanics-lessons
+  file records Claude-side patterns the project author cannot
+  directly control. The file is bookkeeping for future sessions,
+  not contamination cleanup for the present one.
+
+The project author named the framing distinction explicitly
+during the session-close discussion. The distinction matters
+because it tells the next session reader what this follow-up
+commit *is for*: not "VL-018's work needed repair" but "VL-018's
+session demonstrated patterns worth recording, and one pattern
+materialized as a small repair that can ride in the same commit."
+
+### Citation discipline
+
+Lesson 3 (source-first applies to Claude's own derivations) is
+the load-bearing lesson for this follow-up. The header divergence
+is its second-instance failure-cost example: the first instance
+(apply-script template draft) was caught in chat without
+divergence cost; the second instance (entry header format) was
+not caught and produced committed divergence.
+
+Two surface events at two different stages of source-first
+discipline (one caught, one not caught) constitute the
+cross-session evidence the project's two-instance promotion
+threshold requires. Lesson 3's promotion to a durable artifact
+is therefore on the same evidentiary footing as VL-017a's
+verification-request template and VL-017b's build-resumption
+template: pattern observed in a prior session, pattern observed
+again in the current session, promotion at the second instance.
+
+### What this follow-up does NOT do
+
+- Touch VL-018's substantive content. The entry's prose,
+  Candidate-1/2/3 resolutions, G14 surface rationale, validator
+  description, and files-affected list are unchanged.
+- Revise VL-017's friction-point threshold. Lesson 4 in the new
+  file extends the threshold to a second category (Claude-side
+  accumulated friction) rather than replacing VL-017's original
+  calibration; both thresholds operate.
+- Resolve the open G14 spec edit. That remains a separate
+  forthcoming commit per the spec-defines-the-rename pattern
+  (candidate GR-2) flagged in VL-014's process finding and
+  reiterated in VL-018's "What this entry does NOT do" section.
+- Address VL-017's stale forward-reference in SPEC/request_schema.md.
+  Separate focused commit per VL-017's flagging; bundling it here
+  would muddy this follow-up's diff.
+
+### Files affected
+
+- `EVIDENCE/verification_ledger.md` (header correction + this
+  entry appended)
+- `docs/methodology/session_mechanics_lessons.md` (new file)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `SPEC/request_schema.md` (untouched)
+- `IMPLEMENTATION/*` (untouched; the validator stands at HEAD as
+  VL-018 committed it)
+- `TESTS/*` (untouched)
+- `STATE.md` (untouched; STATE.md's last-updated line and
+  next-action prose were correctly set by VL-018's apply script;
+  the header divergence was internal to the ledger entry only)
+- `docs/restructure/04_current_vs_claimed.md` (untouched; G14 row
+  stands at HEAD as VL-018 committed it)
+- `docs/methodology/verification_request_template.md`,
+  `docs/methodology/build_resumption_request_template.md`,
+  `docs/methodology/apply_script_template.py` (untouched; the
+  new session-mechanics-lessons artifact is a sibling, not a
+  revision)
+
+### Process findings
+
+**Source-first held in this follow-up's drafting.** Before
+drafting the corrected header, Claude verified the convention
+against the 17 prior entries via `grep -nE "^#+ VL-"` on the
+committed ledger. Before drafting the session-mechanics-lessons
+file, Claude verified the structural shape against the two prior
+methodology artifacts (VL-017a's verification-request template
+and VL-017b's build-resumption-request template). The same
+source-first discipline whose violation occasioned this
+follow-up was applied to producing the follow-up.
+
+**Sixth verbosity-as-deflection instance occurred during this
+follow-up's drafting.** After Claude recommended Option 1
+(dos2unix + re-add) during the apply-script run, an
+ask_user_input_v0 call followed asking the user to choose
+Option 1 or Option 2. The recommendation made the choice
+already; the question was filler. Retracted in the same turn.
+This is the sixth instance of the pattern this session has
+demonstrated, recorded for Lesson 1's surface-event list in
+the new methodology artifact.
+
+**The threshold-firing observation is itself the proof of
+concept.** VL-017's self-actuating-threshold provision was the
+first attempt in this project at making a process-finding
+candidate self-actuating rather than perpetually-deferred. The
+threshold did not fire on VL-018's session by VL-017's letter
+(zero environment-side first-hour friction points), but the
+Claude-side analog clearly warranted promotion. This follow-up
+extends the mechanism rather than waiting for a future session
+to surface the gap; the Lesson 4 record makes the extension
+explicit.
 
 Per VL-012's self-referencing-hash finding and subsequent
 reinforcement: this entry deliberately does not cite its own
