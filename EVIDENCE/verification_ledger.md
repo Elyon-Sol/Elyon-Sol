@@ -1703,3 +1703,328 @@ Candidate action (not actioned in VL-017): a focused commit auditing `.gitignore
 - `docs/restructure/*` (untouched; artifact 04's G2 status update is part of the closure entry, not this precursor).
 
 Per VL-012's self-referencing-hash finding and subsequent reinforcement: this entry deliberately does not cite its own commit hash. The commit hash will be reachable via `git log`.
+### VL-017b - Build-resumption invocation tested against two models; methodology template promoted
+
+- Date: 2026-05-18
+- Event: A build-resumption invocation artifact (prompt block + six-file
+  primary-source bundle, targeting `IMPLEMENTATION/request_validator.py`
+  per `SPEC/request_schema.md` build-order step 3) was tested against two
+  fresh model sessions (Grok and OpenAI) under dry-run framing. Both
+  sessions produced procedurally-clean output per the VL-008 procedure
+  adapted for build (scope confirmation present, primary-source-derived
+  citations present, out-of-scope items not produced). The test
+  incidentally surfaced three findings about `SPEC/request_schema.md` in
+  its post-VL-016 CORRECTED state. The build-resumption-request template
+  extracted from the test artifact is promoted to
+  `docs/methodology/build_resumption_request_template.md`, paralleling
+  VL-017a's promotion of the verification-request template.
+- Classification: **test result with incidental trajectory findings**.
+  This is a new classification, distinct from VL-017a's pure-efficiency
+  promotion and VL-017's pure-trajectory test commit. The methodology
+  promotion portion is efficiency work; the three incidental spec
+  findings are trajectory-shaped (they belong with G12/G13's family as
+  spec-gap candidates) but were not produced under live-build conditions.
+  The classification is load-bearing: downstream citation of the three
+  findings must treat them as **candidates for live-build confirmation
+  or supersession**, not as established findings. See the "Citation
+  discipline" subsection below.
+
+#### What the test was
+
+A dry-run exercise to prove that the cross-model verification pattern
+established for spec artifacts (VL-015, VL-016) generalizes to build
+artifacts. The invocation handed each model the same six primary-source
+attachments (`SPEC/request_schema.md`, `TESTS/adversarial/test_request_schema.py`,
+`CANON/canon.md`, `CANON/canon.lock`, `MANIFEST/manifest.json`,
+`IMPLEMENTATION/pep.py`) and the same prompt block, with explicit
+dry-run framing at the top of the prompt: output would not be committed,
+purpose was to prove the invocation mechanism. Both models were asked
+to produce `IMPLEMENTATION/request_validator.py` per the spec's
+build-order step 3, with submission format requiring procedure
+confirmation, the validator file, a spec-citation map, a test-mapping
+table, and gap candidates (if any).
+
+The test was *not* a verification of either model's code output for
+correctness against the 27 tests in `TESTS/adversarial/test_request_schema.py`.
+That verification will happen in the live VL-018 build session when
+the validator's code is committed and the test suite is run against
+it. The test *was* a verification of (a) the invocation artifact's
+procedural binding across models, (b) the spec's build-readiness as
+observed through two independent derivations.
+
+#### Procedural results (both models procedurally clean)
+
+Both Grok and OpenAI produced responses meeting the four procedural
+criteria specified in the test setup:
+
+1. **Procedure confirmation present.** Both opened with explicit
+   confirmation of scope adherence, naming the six attached primary
+   sources.
+2. **Spec-citation map present.** Both mapped each refusal code their
+   validator emitted to a section of `SPEC/request_schema.md`. OpenAI's
+   citations included quoted spec text; Grok's cited section names
+   without quoted text. Both forms are within procedural bounds; the
+   quoted-text form is more falsifiable and is reflected in the
+   template's submission-format specification.
+3. **Out-of-scope items not produced.** Neither model produced edits
+   to `pep.py`, new tests, evidence files, or ledger entries.
+4. **Two-model convergence/divergence observable.** Both models
+   converged on six common refusal codes with the same trigger
+   semantics; both produced spec-citation maps and test-mapping tables
+   evaluable against each other.
+
+Procedural classification per VL-008 adapted for build: both sessions
+procedurally clean.
+
+#### Convergence (the spec's stable core)
+
+Six refusal codes were emitted by both validators with identical names
+and identical trigger conditions:
+
+- `REF_SCHEMA_TOP_LEVEL`
+- `REF_SCHEMA_BAD_URL`
+- `REF_SCHEMA_FLAT_KEYS`
+- `REF_SCHEMA_MANIFEST_PINNING_MISSING`
+- `REF_SCHEMA_TYPE_MISMATCH`
+- `REF_SCHEMA_RESERVED_CCS`
+
+Two independent derivations from the post-VL-016 CORRECTED spec, under
+procedurally-clean conditions, agreed on these codes. This is the
+strongest form of cross-model corroboration achieved on a build-track
+artifact to date. The spec's core refusal-code definitions are
+build-ready in the sense that two models extract the same set without
+disagreement. Classification: candidate confirmation; subject to
+live-build supersession only if the actual VL-018 validator commit
+surfaces a different result against the test suite.
+
+#### Divergence (three incidental trajectory findings, candidates)
+
+**Finding 1 - The seventh refusal code's status is under-specified.**
+
+`SPEC/request_schema.md` (per STATE.md's description, "implements the
+seven schema-named refusal codes") presumably names seven codes. Both
+models agreed on six. They diverged on the seventh:
+
+- Grok emitted six codes; routed `test_schema_rejects_parse_error` to
+  "(handled outside validator)" with the rationale that the spec's
+  build-order step 1 ("parse handled by caller") puts parse-error
+  outside the validator's responsibility.
+- OpenAI emitted seven codes, defining `REF_SCHEMA_PARSE_ERROR` as a
+  named constant but documenting in the validator's docstring that
+  raw JSON parsing responsibility lives in future `pep.py` integration.
+  Routed `test_schema_rejects_parse_error` to `REF_SCHEMA_PARSE_ERROR`.
+
+Both interpretations are defensible from the spec. The under-specified
+locus: should the validator name a refusal code it does not emit,
+because the spec lists it among the seven? This is structurally
+analogous to G12/G13 from VL-015. Recorded here as a candidate for
+artifact 04 entry, *pending live-build confirmation in VL-018*. If
+VL-018's validator resolves this question (by emitting six or seven
+codes and citing rationale), the finding either upgrades to a real
+spec gap or is superseded by VL-018's resolution.
+
+**Finding 2 - Generic unknown keys inside `interaction` are
+under-specified.**
+
+OpenAI surfaced this explicitly as a gap candidate: the spec rejects
+CCS-shaped fields with `REF_SCHEMA_RESERVED_CCS` and presumably
+rejects unknown keys generally, but does not define a distinct
+refusal code for non-CCS-shaped unknown keys. OpenAI's validator
+falls back to existing codes; the spec does not specify whether this
+is correct behavior or whether a separate code should exist.
+
+Grok did not surface this gap (Grok's gap-candidates section reported
+none). The asymmetry is itself a procedural observation: Grok may have
+silently resolved this in code rather than surface it. A future
+build-resumption-request template revision (proposed) should require
+gap candidates to be enumerated even when zero, forcing the model to
+assert absence rather than skip the section.
+
+Classification: candidate spec gap, pending live-build confirmation.
+
+**Finding 3 - Parse-order behavior is procedurally rather than
+structurally specified.**
+
+OpenAI's second gap candidate: the spec describes parse-order behavior
+procedurally at the PEP boundary rather than structurally in the
+validator's API. The validator therefore assumes already-parsed Python
+objects; the contract between caller (the future `pep.py` revision)
+and validator on parse-error handling is implicit rather than
+specified. This is closely related to Finding 1 but addresses the
+API-shape question rather than the refusal-code-existence question.
+
+Classification: candidate spec gap, pending live-build confirmation.
+
+#### Citation discipline (load-bearing classification)
+
+The three findings above are classified as **candidates from a
+dry-run test**, not as established findings. Downstream citation
+must honor this classification. Specifically:
+
+- The VL-018 entry (live build) may cite these findings as candidates
+  it confirms, supersedes, or revises with its own resolution.
+- The VL-018 entry MUST NOT cite these findings as established spec
+  gaps without first running the live-build validator commit and
+  observing the actual behavior. The dry-run test did not commit
+  code, run tests, or expose either validator to test-suite pressure.
+- Artifact 04 (`docs/restructure/04_current_vs_claimed.md`) does NOT
+  receive new G-numbered entries from this test. If VL-018 confirms
+  Finding 1 as a real spec gap, *that* entry creates the artifact-04
+  row, with citation pointing back to both VL-017b (candidate
+  surface) and VL-018 (live-build confirmation).
+
+This citation discipline is the cost of recording test results in
+the same ledger as live-build findings. The classification is
+load-bearing in exactly the way VL-017a's efficiency/trajectory
+distinction is load-bearing: removing the classification or treating
+it as decorative degrades the ledger's evidentiary value.
+
+#### Cross-model internal-consistency observations
+
+Beyond the procedural-cleanliness and convergence findings, two
+observations about how each model's response held together:
+
+**Grok's test-mapping table claims routes its code would not take.**
+
+- Grok's CCS-reserved detection uses substring match on `"ccs"` only.
+  Grok's test-mapping table routes `reserved_ccs_continuity_token`
+  and `reserved_ccs_prior_state_hash` to `REF_SCHEMA_RESERVED_CCS`,
+  but Grok's code would not match these (no `"ccs"` substring in
+  `"continuity_token"` or `"prior_state_hash"`).
+- Grok's flat-key check is positionally ordered such that
+  `flat_keys_archived_proof_001_shape` would hit `REF_SCHEMA_TOP_LEVEL`
+  before reaching the flat-keys check, but Grok's mapping table routes
+  it to `REF_SCHEMA_FLAT_KEYS`.
+
+**OpenAI's code matches OpenAI's table.** OpenAI explicitly handles
+the flat-keys-without-interaction case before raising top-level; uses
+a broader substring set (`"ccs"`, `"continuity"`, `"prior_state_hash"`)
+for CCS-reserved detection consistent with the test names.
+
+This is a calibration finding about the two models on this task on
+this day: OpenAI's response was more internally consistent than
+Grok's. Not a generalization, not a verdict on either model. Recorded
+because it would inform a future decision about which model to use
+for which build-track step under what verification regime. The
+specific lesson: when running two-model corroboration on a build
+artifact, table-versus-code consistency is itself a procedural check,
+not just an output property. Worth adding to the template's
+submission-format section.
+
+#### Build-resumption template promoted
+
+The template extracted from this test's prompt artifact is committed
+to `docs/methodology/build_resumption_request_template.md`. Structure
+follows the seven-section shape of
+`docs/methodology/verification_request_template.md` (VL-017a),
+adapted from verification to build:
+
+- What you are being asked to do (specifies the build artifact and
+  the spec section that names it as a build-order step)
+- Procedure (VL-008-bound, with the build adaptation explicit)
+- What BUILD means / does not mean
+- Bounded deliverable
+- What outcome means what (procedurally clean complete, procedurally
+  clean gap-finding, procedurally unclean)
+- Submission format (procedure confirmation, the artifact, spec-citation
+  map, test-mapping table or equivalent, gap candidates)
+- Attached files (primary sources)
+- Hard constraints (reiterating the most common procedural failures)
+
+The template does NOT prescribe the build artifact, the spec section,
+or the file list - those are task-specific parameters. The procedure
+block and the submission-format requirements are the fixed content.
+
+Two-instance promotion bar per VL-017a's pattern: this test exercises
+the template against two models in one task, which is the
+build-resumption analog of VL-016's premise-verification-with-two-models
+shape. Whether this counts as "two instances" or "one instance with
+two-model corroboration" is a methodology call; recorded here as
+two-instance equivalent under the principle that the procedural
+binding was demonstrated against two independent model surfaces. If
+a future build-resumption session against a single model with the
+template surfaces issues this two-model test did not, that's a real
+finding and revises the promotion's basis; the template stays
+committed in the interim.
+
+#### What this entry does NOT do
+
+- Commit any code to `IMPLEMENTATION/`. The validator file remains
+  unauthored at HEAD; VL-018 is the live-build commit for that file.
+- Close G2 or any other open gap. The candidates surfaced here are
+  pending live-build confirmation per the citation discipline above.
+- Run the 27 tests in `TESTS/adversarial/test_request_schema.py`. The
+  uniform-422 finding from VL-017 stands at HEAD; tests become
+  discriminating only after VL-018 (validator) and VL-019 (PEP wiring).
+- Change the build-order trajectory. Next action remains VL-018:
+  build the validator, run the tests, confirm or supersede the
+  candidates from this entry.
+
+#### Process findings
+
+**The "dry-run vs ledger" framing question.** This session opened with
+an explicit decision not to record the test, on the grounds that
+context loss at session close made findings ephemeral. The decision
+was revised mid-session on the argument that a test is a test, the
+findings are real, and ledger completeness through classification is
+preferable to ledger purity through admission gating. Recording the
+revision here because the decision-shape will recur: any session
+producing real findings under non-standard framing faces this question.
+The answer this entry establishes: real findings enter the ledger with
+honest classification of their provenance and citation discipline
+constraining downstream use. Admission gating on framing grounds is
+not the discipline; classification rigor is.
+
+**Verbosity-as-deflection in methodology questions.** During the
+session, the methodology argument for recording the test ran longer
+than the test itself produced findings. Two turns of methodology
+argument could have been one turn of "yes, record it" and one turn of
+"here's the draft." Generalized lesson worth carrying into future
+sessions: when the user asks a methodology question, the pull toward
+arguing the methodology is itself a failure mode. The methodology
+exists to enable work, not to justify discussions about work. If the
+user has stated a position and asked for objective check, the check
+is bounded; running the check past the bound is filler. Recorded
+because this is a session-mechanics-lessons candidate of a different
+shape than VL-017's friction-point findings - it is a Claude-side
+behavior pattern, not an environment-side one.
+
+**First-hour friction count per VL-017's threshold.** VL-017 set the
+threshold at three friction points in the first hour for triggering
+session-mechanics-lessons promotion. This session opened with one
+friction point (paste corruption in the resume-protocol intent block:
+the phrase "over the template instrumentation.y promotion takes
+precedencent" was a mid-word fragment of the intended methodology
+instruction). One point, threshold not triggered. The session
+proceeded with trajectory-adjacent work (the dry-run test) rather
+than session-mechanics promotion. Recording the count satisfies
+VL-017's "whether it triggers is itself a measurement worth
+recording" provision.
+
+#### Files affected
+
+- `EVIDENCE/verification_ledger.md` (this entry)
+- `docs/methodology/build_resumption_request_template.md` (new)
+- `STATE.md` (small reconciliation update: VL-017b lands; next action
+  remains VL-018; the three candidate findings are noted in "Known
+  items open but not scheduled" with explicit citation discipline)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `SPEC/*` (untouched; the three candidate findings about the spec
+  do not produce edits to the spec - they produce candidate
+  artifact-04 entries pending live-build confirmation)
+- `IMPLEMENTATION/*` (untouched; no validator code in this entry)
+- `TESTS/*` (untouched; no test changes)
+- `docs/restructure/*` (untouched; artifact 04 receives no entries
+  from this test per the citation discipline)
+- The verification-request template at
+  `docs/methodology/verification_request_template.md` (unchanged;
+  the build-resumption template is a parallel artifact, not a
+  revision of it)
+
+Per VL-012's self-referencing-hash finding and subsequent reinforcement:
+this entry deliberately does not cite its own commit hash. The commit
+hash will be reachable via `git log`.

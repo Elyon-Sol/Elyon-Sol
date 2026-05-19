@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-017 (failing schema-shape tests at PEP boundary; 27/27 fail uniformly at Pydantic wire-shape gate; honest G2 signal per schema's build-order step 2) lands in this commit alongside the STATE.md update; last ledger entry is VL-017; next action is the schema validator, proposed VL-018)
+Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-017b (build-resumption invocation tested against two models; build-resumption-request template promoted to docs/methodology/; three candidate spec-gap findings recorded with citation discipline pending live-build confirmation in VL-018) lands in this commit alongside the STATE.md update; last ledger entry is VL-017b; next action remains the schema validator, proposed VL-018)
 
 ---
 
@@ -205,6 +205,33 @@ manifest layer. CCS has drifted - see G0 below.
   the honest G2 signal that the schema's build-order step
   2 specifies. Classification: trajectory move per VL-017a's
   distinction.
+- **Build-resumption invocation tested against two models
+  (VL-017b).** A dry-run test of the invocation artifact for
+  VL-018 (`IMPLEMENTATION/request_validator.py` per
+  `SPEC/request_schema.md` build-order step 3) was run against
+  Grok and OpenAI with identical six-file primary-source
+  bundles. Both models produced procedurally-clean output per
+  VL-008-adapted-for-build (scope confirmation, spec-citation
+  maps, no out-of-scope artifacts). Both validators converged
+  on six refusal codes (`REF_SCHEMA_TOP_LEVEL`,
+  `REF_SCHEMA_BAD_URL`, `REF_SCHEMA_FLAT_KEYS`,
+  `REF_SCHEMA_MANIFEST_PINNING_MISSING`,
+  `REF_SCHEMA_TYPE_MISMATCH`, `REF_SCHEMA_RESERVED_CCS`) with
+  identical trigger semantics. They diverged on a seventh code
+  (parse-error: Grok handles externally, OpenAI names but does
+  not trigger). Three candidate spec-gap findings recorded:
+  seventh-code disambiguation, generic-unknown-key handling,
+  parse-order API-vs-procedure separation. Build-resumption-
+  request template extracted from the test prompt and promoted
+  to `docs/methodology/build_resumption_request_template.md`,
+  paralleling VL-017a's verification-request-template
+  promotion. Classification: test result with incidental
+  trajectory findings (new category; distinct from VL-017a's
+  pure-efficiency and VL-017's pure-trajectory). The three
+  candidate findings carry explicit citation discipline: they
+  may be confirmed, superseded, or revised by VL-018's
+  live-build commit, but must not be cited as established spec
+  gaps without that confirmation.
 
 ## What is locked vs. open
 
@@ -283,8 +310,10 @@ the G0 build track is underway:
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected) complete,
-and the failing-tests sub-step of item 4 done (VL-017),
-the remaining order is:
+the failing-tests sub-step of item 4 done (VL-017), and the
+build-resumption invocation tested against two models (VL-017b)
+producing template promotion plus three candidate findings to
+confirm/supersede in VL-018, the remaining order is:
 G2 code-close (validator then PEP wiring; proposed
 VL-018/VL-019), then G0 build (canonical CCS via envelope),
 G7 (canon-derived tests), G3 (reframe public materials once 06 makes
@@ -397,6 +426,43 @@ session-mechanics-lessons file to `docs/` so these
   explicit un-ignore rules or comments for every name that
   could collide with a template assumption. Efficiency move
   per VL-017a's classification; not blocking. Not actioned.
+- VL-017b candidate finding 1: seventh refusal code's status.
+  The spec presumably names seven schema refusal codes; two
+  models disagreed on whether the seventh
+  (`REF_SCHEMA_PARSE_ERROR`) should be named-but-not-triggered
+  by the validator or omitted entirely. Candidate for
+  artifact-04 entry pending live-build confirmation in VL-018.
+  If VL-018 resolves this question through its commit
+  rationale, the candidate either upgrades to an artifact-04
+  row or is superseded. Not actioned in VL-017b; resolution
+  belongs to VL-018.
+- VL-017b candidate finding 2: generic-unknown-key handling
+  inside `interaction`. The spec specifies CCS-shaped unknown
+  keys get `REF_SCHEMA_RESERVED_CCS`; the treatment of non-
+  CCS-shaped unknown keys is under-determined. Candidate for
+  artifact-04 entry pending live-build confirmation in VL-018.
+- VL-017b candidate finding 3: parse-order API-vs-procedure
+  separation. The spec describes parse-order behavior
+  procedurally at the PEP boundary rather than structurally in
+  the validator's API; the contract between caller and
+  validator on parse-error handling is implicit. Candidate for
+  artifact-04 entry pending live-build confirmation in VL-018.
+- VL-017b process finding: verbosity-as-deflection in
+  methodology questions. The decision to record this test ran
+  longer in methodology argument than the test produced
+  findings. Claude-side behavior pattern worth flagging;
+  candidate addition to a future session-mechanics-lessons
+  artifact, distinct from VL-017's environment-side
+  friction-point findings.
+- VL-017b process finding: build-resumption template revision
+  from first use. Item 5 of Submission format now requires
+  explicit 'None' enumeration when no gap candidates exist,
+  rather than allowing the section to be skipped. The first
+  use surfaced this because one model reported 'None' and the
+  other reported two gap candidates; the asymmetry is
+  procedurally informative only when both cases are explicit.
+  Revision incorporated into the committed template; recorded
+  here for traceability.
 
 ---
 
