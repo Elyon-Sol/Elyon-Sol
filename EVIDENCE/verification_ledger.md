@@ -2684,3 +2684,342 @@ explicit.
 Per VL-012's self-referencing-hash finding and subsequent
 reinforcement: this entry deliberately does not cite its own
 commit hash. The commit hash will be reachable via `git log`.
+### VL-019 - PEP wired to validator; G2 closed in code; 27/27 schema tests + 23/23 evaluator regression passing
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** `IMPLEMENTATION/pep.py` per `SPEC/request_schema.md`
+build-order step 4. This is the commit where G2 closes in code:
+the wire shape changes from `{target_url, context}` to
+`{target_url, interaction}`; the PEP calls `validate_request()`
+before `evaluate()`; parse-error handling at the boundary emits
+`REF_SCHEMA_PARSE_ERROR` (the seventh refusal code that VL-018's
+validator names at module level but does not itself emit); the
+27 discriminating tests in
+`TESTS/adversarial/test_request_schema.py` transition from
+uniform-422 (VL-017's finding) to per-code discrimination.
+
+---
+
+### Background
+
+VL-018 (commit `cc08844`) landed the schema validator with six
+emitted refusal codes (`REF_SCHEMA_TOP_LEVEL`,
+`REF_SCHEMA_BAD_URL`, `REF_SCHEMA_FLAT_KEYS`,
+`REF_SCHEMA_MANIFEST_PINNING_MISSING`,
+`REF_SCHEMA_RESERVED_CCS`, `REF_SCHEMA_TYPE_MISMATCH`), with
+`REF_SCHEMA_PARSE_ERROR` named as a module-level constant but
+emitted only by the PEP at the boundary. VL-019 imports that
+constant and emits it; the seven-code vocabulary of the spec is
+fully realized.
+
+VL-017 (commit `092f7ba`) committed 27 failing schema-shape
+tests at `TESTS/adversarial/test_request_schema.py`. Against
+`pep.py` at HEAD prior to this commit, all 27 failed uniformly
+at the Pydantic wire-shape gate (VL-017's uniform-422 finding;
+no field-level discrimination). VL-019's wiring transitions
+them to per-code discrimination: 27/27 pass.
+
+### What this commit does
+
+**New `IMPLEMENTATION/pep.py`** (whole-file replacement).
+Architecture:
+
+- **No Pydantic body model.** The endpoint signature is
+  `async def governed_call(request: Request)`. The body is
+  read as raw bytes via `await request.body()` and parsed with
+  `json.loads()`. A `JSONDecodeError` or `ValueError` from the
+  parse becomes `REF_SCHEMA_PARSE_ERROR`. Rationale below.
+- **Validator call before evaluate.** The parsed dict is passed
+  directly to `validate_request()`. On refusal, an
+  `HTTPException(status_code=403, detail={"terminal_state":
+  "REFUSE", "refusal_reason_code": <code>})` is raised. The
+  validator's normalized return (with `AP` and `OP` sorted and
+  deduplicated per the spec's open question 3) is passed to
+  `evaluate()`.
+- **Evaluator-layer refusal payload preserved.** The
+  `result != "ELIGIBLE"` branch emits `{"terminal_state":
+  "REFUSE"}` with no `refusal_reason_code`, matching pre-VL-019
+  `pep.py`. VL-019's scope is schema-layer wiring; evaluator-
+  layer refusal vocabulary is not specified by
+  `SPEC/request_schema.md` and is not introduced here.
+- **Upstream forwarding** uses the raw body's `target_url`
+  (validated by the validator to be a syntactically valid
+  absolute URL per RFC 3986). The validator's normalized
+  interaction is the JSON payload to upstream.
+- **Fail-closed catches** wrap `evaluate()` and the upstream
+  call only; schema-layer exceptions raise `HTTPException`
+  directly without flowing through the catch.
+
+### Why no Pydantic body model: load-bearing architectural decision
+
+The original VL-019 plan used a Pydantic `GovernedCallRequest`
+model with fields `target_url: str` and `interaction:
+Dict[str, Any]`, plus a `RequestValidationError` exception
+handler converting Pydantic-rejected shapes to schema-named
+refusal codes. That architecture was implemented and tested
+against the 27 tests; 23/27 passed and 4/27 failed.
+
+The failing family:
+`flat_keys_archived_proof_001_shape`,
+`flat_keys_ap_at_top_level_with_interaction_present`,
+`flat_keys_op_at_top_level_with_interaction_present`, and
+`reserved_ccs_legacy_ccs_valid_at_top_level`. All four send a
+body with extra top-level keys (`AP`, `OP`, or `ccs_valid`)
+**alongside** a valid `interaction` object. Pydantic's
+`GovernedCallRequest(target_url=..., interaction=...)`
+construction accepted these bodies and silently dropped the
+extra top-level keys before the constructed `req` reached the
+endpoint handler. When the handler reconstructed
+`body = {"target_url": req.target_url, "interaction":
+req.interaction}` for the validator, the extra keys were
+already gone. The validator's lines 320-321
+(`if "AP" in body or "OP" in body`) and 330-334 (top-level
+CCS-shaped-key walk in `request_validator.py`) had no
+visibility of the keys they were designed to refuse; the
+validator accepted the body and the endpoint forwarded to
+upstream, yielding 200 ELIGIBLE where the spec requires 403
+with `REF_SCHEMA_FLAT_KEYS` or `REF_SCHEMA_RESERVED_CCS`.
+
+The fix was to drop the Pydantic body model entirely. The
+endpoint now reads raw bytes, parses with `json.loads`, and
+hands the full parsed dict to `validate_request`. The
+validator's top-level-key walks (lines 320-321 and 330-334)
+now have full visibility. The schema-vocabulary discrimination
+the test suite requires is preserved exactly because Pydantic
+no longer filters keys between the wire and the validator.
+
+This deviates from the VL-019 session-intent's "implementation
+approach: a FastAPI exception handler that catches JSON-decode
+failures BEFORE the Pydantic model is constructed." The intent's
+architecture is correct for distinguishing parse-error from
+model-validation, but does not survive the adversarial cases
+that send well-formed JSON with rejected top-level keys, because
+by the time the handler fires (or doesn't), Pydantic has already
+filtered. Raw-body reading sidesteps the Pydantic-as-filter
+concern entirely.
+
+### Verification
+
+**In-container.** A working tree mirroring the repo layout was
+constructed in the container (`IMPLEMENTATION/__init__.py`,
+`evaluator.py` from upload, `request_validator.py` from upload,
+the new `pep.py`; `MANIFEST/manifest.json` from upload with
+SHA256 verified against the `LIVE_MANIFEST_SHA256` constant in
+the test file; `TESTS/__init__.py`,
+`TESTS/adversarial/__init__.py`, `test_request_schema.py` from
+upload, `test_adversarial_evaluator.py` from upload). FastAPI
+0.136.1 and Pydantic 2.13.4 installed via pip.
+
+- Baseline run against HEAD `pep.py`: 27/27 fail (uniform-422
+  for all schema-rejected cases; the positive case fails 422
+  due to GovernedCallRequest at HEAD having no `interaction`
+  field). Matches VL-017's documented uniform-422 finding.
+- Run against new `pep.py` with the Pydantic-model
+  architecture (before the raw-body fix): 23/27 pass, 4/27
+  fail in the flat-keys-and-top-level-CCS family. Diagnostic
+  confirmed the Pydantic-projection-as-key-filter root cause.
+- Run against new `pep.py` with the raw-body architecture:
+  **27/27 pass.**
+
+**Regression footprint.** Pre-commit `pytest TESTS/` in the
+working repo surfaced a fourth test file
+(`TESTS/test_pep.py`) that was not in the container working
+tree. The file contained four tests, all using the
+pre-VL-019 wire shape `{target_url, context: {...}}`. Under
+the new wire shape, one test failed at HTTP-code level
+(`eligible_forwards_once`: expected 200, got 403) and three
+tests passed-by-accident at schema-layer 403 instead of at
+the evaluator/upstream behavior they were written to test:
+`refuse_blocks_upstream` (empty AP/OP failing AC^3/T^26
+inside `evaluate()`), `upstream_error_fails_closed` (the
+fake `requests.post` raising TimeoutError), and
+`manifest_version_drift_refuses` (the version-mismatch
+branch of `manifest_integrity_valid()`). All four would
+have continued to nominally pass after commit while
+silently retiring three legitimate behavior assertions.
+
+All four tests migrated to the canonical envelope
+`{target_url, interaction}` in this commit. The three
+evaluator-layer-REFUSE tests additionally gained
+`upstream_guard`-style assertions that `requests.post`
+was NOT called, preventing the same silent-coverage-loss
+failure mode if the wire-shape boundary changes again.
+
+Combined verification:
+- 27/27 `TESTS/adversarial/test_request_schema.py`
+  (VL-017's tests, now per-code discriminating)
+- 23/23 `TESTS/test_adversarial_evaluator.py`
+  (evaluator regression, unchanged)
+- 4/4 `TESTS/test_pep.py` (migrated; previously
+  1-failed-3-passed-by-accident)
+- **54/54 in-container**
+- **61/61 in repo** (the +7 difference being
+  `TESTS/test_concurrency.py` 4/4 and
+  `TESTS/test_replay_receipts.py` 3/3, both untouched by
+  VL-019; both passed before and after).
+
+Evidence committed as:
+- `EVIDENCE/proofs/g2_pep_wiring_001.log` (raw pytest output,
+  50 passed in combined run)
+
+A prose proof artifact (`g2_pep_wiring_001.md`) parallel to
+VL-017's `g2_schema_failing_tests_001.md` is NOT committed in
+this entry. The decision to defer is bookkeeping: the prose
+proof's content for a 50/50 passing run is substantially
+shorter than for VL-017's 27/27 failing run (the failing run
+had a uniform-422 diagnostic to narrate; the passing run is
+flat). Worth recording as a process finding rather than
+muddying this commit's diff. Candidate action for session-
+close: either write the prose proof as a small follow-up
+commit (parallel to VL-018 follow-up's structure) or close
+G2's proof bookkeeping by treating the log as sufficient
+evidence. Not actioned here.
+
+### Files affected
+
+- `IMPLEMENTATION/pep.py` (whole-file replacement)
+- `TESTS/test_pep.py` (whole-file replacement; all four
+  tests migrated from pre-VL-019 to post-VL-019 wire
+  shape; three evaluator-layer-REFUSE tests gained
+  upstream-not-called assertions)
+- `STATE.md` (last-updated line; ledger-range; current-
+  verified-state addition; next-action sequence advancement;
+  known-gaps G2 transition to RESOLVED)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+- `EVIDENCE/proofs/g2_pep_wiring_001.log` (new file; raw
+  pytest output, 54/54 in-container combined run)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `SPEC/request_schema.md` (untouched; the VL-017 stale
+  forward-reference at the schema's "Build order (schema-
+  internal)" closing paragraph is still stale, deferred per
+  VL-017's flagging; G14 spec edit also deferred per VL-018
+  flagging)
+- `IMPLEMENTATION/evaluator.py` (untouched)
+- `IMPLEMENTATION/request_validator.py` (untouched; the VL-018
+  validator stands at HEAD)
+- `TESTS/adversarial/test_request_schema.py` (untouched; the
+  VL-017 tests stand at HEAD and now pass against the wired
+  PEP)
+- `TESTS/test_adversarial_evaluator.py` (untouched)
+- `docs/restructure/04_current_vs_claimed.md` (NOT touched in
+  this commit; G2's transition from PARTIALLY ADVANCED to
+  RESOLVED is reflected in STATE.md's Known-gaps section but
+  the durable artifact 04 update is deferred, paralleling
+  VL-018's choice to keep artifact-04 updates as separate
+  small commits when feasible)
+- `docs/methodology/*` (untouched; no methodology artifact
+  added in this commit; see process findings below)
+- `docs/restructure/05_admissibility_envelope_spec.md`
+  (untouched; the freshness pass for `context` and
+  `target_url` is VL-020's scope)
+
+### Citation discipline
+
+The architectural deviation (raw-body vs. Pydantic-model with
+exception handler) is documented above with explicit
+acknowledgment that the session intent specified the
+Pydantic-model-plus-exception-handler approach. The deviation
+is not a defect of the session intent; it is the result of an
+adversarial-test outcome the intent's architecture did not
+survive. The session intent was correct as planning; the
+implementation revealed a previously-invisible interaction
+between Pydantic's silent key-dropping and the validator's
+top-level-key-walk semantics.
+
+### Process findings
+
+**Two source-first skips materialized in this session.**
+
+First: the original Pydantic-model architecture was designed
+against the spec and the session intent's prose description
+of the validator, not against the validator's actual key-walk
+logic. The validator's lines 320-321 and 330-334
+unambiguously require visibility of all top-level keys; a
+re-read of the validator before designing the endpoint that
+calls it would have caught the architectural incompatibility
+before the first test run. Cost: one round of test-run +
+str_replace iteration. Caught by the schema test suite, not
+by committed divergence.
+
+Second: the regression-footprint claim cited only
+`TESTS/test_adversarial_evaluator.py` (the one file I had
+visibility into) and was framed as comprehensive. The repo
+contained four other test files; one
+(`TESTS/test_pep.py`) failed under the new wire shape and
+three of its other tests were silently passing-by-accident.
+A single `ls TESTS/` query would have surfaced the gap
+before the regression scope was claimed. Cost: one round
+of test-file upload + str_replace iteration + a correction
+apply-script. Caught by the pre-commit `pytest TESTS/` in
+the working repo, not by committed divergence.
+
+Both instances share the same failure mode: claiming
+completeness over a scope I had not enumerated. Lesson 5
+candidate (new lesson, distinct from existing 1-4): before
+asserting that a set is exhaustive, list the set's members
+explicitly and verify against the source-of-truth that no
+members are missing. Two instances in one session crosses
+the project's two-instance promotion threshold; the lesson
+is durable enough to record at session-close, not deferred.
+
+**Three corrections to assertions made earlier in the
+session, recorded for the test-count-and-narration finding.**
+
+- Test count: STATE.md said "28 tests (26 parametrized
+  negatives + 1 parse-error + 1 positive)." Pytest collects
+  27 (25 parametrized + 1 parse-error + 1 positive); the
+  parametrized count is 25, not 26. Verified via
+  `grep -cE` on case-id lines and `"REF_SCHEMA_*"` expected-
+  code lines (both yield 25). STATE.md's "28" / "26
+  parametrized" is documentation drift; not a test-
+  correctness issue.
+- Upload count narration: Claude announced "received four of
+  the five" when five had arrived. Second instance of
+  Lesson 2 (terminal-output / surface-rendering is not file
+  content) this session; the first was in VL-018's
+  `tail -50` misdiagnosis. Both this turn caught
+  pre-commit by direct primitive (`ls`).
+- Read-order narration: Claude claimed reading would proceed
+  "in the order the session intent named." Actual order
+  read the in-context inline documents first (they were
+  visually present) and the on-disk files second. All five
+  were read; the narration was wrong about the order.
+
+**Verbosity-as-deflection instances in this session: ONE.**
+Recommended Option 1 vs Option 2 for fixing the four
+failures, then started to draft an `ask_user_input_v0` call
+asking the user to choose. Caught and retracted; the
+recommendation stood. VL-018 produced six instances; this
+session ran at one. Lesson 1 attenuation: working.
+
+**No `ask_user_input_v0` calls were made in this session.**
+The one near-instance is the case described above. The
+recommendation-not-question pattern recommended by Lesson 1
+held throughout.
+
+**Three pre-existing STATE.md defects observed during the
+canonical-bytes read.** Not VL-019's to fix:
+- Line 184: ` VL-015` (single leading space; should be two-
+  space continuation indent of the surrounding bullet).
+- Line 515: `internal build order).- **G3** - public framing`
+  missing a newline between G2's closing paren and G3's
+  bullet marker.
+- VL-018's seventh-code refusal list in the body of the
+  VL-018 STATE.md bullet (line 219 here, line 240 in the
+  STATE.md committed snapshot) lists
+  `REF_SCHEMA_TYPE_MISMATCH, REF_SCHEMA_RESERVED_CCS` in a
+  different order than VL-018's actual ledger entry. Purely
+  cosmetic.
+
+Recording these because the canonical-bytes read this session
+was the first source-first read of STATE.md in some time. Not
+actionable in this commit; candidate STATE.md-hygiene pass.
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry deliberately does not cite its own
+commit hash. The commit hash will be reachable via `git log`.

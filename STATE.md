@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-18 (commit: see `git log` for STATE.md; VL-018 (IMPLEMENTATION/request_validator.py drafted per SPEC/request_schema.md build-order step 3; six refusal codes emitted, seventh named-for-VL-019; three VL-017b candidates resolved with rationale per citation discipline; G14 surfaced (unknown-key refusal code under-determination inside `interaction`) and added to artifact 04 with PARTIALLY ADDRESSED status) lands in this commit alongside the STATE.md update; last ledger entry is VL-018; next action is the PEP wiring, proposed VL-019)
+Last updated: 2026-05-19 (commit: see `git log` for STATE.md; VL-019 (IMPLEMENTATION/pep.py wired to `validate_request()` per SPEC/request_schema.md build-order step 4; raw-body endpoint architecture (no Pydantic body model) preserves seven-code vocabulary discrimination; REF_SCHEMA_PARSE_ERROR emitted at boundary; TESTS/test_pep.py migrated to new wire shape (4/4 passing; three of four were passing-by-accident at schema-layer 403 before migration); 61/61 in repo, 54/54 in-container) lands in this commit alongside the STATE.md update; last ledger entry is VL-019; G2 closed in code; next action is VL-020 artifact 05 freshness pass)
 
 ---
 
@@ -52,7 +52,7 @@ manifest layer. CCS has drifted - see G0 below.
   source of record), `CANON/canon.md` (ASCII-safe transcription, verified
   against the PDF - see ledger VL-006), `CANON/canon.lock` (sha256 of canon.md).
 - **Verification ledger established.** `EVIDENCE/verification_ledger.md`,
-  entries VL-001 through VL-018.
+  entries VL-001 through VL-019.
 - **G0 confirmed (anchor finding).** Canonical CCS (whitepaper sections 12-13)
   is a temporal invariant over state transitions; the implemented `ccs_valid()`
   is a point-in-time manifest-integrity check. They are not the same invariant.
@@ -255,6 +255,38 @@ manifest layer. CCS has drifted - see G0 below.
   discriminating tests plus the positive case; the 27th
   (parse-error) is structurally VL-019's domain. Validator
   does NOT touch `pep.py`; G2 closes on VL-019.
+- **PEP wired to validator; G2 closed in code (VL-019).**
+  `IMPLEMENTATION/pep.py` replaced wholesale per
+  `SPEC/request_schema.md` build-order step 4. The endpoint
+  reads the raw JSON body (no Pydantic body model), parses
+  with `json.loads` (emitting `REF_SCHEMA_PARSE_ERROR` on
+  decode failure), calls `validate_request()` on the parsed
+  dict, and passes the normalized interaction to
+  `evaluate()` only after schema acceptance. The seven-code
+  schema vocabulary is fully realized: six codes emitted by
+  the validator (VL-018), the seventh
+  (`REF_SCHEMA_PARSE_ERROR`) emitted by the PEP boundary.
+  Architectural deviation from the VL-019 session intent
+  documented in the ledger entry: the planned
+  Pydantic-model-with-RequestValidationError-handler
+  architecture failed 4/27 tests because Pydantic silently
+  drops extra top-level keys, making the validator's flat-
+  key and top-level-CCS-shaped-key refusals structurally
+  unreachable. Raw-body architecture sidesteps the
+  Pydantic-as-filter concern. In-container verification:
+  27/27 schema tests passing; 23/23 evaluator regression
+  passing; TESTS/test_pep.py migrated to new wire shape (4/4
+  passing; three of four previously passing-by-accident at
+  schema-layer 403 rather than at the evaluator/upstream
+  behavior they were written to test); 54/54 in-container,
+  61/61 in repo. Evidence at
+  `EVIDENCE/proofs/g2_pep_wiring_001.log` (raw pytest
+  output). The evaluator-layer refusal payload is preserved
+  from pre-VL-019 pep.py (`{terminal_state: REFUSE}` without
+  a `refusal_reason_code`) because VL-019's scope is
+  schema-layer wiring; evaluator-layer refusal vocabulary is
+  not specified by SPEC/request_schema.md and is not
+  introduced here.
 
 ## What is locked vs. open
 
@@ -330,39 +362,51 @@ the G0 build track is underway:
     all failing uniformly at the Pydantic wire-shape gate against
     current pep.py. Evidence at
     `EVIDENCE/proofs/g2_schema_failing_tests_001.log` and `.md`.
-11. **Schema validator committed.** Done (VL-018, this commit).
+11. **Schema validator committed.** Done (VL-018, commit
+    cc08844; follow-up f24c837).
     `IMPLEMENTATION/request_validator.py` per the schema's
     build-order step 3. Validator accepts a parsed dict and
     emits six refusal codes; the seventh (parse-error) is
     structurally VL-019's domain. Three VL-017b candidates
     resolved with rationale; G14 surfaced as a new gap.
+12. **PEP wired to validator; G2 closed in code.** Done
+    (VL-019, this commit). `IMPLEMENTATION/pep.py` replaced
+    wholesale per `SPEC/request_schema.md` build-order step
+    4. Raw-body endpoint architecture (not the Pydantic-model
+    architecture the session intent specified; rationale in
+    the VL-019 ledger entry). TESTS/test_pep.py migrated to
+    the new wire shape (4/4 passing; three of four previously
+    passing-by-accident; corrected in this commit). 54/54
+    in-container; 61/61 in repo.
+    Evidence at `EVIDENCE/proofs/g2_pep_wiring_001.log`.
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
-4 (SPEC/request_schema.md drafted + verified + corrected) complete,
-the failing-tests sub-step of item 4 done (VL-017), the
-build-resumption invocation tested against two models (VL-017b)
-producing template promotion plus three candidate findings to
-confirm/supersede in VL-018, and the validator itself committed
-(VL-018) with all three candidates resolved with rationale and
-G14 surfaced, the remaining order is:
-G2 code-close (PEP wiring; proposed VL-019), then G0 build
-(canonical CCS via envelope), G7 (canon-derived tests), G3
-(reframe public materials once 06 makes the
-FULL/PARTIAL/DRIFTED picture concrete), then bookkeeping batch
-(G1, G8, G9, G11, G14), then build-outward scope (G4, G5).
+4 (SPEC/request_schema.md drafted + verified + corrected)
+complete, the failing-tests sub-step of item 4 done (VL-017),
+the build-resumption invocation tested against two models
+(VL-017b), the validator committed (VL-018), and the PEP wired
+to the validator with G2 closed in code (VL-019), the
+remaining order is:
+VL-020 artifact 05 freshness pass (absorbs `context` and
+`target_url` into the envelope spec), then G0 build (canonical
+CCS via envelope), G7 (canon-derived tests), G3 (reframe public
+materials once 06 makes the FULL/PARTIAL/DRIFTED picture
+concrete), then bookkeeping batch (G1, G8, G9, G11, G14), then
+build-outward scope (G4, G5).
 
-Suggested next move: wire the schema validator into
-`IMPLEMENTATION/pep.py` per `SPEC/request_schema.md` build-order
-step 4. This is the commit where G2 closes in code: the wire
-shape changes from `{target_url, context}` to `{target_url,
-interaction}` (the canonical envelope per VL-014 + VL-016), the
-PEP calls `validate_request()` before `evaluate()`, parse-error
-handling at the FastAPI layer emits `REF_SCHEMA_PARSE_ERROR`
-(the seventh code that VL-018's validator names but does not
-emit), and the 27 discriminating tests in
-`TESTS/adversarial/test_request_schema.py` transition from
-uniform-422 to per-code discrimination. Proposed ledger entry:
-VL-019.
+Suggested next move: VL-020 artifact 05 freshness pass per the
+schema's build-order step 6 and the "Decided downstream
+tasks / Feed-back to envelope spec" section of
+SPEC/request_schema.md. Add `context` to the envelope's
+`request_context` block (between `OP` and
+`expected_manifest_version`) with a comment citing canon
+section 11.1 and the schema as derivation; add `target_url` at
+envelope top level (between `decision` and `canon`) with a
+comment citing the schema's `target_url` rules (G4 deferral
+noted); append a field-rationale bullet for each. No code
+change. Same scope rule as VL-013 (preserve substantive
+content; only touch statements that became stale after the
+VL-014..VL-019 schema work). Proposed ledger entry: VL-020.
 
 Decisions parked for resolution: open question 5 of
 SPEC/request_schema.md (artifact 05 absorbs `context` and
@@ -501,18 +545,24 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   G0 build track).
 - **G1** - README test count stale / no commit-pinned source of truth.
 - **G2** - request schema drift (interception proofs document a dead API).
-  **PARTIALLY ADVANCED** (VL-014 + VL-015 + VL-016 + VL-017 + VL-018):
-  SPEC/request_schema.md names the rejected and accepting shapes at
-  the schema layer, has been cross-model-verified, and the disputed
-  interpretive loci have been corrected. VL-017 added 27 failing
-  schema-shape tests at `TESTS/adversarial/test_request_schema.py`
-  per the schema's build-order step 2. VL-018 added the schema
-  validator at `IMPLEMENTATION/request_validator.py` per step 3,
-  emitting six refusal codes (the seventh, parse-error, is
-  structurally VL-019's domain). G2 fully closes when the
-  validator is wired into `IMPLEMENTATION/pep.py` at the PEP
-  boundary (proposed VL-019, build-order step 4 of the schema's
-  internal build order).- **G3** - public framing overclaims relative to implementation.
+  **RESOLVED** (VL-014 + VL-015 + VL-016 + VL-017 + VL-018 + VL-019):
+  SPEC/request_schema.md names the rejected and accepting
+  shapes at the schema layer (VL-014), has been
+  cross-model-verified (VL-015), and the disputed interpretive
+  loci have been corrected (VL-016). VL-017 added 27 failing
+  schema-shape tests at
+  `TESTS/adversarial/test_request_schema.py` per the schema's
+  build-order step 2. VL-018 added the schema validator at
+  `IMPLEMENTATION/request_validator.py` per step 3, emitting
+  six refusal codes. VL-019 wired the validator into
+  `IMPLEMENTATION/pep.py` per step 4, emitting the seventh
+  refusal code (`REF_SCHEMA_PARSE_ERROR`) at the boundary;
+  the 27 discriminating tests transition from uniform-422
+  (VL-017) to per-code discrimination (27/27 passing). The
+  artifact-04 update reflecting G2's RESOLVED status is
+  deferred to a follow-up commit (paralleling VL-018's
+  artifact-04-as-separate-commit choice).
+- **G3** - public framing overclaims relative to implementation.
 - **G4** - the gate is bypassable (opt-in, not enforced).
 - **G5** - "external" verification is not durable (ephemeral webhook).
 - **G7** - tests are code-derived, not canon-derived.
