@@ -3023,3 +3023,239 @@ actionable in this commit; candidate STATE.md-hygiene pass.
 Per VL-012's self-referencing-hash finding and subsequent
 reinforcement: this entry deliberately does not cite its own
 commit hash. The commit hash will be reachable via `git log`.
+### VL-019 follow-up - README.md rewritten to reflect current repository state; G1, G3, G4 actions advanced
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** README.md replaced wholesale. The prior README
+described a wire shape that the gate has rejected since
+VL-019 (`{target_url, context: {AP, OP, ccs_valid}}`), an
+example body that would now refuse with
+`REF_SCHEMA_RESERVED_CCS`, a test count that pre-dated the
+honest-base track, and a repository structure block omitting
+`POE/`, the methodology and restructure document trees, and
+multiple `IMPLEMENTATION/` files. The replacement is reconciled
+against `docs/restructure/01_repository_structure.md` (HEAD =
+2db1807, with post-VL-010 additions cited from STATE.md),
+`docs/restructure/04_current_vs_claimed.md`, `STATE.md`
+(post-VL-019 commit 266a114), and the in-container primary
+sources (`SPEC/request_schema.md`,
+`IMPLEMENTATION/request_validator.py`,
+`IMPLEMENTATION/pep.py`, `MANIFEST/manifest.json`).
+
+---
+
+### Background
+
+VL-019 (commit `266a114`) closed G2 in code and transitioned
+the wire shape to `{target_url, interaction}`. The README at
+HEAD prior to this follow-up still documented the
+pre-VL-019 wire shape (`context` outer, `ccs_valid` inside),
+which is now an actively-incorrect public-facing claim: a
+caller following the README would have their request refused
+by the gate. The README also undercounted its own primary test
+file (`3 passed` vs. actual `4 passed` for `test_pep.py`; per
+artifact 04 G1 entry), omitted `POE/` and `docs/` entirely
+from the repository structure, and made no acknowledgement of
+the open gaps the project has tracked since Rev. 2 planning.
+
+This follow-up rewrites the README against the current state.
+Three gap-actions advance as a side effect:
+
+**G1 (README test count is stale)** - the README no longer
+hardcodes test counts. Per artifact 04's G1 action language
+("README references it; hardcodes nothing"), the README's
+Tests section now directs readers to STATE.md and the latest
+ledger entry for the authoritative count pinned to commit.
+G1 is not fully closed by this change (the source-of-truth
+mechanism itself is unchanged; STATE.md continues to serve the
+role), but the README is no longer the surface introducing
+stale counts.
+
+**G3 (framing vs. mechanism)** - the README now opens with
+artifact 04's exact corrective framing ("a formal admissibility
+specification (v0.9.8.4) with a faithful partial
+implementation"), labels canon invariants with
+FULL/PARTIAL/DRIFTED status, and includes a "Known limitations"
+section that names G0, G3, G4, G5, G7 with one-paragraph
+descriptions each. G3's action ("Reframe public materials...
+state exactly which invariants are FULL / PARTIAL / DRIFTED")
+advances substantially; full closure depends on artifact 06's
+spec-to-code traceability being current (out of this commit's
+scope; artifact 06 was brought current to VL-012 in VL-013 and
+has not been touched since).
+
+**G4 (bypassability)** - artifact 04's G4 action says "State
+the property plainly in README now." The new README's Known
+limitations section says exactly that: "The gate is opt-in, not
+enforced. A caller can hit the target directly and bypass the
+PEP." The schedule for non-bypassable enforcement is named
+(build-outward scope) without overcommitting on timing. G4 is
+not closed (the bypass exists); the action is the disclosure,
+and the disclosure now exists.
+
+### What this commit does
+
+**`README.md` wholesale replacement.** The new content is
+401 lines (vs. the prior 137 lines). New sections relative to
+the prior README:
+
+- Orientation for new readers (four-step continuity pointer to
+  STATE.md, ledger, gap document, canon)
+- Request shape (full wire shape with field-by-field canon
+  mapping table)
+- Refusal vocabulary (seven-code table with emission-site
+  attribution)
+- Known limitations (G0, G3, G4, G5, G7 plus bookkeeping batch
+  enumeration; pointer to artifact 04)
+- License section (one line; points at `LICENSE` file)
+
+Sections rewritten or substantially expanded:
+
+- Top description (rephrased to artifact 04's G3 action
+  language; invariants gain FULL/PARTIAL/DRIFTED labels)
+- Examples (REFUSE and ELIGIBLE) now use the post-VL-019 wire
+  shape; the `expected_manifest_sha256` value is a placeholder
+  with a `sha256sum` instruction, not a hardcoded hex string
+- Tests (G1-compliant; no hardcoded counts; test files
+  enumerated, counts deferred to STATE.md)
+- Guarantees (preserved; clarified "manifest pinning" wording
+  to specify the enforcement layer)
+- Repository structure (enumerates every top-level entry from
+  `ls -1` plus subdirectory contents per artifact 01 + STATE.md
+  citations; explicit caveat naming artifact 01 as
+  source-of-truth and which entries are post-artifact-01)
+- Status (preserved structure; ledger-entry pointer is to
+  `git log EVIDENCE/verification_ledger.md` per G1's
+  hardcodes-nothing principle)
+
+### Verification
+
+**Source-derivability spot check.** Each load-bearing claim in
+the new README maps to a primary source in this session's
+upload set:
+
+- Wire shape: `SPEC/request_schema.md` lines 147-162
+- Field mapping table: `request_schema.md` "Canon mapping -
+  section 11" table
+- Refusal codes: `IMPLEMENTATION/request_validator.py` module
+  docstring "Seventh code" section + the constants block at
+  lines 160-171
+- Emission sites: `pep.py` JSON-decode catch + validator's six
+  emit-points
+- Evaluator-layer payload: `pep.py` line emitting
+  `{"terminal_state": "REFUSE"}` without `refusal_reason_code`
+- Example bodies: `TESTS/test_pep.py` post-VL-019 migration
+- Manifest SHA instruction: confirmed in this session against
+  the live file
+- Repository structure: `docs/restructure/01_repository_structure.md`
+  + STATE.md citations of post-artifact-01 additions
+- Known limitations: `docs/restructure/04_current_vs_claimed.md`
+  per-gap entries
+- G3 framing language: `04_current_vs_claimed.md` G3 action
+  (lines 82-84): "Reframe public materials as 'a formal
+  admissibility specification (v0.9.8.4) with a faithful
+  partial implementation.'"
+
+**In-container ASCII-safe check.** The drafted README passes
+`LC_ALL=C grep -n '[^[:print:][:space:]]' README.md` with
+exit 1 (no matches). LF line endings throughout.
+
+**No code change. No test change. No canon change.** The repo
+test set continues to pass (61/61) without modification; this
+is a doc-only commit.
+
+### Files affected
+
+- `README.md` (whole-file replacement)
+- `STATE.md` (last-updated parenthetical updated to acknowledge
+  the README rewrite + G1/G3/G4 advancement)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `SPEC/*` (untouched; G14 spec edit and the stale forward-
+  reference in `request_schema.md` remain deferred)
+- `IMPLEMENTATION/*` (untouched)
+- `TESTS/*` (untouched)
+- `docs/restructure/04_current_vs_claimed.md` (untouched; the
+  G2-RESOLVED row update is still deferred to a separate
+  commit; the G1/G3/G4 rows are unchanged because the gaps are
+  *advanced*, not closed, by this README rewrite)
+- `docs/restructure/06_spec_to_code_traceability.md` (untouched;
+  full G3 closure depends on a freshness pass here, deferred)
+- `docs/methodology/*` (untouched)
+- `EVIDENCE/proofs/*` (untouched)
+
+### Citation discipline
+
+The G1/G3/G4 advances are framed as **advances**, not
+**closures**. None of the three gaps closes by README rewrite
+alone:
+
+- G1's full closure requires a commit-pinned source-of-truth
+  mechanism for test counts. STATE.md serves the role today;
+  the original artifact 04 proposal of `EVIDENCE/STATE.md`
+  pinned to a commit hash was superseded by the root-level
+  STATE.md. The README now respects this mechanism rather
+  than introducing a parallel one.
+- G3's full closure requires the FULL/PARTIAL/DRIFTED picture
+  to be concrete in artifact 06. The README states the
+  picture but cites artifact 04 for the per-gap derivation;
+  artifact 06 has not been freshness-passed since VL-013.
+- G4's full closure requires the bypass to no longer exist
+  (non-bypassable enforcement). The README discloses the
+  bypass plainly per artifact 04's G4 action; the bypass
+  itself is unchanged.
+
+This citation discipline matches VL-016's PARTIALLY ADDRESSED
+status convention: address what is in scope; do not claim
+closure of the canon-layer or build-layer halves that are out
+of scope.
+
+### Process findings
+
+**One verbosity-as-deflection retraction during drafting.**
+When the README v1 draft surfaced multiple omissions against
+the artifact 01 source (POE/, server.py, target.py,
+replay/receipt.py, .gitattributes, docs/methodology/), Claude
+initially framed the discovery as "if you'd uploaded artifact
+01 earlier I would have had this." The framing was wrong; the
+omissions were Claude-side source-first failures, and the
+artifact 01 upload was a fix to a request Claude should have
+made earlier. The framing was retracted in the same turn;
+recorded here for traceability.
+
+**The Lesson 5 self-check fired during README drafting.**
+Before claiming the directory listing was exhaustive, Claude
+enumerated each top-level entry against `ls -1` output and
+each subdirectory against artifact 01 + STATE.md citations.
+The check caught the POE/ and .gitattributes omissions that
+v1 had silently committed. This is Lesson 5 (newly drafted
+into `session_mechanics_lessons.md` per the VL-020 session
+intent) functioning as intended on its first applied use.
+Two pre-commit catches before this one (Pydantic architecture,
+regression-set scope) demonstrated the failure mode; this
+catch demonstrates the corrective rule.
+
+**Em-dash drift caught by VL-009 check.** Drafting the README
+introduced no em-dashes (LC_ALL=C grep exit 1 first pass).
+The VL-020 session intent did surface one em-dash that was
+caught by the pre-commit check; this README drafting did not
+recur the pattern. One-session attenuation; no methodology
+update owed.
+
+**Source breadth declared up front.** The list of "what I need
+to draft an accurate README" was produced before drafting
+began, in the conversational turn preceding the v1 attempt.
+The exercise of declaring the source set explicitly (and the
+gap between the v1 attempt and the artifact-01-reconciled v2)
+is itself a Lesson 5 demonstration. Recording for the
+methodology artifact's surface-events list when it gains a
+fifth instance.
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry deliberately does not cite its own
+commit hash. The commit hash will be reachable via `git log`.

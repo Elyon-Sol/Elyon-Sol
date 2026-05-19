@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-19 (commit: see `git log` for STATE.md; VL-019 (IMPLEMENTATION/pep.py wired to `validate_request()` per SPEC/request_schema.md build-order step 4; raw-body endpoint architecture (no Pydantic body model) preserves seven-code vocabulary discrimination; REF_SCHEMA_PARSE_ERROR emitted at boundary; TESTS/test_pep.py migrated to new wire shape (4/4 passing; three of four were passing-by-accident at schema-layer 403 before migration); 61/61 in repo, 54/54 in-container) lands in this commit alongside the STATE.md update; last ledger entry is VL-019; G2 closed in code; next action is VL-020 artifact 05 freshness pass)
+Last updated: 2026-05-19 (commit: see `git log` for STATE.md; VL-019 follow-up (README.md rewritten against current repository state per artifact 01 + artifact 04 + STATE.md + in-container primary sources; G1, G3, G4 actions advanced as side effects: G1 by removing hardcoded test counts, G3 by adopting artifact 04's corrective framing language and labeling invariants FULL/PARTIAL/DRIFTED, G4 by stating the bypass property plainly in a Known-limitations section; doc-only commit, no code/test/canon change) lands in this commit alongside the STATE.md update; last ledger entry is VL-019 follow-up; G2 still closed in code at VL-019; next action is VL-020 artifact 05 freshness pass)
 
 ---
 
