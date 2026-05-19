@@ -216,6 +216,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
      require canon-version event under GR-1. **OPEN** - not
      currently scheduled.
 
+- **G14** - unknown-key refusal code under-determination inside `interaction`. **PARTIALLY ADDRESSED** (VL-018): the spec rejects CCS-shaped fields with `REF_SCHEMA_RESERVED_CCS` and rejects flat-key collisions at the TOP level with `REF_SCHEMA_FLAT_KEYS`, but does not enumerate a refusal code for non-CCS-shaped unknown keys inside `interaction`. Two surface events corroborate the gap: VL-017 (test author's module docstring at `TESTS/adversarial/test_request_schema.py` lines 31-37) and VL-017b (OpenAI's Candidate 2 from the dry-run build-resumption test). VL-018's validator handles such keys provisionally with `REF_SCHEMA_TYPE_MISMATCH` as the closest extant code; the mapping is provisional because TYPE_MISMATCH's natural reading is "field type is wrong," not "field is unexpected." Spec edit pending: either add `REF_SCHEMA_UNKNOWN_KEY` or formalize the TYPE_MISMATCH overload. Separate forthcoming commit per the spec-defines-the-rename pattern (candidate GR-2).
 ---
 
 ## Resolved gaps

@@ -2028,3 +2028,442 @@ recording" provision.
 Per VL-012's self-referencing-hash finding and subsequent reinforcement:
 this entry deliberately does not cite its own commit hash. The commit
 hash will be reachable via `git log`.
+## VL-018 - 2026-05-18 - G2 build track: schema validator live build; three VL-017b candidates resolved with rationale; G14 surfaced
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** Build-order step 3 of `SPEC/request_schema.md`
+(post-VL-016 CORRECTED). The schema's named validator artifact
+exists in `IMPLEMENTATION/` and emits the schema-named refusal
+codes per the spec's "PEP boundary behavior" section, adapted for
+the validator's parsed-dict input contract.
+
+---
+
+### What was built
+
+`IMPLEMENTATION/request_validator.py`, the first artifact of the
+G2 build track's code half. The validator accepts an already-
+parsed Python dict and returns either a normalized interaction
+dict (on acceptance) or a refusal code (on rejection). It does
+NOT touch `IMPLEMENTATION/pep.py`; wiring is build-order step 4
+(proposed VL-019). It does NOT call `evaluate()` and does NOT
+forward to any upstream; both prohibitions are structural
+(the validator is a pure function over its input dict) rather
+than enforced by check.
+
+The validator exports seven module-level refusal-code constants
+matching the spec's "PEP boundary behavior":
+
+- Six emitted by `validate_request()`:
+  `REF_SCHEMA_TOP_LEVEL`, `REF_SCHEMA_BAD_URL`,
+  `REF_SCHEMA_FLAT_KEYS`, `REF_SCHEMA_MANIFEST_PINNING_MISSING`,
+  `REF_SCHEMA_RESERVED_CCS`, `REF_SCHEMA_TYPE_MISMATCH`.
+- One named but NOT emitted by `validate_request()`:
+  `REF_SCHEMA_PARSE_ERROR`. See "Candidate 1 resolution" below.
+
+In a verification run inside the working container, all 26
+parametrized NEGATIVE_CASES from
+`TESTS/adversarial/test_request_schema.py` plus the positive
+case were exercised against `validate_request()` directly
+(not through the FastAPI TestClient, which requires the PEP
+wiring that VL-019 delivers); all 26 returned the expected
+refusal code; the positive case returned a normalized
+interaction with AP and OP sorted and deduplicated. The 27th
+discriminating test (`test_schema_rejects_parse_error`) was
+not exercised against the validator because parse-error is
+structurally outside the validator's contract per Candidate 3
+resolution below; it becomes discriminating after VL-019.
+
+---
+
+### Citation-discipline observance: three VL-017b candidates
+### resolved
+
+VL-017b recorded three candidate spec-gap findings from a
+two-model dry-run test, each with explicit citation discipline
+requiring VL-018's live build to confirm, supersede, or revise
+them. Each candidate's resolution is recorded below with
+rationale.
+
+#### Candidate 3 (parse-order API-vs-procedure separation) - RESOLVED
+
+VL-017b's Candidate 3 noted that the spec describes parse-order
+behavior procedurally at the PEP boundary rather than
+structurally in the validator's API, leaving implicit whether
+the validator should accept raw bytes (and own parse-error
+emission) or accept an already-parsed dict (and defer
+parse-error to the caller).
+
+**Resolution: validator accepts already-parsed dict.**
+
+**Rationale:** Two direct readings of primary sources force the
+choice:
+
+1. `SPEC/request_schema.md` lines 318-333 number the PEP boundary
+   behavior in six steps. Step 1 ("Parse JSON. Failure -> REFUSE
+   with `REF_SCHEMA_PARSE_ERROR`") and step 6 ("Only after all of
+   the above: `evaluate(interaction, manifest)` is called") are
+   both explicitly *boundary* concerns, listed alongside the
+   validator's steps but not internal to it. Step 6 calls
+   `evaluate()` from outside the validator; step 1's parse is
+   the symmetric counterpart upstream of the validator.
+
+2. `TESTS/adversarial/test_request_schema.py` lines 467-495
+   exercise parse-error by sending raw non-JSON bytes to the
+   FastAPI TestClient. The test exercises the *endpoint*, not
+   the validator's API directly. The test author's framing
+   makes the locus explicit: parse-error is a PEP-wiring
+   concern that VL-019 closes; the validator's contract is
+   over parsed input.
+
+This coupling (Candidate 3 decides Candidate 1's structural
+question) was flagged in the VL-018 session opener and held
+through to the live build.
+
+**Citation:** This candidate is **superseded by VL-018**. The
+question is no longer open at the spec layer; the spec's
+existing text plus the test author's design choice already
+implicit the answer. No spec edit needed. The validator's
+docstring records the API decision and references the spec
+sentences that force it.
+
+#### Candidate 1 (seventh refusal code's status) - RESOLVED via Candidate-3 coupling
+
+VL-017b's Candidate 1 recorded that Grok and OpenAI diverged on
+whether `REF_SCHEMA_PARSE_ERROR` should be named-but-not-triggered
+in the validator (OpenAI) or omitted entirely (Grok). The dry-run
+test left this open pending VL-018's live build.
+
+**Resolution: seven codes named at module level; six emitted by
+the validator; the seventh (`REF_SCHEMA_PARSE_ERROR`) is named
+here and emitted by `pep.py` at VL-019.**
+
+**Rationale:** Given Candidate 3's resolution (parsed-dict
+contract), `REF_SCHEMA_PARSE_ERROR` is structurally unreachable
+from inside `validate_request()`. The choice then reduces to:
+(a) name the constant in this module and document non-emission
+[OpenAI's approach], or (b) omit it from this module and let
+VL-019 define it elsewhere [Grok's approach]. The decision is
+for (a) on the grounds that the spec's "PEP boundary behavior"
+numbers all seven steps as a single set with a single named
+vocabulary; centralizing the constants in the validator module
+keeps that vocabulary discoverable from one import in VL-019,
+which is preferable to scattering the schema-layer vocabulary
+across two modules.
+
+The OpenAI dry-run output that informed this decision was not
+treated as authoritative (no dry-run output is authoritative
+per VL-017b's citation discipline); it was treated as one of
+two defensible options, and the live-build commit chose between
+them with stated rationale. This is the discipline working as
+intended.
+
+**Citation:** This candidate is **superseded by VL-018** in the
+sense that the implementation makes the decision; the
+underlying question (which approach is right) is no longer
+open. No spec edit needed; the spec's existing seven-code
+enumeration is consistent with both the validator's six-code
+emission and `pep.py`'s downstream emission of the seventh.
+
+#### Candidate 2 (generic unknown keys inside `interaction`) - UPGRADED to real spec gap
+
+VL-017b's Candidate 2 recorded OpenAI's gap-candidate flag that
+the spec rejects CCS-shaped fields with `REF_SCHEMA_RESERVED_CCS`
+but does not define a refusal code for non-CCS-shaped unknown
+keys inside `interaction`. The dry-run test left this pending
+live-build confirmation.
+
+**Resolution: this candidate is confirmed as a real spec gap
+(G14) and addressed provisionally in the validator pending the
+spec edit.**
+
+**Rationale:** Two independent surface events corroborate the
+gap:
+
+1. `TESTS/adversarial/test_request_schema.py` module docstring
+   lines 31-37 explicitly flagged the gap in the VL-017 commit:
+   *"The schema names a step-4 'no unknown top-level keys
+   inside interaction' rule but does not enumerate a distinct
+   refusal code for that case (REF_SCHEMA_RESERVED_CCS is
+   narrower: keys containing 'ccs'). That case is intentionally
+   NOT tested here; inventing a code would be tests driving the
+   schema rather than deriving from it. Flagged in the VL-017
+   ledger entry as a schema-side follow-up."*
+
+2. VL-017b's OpenAI derivation surfaced the same gap
+   independently as Candidate 2.
+
+Two surfaces by two different paths (the test author's
+spec-derived test design; an external model's spec-derived code
+draft) constitute the cross-model corroboration that VL-008
+defines. The gap is upgraded from VL-017b candidate status to a
+real artifact-04 row in this commit: **G14 - unknown-key
+refusal code under-determination inside `interaction`**, status
+PARTIALLY ADDRESSED.
+
+**Provisional validator handling:** unknown non-CCS-shaped keys
+inside `interaction` are refused with `REF_SCHEMA_TYPE_MISMATCH`.
+The mapping is *provisional* because TYPE_MISMATCH's natural
+reading is "field type is wrong," not "field is unexpected." The
+spec edit (post-VL-018, separate commit per candidate GR-2's
+spec-defines-the-rename pattern) should either:
+
+(a) define a new `REF_SCHEMA_UNKNOWN_KEY` code, or
+(b) explicitly designate `REF_SCHEMA_TYPE_MISMATCH` as covering
+    unknown-key cases (formalizing this provisional choice).
+
+The provisional handling preserves fail-closed semantics; the
+alternative (silent acceptance of unknown keys) would violate
+the spec's step-4 prohibition. The provisional cost is a
+slightly misleading refusal code on unknown-key cases; the
+spec edit retires that cost.
+
+**Citation:** Candidate 2 **confirms** as G14, with VL-017
+(first surface), VL-017b (second-model corroboration), and
+VL-018 (live-build confirmation + provisional code choice) all
+cited in G14's artifact-04 entry.
+
+---
+
+### Validation order (load-bearing interpretive choice)
+
+The validator implements one specific deterministic ordering of
+the spec's step-4 sub-checks. The spec at lines 326-329 names
+step-4 as a single check ("`interaction` contains exactly the
+required fields named above; no unknown top-level keys inside
+`interaction`; no flat-key collisions (G2). Failure -> REFUSE
+with appropriate code from 'Rejected shapes.'") but does not
+order the sub-checks among themselves.
+
+The validator's chosen order:
+
+- 4a. Flat-key check (AP/OP at top level)
+- 4b. CCS-shaped keys (top-level then inside `interaction`)
+- 4c. Manifest pinning presence
+- 4d. Unknown-key check inside `interaction` (provisional per G14)
+- 5.  Type/format checks
+
+Rationale documented in the validator's docstring: flat-key
+before CCS because a request with both is more diagnostically
+clear as flat-key; CCS before pinning-missing because CCS is a
+specific G0-track violation that warrants explicit naming over
+a generic "field absent" message; pinning before unknown-key
+because pinning is required and named while unknown-key is the
+provisional catch-all.
+
+This is one defensible ordering; alternatives exist. The order
+is interpretive but consistent and reproducible. Recording it
+here so that a future cross-model verification of the validator
+can surface disagreement on ordering specifically rather than
+disagreement masquerading as a different finding. Worth a
+candidate verification round at some later point under VL-008
+procedure.
+
+---
+
+### What this entry does NOT do
+
+- Wire the validator into `IMPLEMENTATION/pep.py`. That is
+  build-order step 4 (proposed VL-019). `pep.py` is unchanged.
+  The current `GovernedCallRequest` Pydantic model still has
+  `target_url` and `context` (flat) at HEAD; the wire-shape
+  change to `interaction` envelope is VL-019's domain.
+- Run the 27 discriminating tests in
+  `TESTS/adversarial/test_request_schema.py` against the
+  endpoint. The tests still fail uniformly at the Pydantic
+  wire-shape gate against HEAD `pep.py`, as VL-017 recorded.
+  They become discriminating only after VL-019.
+- Edit `SPEC/request_schema.md`. The spec stays at the post-
+  VL-016 CORRECTED state. The G14 spec edit is a separate
+  forthcoming commit, matching the spec-defines-the-rename
+  pattern (candidate GR-2) flagged in VL-014's process finding.
+- Close G2. G2's code half is two commits: validator (this
+  entry) plus PEP wiring (VL-019). G2 closes on VL-019, not
+  here.
+- Cross-model-verify the validator. The validator is committed
+  on the strength of (a) direct derivation from spec primary
+  sources, (b) 26/27 discriminating-test pass in container,
+  (c) explicit rationale for all three VL-017b candidate
+  resolutions. A separate cross-model verification round is
+  available under VL-008 procedure if the build-resumption
+  template (`docs/methodology/build_resumption_request_template.md`,
+  VL-017b) is invoked against this validator; not done in this
+  commit, available for any future session that wants the
+  additional corroboration.
+
+---
+
+### Files affected
+
+- `IMPLEMENTATION/request_validator.py` (new file)
+- `EVIDENCE/verification_ledger.md` (this entry)
+- `docs/restructure/04_current_vs_claimed.md` (new G14 row,
+  status PARTIALLY ADDRESSED)
+- `STATE.md` (reconciliation: VL-018 lands; next action becomes
+  VL-019 PEP wiring; G14 added to "Known open gaps" summary;
+  test-count drift acknowledged - the test file contains 28
+  tests total: 26 NEGATIVE_CASES + 1 parse-error + 1 positive,
+  of which 27 are discriminating; the prior "27 tests" framing
+  carried VL-017's discriminating count, not the total)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `SPEC/request_schema.md` (untouched; G14 spec edit is a
+  separate forthcoming commit)
+- `IMPLEMENTATION/pep.py` (untouched; VL-019's domain)
+- `IMPLEMENTATION/evaluator.py` (untouched; evaluator's
+  `manifest_integrity_valid()` is downstream of the validator
+  per the spec's "PEP boundary behavior" step 6)
+- `TESTS/adversarial/test_request_schema.py` (untouched; no
+  test changes in this commit)
+- `docs/methodology/verification_request_template.md`,
+  `docs/methodology/build_resumption_request_template.md`,
+  `docs/methodology/apply_script_template.py` (untouched; no
+  methodology changes from this build)
+- `EVIDENCE/proofs/g2_schema_failing_tests_001.log` and
+  `.md` (VL-017's proof artifacts; unchanged. These remain
+  honest evidence of the wire-shape incompatibility at HEAD.
+  After VL-019, a new proof artifact will record the
+  tests-passing-against-wired-PEP state; that artifact
+  belongs to VL-019, not here)
+
+---
+
+### Process findings
+
+**Source-first instruction held, with one retraction.** The
+VL-018 session opener (the project author's two-message intent
+block) named the source-first instruction explicitly with
+VL-017b's apply-script process finding as its provenance. The
+instruction held for the validator draft: all five primary
+sources (`SPEC/request_schema.md`,
+`TESTS/adversarial/test_request_schema.py`, `CANON/canon.md`,
+`MANIFEST/manifest.json`, `IMPLEMENTATION/pep.py`) were viewed
+in full before any drafting. For the apply-script draft, Claude
+initially argued the script was "bounded enough" to skip
+reading `docs/methodology/apply_script_template.py`; this was
+a source-first violation in form (an argument against the rule
+rather than an application of it) that Claude retracted in the
+same turn before drafting. The template was then read in full
+before the apply-script was drafted. One uploaded-file recovery
+event also occurred (document text not appearing in message
+body despite filename being listed; resolved by direct read
+from the upload mount in one tool call); classified as a
+recovery, not a friction point, because no rework resulted.
+Friction-point count from environment-side sources in the first
+hour: zero. Friction-point count from Claude-side sources: see
+verbosity-as-deflection finding below.
+
+**Candidate-coupling framing reduced rework.** The session
+opener acknowledged Claude's framing that Candidates 1 and 3
+were coupled (the API-shape decision for parsed-vs-raw input
+determines whether the seventh code is structurally
+reachable). This was confirmed during source reading - the
+spec's step-1-and-step-6 pairing as boundary concerns made the
+coupling explicit in the primary source - and held through to
+the ledger entry's resolution rationale. Recording it here as
+a session-mechanics observation: when a candidate set has
+internal logical structure, naming the structure before source
+reading (rather than discovering it during) saves an iteration.
+Counterpart finding for future sessions handling multi-
+candidate citation discipline.
+
+**Verbosity-as-deflection: three instances this session.** VL-017b
+recorded one instance of this pattern. This session produced three
+more: (a) a methodology-clarification ask_user_input_v0 call before
+the ledger draft, retracted in the next message; (b) a source-
+clarification ask_user_input_v0 call before drafting the ledger
+entry's prose, retracted in the next message; (c) a script-scope
+ask_user_input_v0 call before drafting the apply-script that
+argued the bounded-enough framing against the source-first rule,
+retracted in the next message. In each case the retraction was
+immediate (within one turn) and the substantive work proceeded
+correctly. But three instances in one session crosses VL-017's
+friction-point threshold from the Claude-side rather than the
+environment-side. The threshold was originally calibrated for
+environment-side friction; the Claude-side analog is now in
+evidence. Generalized lesson: ask_user_input_v0 calls about
+"should I read source first" or "should I treat the rule as
+bounded" are themselves the rule violation - the answer is
+always source-first - and the call is the friction. The check
+to internalize: if the question Claude is about to ask has a
+known-correct answer derivable from the session's stated rules,
+the question is filler; act on the rule instead. Worth promoting
+to a session-mechanics-lessons artifact under VL-017's
+self-actuating-threshold provision; not actioned in VL-018
+(promoting mid-session would mean abandoning trajectory work, and
+the threshold was about whether to abandon, not what to do once
+the work is done).
+
+**G-numbering chosen on first-available basis.** G14 is the
+first available number after G13. G6 and G10 remain numbered-
+but-resolved (not reused) per the convention that gap numbers
+are durable identifiers, not slot reuses. Recording this so
+that future entries can cite the convention rather than re-
+derive it from prior practice.
+
+**Test-count drift acknowledged.** VL-017's "27 tests" and
+STATE.md's inherited "27" count the discriminating set (26
+parametrized negatives + 1 parse-error test), excluding the
+positive `test_schema_accepts_valid_request`. The test file
+contains 28 tests total. The drift is honest accounting
+(VL-017 was counting the failing-set; this entry records the
+total-vs-discriminating distinction). Not a correction of
+prior entries; a clarification of what "27" means going
+forward.
+
+**Apply-script template used; build-resumption template not used.**
+`docs/methodology/apply_script_template.py` (VL-017a) was used in
+this session to produce `apply_vl018.py` for the STATE.md edits.
+This is the second instance of apply-script-template use after
+VL-017b's use of the same template (which itself was the first
+instance after the template's promotion in VL-017a). The pattern
+is now stable across two sessions and three distinct edit sets
+(VL-017b's STATE.md reconciliation, VL-018's STATE.md edits).
+`build_resumption_request_template.md` (VL-017b) was NOT used in
+this session: Claude drafted the validator directly rather than
+delegating to another model. Available for any future session
+that wants the additional corroboration; absence of use here is
+not a finding about its utility.
+
+**Verification-ledger-range drift corrected by VL-018's apply
+script.** The STATE.md line "entries VL-001 through VL-016" was
+stale - VL-017, VL-017a, and VL-017b had all landed without
+updating it. The VL-018 apply script's edit 2 corrects this to
+"entries VL-001 through VL-018." This is a process finding about
+STATE.md hygiene: the verification-ledger-range line is a
+canonical-fact statement that should update with every VL-Nxx
+entry, but does not have a self-actuating mechanism. Candidate
+action: a STATE.md hygiene check that includes verification of
+this line against the actual last-ledger-entry, runnable as part
+of the session-close protocol. Not actioned in VL-018; flagged
+for the session-mechanics-lessons artifact when promoted.
+
+**False-positive blank-line-stripping diagnosis.** After the
+ledger entry's first append to `verification_ledger.md`, Claude
+read `tail -50` output and diagnosed blank-line stripping
+between Process findings paragraphs, citing it as a recurrence
+of VL-017a's process finding. Recovery plan included `git
+restore` and a Python-based re-append to preserve blank lines.
+At the project author's request to verify the diagnosis first,
+a `diff <(tail -50 file) <(tail -50 source)` showed zero
+differences: the source artifact and the appended-to file were
+byte-identical at the tail. The "run-on paragraphs" Claude saw
+in the terminal were a `tail -50` framing artifact - the 50-line
+window started mid-paragraph and excluded the leading blank
+lines that did exist. The append was clean; the diagnosis was
+wrong. Generalized lesson: when investigating whether terminal
+output indicates a file-content problem, distinguish "output
+format issue" from "file content issue" before drawing the
+conclusion. The diff primitive is the right check; `tail` alone
+is not. Claude almost recorded a false process finding about
+cat-append behavior; the project author's request for the diff
+caught the misdiagnosis before that finding landed. Recording
+this here as the actual finding to displace the false one.
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry deliberately does not cite its own
+commit hash. The commit hash will be reachable via `git log`.
