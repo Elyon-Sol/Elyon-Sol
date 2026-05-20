@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-020 (artifact 05 freshness pass per SPEC/request_schema.md build-order step 6: adds `target_url` at envelope top level and `context` inside `request_context`, plus two field-rationale bullets; bundled queue-drain: methodology Lesson 5 (set-exhaustiveness claims require explicit enumeration) promoted into docs/methodology/session_mechanics_lessons.md, and SPEC/request_schema.md "Build order (schema-internal)" closing paragraph corrected from pre-VL-015 numbering plan to actual VL-014..VL-020 numbering; no code/canon/test change) landed in commit d81de1d; VL-020 follow-up (STATE.md and ledger append; delivery-omission repair) lands in this commit; last ledger entry is VL-021 follow-up (STATE.md + ledger append; recovers from cbb428b's delivery omission); G2 still closed in code at VL-019; next action is the throwaway-session methodology promotion (VL-022, the cross-model evaluate template + Lesson 6 from the bridge document of 2026-05-19), then Finding 3 derivation (VL-023, recursive-continuity hypothesis), then the G0 build half (canonical CCS via envelope))
+Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-020 (artifact 05 freshness pass per SPEC/request_schema.md build-order step 6: adds `target_url` at envelope top level and `context` inside `request_context`, plus two field-rationale bullets; bundled queue-drain: methodology Lesson 5 (set-exhaustiveness claims require explicit enumeration) promoted into docs/methodology/session_mechanics_lessons.md, and SPEC/request_schema.md "Build order (schema-internal)" closing paragraph corrected from pre-VL-015 numbering plan to actual VL-014..VL-020 numbering; no code/canon/test change) landed in commit d81de1d; VL-020 follow-up (STATE.md and ledger append; delivery-omission repair) lands in this commit; last ledger entry is VL-022 (throwaway-session methodology promotion: cross-model evaluate template + Lesson 6 from the bridge document of 2026-05-19; absorbs 37a4390 disappearance-mechanism finding per option B); G2 still closed in code at VL-019; next action is Finding 3 derivation (VL-023, recursive-continuity hypothesis; requires fresh session per bridge prescription), then the G0 build half (canonical CCS via envelope))
 
 ---
 
@@ -353,6 +353,36 @@ manifest layer. CCS has drifted - see G0 below.
   treated as a session-mechanics finding for a future
   ledger entry). Fifth instance of the chat-paste-eats-
   content failure mode family. No code/canon/test change.
+- **VL-022 throwaway-session methodology promotion (this
+  commit).** Two deliverables from the bridge document of
+  2026-05-19: (1) new file
+  `docs/methodology/cross_model_evaluate_template.md` - a
+  fourth methodology template for framework-level
+  evaluation under derivation discipline, paralleling the
+  three existing methodology templates and incorporating
+  the constraint-bounding caveat Lesson 6 motivates; (2)
+  Lesson 6 appended to
+  `docs/methodology/session_mechanics_lessons.md` - the
+  presentation-indistinguishability failure mode
+  (constraint enforcement in cross-model output is
+  prompt-bounded, not model-bounded) and its corrective
+  rule (verify scope discipline within the response body,
+  not just at its opening confirmation). Both deliverables
+  promoted on single-instance basis with explicit
+  acknowledgment; rationale recorded in the VL-022 ledger
+  entry. Finding 3 from the bridge (recursive-continuity
+  hypothesis) NOT in this commit's scope; parked for
+  VL-023, which requires fresh artifact reading without
+  reference to the bridge document or surface-event model
+  phrasing per the bridge's prescription. This entry also
+  absorbs the audit trail for commit 37a4390 (the VL-021
+  follow-up 2 recovery) per option B of the VL-022
+  scoping decision; the disappearance mechanism that
+  necessitated 37a4390 is documented in the VL-022 ledger
+  entry as an open methodology investigation.
+  Classification: efficiency move per VL-017a's
+  distinction. No code/canon/test/spec/structural-doc
+  change. Repo test set 61/61, unchanged from 37a4390.
 
 ## What is locked vs. open
 
@@ -485,6 +515,24 @@ the G0 build track is underway:
     appends both the VL-021 and this VL-021 follow-up
     ledger entries. Fifth instance of the chat-paste-eats-
     content failure mode family.
+17. **VL-022 throwaway-session methodology promotion.**
+    Done (VL-022, this commit). Two deliverables from
+    the bridge document of 2026-05-19: new file
+    `docs/methodology/cross_model_evaluate_template.md`
+    (Finding 1, cross-model evaluate template refined
+    with the constraint-bounding caveat) and Lesson 6
+    appended to
+    `docs/methodology/session_mechanics_lessons.md`
+    (Finding 2, presentation-indistinguishability
+    failure mode). Single-instance promotion with
+    explicit acknowledgment. Finding 3 (recursive-
+    continuity hypothesis) NOT in scope; parked for
+    VL-023 (requires fresh session per bridge
+    prescription). VL-022 ledger entry also absorbs the
+    37a4390 disappearance-mechanism finding per option
+    B of the scoping decision. Classification:
+    efficiency move per VL-017a's distinction. No
+    code/canon/test/spec/structural-doc change.
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected)

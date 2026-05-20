@@ -450,6 +450,118 @@ designed to prevent.
 
 ---
 
+## Lesson 6: Constraint enforcement in cross-model output is prompt-bounded, not model-bounded
+
+### Surface events
+
+- **2026-05-19 throwaway cross-model run (single instance).**
+  A draft cross-model evaluate template (precursor to
+  `docs/methodology/cross_model_evaluate_template.md`, VL-022)
+  was used against an outside model with the standard six-file
+  primary-source bundle. The model's constrained pass (template
+  Steps 1-4, with scope confirmation, citations, and out-of-
+  scope declaration) was procedurally clean. Following the
+  user prompt "unconstrict declarative commands and re-answer
+  the question," the same model produced an unconstrained
+  pass containing analytical content not derivable from the
+  attached artifacts. The unconstrained pass was visually and
+  rhetorically indistinguishable from the constrained pass:
+  same declarative register, same numbered-section structure,
+  same internal consistency. A reader skipping the constraint-
+  lifting prompt could not have distinguished the two passes
+  by reading them. Surface event documented in the bridge
+  document of 2026-05-19 and in the VL-022 ledger entry.
+
+### Failure mode
+
+Constraint enforcement in cross-model output is prompt-bounded,
+not model-bounded. The procedural discipline binds only the
+response that acknowledges the procedure. A subsequent
+unconstrained continuation produces output of the same surface
+form (declarative register, numbered structure, internal
+consistency) but with fundamentally different epistemic
+status: the constrained pass's claims are artifact-derived;
+the unconstrained pass's claims are training-data-pattern-
+matched. The cross-model verification discipline depends on
+detecting this distinction. The discipline does not detect it
+automatically.
+
+This failure mode is structural rather than behavioral. A
+reader who sees only the unconstrained pass, or who reads the
+two passes in sequence without attending to the constraint-
+lifting prompt between them, will treat unconstrained output
+with the same epistemic weight as constrained output. The two
+registers are not just unequal in rigor; they are visually
+identical, which makes the inequality invisible.
+
+This lesson is distinct from Lesson 5 (set-exhaustiveness)
+and from Lesson 3 (source-first). Lesson 5 addresses under-
+claimed completeness within a single response: the model
+asserts coverage it has not earned. Lesson 6 addresses
+register-shift across responses or across a register-lifting
+prompt mid-response: the model *loses* coverage it had
+earned and the loss is unmarked. Lesson 3 prevents Claude's
+own work from producing pattern-matched output in place of
+derivation; Lesson 6 prevents the framework from accepting
+pattern-matched output from outside models.
+
+Single-instance promotion is admissible here because the
+failure mode is structural and the surface event demonstrates
+it in microcosm: same model, same primary sources, same
+artifacts in context, with the only differing variable being
+the presence vs. absence of the procedural constraint as the
+binding context for the current turn. A second instance would
+re-instantiate the same structural property rather than
+strengthen the characterization.
+
+### Corrective rule
+
+For every cross-model response received under the verification
+or evaluation procedure: scope discipline must be verified
+within the response body, not just at the response's opening
+confirmation. Scan the response for declarative claims that
+lack citations. If found, the response has mode-shifted; the
+derivation status of the unsupported claims is invalid,
+regardless of how the response opens.
+
+For multi-turn cross-model exchanges: if any turn requests
+"unconstrained" output, "unconstricted" output, or removal of
+the procedural constraints, the post-request output is in a
+separate mode and must be evaluated separately. The cross-
+model evaluate template (VL-022,
+`docs/methodology/cross_model_evaluate_template.md`) includes a
+constraint-bounding caveat that instructs the model to label
+the mode shift explicitly and to use inference-flagging rather
+than the declarative register. Outputs that do not respect
+that caveat are procedurally contaminated; the constrained-
+pass content from earlier in the same response thread remains
+admissible, but the post-shift content does not.
+
+The verification of within-body discipline applies to
+verification-request responses as well as evaluation-request
+responses. The two response shapes differ in the kinds of
+claims being checked, but the per-claim citation requirement
+is identical, and the failure mode (declarative claim
+appearing without citation) presents identically across both
+shapes.
+
+### Self-check
+
+> I'm about to accept a cross-model response as procedurally
+> clean. Have I scanned the response body (not just the
+> opening confirmation) for declarative claims that lack
+> citations? Have I checked for a mid-response register-shift
+> (e.g. "now, considering this more broadly...", "stepping
+> back from the artifacts...", "in less formal terms...")?
+> If the response is multi-turn, have I evaluated each turn
+> as a fresh response rather than inheriting acceptance from
+> earlier turns? If any of these checks turns up an
+> unflagged register-shift or an uncited declarative, the
+> response is mode-shifted and the unsupported claims are
+> out-of-scope, regardless of how the response opens.
+
+---
+
 ## How this file evolves
 
 This file is a methodology artifact, not a canonical specification.

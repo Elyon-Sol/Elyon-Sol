@@ -4192,3 +4192,309 @@ the prior commit being described, not the commit being created.
   the fourth or fifth surface event in that lesson, depending
   on how the lesson currently catalogs them); deferred per
   strict scope.
+### VL-022 - throwaway-session methodology promotion: cross-model evaluate template and Lesson 6
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** Two methodology deliverables from the bridge document
+of 2026-05-19 are promoted to durable framework artifacts:
+(1) `docs/methodology/cross_model_evaluate_template.md` - a fourth
+methodology template, paralleling the three existing templates, for
+framework-level evaluation under derivation discipline; and
+(2) Lesson 6 in `docs/methodology/session_mechanics_lessons.md` -
+the presentation-indistinguishability failure mode and its
+corrective rule. No code/canon/test/spec/structural-doc change.
+
+Finding 3 from the bridge document (recursive-continuity
+hypothesis) is NOT in this commit's scope. It is parked for
+VL-023, which requires fresh artifact reading without reference
+to the bridge document or the surface-event model's phrasing per
+the bridge's prescription.
+
+This entry also records, per option B of the VL-022 scoping
+decision, the recovery sequence for VL-021's delivery omission:
+cbb428b landed the schema edit only, 79feab9 landed items 15-16
+of "Next open action" plus the two ledger appends, and 37a4390
+landed the last-updated parenthetical and the two
+"Current verified state" bullets that should have been in 79feab9
+but were lost to an undiagnosed disk-state inconsistency. See
+"Disappearance mechanism (open methodology investigation)" below.
+
+---
+
+### Background
+
+On 2026-05-19, a throwaway session was conducted with Claude
+(anthropic.ai). The session's purpose, declared at opening, was
+to evaluate the framework's viability in a scenario explicitly
+designated as not-to-be-recorded. The session contained one
+cross-model run against a separate outside model, using a draft
+cross-model evaluate template prepared during the session, on
+the standard six-file primary-source bundle (STATE.md, the
+verification ledger, `docs/methodology/session_mechanics_lessons.md`,
+`docs/restructure/05_admissibility_envelope_spec.md`,
+`docs/restructure/06_spec_to_code_traceability.md`,
+`SPEC/request_schema.md`).
+
+The cross-model run's structure:
+
+1. The outside model produced a constrained pass (Steps 1-4 of
+   the draft template, with scope confirmation, citations, and
+   out-of-scope declaration). The pass was procedurally clean
+   under VL-008 rules (a) and (b).
+2. The user prompted "unconstrict declarative commands and
+   re-answer the question." The outside model produced an
+   unconstrained pass containing analytical content not
+   derivable from the supplied artifacts. The unconstrained
+   pass was visually and rhetorically indistinguishable from
+   the constrained pass.
+3. The user returned to Claude with the outside model's full
+   output for evaluation, then iterated through several rounds
+   on what the session had produced and how to preserve it.
+
+Three findings were drafted during the throwaway session and
+preserved in a bridge document (`bridge.md` of 2026-05-19) for
+a later recorded session to derive or discard:
+
+- **Finding 1**: a cross-model evaluate template, structurally
+  paralleling the three existing methodology templates,
+  distinguished by purpose (framework-level evaluation rather
+  than artifact verification or build delegation).
+- **Finding 2**: the presentation-indistinguishability failure
+  mode - the unconstrained pass was visually and rhetorically
+  indistinguishable from the constrained pass despite radically
+  different epistemic status - drafted as Lesson 6 for
+  `session_mechanics_lessons.md`.
+- **Finding 3**: a recursive-continuity hypothesis surfaced by
+  the outside model in its unconstrained pass - that the
+  framework applies continuity discipline at multiple layers
+  (request, manifest, decision, methodology, session) - flagged
+  in the bridge as HYPOTHESIS requiring derivation, with
+  explicit prescription that the model's phrasing must NOT be
+  imported.
+
+This commit promotes Findings 1 and 2 under derivation
+discipline. Finding 3 is deferred to VL-023.
+
+### What this commit does
+
+Three categories of change, applied in a tight window to
+minimize exposure to the disappearance mechanism documented
+below:
+
+**1. New file: `docs/methodology/cross_model_evaluate_template.md`.**
+
+Promoted from the bridge document's Finding 1 draft, with the
+constraint-bounding caveat incorporated (the paragraph
+instructing the outside model to explicitly label any
+unconstrained-mode output and to use inference-flagging rather
+than the declarative register the constrained mode uses). This
+caveat is the corrective Finding 2 motivates; the throwaway
+session's draft template did NOT contain this paragraph, and
+its absence is what permitted the surface event documented in
+Lesson 6.
+
+Structural conformity to existing methodology templates verified
+against `verification_request_template.md`,
+`apply_script_template.py`, and `build_resumption_request_template.md`
+by reading each at promotion time and matching the section
+ordering.
+
+**Promotion basis**: single-instance, with explicit
+acknowledgment. VL-017a established two-instance promotion as
+the standard. The single-instance choice here is justified
+because the surface event included a structural stress test
+(the unconstrained-pass contamination), and the template
+incorporates the corrective the stress test surfaced.
+
+**2. Append to `docs/methodology/session_mechanics_lessons.md`:
+Lesson 6.**
+
+Failure mode: constraint enforcement in cross-model output is
+prompt-bounded, not model-bounded. The procedural discipline
+binds only the response that acknowledges the procedure. A
+subsequent unconstrained continuation produces output of the
+same surface form but with fundamentally different epistemic
+status.
+
+Corrective rule: scope discipline must be verified within the
+response body, not just at the response's opening confirmation.
+
+Promotion basis: single-instance. The failure mode is structural
+rather than behavioral; the throwaway session's two-pass test
+demonstrates it in microcosm.
+
+**3. STATE.md updates.**
+
+Three edits applied via a single inline Python script with
+md5-and-read-back verification, matching the pattern that
+survived in commit 37a4390 (and unlike the apply-script +
+separate-cat-append pattern that failed in cbb428b and partly
+in 79feab9):
+
+- Last-updated parenthetical: VL-021 follow-up -> VL-022, next
+  action updated to VL-023.
+- "Current verified state" section: append the VL-022 bullet.
+- "Next open action" section: append items 17 (VL-022) and 18
+  (VL-022's note that VL-023 is the next ledger entry).
+
+### Disappearance mechanism (open methodology investigation)
+
+The VL-021 thread surfaced a session-mechanics failure pattern
+that does not match any of the prior six chat-paste-eats-content
+instances and is recorded here for future investigation:
+
+**Observed pattern.** Edits applied to STATE.md by
+`apply_vl021_state_md.py` and `apply_vl021_followup.py`'s edits
+1 and 2 reported "applied" at apply-script time (with byte
+deltas printed) and STATE.md showed as modified in subsequent
+`git status` output, but the resulting commits recorded only
+the edits that had been applied by a separate, later inline
+Python script. The earlier edits were absent from the commit
+despite having been on disk between the apply-script's exit and
+the next read.
+
+**Ruled-out theories** (with evidence):
+
+- `core.autocrlf=true` working-tree rewriting: refuted by
+  `file STATE.md` showing LF throughout and `git status`
+  showing no spontaneous modifications when STATE.md is at
+  origin's state.
+- File-write atomicity within Python: refuted by 37a4390's
+  inline script's md5 + read-back verification, which showed
+  both edits present immediately after write and persistent
+  across subsequent reads.
+- Path mismatch between apply-script and verification: refuted
+  by both apply-script and inline script using the same
+  `os.path.expanduser("~/Elyon-Sol/STATE.md")` resolution.
+
+**Working hypothesis (not yet confirmed)**: something in the
+interval between an apply-script's exit and the subsequent
+`git add` operation reverts STATE.md to its origin-tracked
+state, but only sometimes. Possible mechanisms include a sync
+client (OneDrive, Dropbox), an IDE indexer with stale buffer,
+an antivirus quarantine-and-restore cycle, or a git hook with
+side effects. The mechanism did not trigger on 37a4390 (which
+ran the entire edit-to-commit sequence as one short paste with
+md5 checkpoints) nor on this commit's STATE.md update (which
+uses the same inline-with-verification pattern).
+
+**Provisional corrective**: until the mechanism is diagnosed,
+prefer inline Python scripts with md5 stability checks over
+separate apply-script + later cat-and-commit sequences when
+the target file is STATE.md. The pattern that has now survived
+twice (37a4390 and this commit) is: read with md5, edit, write
+with md5 verification, read-back to confirm md5, then proceed
+to git operations within a short window.
+
+**Candidate methodology action**: add a "Lesson 7" or amend
+Lesson 4 to record the disappearance pattern, the working
+hypothesis, and the provisional corrective. Deferred from
+this commit per strict scope; flagged for a future ledger
+entry to investigate.
+
+### Verification
+
+**Test regression.** `python -m pytest TESTS/`: 61/61 passing,
+unchanged from 37a4390.
+
+**ASCII-safe check.** `LC_ALL=C grep -n '[^[:print:][:space:]]'`
+on all touched files: no matches.
+
+**md5 stability.** STATE.md md5 verified before edit, after
+edit, after read-back, and (separately) immediately before
+`git add`. The pattern that consistently survives is the one
+documented above.
+
+**Anchor source-of-truth.** All three STATE.md anchors were
+verified by `sed -n` and `cat -A` against disk content before
+the apply was drafted. No anchors reconstructed from session
+scrollback. This is the Lesson 3 corrective applied to the
+STATE.md update specifically.
+
+**Git status pre-commit.** 4 files affected: 1 new
+(`docs/methodology/cross_model_evaluate_template.md`), 3
+modified (`docs/methodology/session_mechanics_lessons.md`,
+`STATE.md`, `EVIDENCE/verification_ledger.md`). No code/canon/
+test/spec/structural-doc change.
+
+### Files affected
+
+- `docs/methodology/cross_model_evaluate_template.md` (NEW)
+- `docs/methodology/session_mechanics_lessons.md` (Lesson 6
+  appended between Lesson 5 and the "How this file evolves"
+  trailer)
+- `STATE.md` (last-updated + Current verified state bullet +
+  Next open action items 17-18)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/*` (untouched)
+- `TESTS/*` (untouched)
+- `SPEC/request_schema.md` (current at VL-021/cbb428b)
+- `docs/restructure/*` (untouched; Finding 3 derivation may
+  amend artifact 05 or add a new artifact, parked for VL-023)
+- `docs/restructure/04_current_vs_claimed.md` (G2-RESOLVED row
+  update still deferred per VL-019)
+
+### Process findings
+
+**Single-instance promotion is admissible when the surface
+event is itself a structural demonstration.** VL-017a
+established two-instance promotion as the standard. Both
+Finding 1 (the template) and Finding 2 (Lesson 6) promote on
+single-instance basis. The template's promotion is justified
+by the surface event's built-in stress test surfacing the
+constraint-bounding caveat now baked into the template;
+Lesson 6's promotion is justified by the failure mode being
+structural rather than behavioral.
+
+Candidate addition to the methodology vocabulary: distinguish
+"behavioral two-instance promotion" (a pattern observed twice
+in practice) from "structural single-instance promotion" (a
+property demonstrated once but completely). Not actioned here;
+flagged for a future session-mechanics-lessons update.
+
+**VL-021 thread accounting.** The VL-021 work spanned three
+commits: cbb428b (schema edit; commit message referenced
+STATE.md update and ledger append that did not land), 79feab9
+(items 15-16 of "Next open action" + the two ledger appends;
+follow-up to cbb428b's omission), and 37a4390 (last-updated
+parenthetical + Current verified state bullets; recovery from
+79feab9's partial landing). The VL-021 follow-up ledger entry
+in 79feab9 documents the cbb428b -> 79feab9 recovery; 37a4390
+has no ledger entry of its own, and per option B of this
+session's scoping decision, this VL-022 entry's "Disappearance
+mechanism" section absorbs the 37a4390 audit trail.
+
+**Bridge document handling decision.** The bridge document
+remains outside the repository. The bridge's drafts have been
+refined and incorporated into the committed artifacts; the
+bridge itself is preservable in the user's session export but
+is not required for the committed artifacts to stand on their
+own.
+
+**Lesson 3 (source-first) compliance: full.** The structural
+conventions of the three existing methodology templates were
+read directly at promotion time. The Lessons 1-5 format in
+`session_mechanics_lessons.md` was read in full before drafting
+the Lesson 6 append. The STATE.md anchors for this commit's
+edits were verified against `sed -n` and `cat -A` output
+before the apply was drafted; no anchors reconstructed from
+session-opener scrollback.
+
+**Verbosity-as-deflection: low.** Limited to the
+ask_user_input_v0-equivalent question about option A/B/C for
+the 37a4390 ledger gap (resolved on first round with explicit
+recommendation; not deflective).
+
+**Citation discipline.** Per VL-012's self-referencing-hash
+finding: this entry does not cite its own commit hash. Prior
+commits cited (cbb428b, 79feab9, 37a4390) are the prior
+commits being described, not the commit being created. The
+bridge document of 2026-05-19 is cited explicitly as
+surface-event source for Findings 1 and 2; the bridge is NOT
+committed to the repo.
