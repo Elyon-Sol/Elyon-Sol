@@ -335,6 +335,121 @@ pattern observed twice that doesn't fit any existing threshold.
 
 ---
 
+## Lesson 5: Set-exhaustiveness claims require explicit enumeration
+
+### Surface events
+
+- **VL-019 source-first skip #1.** Claude designed a Pydantic-based
+  PEP architecture against the VL-019 session intent's prose
+  description of the validator rather than against the validator's
+  actual behavior in `IMPLEMENTATION/request_validator.py` (lines
+  320-321, 330-334). The architectural claim "this will satisfy
+  the 27 schema tests" was made over a set of validator behaviors
+  that had not been enumerated against the validator's source. The
+  architecture failed 4/27 tests because Pydantic silently drops
+  extra top-level keys, making two validator-emitted refusal codes
+  structurally unreachable. Caught by running the schema tests
+  pre-commit; the failure was not committed but the rework was
+  substantial.
+- **VL-019 source-first skip #2.** Claude claimed
+  "23/23 evaluator regression passing" after migrating
+  `TESTS/test_pep.py` to the new wire shape. The regression set
+  was claimed without enumerating `TESTS/`'s actual contents;
+  only one of five test files had been visible in the working
+  context. Caught by the user running `python -m pytest TESTS/`
+  in the working repo and reporting the actual file count. The
+  claim was correct in spirit (the evaluator-specific test file
+  did pass 23/23) but the framing "evaluator regression"
+  implicitly covered a larger set than had been enumerated.
+- **VL-019 `grep -P` flag rejection on MINGW64 + LC_ALL=C.**
+  Claude recommended `LC_ALL=C grep -nP '[^[:print:][:space:]]'`
+  for the non-ASCII byte check. The `-P` (Perl regex) flag
+  requires a unibyte+UTF-8 locale; `LC_ALL=C` is not, so MINGW64
+  rejected the command (exit 2). The recommendation imported a
+  Linux-container habit (`grep -P` works there with the same
+  invocation) without enumerating which platforms support the
+  flag combination. STATE.md's documented pre-commit check at
+  VL-009 used the basic-regex form, which works on all platforms;
+  the `-P` form was a Claude-side change of recommendation that
+  didn't survive cross-platform. Caught by the user's `grep exit: 2`
+  output. The basic-regex form (`grep -n '[^[:print:][:space:]]'`)
+  is the form that works on MINGW64 + Git Bash and is the form
+  the VL-019 session settled on.
+
+### Failure mode
+
+A claim about a set ("the regression suite," "the validator's
+behaviors," "the platforms this command works on") implicitly
+asserts the set has been characterized correctly. When the set is
+not enumerated against the source-of-truth before the claim is
+made, the claim can be confidently wrong about the set's membership
+and still produce a plausible-sounding statement.
+
+This failure mode is closely related to Lesson 3 (source-first) but
+distinct in scope. Lesson 3 says "view primary sources before
+drafting derived work"; Lesson 5 says "enumerate sets before
+asserting their membership." A Lesson 3 violation can pass without
+materializing if the derived work happens not to depend on the
+unread source. A Lesson 5 violation materializes whenever the
+claim is made, because the claim *is* the assertion about the set.
+
+The three surface events have a common shape: a set was claimed
+exhaustive (or characterized in a way that required exhaustiveness)
+without enumeration:
+
+- Skip #1: "the validator's behaviors" was not enumerated against
+  `request_validator.py`'s actual emit sites.
+- Skip #2: "the regression set" was not enumerated against
+  `TESTS/`'s actual contents.
+- `grep -P`: "the platforms this command works on" was not
+  enumerated against the platforms the project actually runs on.
+
+### Corrective rule
+
+Before asserting that a set is exhaustive, characterized,
+covered, or otherwise complete, list the set's members explicitly
+and verify against the source-of-truth that no members are
+missing. The source-of-truth is whatever primitive enumerates the
+set:
+
+- For files in a directory: `ls -1`.
+- For tests in a test suite: `python -m pytest --collect-only` or
+  the source files themselves.
+- For symbols in a module: the module's source, viewed in full,
+  or `grep -n '^def\|^class'` for a quick enumeration.
+- For platforms a command runs on: a reference to the command's
+  documentation, or a check against the target platform's
+  behavior, before the command is recommended.
+- For gaps in `docs/restructure/04_current_vs_claimed.md`: the
+  artifact's gap table, read in full, not from memory.
+
+The cost of enumeration is bounded (one primitive call, one
+view); the cost of a wrong claim about a set is the rework when
+the claim turns out to cover non-existent members or miss real
+ones.
+
+### Self-check
+
+> I'm about to claim that a set is complete / characterized /
+> exhaustive / covered. Have I enumerated the set's members
+> against a source-of-truth primitive, or am I asserting the
+> characterization from memory or inference? If the latter,
+> run the enumeration first.
+
+### First successful application
+
+The VL-019 follow-up README rewrite enumerated each top-level
+entry against `ls -1` output and each subdirectory against
+`docs/restructure/01_repository_structure.md` + STATE.md
+citations before claiming the structure listing was exhaustive.
+The check caught the `POE/` and `.gitattributes` omissions that
+the first README draft had silently committed. This is Lesson 5's
+first applied use; the failure mode demonstrated by the three
+surface events is the same failure mode the self-check is
+designed to prevent.
+
+---
+
 ## How this file evolves
 
 This file is a methodology artifact, not a canonical specification.

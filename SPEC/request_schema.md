@@ -491,8 +491,11 @@ is committed. Each step is committable as a unit.
 
 Steps 2-4 are the code-side of G2. Step 1 is this artifact alone.
 Step 6 reconciles the envelope spec to this schema. Each step gets
-its own ledger entry: VL-014 (this artifact), VL-015 (failing
-tests), VL-016 (validator), VL-017 (PEP wiring + G2 close), VL-018
+its own ledger entry. The actual numbering, post VL-015
+cross-model verification and VL-016 corrections consuming the
+prior numbering, is: VL-014 (this artifact), VL-015 (cross-model
+verification), VL-016 (corrections), VL-017 (failing tests),
+VL-018 (validator), VL-019 (PEP wiring + G2 close), VL-020
 (artifact 05 freshness pass).
 This split is per VL-011's lesson that distinct concerns get distinct
 commits, not bundled commits whose diffs muddy each other.

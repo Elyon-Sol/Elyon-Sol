@@ -41,6 +41,7 @@ reassertion protocol is precisely the missing transition logic. So:
 {
   "envelope_version": "1.0",
   "decision": "ELIGIBLE",
+  "target_url": "<URL the decision was about; see SPEC/request_schema.md target_url rules; G4 deferral noted>",
   "canon": {
     "version": "0.9.8.4",
     "canon_sha256": "<hash of CANON/canon.md at decision time>"
@@ -52,6 +53,7 @@ reassertion protocol is precisely the missing transition logic. So:
   "request_context": {
     "AP": ["identity", "role"],
     "OP": ["session", "request"],
+    "context": {"<arbitrary caller-supplied object; canon section 11.1 `C`; SPEC/request_schema.md `interaction.context` is derivation>": "..."},
     "expected_manifest_version": "1.0",
     "expected_manifest_sha256": "<...>"
   },
@@ -72,11 +74,25 @@ reassertion protocol is precisely the missing transition logic. So:
 
 ### Field rationale
 
+- **`target_url`**  -  the URL the decision was about, recorded as part of the audit trail.
+  Derived from `SPEC/request_schema.md`'s `target_url` rules (HTTPS-only at the schema layer;
+  see G4 deferral on non-bypassable enforcement). Including the target in the envelope makes
+  the decision auditable on its own: a reader of a persisted envelope knows what the gate
+  decided about, not only what the gate decided. Participates in `decision_sha256` by the
+  default rule (only `timestamp_utc` is excluded).
 - **`canon` block**  -  pins the decision to the locked canon (whitepaper version + hash). If
   `CANON/canon.lock` ever shows a different hash, every prior envelope provably predates a
   canon change. This makes "canon is locked" *enforceable*, not merely stated.
 - **`evaluated_against`**  -  the manifest state, per section 11.9 ("the manifest must be
   deterministic, versioned, and integrity-verifiable").
+- **`request_context.context`**  -  the caller-supplied `C` from the canonical interaction
+  tuple `I = (A, S, C, t)` (canon section 11.1). Required by the request schema
+  (`SPEC/request_schema.md` makes `interaction.context` required at the wire boundary; that
+  decision is the schema-layer half of G12). Recording `context` in the envelope preserves
+  the inputs that produced the decision; this is the same discipline as recording `AP` and
+  `OP`. Members of `request_context` are not individually enumerated as bullets here; this
+  bullet exists because `context` is the load-bearing addition from the VL-014..VL-019
+  schema work.
 - **`evaluator` block**  -  pins to the implementation. A changed evaluator hash means the
   decision logic itself moved (section 12.4-class transition).
 - **`condition_results`**  -  note the explicit split. `manifest_integrity` is the point-in-time
