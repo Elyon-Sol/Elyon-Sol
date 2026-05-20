@@ -453,8 +453,8 @@ shape the envelope embeds) get touched. The pass will:
   rules (G4 deferral noted);
 - append a field-rationale bullet for each of the two new fields,
   matching the prose style of the existing bullets;
-- record the pass in the ledger as a separate entry (proposed
-  VL-018, after the VL-014..VL-017 schema-work entries below).
+- record the pass in the ledger as a separate entry (recorded
+  at VL-020, after the VL-014..VL-019 schema-work entries).
 
 No code change in artifact 05's pass; no canon change; no test
 change. Same scope rule as VL-013.
