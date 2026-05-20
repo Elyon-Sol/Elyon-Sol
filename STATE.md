@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-020 (artifact 05 freshness pass per SPEC/request_schema.md build-order step 6: adds `target_url` at envelope top level and `context` inside `request_context`, plus two field-rationale bullets; bundled queue-drain: methodology Lesson 5 (set-exhaustiveness claims require explicit enumeration) promoted into docs/methodology/session_mechanics_lessons.md, and SPEC/request_schema.md "Build order (schema-internal)" closing paragraph corrected from pre-VL-015 numbering plan to actual VL-014..VL-020 numbering; no code/canon/test change) landed in commit d81de1d; VL-020 follow-up (STATE.md and ledger append; delivery-omission repair) lands in this commit; last ledger entry is VL-020 follow-up; G2 still closed in code at VL-019; next action is the second stale forward-reference correction at SPEC/request_schema.md line 457 (small queue-drain commit) followed by the G0 build half (canonical CCS via envelope))
+Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-020 (artifact 05 freshness pass per SPEC/request_schema.md build-order step 6: adds `target_url` at envelope top level and `context` inside `request_context`, plus two field-rationale bullets; bundled queue-drain: methodology Lesson 5 (set-exhaustiveness claims require explicit enumeration) promoted into docs/methodology/session_mechanics_lessons.md, and SPEC/request_schema.md "Build order (schema-internal)" closing paragraph corrected from pre-VL-015 numbering plan to actual VL-014..VL-020 numbering; no code/canon/test change) landed in commit d81de1d; VL-020 follow-up (STATE.md and ledger append; delivery-omission repair) lands in this commit; last ledger entry is VL-021 follow-up (STATE.md + ledger append; recovers from cbb428b's delivery omission); G2 still closed in code at VL-019; next action is the throwaway-session methodology promotion (VL-022, the cross-model evaluate template + Lesson 6 from the bridge document of 2026-05-19), then Finding 3 derivation (VL-023, recursive-continuity hypothesis), then the G0 build half (canonical CCS via envelope))
 
 ---
 
@@ -322,6 +322,37 @@ manifest layer. CCS has drifted - see G0 below.
   chat-paste-eats-content failure mode named in
   `docs/methodology/session_mechanics_lessons.md` (VL-016
   follow-up lessons (a) and (b)). No code/canon/test change.
+- **VL-021 schema line-457 stale forward-reference
+  correction (commit cbb428b).** The second stale
+  forward-reference in `SPEC/request_schema.md`, surfaced
+  by VL-020's source-read pass and deferred per
+  strict-scope discipline, is corrected. The "Decided
+  downstream tasks / Feed-back to envelope spec
+  (Deliverable 05)" section's parenthetical reference is
+  rewritten from forward-tense pre-VL-020 numbering
+  ("proposed VL-018, after the VL-014..VL-017 schema-work
+  entries below") to past-tense citing the actual landing
+  ("recorded at VL-020, after the VL-014..VL-019
+  schema-work entries"). Single focused str_replace; same
+  family as VL-020's closing-paragraph correction. No
+  code/canon/test/structural-doc change. Repo test set
+  61/61, unchanged from VL-020 follow-up.
+- **VL-021 follow-up STATE.md and ledger append;
+  delivery-omission repair (commit 79feab9).** VL-021's
+  commit cbb428b landed the schema edit but omitted the
+  STATE.md update and the ledger entry append. This
+  follow-up commit applies the STATE.md edits with
+  anchors verified against the actual file content and
+  appends both the VL-021 and the VL-021 follow-up ledger
+  entries. Items 15 and 16 of "Next open action" landed
+  in 79feab9; this current-verified-state bullet pair and
+  the last-updated parenthetical landed in a separate
+  follow-up commit after edits 1 and 2 of the original
+  apply-script were observed to apply to disk but not
+  survive to staging in 79feab9 (mechanism undiagnosed;
+  treated as a session-mechanics finding for a future
+  ledger entry). Fifth instance of the chat-paste-eats-
+  content failure mode family. No code/canon/test change.
 
 ## What is locked vs. open
 
