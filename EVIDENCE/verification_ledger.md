@@ -3823,3 +3823,372 @@ in the recovery shape).
 Per VL-012's self-referencing-hash finding and subsequent
 reinforcement: this entry deliberately does not cite its own
 commit hash. The commit hash will be reachable via `git log`.
+### VL-021 - schema line-457 stale forward-reference correction
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** The second stale forward-reference in
+`SPEC/request_schema.md`, surfaced as a VL-020 process finding
+and deferred per strict-scope discipline, is corrected. The
+"Decided downstream tasks / Feed-back to envelope spec
+(Deliverable 05)" section's parenthetical reference is rewritten
+from forward-tense pre-VL-020 numbering ("proposed VL-018, after
+the VL-014..VL-017 schema-work entries below") to past-tense
+citing the actual landing ("recorded at VL-020, after the
+VL-014..VL-019 schema-work entries"). Single focused str_replace;
+same family as VL-020's closing-paragraph correction. No
+code/canon/test/structural-doc change.
+
+---
+
+### Background
+
+VL-020 (commit d81de1d) corrected one stale forward-reference in
+`SPEC/request_schema.md` (the closing paragraph of the "Build
+order (schema-internal)" section) per strict-scope discipline.
+The VL-020-era source-read pass surfaced a second stale
+reference at line 457 of the post-VL-020 file, in the "Decided
+downstream tasks / Feed-back to envelope spec (Deliverable 05)"
+section. The text read:
+
+> record the pass in the ledger as a separate entry (proposed
+> VL-018, after the VL-014..VL-017 schema-work entries below).
+
+The "pass" referenced is the envelope-spec freshness pass that
+absorbs schema-derived changes back into
+`docs/restructure/05_admissibility_envelope_spec.md`. That pass
+landed at VL-020 (commit d81de1d). The forward-reference
+phrasing in the schema was therefore stale by both numbering
+(VL-018 vs. actual VL-020) and verb tense (forward-tense for
+an event already in the past).
+
+Two correction approaches were considered:
+
+- **Forward-tense renumber.** Rewrite "proposed VL-018, after
+  the VL-014..VL-017 schema-work entries below" to "proposed
+  VL-022, after VL-014..VL-021" (or whatever the active VL
+  number is at correction time). Preserves the schema's
+  planning-document character (the section was drafted as a
+  forward plan in VL-014) but introduces a new forward
+  reference that becomes stale again as the queue advances.
+- **Past-tense rewrite.** Rewrite the parenthetical to past
+  tense citing the actual landing: "(recorded at VL-020,
+  after the VL-014..VL-019 schema-work entries)". Closes the
+  reference structurally and removes the forward-reference
+  shape entirely.
+
+Past-tense rewrite chosen. The reference is no longer a
+forward plan; the pass it referenced has already happened.
+Preserving forward-tense for a completed event would itself
+become a future stale reference.
+
+### What this commit does
+
+One str_replace in `SPEC/request_schema.md` at the line 456-457
+region, applied via `apply_vl021.py` (template pattern: read
+normalizes CRLF->LF; write always LF; uniqueness check on the
+anchor; atomic write via tempfile + os.replace).
+
+The str_replace anchor is the full two-line parenthetical, which
+is unique in the file: VL-020 corrected the only other
+"proposed VL-NN" reference (in the Build order closing paragraph
+at lines 494-499), so no ambiguity remains.
+
+### Verification
+
+**Test regression.** `python -m pytest TESTS/`: 61/61 passing,
+unchanged from VL-020 follow-up.
+
+**ASCII-safe check.** `LC_ALL=C grep -n '[^[:print:][:space:]]'`
+on `SPEC/request_schema.md`: no matches.
+
+**Git status pre-commit.** 1 file modified
+(`SPEC/request_schema.md`) plus the ledger and STATE.md
+appended/edited via separate explicit commands per VL-020
+follow-up lesson. No new files. No code/canon/test/structural-
+doc change.
+
+**Dry-run verification.** The apply-script was dry-run against a
+copy of `SPEC/request_schema.md` during draft preparation;
+anchor matched once (count=1), edit applied, diff against
+original shows only the intended two-line change (-3 bytes net).
+
+### Files affected
+
+- `SPEC/request_schema.md` (single str_replace at the line
+  456-457 region; numbering correction with past-tense rewrite)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/*` (untouched)
+- `TESTS/*` (untouched)
+- `docs/restructure/04_current_vs_claimed.md` (G2-RESOLVED row
+  update still deferred per VL-019)
+- `docs/restructure/05_admissibility_envelope_spec.md` (current
+  at VL-020)
+- `docs/methodology/session_mechanics_lessons.md` (Lesson 3
+  surface-event addition for VL-020's apply-script template
+  fire still deferred; will be addressed at VL-022 alongside
+  Lesson 6 promotion)
+
+### Process findings
+
+**Bookkeeping commit shape consistent with VL-020/VL-020-followup
+discipline.** This is a single-edit, single-file, no-semantic-
+change commit. Trajectory orthogonal to both the G0 build half
+and the in-flight throwaway-session methodology promotion
+(VL-022 next). Bundling it with either would have blurred the
+commit boundary in the way VL-020 demonstrated is risky.
+
+**No new process findings.** The VL-020 process findings (second
+stale forward-reference deferral now closed by this commit;
+Lesson 3 pre-commit fire; the chat-paste-eats-content third
+instance) remain open as a class except for this one item; none
+of the others are actioned in this commit.
+
+### Citation discipline
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry does not cite its own commit hash. The
+commit hash will be reachable via `git log`.
+### VL-021 follow-up - STATE.md and ledger append; delivery-omission repair
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** VL-021's commit cbb428b landed the schema line-457
+correction correctly but omitted the STATE.md update and the
+ledger entry append; the commit message references both as if
+they had landed. This follow-up commit applies the STATE.md
+edits with anchors verified against the actual file content
+(sed -n on lines 9, 314-325, 425-440 of post-cbb428b STATE.md)
+and appends both the VL-021 entry and this VL-021 follow-up
+entry to the ledger. No code/canon/test/spec change; this is a
+continuity-repair commit.
+
+---
+
+### Background
+
+VL-021's commit cbb428b ran the schema edit correctly (1 file
+changed, 2 insertions, 2 deletions; SPEC/request_schema.md at
+line 456-457) but the STATE.md update and ledger append failed
+to land. The mechanism is described below; in summary, three
+independent failures converged into one missed-delivery commit:
+
+1. **Edit 1 of `apply_vl021_state_md.py` applied to disk but was
+   lost before staging.** The script's edit 1 (last-updated
+   parenthetical replacement) successfully matched its anchor
+   and wrote +187 bytes to STATE.md. However, by the time
+   `git add -A` ran in the multi-step paste, STATE.md was back
+   at origin/main's state. The cause of the revert is unclear
+   from the available evidence; the user described
+   "edits in between" before re-running parts of the workflow,
+   and a `git checkout STATE.md` or equivalent likely occurred
+   during that interval. The cbb428b commit summary confirms
+   "1 file changed" (schema only), not 2.
+
+2. **Edit 2 of `apply_vl021_state_md.py` aborted on anchor
+   mismatch.** The anchor was reconstructed from session-opener
+   terminal scrollback (the user's initial `cat STATE.md`
+   output, which was paste-rendered through a chat client and
+   may have reflowed multi-line content). The reconstructed
+   anchor read:
+
+       "VL-016 follow-up lessons (a) and (b)). No code/canon/
+       test change."
+
+   But the actual STATE.md content on disk uses a hard-wrapped
+   multi-line form:
+
+       "`docs/methodology/session_mechanics_lessons.md` (VL-016
+       follow-up lessons (a) and (b)). No code/canon/test
+       change."
+
+   The reconstruction omitted the preceding context (the
+   `docs/methodology/...` filename reference and the
+   line-break between "(VL-016" and "follow-up"). The script
+   correctly aborted with "old_str matches 0 times. Has this
+   edit already been applied?" Edit 3 never ran.
+
+3. **The ledger-append cat failed on a non-existent path.** The
+   run-order summary specified `cat /path/to/vl021/vl021_ledger_entry.md`,
+   which the user had to translate to a local path. The first
+   attempt used `tmp/` (relative path; failed); the second
+   attempt used `/tmp/vl021_ledger_entry.md` (absolute path
+   without subdirectory; also failed because the file lived
+   under `../tmp/vl021/` from the repo's perspective). The
+   ledger entry was never appended.
+
+The cbb428b commit included only the schema edit; its commit
+message referenced the STATE.md update and ledger append as if
+they had landed. The repository's continuity layer (STATE.md +
+ledger) was out of sync with the commit graph until this
+follow-up.
+
+### Recovery approach
+
+Per VL-018 / VL-019 follow-up / VL-020 follow-up precedent:
+follow-up commit, not history rewrite. Published history is a
+stronger invariant than commit-count minimization.
+
+This is the fourth instance of the follow-up-commit recovery
+pattern within the project (VL-018 follow-up, VL-019 follow-up,
+VL-020 follow-up are the prior three). The pattern is now
+sufficiently established to warrant a methodology-artifact
+observation: partial-delivery commits are common enough in this
+workflow that the recovery shape is itself a load-bearing
+methodology pattern. Not actioned in this commit per strict
+scope; flagged for a future methodology update.
+
+### What this commit does
+
+Three str_replace edits to STATE.md applied via
+`apply_vl021_followup.py` (template pattern: read normalizes
+CRLF->LF; write always LF; uniqueness-checked str_replace;
+atomic write via tempfile + os.replace).
+
+Each anchor was constructed from `sed -n` output of the actual
+disk content rather than from session-opener terminal scrollback,
+per the Lesson 3 (source-first) discipline applied to disk content
+as a primary source.
+
+1. **Last-updated parenthetical (line 9).** Replaces the closing
+   of the line from "last ledger entry is VL-020 follow-up..."
+   through "...canonical CCS via envelope))" with the updated
+   tail pointing to VL-021 follow-up as the last ledger entry
+   and to VL-022 as the next action.
+
+2. **"Current verified state" section append (after line 324).**
+   Appends two new bullets after the VL-020 follow-up bullet:
+   one for VL-021 (commit cbb428b) describing the schema edit
+   landing, one for this VL-021 follow-up describing the
+   delivery-omission repair.
+
+3. **"Next open action" section append (after line 433).**
+   Appends items 15 (VL-021, commit cbb428b) and 16 (VL-021
+   follow-up, this commit) after item 14's closing. The
+   original VL-022 STATE.md edits will need to add item 17 at
+   that location.
+
+Two `cat >>` appends to `EVIDENCE/verification_ledger.md`:
+
+4. **VL-021 entry append.** The ledger entry that was prepared
+   for cbb428b but never landed, now appended.
+
+5. **VL-021 follow-up entry append.** This entry.
+
+### Verification
+
+**Test regression.** `python -m pytest TESTS/`: expected 61/61
+passing, unchanged from VL-021 (commit cbb428b).
+
+**ASCII-safe check.** `LC_ALL=C grep -n '[^[:print:][:space:]]'`
+on STATE.md and the ledger: no matches expected.
+
+**Anchor source-of-truth verification.** Each of the three edits'
+anchors was verified by the user running `sed -n` on the actual
+STATE.md content and pasting the output back into this session.
+This is the Lesson 3 corrective applied to chat-context vs.
+disk-content divergence: the disk is the primary source for
+anchor text, not the session opener's terminal scrollback.
+
+**Dry-run.** The follow-up apply-script was dry-run against a
+reconstruction of STATE.md's anchor regions assembled from the
+user's `sed -n` output. All three edits matched their anchors
+(count=1), edit deltas were +163, +1635, +1238 bytes
+respectively, total +3036 bytes. Final-state ASCII-clean.
+
+**Git status pre-commit.** 2 files modified: STATE.md and
+EVIDENCE/verification_ledger.md. No new files. No code/canon/
+test/spec/structural-doc change.
+
+### Files affected
+
+- `STATE.md` (last-updated, current state, next open action;
+  +3036 bytes)
+- `EVIDENCE/verification_ledger.md` (VL-021 entry + this
+  VL-021 follow-up entry appended)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/*` (untouched)
+- `TESTS/*` (untouched)
+- `SPEC/request_schema.md` (current at VL-021, commit cbb428b)
+- `docs/*` (untouched; VL-022's template + Lesson 6 promotion
+  is the next trajectory move)
+
+### Process findings
+
+**Fifth instance of the chat-paste-eats-content failure mode
+family.** Prior four instances: VL-012 (pasted `git commit -m`
+lost newline), VL-014 (pasted `git commit -m` block failed
+twice), VL-016 follow-up (pasted execution block silently
+skipped comment-form action items), VL-020 follow-up (Step 8
+paste contained comment-form action items that were silently
+skipped). This instance: multi-step shell paste ran through
+three consecutive `cp` failures, a python script failure, and
+a `cat` failure without any pause point, continuing on to
+`git commit` (failed correctly because the message file path
+was wrong) and `git push` (succeeded vacuously). The pattern
+the lessons describe is now durably established at five
+instances; reframing the lessons may be warranted (deferred
+per strict scope).
+
+**Lesson 3 (source-first) failure on Claude's side.** The
+STATE.md anchors for `apply_vl021_state_md.py` were
+reconstructed from the session-opener terminal scrollback
+rather than from the actual STATE.md file content. The
+reconstruction passed visual inspection (Claude generated the
+anchor by reading the pasted-terminal-output text and produced
+what looked like a unique substring) but failed at execution
+time because chat-rendered terminal output reflows multi-line
+content in ways that do not match disk. This is the same
+failure family as Lesson 3's other surface events (apply-script
+template skip; ledger header format skip; VL-020's pre-commit
+fire). The corrective is: when producing str_replace anchors,
+the source-of-truth is the file as `sed -n` or `view` reports
+it, not as chat-paste rendered it.
+
+**Calibration finding: anchor verification cost.** Verifying
+anchors against disk before producing the apply-script costs
+one tool call (per file region) on Claude's side and one
+`sed -n` invocation on the user's side. The cost of NOT
+verifying and discovering the mismatch at execution time is the
+follow-up commit shape this entry represents. The asymmetry is
+similar to Lesson 3's broader cost analysis: source-read costs
+one tool call; the rework from skipping it can be substantial.
+For STATE.md specifically, future apply-scripts targeting
+STATE.md should request `sed -n` (or `view`) of the anchor
+regions before the apply-script is drafted, not after the
+apply-script fails.
+
+**Verbosity-as-deflection: zero in this commit's drafting.**
+No `ask_user_input_v0` calls were made; the user provided the
+needed disk content directly when asked, and the apply-script
+was drafted from that content.
+
+**Citation discipline.** Per VL-012's self-referencing-hash
+finding: this entry does not cite its own commit hash. The
+cbb428b hash (VL-021 proper) is cited explicitly because it is
+the prior commit being described, not the commit being created.
+
+### Items intentionally NOT in this commit's scope
+
+- VL-022 trajectory work (the throwaway-session methodology
+  promotion). VL-022 is the next commit after this follow-up;
+  its STATE.md edits will need to absorb the items-15-and-16
+  structure this commit added.
+- The follow-up-pattern methodology observation (four instances
+  of follow-up-commit recovery now establish this as a durable
+  pattern). Candidate addition to
+  `docs/methodology/session_mechanics_lessons.md`; deferred per
+  strict scope.
+- The Lesson 3 anchor-from-scrollback finding. Candidate
+  addition to Lesson 3's surface-events list (this would be
+  the fourth or fifth surface event in that lesson, depending
+  on how the lesson currently catalogs them); deferred per
+  strict scope.

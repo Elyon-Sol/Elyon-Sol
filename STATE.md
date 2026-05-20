@@ -431,6 +431,29 @@ the G0 build track is underway:
     appends both the VL-020 and VL-020 follow-up ledger
     entries. Third instance of the chat-paste-eats-content
     failure mode.
+15. **VL-021 schema line-457 stale forward-reference
+    correction.** Done (VL-021, commit cbb428b). Single
+    str_replace in `SPEC/request_schema.md` rewriting the
+    "record the pass in the ledger" parenthetical from
+    forward-tense pre-VL-020 numbering to past-tense
+    citing VL-020. Bookkeeping commit; the schema edit
+    landed correctly but the STATE.md update and ledger
+    append did not (see item 16). Trajectory orthogonal
+    to G0 build half and to the in-flight throwaway-
+    session methodology promotion (VL-022 next).
+16. **VL-021 follow-up: STATE.md and ledger append;
+    delivery-omission repair.** Done (VL-021 follow-up,
+    this commit). cbb428b's apply-script for STATE.md
+    aborted at edit 2 because its anchor was reconstructed
+    from session-opener terminal scrollback rather than
+    from disk; edit 1's on-disk change was lost in
+    between-edits before staging; the ledger-append cat
+    failed on a path that did not exist locally. This
+    follow-up commit applies the STATE.md edits with
+    anchors verified against the actual file content and
+    appends both the VL-021 and this VL-021 follow-up
+    ledger entries. Fifth instance of the chat-paste-eats-
+    content failure mode family.
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected)
