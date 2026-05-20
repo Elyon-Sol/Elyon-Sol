@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-19 (commit: see `git log` for STATE.md; VL-019 follow-up (README.md rewritten against current repository state per artifact 01 + artifact 04 + STATE.md + in-container primary sources; G1, G3, G4 actions advanced as side effects: G1 by removing hardcoded test counts, G3 by adopting artifact 04's corrective framing language and labeling invariants FULL/PARTIAL/DRIFTED, G4 by stating the bypass property plainly in a Known-limitations section; doc-only commit, no code/test/canon change) lands in this commit alongside the STATE.md update; last ledger entry is VL-019 follow-up; G2 still closed in code at VL-019; next action is VL-020 artifact 05 freshness pass)
+Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-020 (artifact 05 freshness pass per SPEC/request_schema.md build-order step 6: adds `target_url` at envelope top level and `context` inside `request_context`, plus two field-rationale bullets; bundled queue-drain: methodology Lesson 5 (set-exhaustiveness claims require explicit enumeration) promoted into docs/methodology/session_mechanics_lessons.md, and SPEC/request_schema.md "Build order (schema-internal)" closing paragraph corrected from pre-VL-015 numbering plan to actual VL-014..VL-020 numbering; no code/canon/test change) landed in commit d81de1d; VL-020 follow-up (STATE.md and ledger append; delivery-omission repair) lands in this commit; last ledger entry is VL-020 follow-up; G2 still closed in code at VL-019; next action is the second stale forward-reference correction at SPEC/request_schema.md line 457 (small queue-drain commit) followed by the G0 build half (canonical CCS via envelope))
 
 ---
 
@@ -287,6 +287,41 @@ manifest layer. CCS has drifted - see G0 below.
   schema-layer wiring; evaluator-layer refusal vocabulary is
   not specified by SPEC/request_schema.md and is not
   introduced here.
+- **VL-020 artifact 05 freshness pass; methodology Lesson 5
+  promoted; schema stale forward-reference corrected
+  (commit d81de1d).** `docs/restructure/05_admissibility_envelope_spec.md`
+  absorbs the canonical wire shape locked by VL-014..VL-019.
+  The envelope's `request_context` block gains `context`
+  (canon section 11.1 `C`) between `OP` and
+  `expected_manifest_version`; the envelope top level gains
+  `target_url` between `decision` and `canon`. Two
+  field-rationale bullets appended in JSON-block-order.
+  Two queue-drain items bundled per VL-013's freshness-pass
+  scope rule: `docs/methodology/session_mechanics_lessons.md`
+  gains Lesson 5 (set-exhaustiveness claims require explicit
+  enumeration; three VL-019 surface events: Pydantic
+  architecture skip, 23/23 regression-set scope claim,
+  `grep -P` MINGW64 flag-set rejection; failure mode
+  characterized distinctly from Lesson 3 source-first);
+  `SPEC/request_schema.md` "Build order (schema-internal)"
+  closing paragraph corrected from pre-VL-015 numbering plan
+  (VL-014..VL-018) to actual numbering (VL-014..VL-020).
+  Single focused str_replace in the schema per session intent;
+  second stale forward-reference at the schema's line 457
+  surfaced as a process finding and deferred to a separate
+  small commit. No code/canon/test change. Repo test set
+  61/61, unchanged from VL-019.
+- **VL-020 follow-up STATE.md and ledger append; delivery-
+  omission repair (this commit).** VL-020's commit d81de1d
+  landed the three structural-edit files but omitted the
+  STATE.md update and the ledger entry append; the Step 8
+  paste contained comment-form action items for both that
+  were silently skipped at execution. This follow-up commit
+  applies the STATE.md edits and appends both the VL-020 and
+  VL-020 follow-up ledger entries. Third instance of the
+  chat-paste-eats-content failure mode named in
+  `docs/methodology/session_mechanics_lessons.md` (VL-016
+  follow-up lessons (a) and (b)). No code/canon/test change.
 
 ## What is locked vs. open
 
@@ -379,6 +414,23 @@ the G0 build track is underway:
     passing-by-accident; corrected in this commit). 54/54
     in-container; 61/61 in repo.
     Evidence at `EVIDENCE/proofs/g2_pep_wiring_001.log`.
+13. **Artifact 05 freshness pass; methodology Lesson 5; schema
+    stale-ref.** Done (VL-020, commit d81de1d).
+    `docs/restructure/05_admissibility_envelope_spec.md`
+    absorbs `context` (canon section 11.1 `C`) and `target_url`
+    from the schema work track. Two bundled queue-drain items:
+    `docs/methodology/session_mechanics_lessons.md` Lesson 5
+    promotion, and `SPEC/request_schema.md` closing-paragraph
+    stale-reference correction. No code/canon/test change.
+14. **VL-020 follow-up: STATE.md and ledger append;
+    delivery-omission repair.** Done (VL-020 follow-up,
+    this commit). Commit d81de1d landed the three structural
+    files but omitted STATE.md and the ledger entry; the
+    Step 8 paste's comment-form action items were silently
+    skipped. This commit applies the STATE.md edits and
+    appends both the VL-020 and VL-020 follow-up ledger
+    entries. Third instance of the chat-paste-eats-content
+    failure mode.
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected)
@@ -394,26 +446,29 @@ materials once 06 makes the FULL/PARTIAL/DRIFTED picture
 concrete), then bookkeeping batch (G1, G8, G9, G11, G14), then
 build-outward scope (G4, G5).
 
-Suggested next move: VL-020 artifact 05 freshness pass per the
-schema's build-order step 6 and the "Decided downstream
-tasks / Feed-back to envelope spec" section of
-SPEC/request_schema.md. Add `context` to the envelope's
-`request_context` block (between `OP` and
-`expected_manifest_version`) with a comment citing canon
-section 11.1 and the schema as derivation; add `target_url` at
-envelope top level (between `decision` and `canon`) with a
-comment citing the schema's `target_url` rules (G4 deferral
-noted); append a field-rationale bullet for each. No code
-change. Same scope rule as VL-013 (preserve substantive
-content; only touch statements that became stale after the
-VL-014..VL-019 schema work). Proposed ledger entry: VL-020.
+Suggested next move: a small queue-drain commit correcting the
+second stale forward-reference in `SPEC/request_schema.md` at
+line 457 of the post-VL-020 file (the "Decided downstream tasks
+/ Feed-back to envelope spec (Deliverable 05)" section's
+parenthetical "proposed VL-018, after the VL-014..VL-017
+schema-work entries below" -> actual "proposed VL-020, after
+VL-014..VL-019"). Surfaced by VL-020's source-read pass;
+deferred per strict-scope discipline. Single focused
+str_replace; same family as VL-019's deferred artifact-04
+G2-RESOLVED row update and the still-pending G14 spec edit.
+Bundle one or more of these into a small bookkeeping commit
+if convenient; otherwise schedule each individually. After the
+queue drain, the next trajectory action is the G0 build half:
+canonical CCS implementation via the envelope spec (now
+current at VL-020). Proposed ledger entry for the next
+queue-drain: VL-021.
 
 Decisions parked for resolution: open question 5 of
 SPEC/request_schema.md (artifact 05 absorbs `context` and
-`target_url`) remains scheduled as VL-020 (renumbered from VL-018
-to absorb the VL-015/VL-016 consumption of the prior numbering).
-The other four open questions from VL-014's draft are resolved by
-VL-016's corrections.
+`target_url`) was resolved by VL-020 (commit d81de1d). The
+other four open questions from VL-014's draft were resolved
+by VL-016's corrections. No VL-014-originated open questions
+remain.
 
 Known items open but not scheduled (do not block the G0 build track):
 - VL-011 process finding on pre-existing non-ASCII bytes in
@@ -532,6 +587,53 @@ session-mechanics-lessons file to `docs/` so these
   procedurally informative only when both cases are explicit.
   Revision incorporated into the committed template; recorded
   here for traceability.
+- VL-020 process finding: a second stale forward-reference
+  exists in `SPEC/request_schema.md` at line 457 of the
+  post-VL-020 file ("proposed VL-018, after the VL-014..VL-017
+  schema-work entries below"; actual: "proposed VL-020, after
+  VL-014..VL-019"). VL-020 corrected the closing-paragraph
+  stale reference per strict-scope discipline; this second
+  reference is deferred to a small queue-drain commit. Not
+  blocking.
+- VL-020 process finding: Lesson 3 fire pre-commit. The first
+  draft of `apply_vl020.py` was written from inference about
+  the apply-script template pattern, without viewing the
+  actual template source. The template was uploaded
+  mid-session; comparison surfaced eight structural
+  divergences from the established pattern. The script was
+  rewritten from scratch against the template; the rewritten
+  script preserves the template's signature and calling
+  convention. Did not materialize as committed divergence
+  (caught pre-commit). Adding the VL-020 surface event to
+  Lesson 3's "Surface events" subsection of
+  `docs/methodology/session_mechanics_lessons.md` is deferred
+  per VL-020's strict-scope discipline; the ledger entry's
+  process findings hold the authoritative record until a
+  future methodology-file update lands.
+- VL-020 follow-up process finding: third instance of the
+  chat-paste-eats-content failure mode (VL-012, VL-014,
+  VL-016 follow-up are the prior instances; this is the
+  third named in session-mechanics terms). VL-020's Step 8
+  paste contained two comment-form action items (apply
+  STATE.md edits; cat ledger entry) that were silently
+  skipped at execution. The commit d81de1d landed with the
+  three structural-edit files but without STATE.md or the
+  ledger entry. Recovery via follow-up commit per VL-018 /
+  VL-019 follow-up precedent (no history rewrite). The
+  lessons in `docs/methodology/session_mechanics_lessons.md`
+  on this failure mode (VL-016 follow-up lessons (a) and
+  (b)) fired correctly when the divergence was diagnosed
+  post-commit but did not prevent the divergence at execution
+  time. Calibration finding: lessons currently structured as
+  "don't paste multi-step blocks with comment-form action
+  items" require Claude-side discipline in *generating* the
+  Step 8 instructions; a complementary discipline (workflow
+  steps that fail loud if skipped, not silently) would catch
+  the case where the discipline is forgotten. Candidate
+  methodology update: when generating multi-step recovery
+  or workflow instructions, prefer apply-scripts (which
+  exit nonzero on skip) over prose comments in pasted shell
+  blocks. Not actioned in this commit per strict-scope.
 
 ---
 

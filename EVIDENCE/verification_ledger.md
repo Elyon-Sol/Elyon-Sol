@@ -3259,3 +3259,567 @@ fifth instance.
 Per VL-012's self-referencing-hash finding and subsequent
 reinforcement: this entry deliberately does not cite its own
 commit hash. The commit hash will be reachable via `git log`.
+### VL-020 - artifact 05 freshness pass; methodology Lesson 5 promoted; schema stale forward-reference corrected
+
+**Status:** COMMITTED at d81de1d. Ledger entry appended in
+follow-up commit (see next entry) per VL-020 delivery-omission
+recovery.
+**Author:** Claude (working session with the project author)
+**Verifies:** `docs/restructure/05_admissibility_envelope_spec.md`
+updated per `SPEC/request_schema.md` "Decided downstream tasks /
+Feed-back to envelope spec (Deliverable 05)" and the schema's
+build-order step 6. Adds `context` (canon section 11.1 `C`) inside
+the envelope's `request_context` block between `OP` and
+`expected_manifest_version`, and `target_url` at envelope top level
+between `decision` and `canon`. Two new field-rationale bullets
+appended in JSON-block-order (target_url before canon block;
+request_context.context between evaluated_against and evaluator
+block). Two bundled queue-drain edits:
+`docs/methodology/session_mechanics_lessons.md` gains Lesson 5
+(set-exhaustiveness claims require explicit enumeration) per the
+file's "How this file evolves" addition rule;
+`SPEC/request_schema.md`'s "Build order (schema-internal)" closing
+paragraph corrected from the pre-VL-015 numbering plan
+(VL-014..VL-018) to the actual numbering (VL-014 schema, VL-015
+verify, VL-016 corrections, VL-017 tests, VL-018 validator, VL-019
+PEP wiring, VL-020 artifact 05).
+
+---
+
+### Background
+
+VL-014..VL-019 locked the canonical wire shape through the schema
+work track: VL-014 drafted `SPEC/request_schema.md`, VL-015
+cross-model-verified it, VL-016 applied the corrections, VL-017
+added the failing schema-shape tests, VL-018 added the validator,
+VL-019 wired the validator into `pep.py` and closed G2 in code.
+The schema's "Decided downstream tasks / Feed-back to envelope
+spec (Deliverable 05)" section names the specific edits the
+envelope spec needs to absorb the new wire shape: `context` as a
+member of `request_context`, and `target_url` at envelope top
+level. VL-020 executes that freshness pass.
+
+Two queue-drain items bundled under the freshness-pass scope rule
+(VL-013 precedent: touch only statements about current state that
+became stale after the upstream work):
+
+- `docs/methodology/session_mechanics_lessons.md` has carried
+  Lesson 5 as a session-intent candidate since VL-019. The VL-019
+  follow-up entry framed Lesson 5 as having fired during README
+  drafting ("first applied use"); VL-019 session intent had named
+  Lesson 5 as "newly drafted into `session_mechanics_lessons.md`
+  per the VL-020 session intent." The file did not actually
+  contain Lesson 5 prior to this commit; VL-020 lands the
+  promotion that was already cited as if-landed.
+- `SPEC/request_schema.md`'s "Build order (schema-internal)"
+  closing paragraph carried a stale forward-reference enumerating
+  ledger entries by the pre-VL-015 numbering plan (when the
+  expected sequence was VL-014..VL-018). VL-015 and VL-016
+  consumed two slots in cross-model verification and corrections;
+  the actual numbering is VL-014..VL-020. The schema's closing
+  paragraph was flagged as stale by VL-017 process finding and
+  remained unactioned through VL-019.
+
+### What this commit (d81de1d) does
+
+Six structural edits across three repo-tracked files, applied as
+one atomic unit via `apply_vl020.py` (`docs/methodology/apply_script_template.py`
+pattern; same read-normalize-CRLF/write-always-LF pattern verified
+across VL-017b, VL-018, VL-019, VL-019 correction).
+
+**`docs/restructure/05_admissibility_envelope_spec.md` (+16 lines):**
+
+1. Adds `target_url` to the envelope JSON block at top level,
+   between `decision` and `canon`. Comment placeholder cites
+   `SPEC/request_schema.md` `target_url` rules and the G4
+   deferral.
+2. Adds `context` to the envelope JSON block inside
+   `request_context`, between `OP` and `expected_manifest_version`.
+   Comment placeholder cites canon section 11.1 and the schema's
+   `interaction.context` as derivation.
+3. Inserts a field-rationale bullet for `target_url` before the
+   `canon` block bullet, matching JSON-block order.
+4. Inserts a field-rationale bullet for `request_context.context`
+   between `evaluated_against` and `evaluator` block, matching
+   JSON-block order.
+
+**`docs/methodology/session_mechanics_lessons.md` (+115 lines):**
+
+5. Inserts Lesson 5 between Lesson 4 and the "How this file
+   evolves" section, matching the four-section template
+   (Surface events / Failure mode / Corrective rule /
+   Self-check) used by Lessons 1-4, plus a "First successful
+   application" note citing VL-019 follow-up's README rewrite
+   POE/.gitattributes catch.
+
+   Three surface events:
+   - VL-019 source-first skip #1 (Pydantic architecture designed
+     against session-intent prose; the set of validator behaviors
+     was not enumerated against the validator source).
+   - VL-019 source-first skip #2 (23/23 evaluator regression
+     claim made over a set whose members were not enumerated
+     against `TESTS/`).
+   - VL-019 `grep -P` flag rejection on MINGW64 + LC_ALL=C (the
+     set of platforms the command works on was not enumerated
+     before the command was recommended).
+
+**`SPEC/request_schema.md` (+3 lines):**
+
+6. Corrects the "Build order (schema-internal)" closing paragraph
+   from the pre-VL-015 numbering plan to the actual numbering.
+
+### What this commit did NOT do (delivery omission)
+
+The Step 8 instructions for the VL-020 session prescribed five
+files touched: the three structural files above, plus STATE.md
+and EVIDENCE/verification_ledger.md. The actual commit at
+d81de1d touched only the three structural files. The STATE.md
+update and the ledger-entry append (this entry) were both
+omitted at execution time.
+
+The mechanism: the Step 8 instructions Claude drafted included
+two comment-form action items inside a multi-step paste block:
+
+```
+# apply STATE.md edits per vl020_state_md_update.txt
+# cat vl020_ledger_entry.md >> EVIDENCE/verification_ledger.md
+```
+
+These were pasted into the user's terminal as part of the Step 8
+sequence. The terminal treated them as comments and skipped them
+at execution; the subsequent `git diff --stat` showed 3 files
+changed instead of the expected 5; the `git add -u && git commit`
+proceeded with the three structural files only. The post-commit
+ASCII-safe `grep` and the file-count check were enumerated in the
+instructions but came AFTER the commit in the pasted sequence,
+so they did not act as a gate.
+
+This is the **third instance** of the chat-paste-eats-content
+failure mode named in
+`docs/methodology/session_mechanics_lessons.md` and reinforced
+across VL-012, VL-014, and VL-016 follow-up (lessons (a) "never
+paste a multi-step block containing comment-form action items;
+paste the actual commands or one tool call per step" and (b)
+"stop signals require interactive pauses, not just printed
+warnings"). The lessons fired correctly when the omission was
+diagnosed post-commit, but did not prevent the omission at
+execution time. Recovery is via follow-up commit per the VL-018
+and VL-019 follow-up precedent (no history rewrite).
+
+The follow-up entry below this one records the recovery commit.
+
+### Verification (the parts that did happen pre-commit)
+
+**Source-first source-read pass.** All four primary-source files
+named in the session intent were viewed before drafting:
+`05_admissibility_envelope_spec.md`,
+`06_spec_to_code_traceability.md`,
+`session_mechanics_lessons.md`, `request_schema.md`. Artifact 06
+verified clean (its references to artifact 05 are at the level of
+"Deliverable 05" / "the envelope's `condition_results` +
+`reassert()`"; none touch the specific JSON-block structure
+VL-020 modifies).
+
+**Dry-run against staged copies.** The apply-script ran cleanly
+against staged copies of all four uploaded files preserving the
+repo's relative path structure. All six edits passed the
+uniqueness check.
+
+**Test regression.** Post-commit pytest output: 61/61 passing
+(unchanged from VL-019).
+
+**ASCII-safe check.** Post-commit `LC_ALL=C grep -n
+'[^[:print:][:space:]]'` on the three touched files: no matches
+(basic-regex form per VL-009; the form that works on MINGW64 +
+Git Bash, per Lesson 5's third surface event).
+
+### Files affected (in d81de1d)
+
+- `docs/restructure/05_admissibility_envelope_spec.md`
+- `docs/methodology/session_mechanics_lessons.md`
+- `SPEC/request_schema.md`
+
+### Files NOT affected (in d81de1d; addressed in follow-up)
+
+- `STATE.md`: delivery omission; updated in follow-up commit.
+- `EVIDENCE/verification_ledger.md`: delivery omission; this entry
+  and the follow-up entry both appended in follow-up commit.
+
+### Citation discipline
+
+The VL-020 changes are scoped strictly per the session intent.
+
+- Artifact 05 absorbs the two specific fields the schema names
+  in its "Decided downstream tasks" section. No other artifact-05
+  edits.
+- Methodology lands Lesson 5 only. Existing Lessons 1-4 are
+  unchanged. The session intent's framing of `grep -P` as both
+  a "Lesson 2 second instance" and "the load-bearing example for
+  Lesson 5's enumerate-before-claiming template" was resolved by
+  recharacterizing it solely as a Lesson 5 surface event (its
+  failure mode is cross-platform-command-form mismatch, not
+  rendered-output-vs-file-content mismatch).
+- Schema corrects the closing-paragraph stale reference only.
+
+### Process findings (pre-commit)
+
+**Lesson 3 fire caught pre-commit (apply-script template not
+viewed before drafting).** The first draft of `apply_vl020.py`
+was written from inference about the apply-script template
+pattern, citing "VL-017a apply-script template" in comments
+without viewing the actual template source
+(`docs/methodology/apply_script_template.py`). The session
+intent's "Files required for VL-020 to begin" listed four
+primary-source files; the template was not among them, but the
+intent's "Methodology context" section did say "Use [the
+apply-script template] for VL-020's STATE.md updates and the
+methodology-file update." Lesson 3's corrective rule names
+methodology templates explicitly as falling under source-first;
+the rule was violated. The user uploaded the template after the
+first apply-script draft was staged. Comparison surfaced eight
+structural divergences from the template: per-edit list shape
+vs per-file list shape; per-edit function granularity vs per-file
+function granularity; cwd-based REPO_ROOT vs module-level
+constant; lines-delta reporting vs bytes-delta reporting;
+`read_bytes`+decode vs `open(newline="")`; absent vs present
+"Has this edit already been applied?" hint; absent vs present
+per-file before/after byte summary; presence of a Python-native
+ASCII-safe check (not in the template; the template defers ASCII
+checking to the standard checklist's `grep` invocation).
+
+The divergent script passed its dry-run cleanly. It would have
+committed without divergence detection. The script was rewritten
+from scratch against the template's actual structure, re-run in
+dry-run, and verified to produce byte-identical staged output.
+The rewritten script preserves the template's signature, calling
+convention, output format, and the implicit-checklist division of
+labor (script handles structural edits; standard checklist handles
+ASCII verification).
+
+This is a Lesson 3 fire that did not materialize as committed
+divergence (caught pre-commit by the template upload prompting
+source-first comparison). Same shape as VL-018's apply-script
+template instance (retracted in same turn). Counted toward
+Lesson 4's threshold metrics: this is the first Lesson 3 instance
+in VL-020 and the third instance overall where the methodology
+template specifically was the unread source (VL-017b first
+instance, VL-018 retracted instance, this one). The pattern is
+durable enough that adding the VL-020 surface event to Lesson 3's
+"Surface events" subsection in `session_mechanics_lessons.md` is
+warranted; deferred to a future commit per strict-scope discipline
+(parallels the artifact-04 G2-RESOLVED row update deferral). The
+ledger entry is the authoritative record of the instance until the
+methodology-file update lands.
+
+**Lesson 5 self-check fired twice during this session before
+substantive drafting:**
+
+- *Upload set enumeration.* The conversation rendered only two
+  of four uploaded files as in-context documents. The Lesson 5
+  self-check fired: enumerate the set against the source-of-
+  truth primitive (`ls -la /mnt/user-data/uploads/`) rather
+  than trusting the rendering. The primitive returned four
+  files. Without the self-check, the session would have
+  proceeded under the false belief that two files were
+  missing.
+- *Line-ending status.* `file` invocation on the four uploaded
+  files revealed `request_schema.md` was CRLF while the other
+  three were LF. The Lesson 5 self-check fired: enumerate
+  the files' line-ending status rather than assuming
+  uniformity. Without the self-check, the apply-script's
+  str_replace patterns (written with LF) would have silently
+  failed against the CRLF schema content, or worse, succeeded
+  on a partial match and produced a mixed-line-ending output.
+  The apply-script's read-normalize-CRLF-to-LF pattern handled
+  it correctly, but the verification that this was needed came
+  from the explicit enumeration.
+
+Both self-check fires are Lesson 5 functioning as intended on
+its first session post-promotion. Recording them as evidence
+that the corrective rule is operational.
+
+**Second stale forward-reference in `SPEC/request_schema.md`
+not in scope.** The schema's "Decided downstream tasks /
+Feed-back to envelope spec (Deliverable 05)" section at line 457
+of the pre-VL-020 file contains a second stale reference:
+"record the pass in the ledger as a separate entry (proposed
+VL-018, after the VL-014..VL-017 schema-work entries below)."
+The actual entry is VL-020. The VL-020 session intent scoped
+"Single focused str_replace in `SPEC/request_schema.md`,"
+referring to the closing paragraph. Strict-scope decision
+confirmed by the user mid-session before drafting.
+The second stale reference is recorded here for a separate
+forthcoming small commit. Same family as VL-019's deferred
+artifact-04 G2-RESOLVED update.
+
+**Lesson 1 self-check fired during dry-run inspection.** The
+first draft of the `target_url` rationale bullet asserted
+inclusion-vs-exclusion in `decision_sha256` ("Excluded would
+weaken auditability; included is the choice that matches the
+rest of the request-context pinning discipline"). This made an
+implicit decision the JSON block did not annotate, and went
+beyond the freshness-pass scope. Caught during dry-run output
+inspection; the bullet was tightened to defer to the existing
+canonical-JSON rule. Single instance; well below Lesson 1's
+three-instance threshold.
+
+**Lesson 1 self-check fired during methodology-edit scoping.**
+The session intent's framing of the methodology changes had two
+overlapping characterizations of the `grep -P` failure: as
+"L2 second instance" and as "the load-bearing example for
+Lesson 5's enumerate-before-claiming template." The first draft
+of the methodology edit set planned two changes (a Lesson 5
+addition + a Lesson 2 second-instance addition). On
+characterization review, the `grep -P` failure mode does not
+match Lesson 2's existing failure mode. The methodology edit
+set was reduced from two changes to one (Lesson 5 addition only).
+Single instance; well below Lesson 1's three-instance threshold.
+
+### Items intentionally NOT in d81de1d's scope (restated)
+
+- G14 spec edit (separate forthcoming commit; semantic addition,
+  not freshness pass).
+- Artifact-04 G2-RESOLVED row update (deferred per VL-019;
+  separate small commit recommended).
+- Prose proof artifact `g2_pep_wiring_001.md` (write-or-retire
+  decision still pending per VL-019).
+- The second stale forward-reference in `SPEC/request_schema.md`
+  at line 457 (newly surfaced this session; separate small
+  commit).
+- Lesson 3 "Surface events" subsection in
+  `docs/methodology/session_mechanics_lessons.md` does not gain
+  the VL-020 apply-script template surface event in this commit
+  (strict-scope discipline; methodology edits in VL-020 are
+  Lesson 5 only).
+- Cross-model verification of the artifact-05 changes (freshness
+  pass exemption per VL-013).
+- Canonical CCS implementation / G0 build half (next track after
+  VL-020).
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry deliberately does not cite its own
+commit hash (this entry is appended in the follow-up commit, not
+in d81de1d). The d81de1d hash is cited explicitly because it is
+the commit being described, not the commit being created.
+### VL-020 follow-up - STATE.md and ledger append; delivery-omission repair
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** STATE.md updated to reflect VL-020's landing
+(commit d81de1d) and this follow-up commit's landing.
+EVIDENCE/verification_ledger.md gains the VL-020 entry (above)
+and this VL-020 follow-up entry. No code, canon, test, or
+structural-doc change; this is a continuity-repair commit.
+
+---
+
+### Background
+
+VL-020 (commit d81de1d) landed three structural-edit files
+(artifact 05, methodology Lesson 5, schema closing-paragraph
+stale-ref) but omitted two files the session intent prescribed:
+STATE.md and EVIDENCE/verification_ledger.md. The mechanism is
+described in the VL-020 entry above; in summary, the Step 8
+paste contained two comment-form action items
+(`# apply STATE.md edits per vl020_state_md_update.txt` and
+`# cat vl020_ledger_entry.md >> EVIDENCE/verification_ledger.md`)
+that were silently skipped at execution.
+
+This is the **third instance** of the chat-paste-eats-content
+failure mode named in
+`docs/methodology/session_mechanics_lessons.md`. Prior instances:
+
+- **VL-012**: pasted multi-line `git commit -m` lost the newline
+  between subject and body.
+- **VL-014**: pasted multi-line `git commit -m` block failed
+  twice in the same session.
+- **VL-016 follow-up**: pasted execution block containing
+  comment-form action items silently skipped the relevant
+  edits; documented as lessons (a) and (b) in
+  `session_mechanics_lessons.md`'s VL-016-follow-up source
+  material.
+
+The VL-020 failure is the most consequential to date: the
+repository's continuity layer (STATE.md + ledger) was out of
+sync with the commit graph for the duration between d81de1d
+and this commit. A fresh session reading STATE.md during that
+window would have believed VL-020 had not happened, despite
+the `git log` showing otherwise. STATE.md's own session-close
+note warns about exactly this: "If they do not [reflect
+reality at the time of the last commit], the repository's
+continuity is broken - treat that as the first thing to fix."
+
+This commit fixes it.
+
+### Recovery approach
+
+Two recovery paths were considered:
+
+- **Option A**: amend d81de1d with the STATE.md edits and the
+  ledger append, then force-push. Cost: rewrites published
+  history. Benefit: VL-020 is one commit, complete.
+- **Option B**: land a follow-up commit on top. Cost: VL-020
+  becomes a two-commit unit. Benefit: no history rewrite,
+  failure mode visible in commit graph rather than hidden by
+  amend.
+
+Option B chosen by the user. Aligns with VL-018 follow-up and
+VL-019 follow-up precedent (both two-commit recoveries from
+partial deliveries). The history-rewrite avoidance is the load-
+bearing reason: published history is a stronger invariant than
+commit-count minimization.
+
+### What this commit does
+
+Five edits to STATE.md applied via `apply_vl020_followup.py`
+(template pattern preserved):
+
+1. **Last-updated parenthetical replacement.** Replaces the
+   2026-05-19 / VL-019-follow-up parenthetical with the
+   2026-05-20 / VL-020 + VL-020-follow-up parenthetical.
+2. **"Current verified state" section append.** Two new
+   bullets: one for VL-020 (commit d81de1d) describing the
+   structural-edit landing, one for VL-020 follow-up (this
+   commit) describing the recovery.
+3. **"Next open action" section append + Suggested-next-move
+   rewrite + Decisions-parked rewrite.** Adds items 13
+   (VL-020) and 14 (VL-020 follow-up) to the numbered list.
+   Suggested next move repointed to the small queue-drain
+   commit for the second stale forward-reference. Decisions
+   parked paragraph updated to reflect that VL-020 resolved
+   open question 5.
+4. **Open list - VL-020 process-finding bullets.** Three new
+   bullets appended after the VL-017b process-finding entries:
+   (a) the second stale forward-reference deferral,
+   (b) the Lesson 3 fire pre-commit (apply-script template
+       not viewed before drafting),
+   (c) this follow-up's failure-mode finding (third instance
+       of chat-paste-eats-content; lessons fired post-commit
+       but did not prevent execution-time omission).
+
+Two ledger appends via `cat >>`:
+
+5. **VL-020 entry append** to
+   `EVIDENCE/verification_ledger.md`, describing the
+   commit-d81de1d state with the delivery omission flagged.
+6. **VL-020 follow-up entry append** (this entry).
+
+### Verification
+
+**Test regression.** `python -m pytest TESTS/`: 61/61
+passing (unchanged from VL-019).
+
+**ASCII-safe check.** `LC_ALL=C grep -n '[^[:print:][:space:]]'`
+on the two touched files (STATE.md, ledger): no matches.
+
+**Git status pre-commit.** 2 files modified: STATE.md and
+EVIDENCE/verification_ledger.md. No new files. No code/canon/
+test/structural-doc change.
+
+### Files affected
+
+- `STATE.md` (last-updated, current state, next action, open
+  list)
+- `EVIDENCE/verification_ledger.md` (VL-020 entry + this entry
+  appended; ~660 lines added)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/*` (untouched)
+- `TESTS/*` (untouched)
+- `docs/restructure/05_admissibility_envelope_spec.md` (modified
+  in d81de1d; not retouched)
+- `docs/methodology/session_mechanics_lessons.md` (modified in
+  d81de1d; not retouched - the Lesson 3 surface-event addition
+  for VL-020's apply-script template fire is still deferred)
+- `SPEC/request_schema.md` (modified in d81de1d; not retouched -
+  the line-457 second stale forward-reference is still deferred)
+- `docs/restructure/04_current_vs_claimed.md` (G2-RESOLVED row
+  update still deferred per VL-019)
+
+### Process findings
+
+**Calibration finding: lessons require execution-time
+enforcement, not just description.** The
+`docs/methodology/session_mechanics_lessons.md` lessons on
+chat-paste-eats-content (lessons (a) and (b) from VL-016
+follow-up) are correctly characterized: they describe the
+failure mode accurately and prescribe the right corrective
+discipline ("paste actual commands or one tool call per step";
+"stop signals require interactive pauses"). They are also
+ineffective in the VL-020 case because:
+
+- The discipline applies to *Claude's* generation of Step 8
+  instructions: Claude should structure the recovery steps as
+  individually-runnable commands, not as comment-form action
+  items inside a multi-step paste.
+- Claude did not apply the discipline when drafting the
+  VL-020 Step 8 instructions; the two omission-causing lines
+  were generated as `# ...` comments by Claude in the prior
+  turn.
+- The lessons fired at diagnosis time (post-commit), not at
+  generation time (when the Step 8 instructions were being
+  drafted) or at execution time (when the paste was being run).
+
+**Candidate methodology update** (not actioned in this commit
+per strict scope; recorded for a future
+session_mechanics_lessons.md update):
+
+When generating multi-step recovery or workflow instructions,
+the discipline is: produce an apply-script (which exits nonzero
+on skip and produces an audit trail of what ran) rather than
+prose comments inside a pasted shell block. The apply-script
+pattern is already established for structural edits; extending
+it to "any multi-step state-change including STATE.md updates
+and ledger appends" would close the chat-paste-eats-content
+failure mode at the level it fails: the generation of the
+instructions, not the discipline of executing them.
+
+This commit's `apply_vl020_followup.py` implements this candidate
+discipline for its own STATE.md edits (the ledger appends remain
+`cat >>` because appending is not str_replace-shaped, but
+they're enumerated explicitly as commands in the apply-script's
+output rather than as comments).
+
+**Lesson 4 threshold-firing condition met (one source-first
+skip materializing as committed divergence).** The VL-020
+commit d81de1d's STATE.md and ledger omission is a committed
+divergence from the session intent. Lesson 4's firing condition
+("One source-first skip that materializes as committed
+divergence") is met for the first time since the threshold was
+calibrated in VL-018. Per Lesson 4: "A session that observes
+any of [these conditions] should pause to record the pattern
+in this file before declaring session-close, regardless of
+whether trajectory work completed." This entry records the
+pattern; the methodology-file update is deferred to a future
+commit per strict-scope discipline, but the record is now in
+the ledger as the authoritative source until that update lands.
+
+**Verbosity-as-deflection: zero in this commit's drafting.**
+The recovery instructions are direct; no `ask_user_input_v0`
+calls were made (the user named option B explicitly in
+response to a direct question with two clearly-characterized
+options, which is the legitimate use of the elicitation
+pattern).
+
+**Source-first compliance: full.** STATE.md content was read
+from the session opener's `cat STATE.md` output (the same
+content that was on disk at d81de1d, since d81de1d did not
+touch STATE.md per its diff stat). The five str_replace
+anchors were drafted against that content; the apply-script's
+uniqueness checks are the final verification at execution
+time.
+
+### Citation discipline
+
+The VL-020 entry above describes the trajectory work landed in
+commit d81de1d. This entry describes the recovery work landed
+in *this* commit. The two entries are intentionally separate
+per VL-018 / VL-019 follow-up precedent (one entry per commit
+in the recovery shape).
+
+Per VL-012's self-referencing-hash finding and subsequent
+reinforcement: this entry deliberately does not cite its own
+commit hash. The commit hash will be reachable via `git log`.
