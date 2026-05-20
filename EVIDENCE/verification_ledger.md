@@ -5000,3 +5000,403 @@ VL-022, one in VL-023). The bridge document remains outside
 the repository; the framework's record of what was found
 that day now lives entirely in the committed VL-022 and
 VL-023 entries plus the methodology artifacts they reference.
+### VL-023 follow-up - 2026-05-20 - Cross-model evaluation of VL-023 PARTIAL HOLDS verdict
+
+**Status:** Cross-model run complete. Procedurally clean per VL-008
++ Lesson 6. Convergent on VL-023's verdict; one supplementary
+finding (evaluator versioning layer).
+**Author:** Claude (this session), procedural evaluation; outside
+model (recipient per request), derivation.
+**Verifies:** VL-023's PARTIAL HOLDS verdict (commit 83fa5a7).
+
+### Background
+
+VL-023 (commit 83fa5a7) closed the recursive-continuity hypothesis
+with PARTIAL HOLDS: four of five candidate layers fit the four-part
+abstract continuity shape extracted from canon section 12; the
+request layer does not. The verdict was a single-model derivation
+under VL-008 procedural discipline, conducted in a fresh session
+without the bridge document or the throwaway-session model output
+in working context.
+
+The framework's methodology track distinguishes single-model
+derivations from cross-model-verified derivations. VL-015 and
+VL-016 established the precedent that cross-model verification
+strengthens a derivation's epistemic standing (artifact-level
+verification at the schema layer). VL-022 promoted the cross-model
+evaluate template for framework-level evaluation under derivation
+discipline, structurally distinct from artifact verification.
+
+This entry records the first framework-level cross-model evaluation
+under the VL-022 template applied to a substantive derivation
+verdict. The evaluation tests whether VL-023's PARTIAL HOLDS
+verdict survives independent re-derivation by a model operating
+under the same procedural constraints.
+
+### What this commit does
+
+Records the cross-model run conducted on 2026-05-20 against VL-023's
+verdict. No code, canon, manifest, test, spec, or structural-doc
+change. The deliverable is the ledger entry alone.
+
+**Request construction.** The cross-model evaluate request was
+drafted in the same session that committed VL-023, with explicit
+acknowledgment that the request was drafted WITHOUT
+`docs/methodology/cross_model_evaluate_template.md` in the
+drafter's working context. The template was committed at VL-022
+and is the structural source; the drafter inferred the request's
+shape from session_mechanics_lessons.md Lesson 6 (the
+constraint-bounding caveat), STATE.md's narrative on VL-017a /
+VL-017b / VL-022, and the shape of VL-015 + VL-016 cross-model
+verification runs. The procedural caveat was placed at the top of
+the request so the recipient model could verify the request
+structure against the template independently and so this entry's
+record carries the inference flag explicitly.
+
+This is a Lesson-3-aware operating mode: draft from inference,
+flag the inference, allow downstream correction. The alternative
+(decline to draft until the template is read) was offered to the
+user and explicitly declined ("a"). The cost is the inference;
+the corrective is the explicit flag.
+
+**Request structure.** Six-part submission format: scope
+confirmation, abstract shape extraction (deliberately ordered
+BEFORE reading VL-023's entry to prevent priming), layer-by-layer
+derivation, outcome classification, comparison against VL-023,
+optional out-of-scope observations. The full request is at
+`/tmp/vl023_crossmodel_request.md` (not committed; the request
+itself is methodology ephemera). The request's load-bearing
+sections are Mode discipline (Lesson 6 corrective: four explicit
+constraints on within-body adherence, register-shift, out-of-scope
+labeling, post-shift content) and Submission format (the six-part
+order).
+
+**Recipient response.** The outside model returned a response
+that:
+
+  1. Acknowledged the procedural constraints in the prescribed
+     opening sentence.
+  2. Extracted a four-part abstract shape from canon sections
+     12.1-12.4 and 13: state representation, detectable
+     transitions, continuity constraint / revalidation mechanism,
+     fail-closed rule on unverified continuation. This matches
+     VL-023's four-part shape exactly in components and
+     citations (canon section 12.1 for state, sections 12.1
+     and 12.4 for transitions, section 12.3 for constraint
+     mechanism, sections 12.4 and 13 for fail-closed).
+  3. Applied the abstract shape to all five candidate layers
+     plus one supplementary layer.
+  4. Classified the outcome as PARTIAL HOLDS, matching VL-023.
+  5. Compared its derivation to VL-023's, identifying
+     convergences and divergences explicitly and symmetrically.
+  6. Correctly used the optional out-of-scope section by
+     declaring "None. All analysis stayed within the bundle."
+
+### Procedural evaluation
+
+**(a) Scope-bound to primary sources.** Held. The recipient's
+response cites canon sections by number, artifact 04 / 05 / 06
+by section or line, SESSION_PROTOCOL.md by line, and
+SPEC/request_schema.md by line. No imports from training-data
+exposure to other admissibility frameworks; no comparative
+claims to RBAC/ABAC/UCON/XACML/Reference Monitor.
+
+**(b) Scope-adherence is checkable.** Held. Spot-checked
+citations resolve:
+
+  - "canon.md section 12.1 'State Transition'" matches the
+    actual canon.md heading.
+  - "canon.md sections 12.1 and 12.4" for enumerated invalid
+    transitions matches the canon's transition enumeration
+    and the section-12.4 examples list.
+  - "06_spec_to_code_traceability.md rows for sections 12.x
+    and 13 list as UNIMPLEMENTED" matches artifact 06's
+    UNIMPLEMENTED count.
+  - "SPEC/request_schema.md lines ~23-25" for "Schema
+    conformance is a precondition... not part of evaluation"
+    matches lines 24-25 of the schema.
+  - "04 line 10" for the no-prose-promotion rule matches.
+  - "SESSION_PROTOCOL.md lines ~84-86" for "did not happen
+    for continuity purposes" matches lines 84-86.
+
+All spot-checked citations resolve; citations are appropriately
+granular.
+
+**(c) Prior project exposure.** Not at issue; the grounding is
+explicit and the citations are checkable.
+
+**(d) Bridge document and prior cross-model output out of scope.**
+Held. No reconstruction attempted; no reference to the
+throwaway-session output. VL-023 is treated as the comparison
+target (which it is per the request structure), not as an
+authority to defer to.
+
+**Lesson 6 within-body scan.** Held. No register-shift phrases
+detected ("stepping back," "considering more broadly," etc.);
+every layer verdict carries a citation; the out-of-scope
+section is correctly used. No inference flags appear because
+no claims requiring inference flags appear, with one minor
+exception noted below.
+
+**Procedural verdict: clean.** The response operates entirely
+within the constrained mode. The cross-model evaluate
+template's mode discipline (Lesson 6 corrective) held in
+practice for its first framework-level application.
+
+### Substantive findings
+
+**Convergence on the load-bearing claim.** Independent
+re-derivation reaches the same four-part abstract shape, the
+same per-layer verdicts on all five original candidates
+(decision fits definitionally; manifest fits with the
+CCS-application refinement; request does NOT fit as a
+precondition layer; methodology fits via procedural detector;
+session fits via close/resume protocols), and the same
+PARTIAL HOLDS classification. The recipient explicitly states:
+"Same as VL-023 (PARTIAL HOLDS). No divergence in outcome;
+artifacts drove convergence."
+
+The convergence strengthens VL-023's claim from "single-model
+derivation" to "two-model converged derivation." Specifically:
+
+  - The four-part abstract shape is now demonstrated to be
+    extractable from canon section 12 by independent
+    derivations rather than being a particular reading.
+  - The request-layer non-instance is confirmed structurally
+    (both derivations classify it as precondition rather than
+    continuity-shaped). This is the most load-bearing
+    convergence point because the request-layer verdict is
+    what keeps the outcome at PARTIAL HOLDS rather than
+    universal HOLDS; an independent derivation reaching the
+    same exclusion strengthens the bounded claim.
+  - The procedural-vs-functional detector distinction at the
+    methodology and session layers is independently surfaced.
+  - The manifest layer's "transition-shape is canonical CCS
+    applied to the manifest component" refinement is
+    independently surfaced.
+
+**Supplementary divergence finding: evaluator versioning
+layer.** VL-023 explicitly named evaluator versioning as
+out-of-scope ("the evaluator layer was not in the session
+opener's candidate list and is not derived here; flagged for
+completeness only"). The recipient's derivation, operating
+under a looser self-imposed bound, derives it as a fitting
+supplementary layer:
+
+  - State = `evaluator_sha256` per
+    `docs/restructure/05_admissibility_envelope_spec.md`
+    `evaluator` block.
+  - Transitions = decision logic change, per artifact 05's
+    `evaluator` field rationale: "A changed evaluator hash
+    means the decision logic itself moved (section
+    12.4-class transition)."
+  - Mechanism = `reassert()` returning RE-EVALUATE-REQUIRED
+    on `evaluator_sha256` mismatch, per artifact 05's
+    reassertion protocol table.
+  - Fail-closed = "implicit in envelope tamper-evidence"
+    (recipient's phrasing).
+
+The first three components are directly citable to artifact
+05. The fourth component (fail-closed) is the weakest link
+in the derivation: the recipient flags it as implicit rather
+than explicit. Reading artifact 05's `decision_sha256` and
+overall envelope discipline, the tamper-evidence does
+fail-closed (a mismatched `decision_sha256` returns
+INVALIDATED per the reassertion table), but the claim that
+evaluator versioning specifically inherits that fail-closed
+property is one step of inference. The recipient should have
+flagged this with an inference marker per Mode discipline
+constraint 1; the absence is the one minor procedural
+imperfection in an otherwise clean response.
+
+The evaluator-versioning layer fits the four-part shape with
+the noted caveat. The finding is real and citable to
+artifact 05. It is artifact-grounded; it does not depend on
+training-data inference about how versioning works in other
+frameworks. VL-023 could have surfaced it and chose not to
+under self-imposed scope discipline.
+
+This is a genuine derivation finding that VL-023 missed,
+strengthening the recursion case rather than weakening it:
+one more fitting layer adds to the four already established.
+The PARTIAL HOLDS verdict does not change (the request layer
+still does not fit, regardless of how many layers do); the
+"fitting" side gains a member.
+
+**Symmetric comparison.** The recipient correctly identifies
+that VL-023 surfaced no material derivation content the
+recipient missed. The Lesson-3 self-failure surface event
+recorded in VL-023's process findings and the
+downstream-artifact candidate (`07_continuity_recursion.md`)
+are process observations outside the core derivation scope;
+the recipient correctly categorizes them as such rather
+than claiming to have missed substantive content.
+
+### Outcome
+
+PARTIAL HOLDS strengthened by cross-model convergence on all
+load-bearing claims. One supplementary layer (evaluator
+versioning) added to the fitting set, with minor inference
+caveat on its fail-closed component.
+
+The downstream-artifact candidate (`07_continuity_recursion.md`,
+flagged in VL-023's process findings for post-G0-build
+scheduling) should now include the evaluator versioning layer
+as a sixth fitting layer when it is eventually drafted. The
+artifact's drafter should cite the recipient's derivation
+(this entry's process findings) as the surface event for the
+evaluator layer's inclusion, with VL-023's bounded-derivation
+note as context for why VL-023 itself did not include it.
+
+### Files affected
+
+  - `EVIDENCE/verification_ledger.md` (this entry appended)
+  - `STATE.md` (Last updated parenthetical updated; Current
+    verified state bullet for VL-023 follow-up appended;
+    item 19 inserted as VL-024 strengthening derivation;
+    existing item 19 renumbered to item 20 with forward-
+    reference adjustments)
+
+### Files NOT affected
+
+  - `CANON/canon.md` (locked)
+  - `MANIFEST/manifest.json` (untouched)
+  - `IMPLEMENTATION/*` (untouched)
+  - `TESTS/*` (untouched)
+  - `SPEC/request_schema.md` (untouched)
+  - `docs/restructure/*` (untouched; the
+    `07_continuity_recursion.md` candidate remains deferred
+    per VL-023 with the evaluator-versioning amendment
+    flagged here)
+  - `docs/methodology/*` (untouched; see Process findings
+    for the Lesson-3 surface event recommendation)
+
+### Process findings
+
+**Lesson 3 inference flag operated as designed.** The
+cross-model request was drafted from inference about the
+template structure, with the inference explicitly flagged at
+the top of the request. The recipient model produced a
+procedurally-clean response operating against the inferred
+structure. This is a methodology data point: the cross-model
+evaluate template's structural commitments (insofar as the
+inferred reconstruction captured them) are robust enough that
+clean operation is possible without verbatim template access.
+The template's content (the six-part submission order, the
+Lesson 6 mode discipline, the scope-bound procedural
+constraints) is more load-bearing than its exact form.
+
+Candidate addition to Lesson 3's surface events list: drafting
+from-inference WITH inference-flag-at-top is admissible
+operating mode and produced clean output once. Two-instance
+threshold not yet met; recorded here for the next instance to
+build on.
+
+**First framework-level cross-model run under VL-022 template.**
+This entry records the first application of the VL-022
+cross-model evaluate template to a substantive derivation
+verdict. The VL-022 ledger entry promoted the template on
+single-instance basis (structural promotion per VL-017a's
+distinction); this entry is the first behavioral instance.
+The template's procedural-cleanliness production is now
+attested once in practice in addition to the single
+structural-demonstration instance from the 2026-05-19
+throwaway session.
+
+**One minor procedural imperfection in the recipient response.**
+The evaluator-versioning layer's fail-closed component was
+claimed implicitly without an inference marker. Mode
+discipline constraint 1 ("declarative claim without citation
+and without an inference flag is a mode violation") was
+violated on this one component. The violation is small (one
+component of one supplementary finding) and does not
+contaminate the rest of the response, which holds cleanly.
+Recording the instance:
+
+  - The response otherwise demonstrates clean within-body
+    discipline.
+  - The implicit inference is artifact-recoverable (the
+    fail-closed posture is in artifact 05's envelope
+    structure discussion); the recipient's reasoning is
+    correct, only the flagging is missing.
+  - The finding's admissibility is preserved with the caveat
+    documented.
+
+This is a useful calibration finding for the cross-model
+evaluate template: requesting inference flags is one thing;
+verifying that they are applied to every implicit step is
+another. The within-body scan caught the imperfection. The
+template held.
+
+**Cross-model verification at the framework level is now
+operationally established as a methodology pattern.** The
+project has now conducted two artifact-level cross-model
+verifications (VL-015, VL-016) and one framework-level
+cross-model evaluation (this entry). All three were
+procedurally clean. The methodology pattern is durable across
+both shapes (artifact verification, framework evaluation) and
+across both purposes (claim contestation, claim
+strengthening).
+
+**Recommendation for VL-024.** Per the strengthening question
+the user posed during the same session as this run: VL-024
+should be repurposed from the envelope.py build to a
+methodology / analysis entry that derives whether and how
+the cross-model run strengthens the framework's claim. The
+envelope build slides to VL-025. Rationale: the strengthening
+question deserves derivation rather than absorption into a
+build commit's process findings, and the methodology layer
+just got cross-model-confirmed as a fitting continuity layer;
+demonstrating that confirmation by doing a clean methodology
+derivation before the next code commit is the framework
+practicing what VL-023 + this entry found. The revised VL-024
+session opener is drafted and ready; the build session
+opener prepared in the VL-023 session is preserved at
+`/home/claude/work/vl024_session_opener.md` for use as VL-025's
+session opener.
+
+**Chat-paste-eats-content seventh and eighth instances during
+this session.** The Python heredoc for commit-message
+regeneration in the VL-023 close (seventh instance) failed
+loud with FileNotFoundError; no corruption. The follow-up
+entry file overwrite (this entry's recovery sequence; eighth
+instance) was silent: the apply script content overwrote the
+entry file at `../tmp/vl023_followup_entry.md`, and the
+subsequent cat-append concatenated 378 lines of Python code
+into the ledger before being caught by post-append
+verification. The ledger was truncated back to its
+origin-baseline by a recovery Python script; no commit
+occurred. The eighth instance differs from the prior seven
+in three ways: (a) it materialized as actual file corruption
+on disk (the prior instances either failed loud or were
+caught pre-commit); (b) the corruption was caught by md5
+verification at append time, not by the chat-paste mechanism
+itself; (c) the recovery required surgical line-truncation
+of the ledger rather than a clean re-do. Worth a future
+methodology note: the inline-Python-with-md5 pattern
+survived a fourth consecutive session for STATE.md edits,
+but the cat-append pattern for ledger entries does not
+carry equivalent verification - the cat operation will
+append whatever is in the source file, including wrong
+content if the source has been silently replaced. Candidate
+corrective: pre-append md5 check against an expected hash
+captured at entry-file-creation time, with a fail-loud
+mismatch.
+
+### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not
+cite its own commit hash. VL-023 is cited as commit 83fa5a7
+because it is the prior commit being described, not the
+commit being created.
+
+The cross-model recipient model's identity (Grok or OpenAI)
+is not recorded in this entry because the request structure
+made the request identical across recipients. If a future
+follow-up or contest of this finding requires recipient
+identification, the project record should be amended; the
+absence here is by design, not by oversight.
+
+The throwaway session of 2026-05-19 remains cited only by
+date per VL-022 and VL-023's discipline; the bridge document
+is not committed to the repo and is not imported.

@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-023 (recursive-continuity hypothesis derivation - PARTIAL HOLDS: four of five candidate layers fit the four-part continuity shape extracted from canon section 12 - decision (definitionally; build half open per G0), manifest (transition-shape is part of canonical CCS, not a separate invariant), methodology (procedural detector via ledger discipline + no-prose-promotion rule), session (procedural detector via close + resume protocols); request layer does NOT fit, being a precondition layer rather than a continuity layer; Finding 3 from the bridge document of 2026-05-19 closes with this entry; downstream-artifact candidate `docs/restructure/07_continuity_recursion.md` flagged in process findings, NOT committed in this entry, recommended for post-G0-build scheduling; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-022 (throwaway-session methodology promotion: cross-model evaluate template + Lesson 6 from the bridge document of 2026-05-19; absorbs 37a4390 disappearance-mechanism finding per option B); G2 still closed in code at VL-019; next trajectory action is the G0 build half (canonical CCS via envelope))
+Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-023 follow-up (cross-model evaluation of VL-023 PARTIAL HOLDS verdict - procedurally clean per VL-008 + Lesson 6, convergent on the load-bearing claim - four-part abstract shape and all five original per-layer verdicts confirmed by independent re-derivation, PARTIAL HOLDS unchanged; one supplementary divergence finding: evaluator versioning layer added as a sixth fitting layer per artifact 05's evaluator block field rationale citing canon section 12.4, with one inference caveat on its fail-closed component; recommendation: VL-024 repurposed as a methodology / analysis entry deriving whether and how the cross-model run strengthens the framework's claim, with the envelope.py build sliding to VL-025; downstream-artifact candidate `07_continuity_recursion.md` to incorporate the evaluator versioning layer when eventually drafted; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-023 at commit 83fa5a7; G2 still closed in code at VL-019; next trajectory action is VL-024 (strengthening derivation per the recommendation in this entry), then VL-025 (G0 build half: envelope.py))
 
 ---
 
@@ -411,6 +411,34 @@ manifest layer. CCS has drifted - see G0 below.
   analysis entry per VL-017a's distinction. No
   code/canon/test/spec/structural-doc change. Repo test
   set 61/61, unchanged from 37a4390 (VL-022).
+- **VL-023 follow-up cross-model evaluation: convergent
+  on PARTIAL HOLDS; one supplementary finding (this commit).**
+  First framework-level cross-model evaluation under the
+  VL-022 template (drafted from inference about the template
+  structure; Lesson 3 inference flag at top of the request).
+  Recipient model produced a procedurally-clean response per
+  VL-008 + Lesson 6 within-body discipline. Four-part abstract
+  shape extracted independently from canon section 12 matches
+  VL-023's extraction exactly in components and citations. All
+  five original per-layer verdicts converge: decision fits
+  definitionally, manifest fits with CCS-application
+  refinement, request does NOT fit, methodology fits via
+  procedural detector, session fits via procedural detector.
+  Outcome classification: PARTIAL HOLDS, matching VL-023.
+  One supplementary divergence finding: evaluator versioning
+  layer added as a sixth fitting layer per artifact 05's
+  `evaluator` block field rationale citing canon section
+  12.4-class transition, with one minor inference caveat on
+  its fail-closed component (artifact-recoverable from the
+  envelope's overall fail-closed posture; flagged for
+  precision). VL-023's PARTIAL HOLDS strengthened from
+  single-model to two-model converged derivation; the
+  `07_continuity_recursion.md` artifact candidate (if/when
+  eventually drafted post-G0-build) should incorporate the
+  evaluator versioning layer per this entry's recommendation.
+  Classification: methodology / analysis entry per VL-017a's
+  distinction. No code/canon/test/spec/structural-doc change.
+  Repo test set 61/61, unchanged from 83fa5a7 (VL-023).
 
 ## What is locked vs. open
 
@@ -574,10 +602,26 @@ the G0 build track is underway:
     opener's "Outcome and submission" rule. Classification:
     methodology / analysis entry per VL-017a's distinction.
     No code/canon/test/spec/structural-doc change.
-19. **G0 build half: canonical CCS implementation via the
-    envelope spec.** OPEN. Next trajectory action per
-    STATE.md and per VL-023's redirection of the next
-    trajectory move back to G0. The envelope spec
+19. **VL-024 strengthening derivation.** OPEN. Methodology
+    / analysis entry deriving whether and how the cross-model
+    run recorded at VL-023 follow-up strengthens the
+    framework's claim of recursive continuity discipline.
+    The question is decomposed into load-bearing sub-meanings
+    (confidence, scope, risk-reduction, external
+    defensibility) and each is derived against the artifacts
+    (VL-023, VL-023 follow-up, canon section 12, artifact 05,
+    Lesson 6, the cross-model evaluate template read at
+    session start per the source-first corrective).
+    Outcome: strengthens / partially strengthens / does not
+    strengthen / ill-posed, all four admissible. Session
+    opener drafted at
+    `/home/claude/work/vl024_session_opener_clarification.md`.
+    Classification: methodology / analysis entry per
+    VL-017a's distinction. No code/canon/test/spec/
+    structural-doc change expected.
+20. **G0 build half: canonical CCS implementation via the
+    envelope spec.** OPEN. Next trajectory action after
+    VL-024. The envelope spec
     (`docs/restructure/05_admissibility_envelope_spec.md`)
     is current at VL-020. The build order from artifact 05
     names `IMPLEMENTATION/envelope.py` (`build_envelope()`
@@ -585,9 +629,18 @@ the G0 build track is underway:
     `TESTS/adversarial/test_envelope.py` and a
     canon-derived `test_ccs_canonical.py` (the latter
     addresses G7) follow; wiring `pep.py` to emit an
-    envelope per decision is the closing step. Proposed
-    ledger entries: VL-024 (`envelope.py`), VL-025 (tests),
-    VL-026 (`pep.py` wiring + G7 close).
+    envelope per decision is the closing step. The evaluator
+    versioning layer surfaced at VL-023 follow-up may
+    warrant specific attention in envelope.py's `evaluator`
+    block treatment; the VL-024 strengthening derivation's
+    Step 4 implications section will clarify whether this
+    requires build-plan adjustment. Proposed ledger entries:
+    VL-025 (`envelope.py`), VL-026 (tests), VL-027 (`pep.py`
+    wiring + G7 close). Session opener drafted at
+    `/home/claude/work/vl024_session_opener.md` (originally
+    drafted for VL-024 before the strengthening question was
+    posed; slides forward to VL-025 with refinements per
+    VL-024's outcome).
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected)
