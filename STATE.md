@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-020 (artifact 05 freshness pass per SPEC/request_schema.md build-order step 6: adds `target_url` at envelope top level and `context` inside `request_context`, plus two field-rationale bullets; bundled queue-drain: methodology Lesson 5 (set-exhaustiveness claims require explicit enumeration) promoted into docs/methodology/session_mechanics_lessons.md, and SPEC/request_schema.md "Build order (schema-internal)" closing paragraph corrected from pre-VL-015 numbering plan to actual VL-014..VL-020 numbering; no code/canon/test change) landed in commit d81de1d; VL-020 follow-up (STATE.md and ledger append; delivery-omission repair) lands in this commit; last ledger entry is VL-022 (throwaway-session methodology promotion: cross-model evaluate template + Lesson 6 from the bridge document of 2026-05-19; absorbs 37a4390 disappearance-mechanism finding per option B); G2 still closed in code at VL-019; next action is Finding 3 derivation (VL-023, recursive-continuity hypothesis; requires fresh session per bridge prescription), then the G0 build half (canonical CCS via envelope))
+Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-023 (recursive-continuity hypothesis derivation - PARTIAL HOLDS: four of five candidate layers fit the four-part continuity shape extracted from canon section 12 - decision (definitionally; build half open per G0), manifest (transition-shape is part of canonical CCS, not a separate invariant), methodology (procedural detector via ledger discipline + no-prose-promotion rule), session (procedural detector via close + resume protocols); request layer does NOT fit, being a precondition layer rather than a continuity layer; Finding 3 from the bridge document of 2026-05-19 closes with this entry; downstream-artifact candidate `docs/restructure/07_continuity_recursion.md` flagged in process findings, NOT committed in this entry, recommended for post-G0-build scheduling; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-022 (throwaway-session methodology promotion: cross-model evaluate template + Lesson 6 from the bridge document of 2026-05-19; absorbs 37a4390 disappearance-mechanism finding per option B); G2 still closed in code at VL-019; next trajectory action is the G0 build half (canonical CCS via envelope))
 
 ---
 
@@ -383,6 +383,34 @@ manifest layer. CCS has drifted - see G0 below.
   Classification: efficiency move per VL-017a's
   distinction. No code/canon/test/spec/structural-doc
   change. Repo test set 61/61, unchanged from 37a4390.
+- **VL-023 recursive-continuity hypothesis derivation:
+  PARTIAL HOLDS (this commit).** Finding 3 from the bridge
+  document of 2026-05-19, deferred to VL-023 by VL-022 per
+  the bridge's prescription that the model's phrasing not
+  be imported. Derivation conducted in a fresh session
+  without the bridge document, the throwaway chat
+  transcript, or the outside model's output in working
+  context. A four-part abstract shape extracted from canon
+  section 12 (state + enumerated transitions +
+  invalidation/revalidation mechanism + fail-closed on
+  unverified continuation) applied to the five candidate
+  layers the session opener named: decision layer
+  (definitionally; build half open per G0), manifest layer
+  (with the transition-shape being part of canonical CCS,
+  not a separate invariant), methodology layer (procedural
+  detector via ledger discipline plus no-prose-promotion
+  rule), and session layer (procedural detector via close
+  + resume protocols) all fit. Request layer does NOT fit:
+  no transition concept; it is a precondition layer, not a
+  continuity layer. Hypothesis closes with PARTIAL HOLDS;
+  downstream-artifact candidate
+  (`docs/restructure/07_continuity_recursion.md` naming
+  the four fitting layers) flagged in process findings,
+  NOT committed in this entry, with recommendation to
+  schedule post-G0-build. Classification: methodology /
+  analysis entry per VL-017a's distinction. No
+  code/canon/test/spec/structural-doc change. Repo test
+  set 61/61, unchanged from 37a4390 (VL-022).
 
 ## What is locked vs. open
 
@@ -533,6 +561,33 @@ the G0 build track is underway:
     B of the scoping decision. Classification:
     efficiency move per VL-017a's distinction. No
     code/canon/test/spec/structural-doc change.
+18. **VL-023 recursive-continuity hypothesis derivation.**
+    Done (VL-023, this commit). Finding 3 from the bridge
+    document of 2026-05-19, conducted in a fresh session
+    per the bridge's prescription. Outcome: PARTIAL HOLDS
+    (four of five candidate layers fit the four-part
+    continuity shape extracted from canon section 12;
+    request layer does not). Downstream-artifact candidate
+    (`docs/restructure/07_continuity_recursion.md` naming
+    the four fitting layers) flagged for post-G0-build
+    scheduling; NOT committed in this entry per session
+    opener's "Outcome and submission" rule. Classification:
+    methodology / analysis entry per VL-017a's distinction.
+    No code/canon/test/spec/structural-doc change.
+19. **G0 build half: canonical CCS implementation via the
+    envelope spec.** OPEN. Next trajectory action per
+    STATE.md and per VL-023's redirection of the next
+    trajectory move back to G0. The envelope spec
+    (`docs/restructure/05_admissibility_envelope_spec.md`)
+    is current at VL-020. The build order from artifact 05
+    names `IMPLEMENTATION/envelope.py` (`build_envelope()`
+    and `reassert()`) as the next implementation artifact;
+    `TESTS/adversarial/test_envelope.py` and a
+    canon-derived `test_ccs_canonical.py` (the latter
+    addresses G7) follow; wiring `pep.py` to emit an
+    envelope per decision is the closing step. Proposed
+    ledger entries: VL-024 (`envelope.py`), VL-025 (tests),
+    VL-026 (`pep.py` wiring + G7 close).
 
 With priority item 3 (G0 rename + G6 + G10) resolved, item
 4 (SPEC/request_schema.md drafted + verified + corrected)

@@ -4498,3 +4498,505 @@ commits being described, not the commit being created. The
 bridge document of 2026-05-19 is cited explicitly as
 surface-event source for Findings 1 and 2; the bridge is NOT
 committed to the repo.
+### VL-023 - 2026-05-20 - Recursive-continuity hypothesis derivation: PARTIAL HOLDS
+
+**Status:** Derivation complete. Outcome: hypothesis PARTIAL HOLDS.
+**Author:** Claude (this session), under VL-008 procedural discipline.
+**Verifies:** the recursive-continuity hypothesis surfaced during the
+throwaway cross-model run of 2026-05-19 (cited by date per
+VL-022, not by importation of the model's phrasing).
+
+### Background
+
+The bridge document of 2026-05-19 (outside the repository) recorded
+three findings from a throwaway cross-model run. VL-022 promoted
+Findings 1 and 2 on single-instance basis: the cross-model evaluate
+template and Lesson 6 on presentation-indistinguishability. Finding
+3 (the recursive-continuity hypothesis) was deferred to a fresh
+session per the bridge's prescription that "the model's phrasing
+must NOT be imported."
+
+The bridge's prescription is binding for procedural-integrity
+reasons: importing the hypothesis as already-characterized would
+collapse the "pass artifacts, never verdicts" rule (STATE.md
+preamble) at exactly the point the rule is most load-bearing. The
+hypothesis names a structural property of the framework; whether
+that property holds is an artifact-derivable question, and the
+derivation must come from the artifacts rather than from a prior
+characterization the model has read.
+
+This session opened with `vl023_session_opener.md`, which posed
+the question, enumerated five candidate layers as a starting
+point (with explicit acknowledgment that the enumeration was
+candidate-only and could be revised), and named four admissible
+outcomes (holds / partial holds / does not hold / ill-posed).
+The session did not have the bridge document, the throwaway
+chat transcript, or the outside model's output in working
+context.
+
+### The question, precisely
+
+Does the Elyon-Sol framework apply continuity discipline as a
+recursive organizing principle across multiple layers, with
+structurally analogous shape at each layer?
+
+Two parts kept distinct in the derivation:
+  (a) Recursive presence: is continuity-shaped discipline visible
+      at multiple layers?
+  (b) Structural analogy: do those instances share a common
+      abstract shape, or only the vocabulary?
+
+A common shape is the substantive claim. Multiple layers sharing
+only the word "continuity" but operating on incommensurable
+structures would be vocabulary reuse, not recursion.
+
+### The abstract shape (derived from canon)
+
+From `CANON/canon.md` sections 12.1-12.4 and 13, canonical CCS
+has four components:
+
+  1. A state: a bundle of values whose consistency matters
+     (canon section 12.1 names "interaction context, authority,
+     coverage, or system state").
+  2. Detectable transitions: specific changes enumerated as
+     transitions (canon section 12.1 plus the section 12.4
+     examples: manifest version change, role/authority schema
+     change, identity mapping inconsistency).
+  3. An invalidation/revalidation mechanism: a check that
+     determines whether the prior verdict still holds under
+     the new state, or a procedure that re-establishes it
+     (canon section 12.3's continuity constraint).
+  4. Fail-closed on unverified continuation: if continuity
+     cannot be confirmed, the prior verdict does not persist
+     (canon section 13: "eligibility does not persist across
+     state transitions without revalidation").
+
+This is the four-part shape used as the structural test for
+each candidate layer below.
+
+### Layer-by-layer derivation
+
+**Decision layer (canonical CCS itself).**
+  - State: (authority AP, coverage OP, decision d, context C),
+    `canon.md` section 11.1 plus section 12.2's `d = u AND c`.
+  - Transitions: enumerated in `canon.md` sections 12.1 and 12.4.
+  - Mechanism: `CCS(S_t, S_{t+1}, I)` per `canon.md` section
+    12.3.
+  - Fail-closed: `canon.md` section 13.
+  - Implementation status: UNIMPLEMENTED per
+    `docs/restructure/06_spec_to_code_traceability.md` rows for
+    canon sections 12.1, 12.3, 12.4, 13. This is the G0 build
+    half per `docs/restructure/04_current_vs_claimed.md` G0
+    action item 3.
+  - Verdict: fits the four-part shape definitionally. This is
+    the layer the shape is defined at; the other layers are
+    candidates for structural analogy to this one.
+
+**Manifest layer.**
+  - State: `(manifest.version, manifest_sha256)` per
+    `SPEC/request_schema.md` "Canon mapping - section 11.9 ->
+    manifest-pinning fields" and `canon.md` section 11.9.
+  - Transition: manifest change, enumerated in `canon.md`
+    section 12.4 as an invalid transition.
+  - Mechanism: two distinct mechanisms, one point-in-time and
+    one transition-shaped. Point-in-time:
+    `manifest_integrity_valid()` per
+    `docs/restructure/06_spec_to_code_traceability.md` row for
+    canon section 8.1 and per `SPEC/request_schema.md` field
+    definitions for `expected_manifest_version` and
+    `expected_manifest_sha256`. Transition-shaped (planned):
+    `reassert()` per
+    `docs/restructure/05_admissibility_envelope_spec.md`
+    reassertion table, `manifest_sha256` mismatch row mapped to
+    `RE-EVALUATE-REQUIRED` citing canon sections 7 and 12.4.
+  - Fail-closed: `REF_SCHEMA_MANIFEST_PINNING_MISSING` at the
+    schema boundary (`SPEC/request_schema.md` "Missing manifest
+    pinning"; `IMPLEMENTATION/request_validator.py` lines
+    362-366); refuse-on-mismatch inside
+    `manifest_integrity_valid()`.
+  - Verdict: fits, with a structural refinement. The
+    transition-shaped check at the manifest layer is not a
+    separate invariant; it is canonical CCS applied to the
+    manifest component of state. The point-in-time check is the
+    per-instant prerequisite that establishes the state value
+    a future transition will be measured against. Cite:
+    `docs/restructure/05_admissibility_envelope_spec.md`
+    "Envelope structure" `condition_results` field rationale
+    bullet, which makes this distinction explicit:
+    "`manifest_integrity` is the point-in-time check ... `ccs`
+    is the true section 12 invariant - decision consistency
+    across a transition."
+
+**Request layer.**
+  - State: request shape (well-formedness per
+    `SPEC/request_schema.md` "Top-level wire shape").
+  - Transitions: none. Requests are atomic per
+    `SPEC/request_schema.md` lines 23-25: "Schema conformance
+    is a precondition of evaluation, not part of evaluation."
+    Each request is a fresh point-in-time admissibility query.
+  - Mechanism: schema validation
+    (`IMPLEMENTATION/request_validator.py::validate_request`).
+  - Fail-closed: yes, via the seven-code refusal vocabulary
+    per `SPEC/request_schema.md` "PEP boundary behavior" steps
+    1-5.
+  - Verdict: does NOT fit. The request layer has fail-closed
+    behavior but no transition concept. It is a precondition
+    layer, not a continuity layer. The session opener's
+    candidate enumeration listed "Transition = ?" with a
+    question mark at this layer; the derivation answer is
+    that the question mark is the answer.
+  - Refined observation: the request layer is a CARRIER of
+    state-pinning information for the manifest layer's
+    continuity check. The request's `expected_manifest_version`
+    and `expected_manifest_sha256` fields are the data the
+    manifest-layer mechanism consumes. The request layer is
+    upstream of the manifest layer's continuity check but is
+    not itself a continuity layer.
+
+**Methodology layer (verification ledger + gap registry).**
+  - State: epistemic status of project claims. Each row in
+    `docs/restructure/04_current_vs_claimed.md` carries a
+    status field. Each ledger entry records a claim moving
+    through statuses.
+  - Transitions: explicit and enumerated. Examples from
+    `docs/restructure/04_current_vs_claimed.md`: G0 was
+    DRIFTED pre-VL-012; PARTIALLY RESOLVED post-VL-012 (line
+    31). G12 and G13: PARTIALLY ADDRESSED with the
+    schema-layer-closed / canon-layer-open distinction
+    explicit (lines 167-168, 202-203). From the ledger per
+    STATE.md narrative: VL-014 transitioned SINGLE-SOURCE ->
+    DISPUTED at VL-015 -> CORRECTED at VL-016.
+  - Mechanism: ledger entries plus the no-prose-promotion
+    rule from `docs/restructure/04_current_vs_claimed.md`
+    line 10: "A row closes only when code, tests, or
+    structure change such that the delta no longer exists -
+    never by editing prose."
+  - Fail-closed: `docs/SESSION_PROTOCOL.md` lines 84-86:
+    "Verification work that is not ledgered did not, for
+    continuity purposes, happen." The phrase "for continuity
+    purposes" is the artifact's own naming of the analogy.
+  - Verdict: fits. Detector is procedural (the ledger
+    discipline + the no-prose-promotion rule) rather than
+    functional, but the four-part shape is present.
+
+**Session layer.**
+  - State: `docs/SESSION_PROTOCOL.md` lines 119-122 names
+    three at-rest invariants: working tree clean +
+    HEAD == origin/main; STATE.md's "Next open action" first
+    item is literally the next task; the verification ledger
+    reflects all verification work to date.
+  - Transitions: session close -> session start. The interval
+    between sessions is the transition.
+  - Mechanism: close protocol
+    (`docs/SESSION_PROTOCOL.md` lines 64-100) establishes the
+    at-rest state; resume protocol (lines 20-58) checks it.
+  - Fail-closed: lines 124-126: "If a resume protocol finds
+    these untrue, the previous session's close protocol
+    failed. Fixing that is the first task of the new
+    session, before anything else."
+  - Verdict: fits. Detector is procedural. STATE.md's own
+    session-close note uses the word "continuity"
+    directly: "If they do not, the repository's continuity is
+    broken - treat that as the first thing to fix."
+
+### Outcome classification: PARTIAL HOLDS
+
+Four of five candidate layers fit the four-part shape:
+
+  - Decision layer (definitionally; build half open per G0).
+  - Manifest layer (with structural refinement: the
+    transition-shape is part of canonical CCS, not a separate
+    invariant).
+  - Methodology layer (procedural detector).
+  - Session layer (procedural detector).
+
+One does not:
+
+  - Request layer (precondition layer, not continuity layer).
+
+The hypothesis as phrased ("recursive across multiple layers")
+holds for four layers but is NOT universal across the candidate
+enumeration. The candidate enumeration itself was a starting
+point and may not be exhaustive; other layers (e.g., POE
+anchoring per canon section 8.2, evaluator versioning per the
+envelope's `evaluator_sha256` field) might or might not
+instantiate the shape. This derivation does not exhaust the
+candidate space; it tests the five candidates the session opener
+named.
+
+### Supporting structural observations
+
+**(1) Two detector forms, equally load-bearing.** Where the
+recursion holds, the invalidation/revalidation mechanism takes
+one of two forms:
+
+  - Functional detector (decision layer's planned CCS check;
+    manifest layer's `manifest_integrity_valid()` and planned
+    `reassert()`): a computable check.
+  - Procedural detector (methodology layer's ledger discipline;
+    session layer's close + resume protocols): a discipline
+    enforced at boundaries via human-driven protocol.
+
+The framework treats these as equally load-bearing. The
+procedural detectors are not weaker than the functional ones;
+they apply continuity discipline at layers where the relevant
+transition rate is slow enough for human-driven checks to be
+sufficient. The artifacts use the same vocabulary
+("continuity") at both kinds of layer
+(`docs/SESSION_PROTOCOL.md` line 86; STATE.md session-close
+note; canon section 12 et seq.).
+
+**(2) The session layer is substrate for cross-time recursion.**
+Session-layer continuity is what makes the other layers'
+continuity discoverable across the time dimension that all
+other continuity checks operate over. Without session-layer
+continuity, the ledger's record of past status transitions
+would not survive into the next session's evaluation context,
+and the project would lose its ability to know what it had
+verified. This observation is a layer-relationship claim, not
+a layer-shape claim; it does not strengthen or weaken the
+PARTIAL HOLDS verdict, but it is artifact-derivable from
+`docs/SESSION_PROTOCOL.md`'s opening rationale ("no model ...
+carries memory between sessions. The repository is the
+continuity layer; this protocol is how a session connects to
+it.").
+
+**(3) The recursion is observable in the artifacts.** Several
+artifact passages can be re-read as instances of the recursion
+once the pattern is named:
+
+  - `docs/restructure/05_admissibility_envelope_spec.md`
+    reassertion protocol explicitly maps reassert outcomes to
+    canon section 13.
+  - `docs/SESSION_PROTOCOL.md` line 86 explicit "continuity
+    purposes."
+  - `docs/restructure/04_current_vs_claimed.md` line 10's
+    no-prose-promotion rule is fail-closed at the
+    claim-epistemic-status layer, structurally parallel to
+    fail-closed at the admissibility layer.
+  - STATE.md session-close note: "If they do not, the
+    repository's continuity is broken - treat that as the
+    first thing to fix."
+
+These passages were not written to argue the recursion exists;
+each was written for its immediate purpose. The pattern
+emerges when the artifacts are read against each other. This
+emergent visibility is what distinguishes the derivation's
+PARTIAL HOLDS verdict from a vocabulary-reuse coincidence: the
+artifacts share a vocabulary AND share structural commitments
+AND cite each other's structures.
+
+### What this derivation explicitly does NOT claim
+
+Per the session opener's "What this derivation IS (and is not)"
+section, the following claims are out of scope and not made:
+
+  - The recursion is unusual, foundational, or commercially
+    distinctive. No comparative evidence; canon section D.4
+    "Relation to Prior Work" addresses individual invariants
+    against RBAC/ABAC/XACML/UCON, not recursive structure.
+  - The recursion is the framework's "true organizing
+    principle" or "what it really is." Per canon section 1
+    and the abstract, the framework's organizing principle is
+    governance-before-intelligence and pre-execution
+    admissibility. The recursion of continuity discipline is
+    a structural property of how the framework is built, not
+    its declared purpose.
+  - The framework's authors intended the recursion. The
+    artifacts support that each instance was built for its
+    own reason. The recursion is observable; intentionality
+    is not.
+  - The recursion is complete. The request layer does not
+    exhibit it. The candidate space is not exhausted by the
+    five layers examined.
+
+The bounded claim made by this entry: continuity discipline
+(state + enumerated transitions + invalidation/revalidation
+mechanism + fail-closed on unverified continuation) is
+visible at four of five examined layers in the framework's
+current artifacts, with structurally analogous shape at each.
+
+### Verification
+
+**Citation resolution.** Every load-bearing claim above cites
+an artifact passage. Citations resolved at draft time:
+
+  - `CANON/canon.md` sections 11.1, 11.9, 12.1, 12.2, 12.3,
+    12.4, 13, D.4: read in full.
+  - `SPEC/request_schema.md`: read in full (lines 1-526).
+  - `IMPLEMENTATION/request_validator.py`: read in full
+    (lines 1-413).
+  - `IMPLEMENTATION/pep.py`: read in full.
+  - `docs/restructure/04_current_vs_claimed.md`: read in
+    full.
+  - `docs/restructure/05_admissibility_envelope_spec.md`:
+    read in full.
+  - `docs/restructure/06_spec_to_code_traceability.md`: read
+    in full.
+  - `docs/SESSION_PROTOCOL.md`: read in full.
+  - `docs/methodology/session_mechanics_lessons.md`: read in
+    full (Lessons 1-6).
+
+**Procedural integrity.** Per VL-008 and the session opener's
+constraint (d): the bridge document of 2026-05-19, the
+throwaway chat transcript, and the outside model's output
+were NOT in working context for this derivation. The bridge
+is cited once, by date, as surface-event source for the
+hypothesis. The hypothesis is restated in this entry's
+words, derived from a four-part abstract shape extracted from
+canon section 12, applied to the five candidate layers the
+session opener named.
+
+**Test regression:** none expected. This is a methodology /
+analysis entry. No code, canon, manifest, test, spec, or
+structural-doc change in this commit.
+
+### Files affected
+
+  - `EVIDENCE/verification_ledger.md` (this entry appended)
+  - `STATE.md` (last-updated parenthetical updated to cite
+    VL-023; Current verified state bullet added; Next open
+    action item 18 added; the entry's PARTIAL HOLDS verdict
+    redirects "next open action" back to the G0 build half
+    per the session opener's "Outcome and submission"
+    instruction)
+
+### Files NOT affected
+
+  - `CANON/canon.md` (locked)
+  - `MANIFEST/manifest.json` (untouched)
+  - `IMPLEMENTATION/*` (untouched)
+  - `TESTS/*` (untouched)
+  - `SPEC/request_schema.md` (untouched)
+  - `docs/restructure/*` (untouched; the downstream-artifact
+    candidate proposed in process findings below is NOT
+    committed in this entry per session opener's rule)
+  - `docs/methodology/*` (untouched)
+
+### Process findings
+
+**Downstream-artifact candidate.** The PARTIAL HOLDS outcome
+admits a candidate downstream artifact in
+`docs/restructure/`: a new artifact (proposed name
+`07_continuity_recursion.md` or similar) that names the four
+fitting layers, cites the artifacts at each, and notes the
+request-layer non-instance with rationale. The artifact would
+be a reading-aid that makes the recursion observable to
+future readers without requiring them to re-derive it. The
+artifact would change no canon, code, manifest, tests, or
+existing structure. Per the session opener's "Outcome and
+submission" section, this candidate is recorded here and
+NOT committed in this entry; the artifact commit, if
+scheduled, would be a separate trajectory move.
+
+If the candidate is declined, the PARTIAL HOLDS verdict is
+preserved by this ledger entry alone, and the recursive-
+continuity hypothesis closes with the entry. Future readers
+who notice the pattern in the artifacts would re-derive it;
+the entry's existence at VL-023 makes the prior derivation
+discoverable.
+
+**Recommendation:** schedule the downstream artifact only
+after the G0 build half lands. The recursion's
+canonical-CCS-layer instance is currently UNIMPLEMENTED; the
+artifact would describe a recursion whose anchor instance is
+not yet built. Committing the artifact post-G0-build is
+honest; committing it pre-G0-build risks describing the
+recursion in a way that the anchor's actual implementation
+might contradict. The G0 build half is the next trajectory
+action per STATE.md (item 19, post-VL-023).
+
+**Lesson 3 self-failure in the session opener turn.** In the
+prior turn of this session, when verifying which uploaded
+files had arrived, Claude read the rendered documents block
+in context rather than running `ls /mnt/user-data/uploads/`
+to check the source-of-truth. The rendered documents block
+showed five of nine files; the filesystem held all nine. The
+discrepancy was a rendering-vs-source-of-truth distinction
+exactly analogous to Lesson 2 (terminal-output rendering is
+not file content). Claude reported four files as missing on
+the basis of the rendered view. The user corrected the
+claim; the filesystem check confirmed all nine present.
+
+This is a Lesson 3 failure mode (source-first applies to
+Claude's own derivations - in this case, "derivations" about
+what is present in working context) crossed with Lesson 2
+(terminal-output rendering is not file content - in this
+case, the documents block rendering is not the filesystem
+source-of-truth). The cost was one turn of friction; no
+committed divergence. Recorded here as a session-mechanics
+observation; promotion to
+`docs/methodology/session_mechanics_lessons.md` deferred
+because the failure mode is already covered by the existing
+Lessons 2 and 3 with sufficient generality - the
+documents-block-vs-filesystem instance is a new surface
+event for two existing lessons rather than a new lesson. A
+future methodology update could add the surface event to
+Lesson 3's "Surface events" subsection if the pattern
+recurs.
+
+**Single-derivation outcome admissible.** The session opener
+explicitly named four outcomes as all useful (holds /
+partial holds / does not hold / ill-posed) and explicitly
+named "None is a failure." The PARTIAL HOLDS verdict is
+recorded as the derivation's actual finding, not as a
+hedged version of "holds." The request layer's non-instance
+is artifact-derivable and load-bearing; flattening it into
+"holds" would be exactly the kind of soft-claim the
+framework's procedural discipline is designed to prevent.
+
+**Candidate enumeration acknowledgment.** The session opener
+named five candidate layers as a starting point and
+explicitly authorized the derivation to find additional
+layers or recharacterize the candidates. This derivation
+used the five candidates as-named without adding or
+subtracting layers. Two layers not examined that future work
+might investigate:
+
+  - POE (Proof-of-Existence) anchoring per canon section 8.2.
+    Status UNIMPLEMENTED per artifact 06; out of scope as the
+    canon marks it "optional" and "implementation-dependent."
+    A future implementation might or might not instantiate
+    the four-part shape.
+  - Evaluator versioning via the envelope's
+    `evaluator_sha256` field. Cite:
+    `docs/restructure/05_admissibility_envelope_spec.md`
+    `evaluator` block field rationale: "A changed evaluator
+    hash means the decision logic itself moved (section
+    12.4-class transition)." This phrasing suggests the
+    evaluator layer is structurally analogous to the
+    manifest layer in the envelope's planned reassertion
+    behavior. The evaluator layer was not in the session
+    opener's candidate list and is not derived here; flagged
+    for completeness only.
+
+The two additional layers are not gaps in this derivation;
+they are out-of-scope for a derivation bounded to the five
+candidates the session opener named. Recording them here
+makes the bound explicit.
+
+### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does
+not cite its own commit hash. Prior VL-N entries are cited
+by ledger position, not by commit hash.
+
+Per the session opener's constraint (d) on this derivation
+specifically: the bridge document of 2026-05-19 is cited
+once, by date, as the surface-event source for the
+hypothesis. The bridge document is not committed to the
+repository; the throwaway chat transcript and the outside
+model's output were not in working context for this
+derivation. The hypothesis is restated and answered in this
+entry's words, derived from canon section 12's four-part
+abstract shape applied to the five candidate layers the
+session opener named.
+
+The single-instance surface-event citation pattern matches
+VL-022's citation of the same surface event for Findings 1
+and 2. The throwaway session of 2026-05-19 has now been
+cited as the surface-event source for three findings (two in
+VL-022, one in VL-023). The bridge document remains outside
+the repository; the framework's record of what was found
+that day now lives entirely in the committed VL-022 and
+VL-023 entries plus the methodology artifacts they reference.
