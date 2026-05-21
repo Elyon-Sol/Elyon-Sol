@@ -6974,3 +6974,108 @@ Per the recommendation in the synthesis section:
    entry could land before VL-026 if the spec changes affect
    test docstring citations.
 
+
+---
+
+## VL-026 - Artifact 05 spec revision: four edits resolving VL-025 and VL-025 follow-up gap candidates
+
+**Date:** 2026-05-21
+**Classification:** Methodology / analysis entry per VL-017a's distinction (structural-doc edits to artifact 05; no code, canon, manifest, test, or schema change).
+**Outcome:** Four spec edits to `docs/restructure/05_admissibility_envelope_spec.md` applied in a single atomic write. Five gap candidates resolved (four via spec edits, one as deliberate non-spec record). Pre-VL-027 spec-revision commit per Order B of the VL-026 session opener's pre-session ordering decision. The opener's "VL-026 = tests" framing is renumbered: VL-026 = spec revision (this entry); VL-027 = tests; VL-028 = pep.py wiring.
+
+### Procedure confirmation
+
+Scope-bound to `docs/restructure/05_admissibility_envelope_spec.md` and the existing VL-025 + VL-025 follow-up gap-candidate lists. No code, canon, manifest, test, or schema files touched. Apply-script discipline per VL-025 follow-up's corrective: read-only `diagnose_anchors_vl026.py` ran first against the pre-edit file (9747 bytes, pure LF); produced byte-exact regions for all four anchors with 8/8 anchor-needles unique (Edit 1 start/end, Edit 2 start/end, Edit 4 start/end, Edit 5 start/end). Apply-script `apply_vl026_specrev.py` byte-copied the anchors from the diagnostic output, applied four `str.replace` calls in memory under atomic-write discipline, performed ASCII verification (VL-009) on the result, wrote once, read back to verify. Post-edit file: 11309 bytes, +1562 bytes total. Per-edit deltas observed at +230 / +295 / +71 / +966 bytes; identical to the deltas observed against a synthetic fixture reconstructed from the diagnostic output prior to running against the real file. The synthetic-fixture verification step is a new methodology pattern recorded in this entry's process findings.
+
+### Edits applied
+
+**Edit 1 - `decision_sha256` field rationale: `ensure_ascii=True` clause + receipt.py divergence parenthetical.** Resolves VL-025 gap candidate 4 (the `ensure_ascii` divergence from receipt.py recorded at VL-025 build time) and VL-025 follow-up Bundle A finding 1 (OpenAI's independent surfacing of the same gap). The bullet now names `ensure_ascii=True` inside the canonical-JSON parenthetical with explicit VL-009 ASCII-safe-standard citation, and flags the divergence from `IMPLEMENTATION/replay/receipt.py`'s `ensure_ascii=False` as a methodology-debt finding recorded at VL-012 and reinforced at VL-025. The receipt.py divergence is kept as a brief parenthetical per session-scoping choice; deeper resolution (whether to update receipt.py, normalize both to one convention, or document the asymmetry as intentional) remains a methodology-debt candidate.
+
+**Edit 2 - Reassertion protocol: `reassert()` purity contract paragraph inserted.** Resolves VL-025 follow-up Bundle A finding 2 (the purity contract was operative in envelope.py at VL-025 and recorded in the VL-025 ledger entry but was not stated in artifact 05 itself). The new paragraph follows the reassertion-protocol table and precedes the "REASSERTED is the only state..." paragraph. The contract states: `reassert()` reads live file hashes (`canon.lock`, `IMPLEMENTATION/evaluator.py`, the live manifest) but does not modify its input envelope. Callers may pass a persisted envelope to `reassert()` and rely on the envelope's bytes remaining unchanged. The file references match envelope.py's actual reads at VL-025.
+
+**Edit 4 - Reassertion protocol table Row 2: Canon basis cell rewritten.** Resolves VL-025 follow-up Bundle B finding 5 (load-bearing). The pre-edit cell read "tampered/corrupt envelope" - a description of the failure mode, not a canon citation, making Row 2 the only row in the table without an explicit canon-clause cite. The post-edit cell reads "sections 12.3/12.4 fail-closed semantics, operationalized via artifact-05-layer tamper detection." This brings Row 2 into structural parity with the other four rows of the table (which cite section 12.1, section 12.3, section 12.4, section 7/12.4, section 13) while honestly naming the artifact-05-layer mechanism rather than claiming direct canon-clause instantiation. The wording is a paraphrase of OpenAI Bundle B's "operationally compatible with sections 12.3/12.4" + "operationalizes the canon's fail-closed semantics"; the cell-sized phrase compresses the two into one. Per VL-025 follow-up's classification-divergence finding (Grok Match vs OpenAI Different-set on this row), the post-edit cell is intentionally less assertive about direct canon authorization than the original spec wording implied.
+
+**Edit 5 - Open question 1: rewritten as resolution, forward-looking implementation note included.** Resolves VL-025 gap candidate 1 (the reassert-time ccs derivation semantic) and VL-025 follow-up Bundle B finding 6 (first-issuance sentinel canon-underdetermined) jointly. The pre-edit question read "Proposal: on first issuance `ccs` is recorded as `null` or `\"INITIAL\"`... Confirm." The post-edit text:
+- Names the first-issuance sentinel as Python `None` (JSON `null`); rejects the alternative `"INITIAL"` sentinel for Python/JSON convention and `Optional[bool]` type-signature reasons.
+- States that canon section 12.3 is inapplicable on first issuance (it presupposes a transition).
+- Specifies the reassert-time ccs derivation rule: `True` on REASSERTED (canon section 12.3 holds per row 5); `False` on any INVALIDATED or RE-EVALUATE-REQUIRED outcome (canon section 12.4 "if any condition is violated: CCS = 0").
+- Notes that the derivation is `reassert()`'s output, not stored back into the envelope (envelope purity per Edit 2's contract).
+- Includes an explicit forward-looking implementation note: envelope.py at VL-025 returns the row outcome only; the ccs-derivation rule named here is a forward-looking spec statement that VL-027 tests will assert against and that a small envelope.py update (deferred to VL-028 or earlier) will satisfy. This makes the spec/implementation gap explicit in the spec itself rather than carrying the gap as undocumented forward-trajectory work.
+
+### Edit 3 (defensive AP/OP copies): deliberate non-spec record
+
+VL-025 follow-up Bundle A finding 3 (OpenAI flagged defensive `list(...)` copies for AP/OP as Spec-undetermined) is **not** absorbed by an artifact 05 edit. This entry records the deliberate non-spec status. Rationale: envelope.py's `list(...)` copies of AP/OP are implementation-pattern choices, not spec-layer constraints. The normalized interaction dict returned by `validate_request()` is already a fresh dict, so the defensive copies are belt-and-suspenders rather than load-bearing. Specifying defensive-copy semantics in artifact 05 would constrain future implementations without correctness benefit. This parallels VL-025 follow-up Bundle A finding 4 (module-level path constants `CANON_LOCK_PATH` / `EVALUATOR_PATH`), which was likewise classified as deliberate non-spec implementation-pattern choice. Both findings are recorded in the ledger but not in the spec.
+
+### Citation: VL-025 follow-up gap candidates resolved here
+
+| Source finding | Resolution in this entry |
+|---|---|
+| VL-025 gap candidate 1 (reassert-time ccs derivation) | Edit 5 |
+| VL-025 gap candidate 4 (`ensure_ascii=True` divergence) | Edit 1 |
+| VL-025 follow-up Bundle A finding 1 (`ensure_ascii=True`) | Edit 1 (same gap; converged) |
+| VL-025 follow-up Bundle A finding 2 (`reassert()` purity contract) | Edit 2 |
+| VL-025 follow-up Bundle A finding 3 (defensive AP/OP copies) | Edit 3 deliberate non-spec record |
+| VL-025 follow-up Bundle A finding 4 (module-level path constants) | Already recorded as deliberate non-spec at VL-025 follow-up; no further action |
+| VL-025 follow-up Bundle B finding 5 (Row 2 canon-mapping) | Edit 4 |
+| VL-025 follow-up Bundle B finding 6 (first-issuance ccs sentinel) | Edit 5 (joint with VL-025 gap candidate 1) |
+
+VL-025 gap candidates 2 (evaluate aggregate return vs condition_results needs), 3 (canon section 12.3 c_{t+1} vs T^26 relationship), and 5 (canon_sha256 lockfile-read vs canon.md hash recomputation) are not resolved here. Each falls outside the spec-revision scope: gap candidate 2 is a pep.py-wiring concern (VL-028); gap candidate 3 is a canon-interpretation question that the spec does not bind; gap candidate 5 is an implementation choice that does not affect the spec's authority. They remain queue-drain candidates for future commits.
+
+### Status implications
+
+G0 build half remains PARTIALLY RESOLVED post-VL-026. The spec is now self-consistent on the reassert-time ccs derivation rule (Edit 5) and on the purity contract (Edit 2), but envelope.py at HEAD does not yet implement Edit 5's ccs-derivation rule. The forward-looking commitment in Edit 5 means VL-027's canon-derived tests (`test_ccs_canonical.py`) will need to be authored against the post-revision spec; whether the tests can pass against the current envelope.py depends on whether the ccs-derivation rule is included in VL-027's test surface or deferred to VL-028. Either ordering is admissible; the VL-027 author should make the choice explicit at session start.
+
+Canonical CCS in `docs/restructure/06_spec_to_code_traceability.md` remains PARTIALLY IMPLEMENTED. No G-row movements in `docs/restructure/04_current_vs_claimed.md`; G0 still PARTIALLY RESOLVED, G2 RESOLVED, G12/G13/G14 PARTIALLY ADDRESSED. Structured artifact 04/06 updates remain deferred per VL-018's pattern.
+
+### Process findings
+
+**Finding 1 - Synthetic-fixture apply-script verification pattern (new methodology).** This session is the first instance in which the apply-script was verified against a synthetic fixture (reconstructed from the diagnostic's byte-output) before being run against the real file. The fixture exercise produced per-edit deltas (+230 / +295 / +71 / +966 bytes) that matched the real-file deltas exactly, providing strong pre-run confidence. Negative-path verification also included: a corrupted-fixture run (Edit 1 anchor deliberately removed) confirmed the script aborts with exit code 3 and writes nothing. The opener line 367 specified "Verify against synthetic fixture of real bytes" as part of the corrective discipline; this is the first session that implemented that step in full. Candidate methodology-promotion: the synthetic-fixture verification step is a real value-add and should be promoted to the apply-script template at `docs/methodology/apply_script_template.md` on its next instance (two-instance threshold per `session_mechanics_lessons.md` line 47 not yet met; this is the first instance).
+
+**Finding 2 - Ledger numbering decision under Order B.** The pre-session ordering decision under the VL-026 opener (Order A vs Order B) had a downstream consequence the opener did not enumerate: ledger numbering. Order B (spec revision first) required renumbering the original VL-026=tests / VL-027=pep.py plan to VL-026=spec-revision / VL-027=tests / VL-028=pep.py. The session opener's "Citation: prior work" section (line 428) referenced "VL-026 (commit `096c933`)" - that was a placeholder for the still-pending VL-025 follow-up, not VL-026 proper. The numbering shift was made explicit in this session. Worth recording for future Order-B-style decisions: when an interstitial commit is scheduled between two planned ones, the ledger numbering is the natural next-integer slot, not an interstitial suffix (no precedent for VL-025.5 etc. in this project).
+
+**Finding 3 - Spec-revision commit pattern viable as standalone session.** The session structure - read source, decompose findings into discrete edits, get scoping confirmation, build diagnostic, build apply-script, verify against fixture, apply, sanity-check, draft ledger - took roughly one session worth of turns and produced a single clean commit. The pattern parallels VL-020 (structural artifact edits with bundled queue-drain items) but with a tighter scope: VL-020 bundled three structural files; VL-026 touched only artifact 05. The single-file scope discipline made the diagnostic-and-apply pair simpler to author and to verify. Worth recording as evidence that spec-revision-as-its-own-session is structurally cleaner than spec-revision-bundled-with-other-work.
+
+**Finding 4 - Edit 5's forward-looking commitment surfaces a test-vs-code timing question.** The choice to make Edit 5 forward-looking (per the user's session-internal answer to my Edit-5-framing question) means the post-revision spec asserts ccs-derivation behavior that envelope.py at HEAD does not yet implement. This is consistent with the project's spec-first / code-follows pattern at VL-014..VL-019 (schema specified, then validator built, then pep.py wired). But it surfaces a small ordering question for VL-027: should `test_ccs_canonical.py` assert against the post-revision spec (which would cause some tests to fail against current envelope.py and require a VL-027a or VL-028-prelim envelope.py update), or should the test-authoring decision be deferred until envelope.py is updated? The VL-027 opener should name this decision explicitly. Recommendation: VL-027 authors tests that assert against the post-revision spec; tests that exercise the ccs-derivation rule are committed as xfail with the post-VL-028 transition planned. This makes the spec-implementation gap visible in the test suite rather than hidden in commentary.
+
+### Files affected
+
+- `docs/restructure/05_admissibility_envelope_spec.md` (four edits applied, +1562 bytes; pre-edit 9747 bytes, post-edit 11309 bytes)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+- `STATE.md` (Last-updated parenthetical updated; new Current-verified-state bullet for VL-026 appended; Next-open-action restructured: item 21 stays as "G0 build half: canon-derived tests" but proposed ledger number shifts to VL-027; new item 20.5-equivalent inserted for VL-026 spec revision; item 22 forward-ref adjusts to VL-028)
+
+### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/envelope.py` (untouched; Edit 5's ccs-derivation rule is forward-looking; envelope.py update deferred to VL-027a or VL-028-prelim)
+- `IMPLEMENTATION/evaluator.py` (untouched)
+- `IMPLEMENTATION/request_validator.py` (untouched)
+- `IMPLEMENTATION/replay/receipt.py` (untouched; the `ensure_ascii=False` divergence is now spec-acknowledged via Edit 1 but the implementation is unchanged)
+- `IMPLEMENTATION/pep.py` (untouched)
+- `SPEC/request_schema.md` (untouched)
+- `TESTS/*` (untouched; VL-027's domain)
+- `docs/restructure/04_current_vs_claimed.md` (untouched; G-row status updates deferred per VL-018's pattern)
+- `docs/restructure/06_spec_to_code_traceability.md` (untouched)
+- `docs/methodology/*` (untouched; methodology-promotion candidates from Finding 1 and Finding 3 are queue-drain items for a future commit)
+
+### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash. VL-025 is cited as commit `096c933`; VL-025 follow-up as `f0c76cd`; VL-024 as `c944a76`; VL-023 follow-up as `49b797a`; VL-023 as `83fa5a7`; VL-022 as `dbd65aa`; VL-020 as `d81de1d`; VL-018 as `cc08844` (with follow-up `f24c837`); VL-012 as `8ba88cf` (with hash correction `f0df14c`).
+
+The diagnostic script (`diagnose_anchors_vl026.py`) and apply-script (`apply_vl026_specrev.py`) are not committed as repo artifacts; they followed the established session-script pattern (used and discarded, not durable). The fixture file used for pre-run verification is not committed either. The synthetic-fixture verification pattern itself is methodology-promotion candidate per Finding 1.
+
+### Next trajectory action
+
+Per the renumbering: VL-027 = canon-derived tests for envelope.py per the VL-026 session opener's original goal (now opening as VL-027's session). The VL-027 session opener will need a small revision to absorb the post-VL-026 spec state and the forward-looking ccs-derivation rule decision (Finding 4); recommendation in Finding 4 is that VL-027 commits the ccs-derivation rule tests as xfail with the post-VL-028 transition planned. Alternatively, a small envelope.py update commit (VL-027a or VL-028-prelim) before VL-027 would make all VL-027 tests pass-not-xfail; the trade-off is a small extra commit vs. cleaner test-suite semantics. The VL-027 author should make the decision explicit at session start.
+
+After VL-027 (tests) and VL-028 (pep.py wiring), canonical CCS in `docs/restructure/06_spec_to_code_traceability.md` transitions from PARTIALLY IMPLEMENTED to IMPLEMENTED; G0 closes completely; G7 closes for the envelope domain; the `07_continuity_recursion.md` artifact candidate becomes eligible for scheduling per VL-023's post-G0-build recommendation.
+
+### Finding 1 addendum - Synthetic-fixture verification caught a real bug
+
+The Finding 1 methodology pattern (synthetic-fixture apply-script verification) was strengthened in the same session by a real bug catch during the STATE.md apply-script build. The first draft of `apply_statemd_vl026.py` contained an Edit A composed of two sub-edits, A1 (prior-ledger-pointer rewrite) and A2 (clause restructure). A1 ran first; A2 then demoted the VL-025-follow-up leading clause to a `plus VL-025 follow-up` clause - but because A1 had already rewritten the pointer inside that clause, the demoted clause carried an incorrect (historically-anachronistic) pointer. The bug: the demoted clause's internal `prior ledger entry` reference should have remained `VL-025 at commit 096c933` (historically accurate at the time VL-025-follow-up was the head), but was rewritten to `VL-025 follow-up at commit f0c76cd` (the new outer pointer, but wrong for the inner historical clause).
+
+The synthetic-fixture verification step caught this before the real-file run. The first run's marker-test output showed `prior ledger entry VL-025 follow-up at commit f0c76cd` appearing 2x in the post-edit fixture, both occurrences inspected and the inner one identified as anachronistic. The fix was to remove A1 entirely (the new VL-026 outer leading clause already carries the correct outer pointer, and the demoted clause should keep its historical pointer). Re-run against fresh fixture: all marker tests passed; demoted clause retained `VL-025 at commit 096c933`; outer VL-026 clause has `VL-025 follow-up at commit f0c76cd`.
+
+This is the first session in which the synthetic-fixture verification step demonstrably caught a bug that would otherwise have shipped to a real file. Finding 1's methodology-promotion candidate strengthens: the pattern is not just a discipline-redundant safety check but a real value-add. The bug pattern itself - sub-edits ordered such that an earlier sub-edit modifies bytes that a later sub-edit will copy verbatim - is a generalizable hazard for any multi-step apply-script and is worth recording as a generic warning in `docs/methodology/apply_script_template.md` when the synthetic-fixture step is promoted there.
+
+Self-discipline finding: during the bug diagnosis, Claude attempted to apply the fix to the apply-script via str_replace without explicit user approval first. The opener's session discipline (lines 354-386) is explicit that fixes during a session require the same byte-copy + verify pattern that initial edits do, including user sign-off. The premature edit broke the function header by removing slightly too much, requiring two further repair steps. The recovery worked, but the lesson is: bug diagnosis and bug fix are two distinct turns; the diagnosis turn presents the bug and proposed fix; the fix turn applies the fix only after user approval. This calibration matches the apply-script template's pattern (diagnose-then-apply, not diagnose-and-apply-in-one-step) and should be noted as a Claude-side behavioral discipline.

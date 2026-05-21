@@ -101,8 +101,11 @@ reassertion protocol is precisely the missing transition logic. So:
   **true section 12 invariant**  -  decision consistency across a transition  -  and is only
   meaningfully evaluable at *reassertion* time, because it is inherently about `S_t -> S_{t+1}`.
   Implementing it is the G0 build track (open).
-- **`decision_sha256`**  -  tamper-evidence. Canonical JSON (sorted keys, no whitespace),
-  reusing the serialization discipline from the existing replay-receipt work.
+- **`decision_sha256`**  -  tamper-evidence. Canonical JSON (sorted keys, no whitespace,
+  `ensure_ascii=True` per VL-009 ASCII-safe standard), reusing the serialization
+  discipline from the existing replay-receipt work (note: `IMPLEMENTATION/replay/receipt.py`
+  currently uses `ensure_ascii=False`; the divergence is recorded as a methodology-debt
+  finding at VL-012 and reinforced at VL-025).
 - **`timestamp_utc`**  -  audit only; **excluded** from `decision_sha256` so the same decision
   is bit-identical regardless of issue time (preserves section 9 reproducibility).
 
@@ -120,10 +123,15 @@ reassert(envelope) -> REASSERTED | INVALIDATED | RE-EVALUATE-REQUIRED
 | Condition | Result | Canon basis |
 |---|---|---|
 | `canon_sha256` != live canon hash | `INVALIDATED` | canon changed; envelope predates current rules |
-| `decision_sha256` does not verify | `INVALIDATED` | tampered/corrupt envelope |
+| `decision_sha256` does not verify | `INVALIDATED` | sections 12.3/12.4 fail-closed semantics, operationalized via artifact-05-layer tamper detection |
 | `evaluator_sha256` != live evaluator hash | `RE-EVALUATE-REQUIRED` | section 12.4  -  decision logic transition |
 | `manifest_sha256` != live manifest hash | `RE-EVALUATE-REQUIRED` | section 7/section 12.4  -  manifest version/schema transition |
 | all hashes match AND `decision_sha256` verifies | `REASSERTED` | section 12.3  -  continuity holds; `d_{t+1} = d_t` provably |
+
+`reassert()` is **pure with respect to the envelope**: it reads live file hashes
+(`canon.lock`, `IMPLEMENTATION/evaluator.py`, the live manifest) but does not modify
+its input envelope. Callers may pass a persisted envelope to `reassert()` and rely on
+the envelope's bytes remaining unchanged.
 
 `REASSERTED` is the only state in which a past `ELIGIBLE` may be honored without
 re-evaluation. This is exactly section 13's requirement, made operational.
@@ -144,9 +152,21 @@ re-evaluation. This is exactly section 13's requirement, made operational.
 
 ## Open questions for review
 
-1. **`ccs` field on first issuance.** On the initial decision there is no `S_t`  -  only
-   `S_{t+1}`. Proposal: on first issuance `ccs` is recorded as `null` or `"INITIAL"`, and
-   becomes a true boolean only at first reassertion. Confirm.
+1. **`ccs` field on first issuance and at reassertion (resolved at VL-026).** On the
+   initial decision there is no `S_t`  -  only `S_{t+1}`  -  and canon section 12.3 is
+   inapplicable (it presupposes a transition). `build_envelope()` records
+   `condition_results.ccs` as Python `None` (JSON `null`) on first issuance; the
+   `"INITIAL"` sentinel proposed in Rev. 2 was rejected in favor of `None` for Python/JSON
+   convention and to keep the type signature `Optional[bool]`. At reassertion,
+   `reassert()` derives `condition_results.ccs` from the row outcome: `True` on
+   `REASSERTED` (the canon's `d_{t+1} = u_{t+1} AND c_{t+1}` holds per row 5);
+   `False` on any `INVALIDATED` or `RE-EVALUATE-REQUIRED` outcome (continuity does not
+   hold; per section 12.4 "if any condition is violated: CCS = 0"). The derivation
+   is `reassert()`'s output, not stored back into the envelope (envelope purity per
+   the contract above). Implementation note: envelope.py at VL-025 returns the row
+   outcome only; the ccs-derivation rule named here is a forward-looking spec
+   statement that VL-026 tests will assert against and that a small envelope.py
+   update (deferred to VL-027 or earlier) will satisfy.
 2. **Where envelopes live.** Runtime return value from `pep.py`, persisted log under
    `EVIDENCE/`, or both. Recommend both.
 3. **Envelope on the forwarded call (bypassability thread  -  G4).** If `pep.py` attaches the
