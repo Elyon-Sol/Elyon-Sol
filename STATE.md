@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-023 follow-up (cross-model evaluation of VL-023 PARTIAL HOLDS verdict - procedurally clean per VL-008 + Lesson 6, convergent on the load-bearing claim - four-part abstract shape and all five original per-layer verdicts confirmed by independent re-derivation, PARTIAL HOLDS unchanged; one supplementary divergence finding: evaluator versioning layer added as a sixth fitting layer per artifact 05's evaluator block field rationale citing canon section 12.4, with one inference caveat on its fail-closed component; recommendation: VL-024 repurposed as a methodology / analysis entry deriving whether and how the cross-model run strengthens the framework's claim, with the envelope.py build sliding to VL-025; downstream-artifact candidate `07_continuity_recursion.md` to incorporate the evaluator versioning layer when eventually drafted; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-023 at commit 83fa5a7; G2 still closed in code at VL-019; next trajectory action is VL-024 (strengthening derivation per the recommendation in this entry), then VL-025 (G0 build half: envelope.py))
+Last updated: 2026-05-20 (commit: see `git log` for STATE.md; VL-024 strengthening derivation (methodology / analysis entry deriving whether and how the cross-model run at VL-023 follow-up strengthens the framework's claim of recursive continuity discipline - outcome: STRENGTHENS, bounded to layers B (epistemic discipline) and C (reading-aid track) of the framework's purposes; not layer A (declared purpose / gate behavior); three load-bearing sub-meanings derived after source-of-truth enumeration per Lesson 5 substituted opener candidates: confidence in the recursive-continuity claim strengthens materially on both the abstract shape and the per-layer verdicts including the load-bearing request-layer exclusion; scope expands by one fitting layer (evaluator versioning) with one artifact-recoverable inference caveat, PARTIAL HOLDS unchanged with fitting set now five; methodology-pattern durability strengthens with the cross-model evaluate template now meeting the two-instance threshold per session_mechanics_lessons.md line 47 and the methodology layer's recursive-continuity instance now operative rather than merely observable; five downstream implications recorded covering `07_continuity_recursion.md` composition, VL-025 envelope.py build attention to `evaluator` block `reassert()` semantics, external defensibility bounded by current readership scope, cross-model evaluate template single-instance language removable, and derivation-over-absorption verdict-refinement as the first instance of a candidate methodology pattern; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-023 follow-up at commit 49b797a; G2 still closed in code at VL-019; next trajectory action is VL-025 (G0 build half: envelope.py))
 
 ---
 
@@ -439,6 +439,55 @@ manifest layer. CCS has drifted - see G0 below.
   Classification: methodology / analysis entry per VL-017a's
   distinction. No code/canon/test/spec/structural-doc change.
   Repo test set 61/61, unchanged from 83fa5a7 (VL-023).
+- **VL-024 strengthening derivation: STRENGTHENS bounded to
+  layers B and C (this commit).** Methodology / analysis entry
+  deriving whether the cross-model run at VL-023 follow-up
+  strengthens the framework's claim of recursive continuity
+  discipline. Four-step structure per session opener: Step 1
+  decomposed `strengthen` against VL-023 follow-up's stated
+  accomplishments (Passages A, B, C of that entry) per Lesson 5
+  set-exhaustiveness, producing three load-bearing sub-meanings
+  (confidence, scope, methodology-pattern durability) after
+  collapsing opener-(iii) risk-reduction into (i) and deferring
+  opener-(iv) external defensibility to Step 4. Step 2 derived
+  each sub-meaning with citations: (i) confidence strengthens
+  materially on the abstract shape and the load-bearing
+  request-layer exclusion, bounded by the shared-bundle caveat
+  which is the strongest test the framework's methodology
+  specifies; (ii) scope expands by one fitting layer (evaluator
+  versioning) with one artifact-recoverable inference caveat,
+  PARTIAL HOLDS verdict unchanged with fitting set now five;
+  (iii) methodology-pattern durability strengthens with two
+  effects - cross-model evaluate template now meets two-instance
+  threshold per session_mechanics_lessons.md line 47, and the
+  methodology layer's recursive-continuity instance is now
+  operative rather than merely observable. Step 3 synthesized
+  via Layer A/B/C decomposition of framework purposes (Layer A
+  = declared purpose per canon sections 1, 6, 14; Layer B =
+  epistemic discipline per VL-008 plus the no-prose-promotion
+  rule plus SESSION_PROTOCOL.md lines 84-86; Layer C =
+  reading-aid track per the `07_continuity_recursion.md`
+  candidate and STATE.md's entry-point role). Verdict:
+  STRENGTHENS, bounded to layers B and C; explicitly does NOT
+  extend to layer A. The verdict refines VL-023 follow-up's
+  unqualified `strengthened` framing (entry line 5237) to an
+  explicit layer-bounded form. Step 4 recorded five implications:
+  (1) `07_continuity_recursion.md` composition to include
+  evaluator-versioning as fifth fitting layer with detector-type
+  distinction made explicit; (2) VL-025 envelope.py build
+  attention to `reassert()`'s handling of `evaluator_sha256` as
+  load-bearing for the evaluator-versioning layer's fit; (3)
+  external defensibility strengthens in proportion to current
+  readership scope (bounded), becomes load-bearing contingent on
+  G3 status change; (4) cross-model evaluate template's
+  single-instance language now removable per two-instance
+  threshold met, efficiency move queue-drain candidate; (5)
+  derivation-over-absorption verdict-refinement as first
+  instance of candidate methodology pattern (VL-024 itself is
+  the first instance), two-instance threshold not yet met.
+  Classification: methodology / analysis entry per VL-017a's
+  distinction. No code/canon/test/spec/structural-doc change.
+  Repo test set 61/61, unchanged from 49b797a (VL-023 follow-up).
 
 ## What is locked vs. open
 
@@ -602,23 +651,32 @@ the G0 build track is underway:
     opener's "Outcome and submission" rule. Classification:
     methodology / analysis entry per VL-017a's distinction.
     No code/canon/test/spec/structural-doc change.
-19. **VL-024 strengthening derivation.** OPEN. Methodology
-    / analysis entry deriving whether and how the cross-model
-    run recorded at VL-023 follow-up strengthens the
-    framework's claim of recursive continuity discipline.
-    The question is decomposed into load-bearing sub-meanings
-    (confidence, scope, risk-reduction, external
-    defensibility) and each is derived against the artifacts
-    (VL-023, VL-023 follow-up, canon section 12, artifact 05,
-    Lesson 6, the cross-model evaluate template read at
-    session start per the source-first corrective).
-    Outcome: strengthens / partially strengthens / does not
-    strengthen / ill-posed, all four admissible. Session
-    opener drafted at
-    `/home/claude/work/vl024_session_opener_clarification.md`.
+19. **VL-024 strengthening derivation.** Done (VL-024,
+    this commit). Methodology / analysis entry deriving the
+    strengthening claim implicit in VL-023 follow-up's
+    self-description. Four-step structure: Step 1 decomposed
+    `strengthen` against the source-of-truth (Passages A, B,
+    C of VL-023 follow-up) per Lesson 5 set-exhaustiveness,
+    producing three load-bearing sub-meanings (confidence,
+    scope, methodology-pattern durability) after collapsing
+    opener-(iii) risk-reduction into (i) and deferring
+    opener-(iv) external defensibility to Step 4. Step 2
+    derived each sub-meaning with citations. Step 3
+    synthesized via Layer A/B/C decomposition of framework
+    purposes. Step 4 recorded five downstream implications.
+    Outcome: STRENGTHENS, bounded to layers B (epistemic
+    discipline) and C (reading-aid track); explicitly does
+    NOT extend to layer A (declared purpose / gate behavior).
+    The verdict refines VL-023 follow-up's unqualified
+    `strengthened` framing (entry line 5237) to an explicit
+    layer-bounded form. First instance of a derivation-
+    over-absorption methodology-layer entry; Implication 5
+    of this entry's Step 4 records the pattern as a
+    candidate for `session_mechanics_lessons.md` addition on
+    the next instance (two-instance threshold not yet met).
     Classification: methodology / analysis entry per
     VL-017a's distinction. No code/canon/test/spec/
-    structural-doc change expected.
+    structural-doc change.
 20. **G0 build half: canonical CCS implementation via the
     envelope spec.** OPEN. Next trajectory action after
     VL-024. The envelope spec
