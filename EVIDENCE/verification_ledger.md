@@ -6547,3 +6547,430 @@ the conversion of VL-024 Implication 2's inference flag on
 evaluator-versioning's fail-closed component to a direct
 citation (this entry's Reassertion-protocol mapping Row 3).
 
+---
+
+## VL-025 follow-up - Cross-model verification of envelope.py against artifact 05 and canon section 12-13
+
+**Date:** 2026-05-21
+**Classification:** Methodology / analysis entry per VL-017a's distinction.
+**Outcome:** Two-bundle, two-recipient cross-model verification of
+the VL-025 build (`IMPLEMENTATION/envelope.py`). All four
+verifier-runs procedurally clean per VL-008 + Lesson 6.
+Convergent on substance: envelope.py honors the intent of
+artifact 05 and of canon section 12-13. Divergent on
+classification rigor: same pattern in both bundles, with
+implications for the verification request template.
+
+### Verification scope
+
+Two bundles, each sent to two recipients (Grok, OpenAI) under
+identical primary-source bundles per VL-023 follow-up's
+identical-bundle pattern:
+
+- **Bundle A: spec fidelity.** Verifies envelope.py against
+  `docs/restructure/05_admissibility_envelope_spec.md`.
+  Primary sources: `IMPLEMENTATION/envelope.py`, artifact 05,
+  `IMPLEMENTATION/request_validator.py` (the integration
+  boundary), VL-025 ledger entry. Outcome rubric:
+  Match / Same-set-different-attributions / Different-set /
+  Procedure violation / Reframing required. Request artifact
+  at `verification_request_vl025_bundle_a.md` (not committed;
+  drafted in chat per the VL-015 + VL-016 + VL-017b pattern).
+
+- **Bundle B: canon section 12-13 fidelity.** Verifies
+  `reassert()`'s five-row table against canon section 12-13.
+  Primary sources: `IMPLEMENTATION/envelope.py`,
+  `CANON/canon.md`, artifact 05 (the reassertion-protocol
+  table), VL-025 ledger entry. Same outcome rubric. Request
+  artifact at `verification_request_vl025_bundle_b.md` (not
+  committed).
+
+Both requests built against
+`docs/methodology/verification_request_template.md` per the
+template's "When to use this template vs. the verification-
+request template" guidance: code-against-spec and code-against-
+canon are artifact verifications, not framework-level
+evaluations.
+
+### Procedural confirmation
+
+All four verifier-runs evaluated against VL-008 (a) scope-bound,
+(b) scope-adherence checkable, (c) prior exposure permitted, and
+Lesson 6 within-body discipline:
+
+| Bundle | Recipient | Procedural verdict |
+|---|---|---|
+| A | Grok | Clean per VL-008 (a)+(b) + Lesson 6 |
+| A | OpenAI (first run) | Truncated mid-response; procedurally clean within emitted body; missing terminal Scope check. Re-requested with "respond in full" instruction. |
+| A | OpenAI (re-run) | Clean per VL-008 (a)+(b) + Lesson 6 |
+| B | Grok | Clean per VL-008 (a)+(b) + Lesson 6 |
+| B | OpenAI | Clean per VL-008 (a)+(b) + Lesson 6 |
+
+Four full verifier-runs across both bundles. One re-request due
+to response-mechanism truncation (not a procedural violation;
+the model's discipline within the emitted body held). The
+truncation is recorded as a procedural finding for cross-model
+runs: long verification requests with extensive per-element
+tables may exceed default response length; explicit length
+instructions help.
+
+### Outcome classification: per bundle, per recipient
+
+| Bundle | Recipient | Outcome | Notes |
+|---|---|---|---|
+| A | Grok | Match | All 20 enumerated elements pair cleanly with artifact 05. |
+| A | OpenAI | Different-set (4 Spec-undetermined; 0 Divergence; 0 Code-absent) | Stricter "directly authorized by artifact 05" reading. |
+| B | Grok | Match | All 5 reassertion branches pair cleanly with canon 12-13; first-issuance ccs = None consistent with section 12.3. |
+| B | OpenAI | Different-set (1 Canon-undetermined branch + 1 Canon-underdetermined first-issuance; 0 Divergence; 0 Canon-absent) | Stricter "directly named in canon" reading. |
+
+The divergence between Grok's Match and OpenAI's Different-set
+outcomes is the central finding of this verification round and
+is treated below as a methodology observation, not as a
+contradiction.
+
+### Substantive convergence
+
+Across all four runs, the verifiers agree on:
+
+- **envelope.py contains no Divergence and no Code-absent
+  elements** at either layer. Every load-bearing element of
+  envelope.py operates within the design space artifact 05
+  authorizes; every element of artifact 05's "Envelope
+  structure" JSON block has a corresponding code element;
+  every branch of `reassert()` operates within the design
+  space canon section 12-13 authorizes.
+- **Row 3 (`evaluator_sha256` mismatch -> RE-EVALUATE-REQUIRED)
+  is directly authorized by canon section 12.4** per both
+  Bundle B verifiers. The VL-024 Implication 2 inference flag
+  on evaluator-versioning's fail-closed component
+  (VL-023 follow-up lines 5200-5210) is now two-model-converged
+  at the canon-fidelity layer. The "inference" framing carried
+  forward in VL-023 follow-up and refined in VL-024 can be
+  retired in any subsequent `07_continuity_recursion.md`
+  draft.
+- **First-issuance `condition_results.ccs = None` is
+  consistent with canon section 12.3** per both Bundle B
+  verifiers. Section 12.3 defines continuity as a transition
+  relation; first issuance has no prior state to transition
+  from; the clause is inapplicable rather than violated. Both
+  verifiers also note that section 12.3 does not specify the
+  sentinel value for first issuance, so the choice of `None`
+  vs `"INITIAL"` (artifact 05 open question 1) is canon-
+  underdetermined.
+- **Rows 1, 4, 5 of `reassert()` pair cleanly with canon
+  section 12-13** per both Bundle B verifiers. Row 1 cites
+  section 12.1 + 12.4; Row 4 cites section 11.9 + 12.1 + 12.4
+  (with section 11.9 added by OpenAI as a refinement); Row 5
+  cites section 12.3.
+
+These convergence findings establish that envelope.py's
+*behavior* is canon-fidelity-verified by two independent
+derivations. The build's substance is correct.
+
+### Substantive divergence
+
+The two verifiers used different definitions of the Match
+classification:
+
+- **Grok's reading:** A code element is Match if artifact 05
+  (Bundle A) or canon section 12-13 (Bundle B) authorizes the
+  element's intent, including authorization via the source's
+  field rationale, design space, or implied semantics.
+- **OpenAI's reading:** A code element is Match if the
+  authorizing source directly names or specifies the element.
+  Elements authorized only by the source's broader intent, by
+  repository methodology history (VL-009, VL-012, VL-025
+  opener), or by operational compatibility with the source's
+  semantics are classified Spec-undetermined or
+  Canon-undetermined.
+
+Neither reading is wrong against the verification request
+artifacts. Both reading patterns produce the same convergence
+on the absence of Divergence and Code-absent classifications.
+They differ on how strictly to interpret the "directly
+authorized by the cited passage" language in the rubric
+definition.
+
+This is the substantive finding of the divergence: not a
+divergence about envelope.py, but a divergence about the
+verification rubric.
+
+### Gap candidates surfaced
+
+OpenAI's Different-set outcomes named specific elements as
+Spec-undetermined or Canon-undetermined. Treating these as
+gap candidates for artifact 05 (per the rubric: artifact 05
+underspecifies; the build made a deliberate choice; the choice
+is recorded in the ledger but not in the spec):
+
+**From Bundle A (spec-clarification candidates):**
+
+1. **`canonical_json` `ensure_ascii=True`.** Artifact 05
+   specifies "canonical JSON (sorted keys, no whitespace)" but
+   does not specify ASCII-escaping. Already recorded as gap
+   candidate 4 in VL-025; OpenAI's independent surfacing is
+   confirmation. Resolution candidate: artifact 05's
+   `decision_sha256` field rationale should add "ensure_ascii
+   true per VL-009 ASCII-safe standard" to the canonical-JSON
+   wording.
+
+2. **`reassert()` purity / non-mutation guarantee.** Artifact
+   05 names `reassert()`'s outcomes but does not specify
+   whether the function mutates its input envelope. The VL-025
+   opener locked purity as the build contract; the VL-025
+   ledger entry records the contract; artifact 05 itself is
+   silent. **New gap candidate, not in VL-025's gap-candidate
+   list.** Resolution candidate: artifact 05's "Reassertion
+   protocol" section should add an explicit purity-contract
+   note: "`reassert()` is pure with respect to the envelope;
+   it reads live file hashes but does not modify its input."
+
+3. **Defensive `list(...)` copies for AP/OP.** Artifact 05
+   requires array fields but does not specify defensive
+   copying semantics. **New gap candidate, not in VL-025's
+   gap-candidate list.** Minor; the choice does not affect
+   correctness because the normalized interaction is already a
+   fresh dict from `validate_request()`. Resolution
+   candidate: artifact 05's "Field rationale" for
+   `request_context` could note defensive-copy semantics.
+   Lower priority than (1) and (2).
+
+4. **Module-level path constants (`CANON_LOCK_PATH`,
+   `EVALUATOR_PATH`).** Artifact 05 specifies the semantic
+   targets (canon hash, evaluator hash) but not the
+   constantization into module-level identifiers. OpenAI
+   surfaces this as Spec-undetermined. Resolution: this is an
+   implementation-pattern choice authorized by VL-012's
+   discipline for the existing `manifest_sha256()` function;
+   no artifact 05 edit needed. Recorded here as a deliberate
+   non-spec choice rather than a spec-edit candidate.
+
+**From Bundle B (spec/canon-clarification candidates):**
+
+5. **Row 2 (tamper detection) canon authorization.** OpenAI
+   classifies Row 2 as Canon-undetermined: canon sections
+   12-13 do not explicitly specify envelope-integrity hash
+   verification as a mechanism. Tamper detection is an
+   artifact-05-layer operationalization of canon fail-closed
+   semantics, not a direct canonical mechanism. **New gap
+   candidate, load-bearing.** Resolution candidate: artifact
+   05's "Canon mapping" table should reword Row 2's "Canon
+   basis" column from claiming direct canon authorization to
+   acknowledging that decision_sha256 tamper verification is
+   an artifact-05-layer mechanism that operationalizes canon
+   section 12.3's "continuity requires internal consistency"
+   principle. The mechanism is consistent with canon but is
+   spec-layer, not canon-layer.
+
+6. **First-issuance ccs initialization semantic.** Both
+   Bundle B verifiers note canon section 12.3 does not
+   specify the sentinel value (None, "INITIAL", or other) for
+   first issuance. This overlaps with VL-025 gap candidate 1
+   (the reassert-time ccs derivation) but is distinct: gap
+   candidate 1 is about what `reassert()` does with ccs at
+   reassertion time; this finding is about what
+   `build_envelope()` records at build time. Both are canon-
+   undetermined and resolvable via the same artifact 05 spec
+   edit. Resolution candidate: when artifact 05 spec-edits
+   gap candidate 1, the spec edit should also explicitly name
+   the first-issuance sentinel (recommending `None` per
+   Python convention, with the JSON-null rendering preserved).
+
+### Status implications
+
+Per Bundle B's status implications language: "A Different-set
+outcome from either verifier triggers a corrective
+investigation: a spec-edit candidate for artifact 05, or a
+code-correction candidate for envelope.py, or both."
+
+- **No code-correction needed.** Both verifiers in both
+  bundles agree envelope.py honors the intent of both artifact
+  05 and canon section 12-13. envelope.py's behavior is
+  correct; no edit to the implementation is triggered.
+
+- **One spec-clarification batch needed before VL-027.**
+  Combining Bundle A's findings (1, 2, 3 above) and Bundle B's
+  findings (5, 6 above), plus the existing VL-025 gap
+  candidate 1 (reassert-time ccs derivation), a single
+  artifact 05 spec-revision commit can resolve all five.
+  Proposed scope: artifact 05's "Field rationale" section
+  receives ensure_ascii and defensive-copy clarifications;
+  "Reassertion protocol" section receives the purity contract
+  and Row 2 canon-mapping rewording; "Open questions" item 1
+  receives the explicit first-issuance sentinel + reassert-
+  time ccs derivation resolution. Proposed ledger entry:
+  pre-VL-027 spec edit (numbering TBD; could be VL-026.5 or
+  similar).
+
+- **VL-026 (canon-derived tests) is not blocked.** Tests
+  exercise envelope.py's behavior; envelope.py's behavior is
+  two-model-converged correct. The canon-derived test file
+  (`test_ccs_canonical.py`) can use the four canon-clause
+  citations both Bundle B verifiers provided as the
+  authoritative per-branch canon citations:
+  - Row 1: canon 12.1 + 12.4 (state transition + invalid
+    transition examples)
+  - Row 3: canon 12.4 (decision logic transition)
+  - Row 4: canon 11.9 + 12.1 + 12.4 (manifest must be
+    deterministic; manifest change is a transition; manifest-
+    version change is an invalid transition without
+    revalidation)
+  - Row 5: canon 12.3 (continuity holds; d_{t+1} derivation)
+  - Row 2: canon 12.3 + 12.4 by operational compatibility;
+    artifact-05-layer mechanism per Bundle B finding 5. The
+    canon-derived test file may either include Row 2 with a
+    docstring noting the artifact-05-layer authorization, or
+    omit Row 2 from the canon-derived file and place it in
+    the spec-derived `test_envelope.py` instead. Decision
+    deferred to VL-026's author.
+
+### Methodology process findings
+
+**Verification request template's Match-criterion ambiguity is
+load-bearing across both bundles.** The current rubric language
+"the code element is directly authorized by the cited passage"
+is interpreted by different verifiers as "directly named in the
+source" vs "within the design space the source authorizes."
+The pattern manifested identically across Bundle A and Bundle B
+with the same two verifiers; this is structural, not random.
+Two-instance threshold per `session_mechanics_lessons.md`
+line 47 met for a verification-request-template revision.
+Candidate revision: add an explicit rubric clarification
+distinguishing "Match (directly named in source)" from
+"Match (within authorized design space)" or pick one definition
+and bind it explicitly.
+
+**Cross-model run patterns: identical-bundle convergence-on-
+absence is itself signal.** Across all four verifier-runs,
+neither recipient found Divergence (a code element that
+contradicts the source) nor Code-absent (a source requirement
+that envelope.py fails to implement). The convergence-on-
+absence is the load-bearing finding even when the Match-vs-
+Spec-undetermined classifications diverge. Worth recording in
+the verification-request-template's "What outcome means what"
+section: emphasizing that absence-of-Divergence and absence-of-
+Code-absent are themselves derivation outcomes, not weaker
+than per-element Match.
+
+**Response truncation as a verification-request-template
+finding.** OpenAI Bundle A's first run truncated mid-section-4
+without the model itself flagging the truncation. The re-request
+with "respond in full" produced a complete response. Worth
+recording in the verification-request-template: long
+verification requests with extensive per-element tables may
+exceed default response lengths; explicit length instructions in
+the submission-format section help. Candidate addition to the
+template's "Submission format" wording.
+
+**Build-author-as-classifier vs strict-verifier-as-classifier
+distinction surfaces as a real epistemic position.** OpenAI's
+Bundle A section 4 ("Notes on the VL-025 ledger's Spec-citation
+map") articulated this distinction explicitly: the build author
+treats authorization-by-repository-methodology as direct Match;
+the strict verifier treats only authorization-by-the-named-
+source as Match. This is the same epistemic position that
+produces VL-008's "verdicts carry no verification weight" rule
+(the build author's verdict is not the verifier's verdict). The
+distinction has been operative across the project but has not
+been named explicitly. Candidate addition to
+`session_mechanics_lessons.md` as a methodology observation;
+two-instance threshold not yet met (this is the first
+explicit surfacing) but the position has been implicit in every
+prior cross-model run.
+
+**Procedural-cleanliness verdict-shape.** All four verifier-
+runs included a Scope check section as required. Two of the
+four (both Grok responses) used a grouped-concept Scope check
+("All file names, function names, field names...") rather than
+a fully enumerated per-concept Scope check. This is admissible
+under rule (b) but at the looser end of (b)'s discipline.
+OpenAI's responses used per-concept enumeration. Worth a small
+template clarification: rule (b) requires enumeration per
+concept, not grouped enumeration by concept-family. Candidate
+template revision.
+
+### Files affected
+
+  - `EVIDENCE/verification_ledger.md` (this entry appended)
+  - `STATE.md` (Last updated parenthetical updated; Current
+    verified state bullet for VL-025 follow-up appended;
+    Next open action items 21 and 22 carry forward; new
+    proposed item or item-20 amendment naming the pre-VL-027
+    spec-revision commit)
+
+### Files NOT affected
+
+  - `CANON/canon.md` (locked per GR-1)
+  - `MANIFEST/manifest.json` (untouched)
+  - `IMPLEMENTATION/envelope.py` (untouched; verification
+    confirms behavior is correct)
+  - `IMPLEMENTATION/request_validator.py` (untouched)
+  - `IMPLEMENTATION/replay/receipt.py` (untouched; gap
+    candidate 4 from VL-025 remains a separate queue-drain
+    candidate)
+  - `IMPLEMENTATION/pep.py` (untouched; VL-027's domain)
+  - `SPEC/request_schema.md` (untouched)
+  - `TESTS/*` (untouched; VL-026's domain)
+  - `docs/restructure/05_admissibility_envelope_spec.md`
+    (untouched; the spec-revision commit named above is a
+    separate forthcoming commit, not this one)
+  - `docs/restructure/06_spec_to_code_traceability.md`
+    (untouched; the canonical CCS transition from
+    UNIMPLEMENTED to PARTIALLY IMPLEMENTED was already
+    recorded at VL-025 in STATE.md; structured artifact 06
+    update deferred per VL-025's pattern)
+  - `docs/methodology/*` (untouched; methodology revision
+    candidates from this entry's process findings are
+    candidates for a future commit, not actioned here)
+  - `verification_request_vl025_bundle_a.md` and
+    `verification_request_vl025_bundle_b.md` (drafted in chat
+    per VL-015/VL-016 process finding pattern; not committed
+    as deliverables; candidate methodology-promotion to
+    `docs/methodology/` exists from VL-015's first instance
+    and is reinforced by these two new instances but is not
+    actioned here)
+
+### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not
+cite its own commit hash. VL-025 is cited as commit `096c933`;
+VL-024 as `c944a76`; VL-023 follow-up as `49b797a`; VL-023 as
+`83fa5a7`; VL-022 as `dbd65aa`.
+
+Verifier identity per the established pattern (VL-015, VL-016,
+VL-023 follow-up): the recipients are named (Grok, OpenAI)
+without further provenance detail. Verifier-run timestamps are
+all 2026-05-21 within a single session.
+
+The four verifier responses are not committed as standalone
+artifacts; their content is recorded by reference here via the
+per-bundle outcome tables and the gap-candidate enumerations.
+This matches the precedent at VL-015 (where Grok and OpenAI
+responses were recorded by reference, not committed), VL-016,
+and VL-023 follow-up.
+
+The bridge document of 2026-05-19, the throwaway-session
+output, and any other external material outside the repository
+are not cited and were not in the verifier bundles.
+
+### Next trajectory action
+
+Per the recommendation in the synthesis section:
+
+1. **This commit** lands the verification synthesis. ledger
+   entry + STATE.md update only.
+2. **Next** is VL-026 (canon-derived tests) per the existing
+   session opener at
+   `/home/claude/work/vl026_session_opener.md` (not committed;
+   delivered to user in prior session turn). The canon-clause
+   citations from Bundle B's verifier-runs provide the
+   authoritative per-branch citations for
+   `test_ccs_canonical.py`'s docstrings.
+3. **Before VL-027** is the artifact 05 spec-revision commit
+   addressing the five spec-clarification candidates surfaced
+   above plus the existing VL-025 gap candidate 1. Proposed
+   ledger numbering: VL-026 then a spec-revision entry (TBD
+   numbering) then VL-027. Alternative: the spec-revision
+   entry could land before VL-026 if the spec changes affect
+   test docstring citations.
+

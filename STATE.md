@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-21 (commit: see `git log` for STATE.md; VL-025 G0 build half: canonical CCS implementation via envelope.py (trajectory entry: IMPLEMENTATION/envelope.py lands per docs/restructure/05_admissibility_envelope_spec.md build-order step 3; two functions implemented - build_envelope() constructs the envelope per artifact 05's Envelope structure section, reassert() implements the five-row Reassertion protocol table with VL-024 Implication 2's evaluator-versioning fail-closed posture converted from inference to direct citation at Row 3; Option A integration locked pre-build (condition booleans as parameters; envelope.py imports only manifest_sha256 from evaluator.py and is not imported by evaluator.py or pep.py at VL-025); reassert() pure with respect to envelope (reads live file hashes, does not modify input); ensure_ascii=True per VL-009 with divergence from receipt.py recorded as gap candidate 4; condition_results.ccs None on first issuance per artifact 05 open question 1 locked by opener constraint (e); five gap candidates surfaced (reassert-time ccs semantic, evaluate aggregate return vs condition needs, c_{t+1} vs T^26 relationship, ensure_ascii divergence, canon_sha256 source choice) none blocking; smoke test verified end-to-end pre-commit (validator -> conditions -> build_envelope -> reassert across all 5 table rows in order plus determinism plus timestamp-invariance plus purity); build-resumption template's second behavioral instance and first with Claude as executing agent, two-instance threshold met per session_mechanics_lessons.md line 47; G0 build half transitions from OPEN to PARTIALLY RESOLVED with envelope.py landed and tests + pep.py wiring still open for VL-026 and VL-027 respectively; canonical CCS in 06_spec_to_code_traceability.md transitions from UNIMPLEMENTED to PARTIALLY IMPLEMENTED with structured artifact 06 update deferred to a follow-up commit paralleling VL-018's pattern; trajectory move per VL-017a's distinction; no canon/manifest/schema/structural-doc change in this commit) (methodology / analysis entry deriving whether and how the cross-model run at VL-023 follow-up strengthens the framework's claim of recursive continuity discipline - outcome: STRENGTHENS, bounded to layers B (epistemic discipline) and C (reading-aid track) of the framework's purposes; not layer A (declared purpose / gate behavior); three load-bearing sub-meanings derived after source-of-truth enumeration per Lesson 5 substituted opener candidates: confidence in the recursive-continuity claim strengthens materially on both the abstract shape and the per-layer verdicts including the load-bearing request-layer exclusion; scope expands by one fitting layer (evaluator versioning) with one artifact-recoverable inference caveat, PARTIAL HOLDS unchanged with fitting set now five; methodology-pattern durability strengthens with the cross-model evaluate template now meeting the two-instance threshold per session_mechanics_lessons.md line 47 and the methodology layer's recursive-continuity instance now operative rather than merely observable; five downstream implications recorded covering `07_continuity_recursion.md` composition, VL-025 envelope.py build attention to `evaluator` block `reassert()` semantics, external defensibility bounded by current readership scope, cross-model evaluate template single-instance language removable, and derivation-over-absorption verdict-refinement as the first instance of a candidate methodology pattern; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-023 follow-up at commit 49b797a; G2 still closed in code at VL-019; next trajectory action is VL-025 (G0 build half: envelope.py))
+Last updated: 2026-05-21 (commit: see `git log` for STATE.md; VL-025 follow-up cross-model verification of envelope.py against artifact 05 and canon section 12-13 (methodology / analysis entry: two-bundle, two-recipient cross-model verification under VL-008 + Lesson 6 with Grok and OpenAI as recipients; Bundle A verifies envelope.py against artifact 05 spec; Bundle B verifies reassert() behavior against canon section 12-13; all four verifier-runs procedurally clean with one re-request for response-mechanism truncation; substantive convergence across all four runs: no Divergence and no Code-absent classifications anywhere - envelope.py honors the intent of both artifact 05 and canon section 12-13; VL-024 Implication 2 fully confirmed: Row 3 evaluator_sha256 mismatch -> RE-EVALUATE-REQUIRED directly authorized by canon section 12.4 per both Bundle B verifiers, inference flag retired; classification divergence on Match-vs-Spec-undetermined rigor produces six gap candidates (five spec-clarification + one non-spec implementation pattern), batchable into a single pre-VL-027 artifact 05 spec-revision commit; four methodology process findings for verification request template revision (Match-criterion ambiguity, absence-of-Divergence as signal, response truncation handling, scope-check enumeration discipline); methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change in this commit) lands in this commit; prior ledger entry VL-025 at commit 096c933; G0 build half remains PARTIALLY RESOLVED with envelope.py verified correct; next trajectory action is VL-026 (canon-derived tests) per existing session opener) plus VL-025 G0 build half: canonical CCS implementation via envelope.py (trajectory entry: IMPLEMENTATION/envelope.py lands per docs/restructure/05_admissibility_envelope_spec.md build-order step 3; two functions implemented - build_envelope() constructs the envelope per artifact 05's Envelope structure section, reassert() implements the five-row Reassertion protocol table with VL-024 Implication 2's evaluator-versioning fail-closed posture converted from inference to direct citation at Row 3; Option A integration locked pre-build (condition booleans as parameters; envelope.py imports only manifest_sha256 from evaluator.py and is not imported by evaluator.py or pep.py at VL-025); reassert() pure with respect to envelope (reads live file hashes, does not modify input); ensure_ascii=True per VL-009 with divergence from receipt.py recorded as gap candidate 4; condition_results.ccs None on first issuance per artifact 05 open question 1 locked by opener constraint (e); five gap candidates surfaced (reassert-time ccs semantic, evaluate aggregate return vs condition needs, c_{t+1} vs T^26 relationship, ensure_ascii divergence, canon_sha256 source choice) none blocking; smoke test verified end-to-end pre-commit (validator -> conditions -> build_envelope -> reassert across all 5 table rows in order plus determinism plus timestamp-invariance plus purity); build-resumption template's second behavioral instance and first with Claude as executing agent, two-instance threshold met per session_mechanics_lessons.md line 47; G0 build half transitions from OPEN to PARTIALLY RESOLVED with envelope.py landed and tests + pep.py wiring still open for VL-026 and VL-027 respectively; canonical CCS in 06_spec_to_code_traceability.md transitions from UNIMPLEMENTED to PARTIALLY IMPLEMENTED with structured artifact 06 update deferred to a follow-up commit paralleling VL-018's pattern; trajectory move per VL-017a's distinction; no canon/manifest/schema/structural-doc change in this commit) (methodology / analysis entry deriving whether and how the cross-model run at VL-023 follow-up strengthens the framework's claim of recursive continuity discipline - outcome: STRENGTHENS, bounded to layers B (epistemic discipline) and C (reading-aid track) of the framework's purposes; not layer A (declared purpose / gate behavior); three load-bearing sub-meanings derived after source-of-truth enumeration per Lesson 5 substituted opener candidates: confidence in the recursive-continuity claim strengthens materially on both the abstract shape and the per-layer verdicts including the load-bearing request-layer exclusion; scope expands by one fitting layer (evaluator versioning) with one artifact-recoverable inference caveat, PARTIAL HOLDS unchanged with fitting set now five; methodology-pattern durability strengthens with the cross-model evaluate template now meeting the two-instance threshold per session_mechanics_lessons.md line 47 and the methodology layer's recursive-continuity instance now operative rather than merely observable; five downstream implications recorded covering `07_continuity_recursion.md` composition, VL-025 envelope.py build attention to `evaluator` block `reassert()` semantics, external defensibility bounded by current readership scope, cross-model evaluate template single-instance language removable, and derivation-over-absorption verdict-refinement as the first instance of a candidate methodology pattern; methodology / analysis classification per VL-017a; no code/canon/test/spec/structural-doc change) lands in this commit; prior ledger entry VL-023 follow-up at commit 49b797a; G2 still closed in code at VL-019; next trajectory action is VL-025 (G0 build half: envelope.py))
 
 ---
 
@@ -541,6 +541,65 @@ manifest layer. CCS has drifted - see G0 below.
   proposition; canon section 12 has a deterministic implementation
   in code for the first time in the project's history. Classification:
   trajectory move per VL-017a's distinction.
+- **VL-025 follow-up cross-model verification of envelope.py against artifact 05 and canon section 12-13 (this commit).** Two-bundle, two-recipient cross-model verification of VL-025 under VL-008 + Lesson 6 with Grok and OpenAI as recipients. Bundle A verifies
+  envelope.py's structural fidelity to
+  `docs/restructure/05_admissibility_envelope_spec.md`; Bundle B
+  verifies `reassert()`'s behavior against `CANON/canon.md`
+  sections 12.1-12.4 and 13. Four verifier-runs total; all
+  procedurally clean per VL-008 (a)+(b) and Lesson 6 within-body
+  discipline. One re-request for response-mechanism truncation
+  (OpenAI Bundle A first run truncated mid-section-4; re-requested
+  with explicit "respond in full" instruction; re-run clean).
+  **Substantive convergence across all four runs**: no Divergence
+  and no Code-absent classifications anywhere; envelope.py honors
+  the intent of both artifact 05 and canon section 12-13. **VL-024
+  Implication 2 fully confirmed**: Row 3 (evaluator_sha256
+  mismatch -> RE-EVALUATE-REQUIRED) directly authorized by canon
+  section 12.4 per both Bundle B verifiers; the inference flag at
+  the methodology layer on evaluator-versioning's fail-closed
+  component (VL-023 follow-up lines 5200-5210) is now two-model-
+  converged and can be retired in any subsequent
+  `07_continuity_recursion.md` draft. **Classification divergence**:
+  Grok's Match outcomes (both bundles) vs. OpenAI's Different-set
+  outcomes (both bundles) reflect a Match-criterion divergence,
+  not a substantive divergence: Grok treats authorization-by-
+  design-space as Match; OpenAI treats only authorization-by-
+  direct-naming as Match. The pattern is structural across both
+  bundles; two-instance threshold per session_mechanics_lessons.md
+  line 47 met for a verification-request-template Match-criterion
+  clarification. **Six gap candidates surfaced**, none blocking:
+  (1) artifact 05 should specify `ensure_ascii=True` per VL-009 -
+  this is VL-025 gap candidate 4 confirmed by OpenAI Bundle A; (2)
+  artifact 05 should specify `reassert()` purity contract - new,
+  not in VL-025's gap-candidate list; (3) artifact 05 could specify
+  defensive AP/OP copy semantics - new, minor; (4) module-level
+  path constants `CANON_LOCK_PATH`/`EVALUATOR_PATH` recorded as
+  deliberate non-spec choice per VL-012 discipline pattern; (5)
+  artifact 05's Canon-mapping table Row 2 (tamper detection) needs
+  rewording to acknowledge artifact-05-layer mechanism rather than
+  direct canon-clause instantiation - new, load-bearing; (6)
+  first-issuance ccs initialization semantic is canon-underdetermined
+  - overlaps with VL-025 gap candidate 1 and resolvable via same
+  spec edit. **Four methodology process findings**: (i) verification
+  request template Match-criterion ambiguity is load-bearing across
+  both bundles; (ii) absence-of-Divergence and absence-of-Code-absent
+  are themselves derivation outcomes worth elevating in the template's
+  rubric language; (iii) response truncation handling needs explicit
+  length instruction in submission-format wording; (iv) scope check
+  enumeration discipline (per-concept vs grouped) needs clarification.
+  **Status implications**: no code-correction needed (envelope.py is
+  verified correct); one spec-clarification batch needed before
+  VL-027, combining VL-025 gap candidate 1 plus this entry's gap
+  candidates 1, 2, 3, 5, 6 into a single artifact 05 spec-revision
+  commit; VL-026 (canon-derived tests) is not blocked and may use
+  Bundle B verifier-runs' per-branch canon citations as the
+  authoritative source for `test_ccs_canonical.py` docstrings.
+  Verifier responses recorded by reference per VL-015/VL-016/VL-023
+  follow-up precedent (not committed as standalone artifacts).
+  Classification: methodology / analysis entry per VL-017a's
+  distinction. No code/canon/test/spec/structural-doc change in
+  this commit. Repo test set 61/61, unchanged from 096c933
+  (VL-025).
 
 ## What is locked vs. open
 
