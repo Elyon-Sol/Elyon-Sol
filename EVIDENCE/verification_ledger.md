@@ -6105,3 +6105,445 @@ derivation operates on VL-022, VL-023, and VL-023 follow-up as
 the framework's record of the 2026-05-19 work, consistent with
 VL-022's prescription that the throwaway-session model phrasing
 must not be imported.
+---
+
+## VL-025 - G0 build half: canonical CCS implementation via envelope.py
+
+**Date:** 2026-05-21
+**Classification:** Trajectory move per VL-017a's distinction.
+**Outcome:** `IMPLEMENTATION/envelope.py` lands per
+`docs/restructure/05_admissibility_envelope_spec.md` build-order
+step 3. The build half of G0 is now PARTIALLY RESOLVED: canonical
+CCS is implemented at the envelope construction + reassertion layer;
+wiring `pep.py` to emit envelopes per decision is VL-027's domain
+and remains OPEN.
+
+### Procedure confirmation (VL-008 + build-resumption template)
+
+Scope-bound to the primary sources named in the VL-025 session
+opener's session-start protocol:
+`docs/restructure/05_admissibility_envelope_spec.md` (the structural
+spec for envelope shape and reassertion table),
+`CANON/canon.md` sections 12.1-12.4 and 13 (the invariant being
+implemented), `IMPLEMENTATION/evaluator.py` and
+`IMPLEMENTATION/request_validator.py` (the integration boundaries),
+`IMPLEMENTATION/replay/receipt.py` (the canonical-JSON precedent),
+`MANIFEST/manifest.json` (the pinning target), and
+`CANON/canon.lock` (the canon-hash source).
+
+Every field in the returned envelope cites a specific artifact 05
+passage or canon clause (see Spec-citation map below). Every branch
+of `reassert()` cites a specific artifact 05 reassertion-table row
+(see Reassertion-protocol mapping below). No imports from
+training-data exposure to other envelope, receipt, or audit-trail
+designs; no reference to the bridge document or throwaway-session
+output.
+
+The integration boundary is one-sided per opener risk-reduction
+observation 1: `envelope.py` imports `manifest_sha256` from
+`evaluator.py` for the on-disk manifest hash; `envelope.py` is not
+imported by `evaluator.py` or by `pep.py` in this commit. The
+condition functions (`ac3_valid`, `t26_valid`,
+`manifest_integrity_valid`) are NOT called from `envelope.py`;
+condition booleans are caller-supplied parameters per Option A
+integration (locked pre-build).
+
+### Spec-citation map
+
+Each envelope field returned by `build_envelope()` -> artifact 05 passage:
+
+  - `envelope_version` (literal "1.0")
+    -> artifact 05 "Envelope structure" JSON block line 2.
+  - `decision`
+    -> artifact 05 "Envelope structure" JSON block line 3;
+       caller-supplied; the output of `evaluator.evaluate()`.
+  - `target_url`
+    -> artifact 05 "Envelope structure" JSON block line 4 +
+       "Field rationale" first bullet ("the URL the decision was
+       about, recorded as part of the audit trail; derived from
+       SPEC/request_schema.md; G4 deferral noted").
+  - `canon.version` (literal "0.9.8.4")
+    -> artifact 05 "Envelope structure" JSON block lines 5-7;
+       matches the canon version pinned in `CANON/canon.md` and
+       `MANIFEST/manifest.json`.
+  - `canon.canon_sha256`
+    -> artifact 05 "Envelope structure" lines 5-7 + "Field rationale"
+       "canon block" bullet ("pins the decision to the locked canon");
+       read from `CANON/canon.lock` (per VL-006, the lockfile holds
+       the SHA-256 of `CANON/canon.md`).
+  - `evaluated_against.manifest_version`
+    -> artifact 05 "Envelope structure" lines 8-10 + section 11.9
+       canon clause ("the manifest must be deterministic, versioned,
+       and integrity-verifiable"); read from the `manifest` argument.
+  - `evaluated_against.manifest_sha256`
+    -> artifact 05 lines 8-10; computed via
+       `evaluator.manifest_sha256()` (the hardcoded-path G11 pattern
+       carried forward unchanged per opener risk-reduction
+       observation 2).
+  - `request_context.AP`, `request_context.OP`
+    -> artifact 05 "Envelope structure" lines 11-12 + canon section
+       11.5 (AP) and 11.6 (OP); read from the normalized interaction
+       returned by `request_validator.validate_request()`.
+  - `request_context.context`
+    -> artifact 05 "Envelope structure" line 13 + "Field rationale"
+       "request_context.context" bullet + canon section 11.1 (`C`);
+       VL-014..VL-019 schema-layer half of G12. Read from the
+       normalized interaction.
+  - `request_context.expected_manifest_version`,
+    `request_context.expected_manifest_sha256`
+    -> artifact 05 "Envelope structure" lines 14-15 + VL-012's
+       documented caller-asserted pinning convention; read from the
+       normalized interaction.
+  - `evaluator.version` (literal "0.9.8.4")
+    -> artifact 05 "Envelope structure" lines 16-19 + "Field
+       rationale" "evaluator block" bullet ("pins to the
+       implementation; a changed evaluator hash means the decision
+       logic itself moved - section 12.4-class transition").
+  - `evaluator.evaluator_sha256`
+    -> artifact 05 lines 16-19; computed via SHA-256 of
+       `IMPLEMENTATION/evaluator.py` file bytes.
+  - `condition_results.ac3`, `condition_results.t26`,
+    `condition_results.manifest_integrity`
+    -> artifact 05 "Envelope structure" lines 20-25 + "Field
+       rationale" "condition_results" bullet (point-in-time check
+       split + reserved-name treatment per VL-012); caller-supplied
+       booleans.
+  - `condition_results.ccs`
+    -> artifact 05 "Open questions for review" item 1 (locked to
+       `null` on first issuance per VL-025 opener constraint (e)) +
+       canon section 12.3 (the d-consistency invariant whose
+       reassertion semantic is a gap candidate; see Gap candidates).
+  - `decision_sha256`
+    -> artifact 05 "Envelope structure" line 26 + "Field rationale"
+       "decision_sha256" bullet ("canonical JSON, sorted keys, no
+       whitespace, reusing the serialization discipline from the
+       existing replay-receipt work"); computed last over the
+       envelope minus `decision_sha256` itself and minus
+       `timestamp_utc`.
+  - `timestamp_utc`
+    -> artifact 05 "Envelope structure" line 27 + "Field rationale"
+       "timestamp_utc" bullet ("audit only; excluded from
+       decision_sha256 so the same decision is bit-identical
+       regardless of issue time; preserves section 9
+       reproducibility"); caller-supplied with internal default to
+       `datetime.now(timezone.utc).isoformat()`.
+
+### Reassertion-protocol mapping
+
+Each branch of `reassert()` -> artifact 05 "Reassertion protocol"
+table row, in table order:
+
+  - Row 1: `canon_sha256 != live canon hash` -> `INVALIDATED`
+    -> branch at envelope.py "Row 1: canon_sha256 mismatch".
+       Canon basis: canon-locked (GR-1 per VL-007); a hash mismatch
+       means the envelope predates a canon change.
+  - Row 2: `decision_sha256` does not verify -> `INVALIDATED`
+    -> branch at envelope.py "Row 2: decision_sha256 verification".
+       Canon basis: tampered or corrupt envelope. Re-canonicalizes
+       the envelope minus `decision_sha256` and `timestamp_utc`,
+       hashes, compares against the envelope's stored hash.
+  - Row 3: `evaluator_sha256 != live evaluator hash`
+    -> `RE-EVALUATE-REQUIRED`
+    -> branch at envelope.py "Row 3: evaluator_sha256 mismatch".
+       Canon basis: section 12.4 ("decision logic transition").
+       **VL-024 Implication 2 attention point converted from
+       inference to direct citation in this commit.** The
+       fail-closed posture flagged at VL-023 follow-up lines
+       5200-5210 as inferred-rather-than-explicit dissolves on
+       direct read of artifact 05's reassertion table: this branch
+       returns `RE-EVALUATE-REQUIRED`, not silent fallthrough to
+       `REASSERTED` and not `INVALIDATED`. The inference caveat
+       carried in VL-024's Implication 1 ("Carry the inference
+       flag on evaluator-versioning's fail-closed component") can
+       be retired in any subsequent draft of
+       `07_continuity_recursion.md`.
+  - Row 4: `manifest_sha256 != live manifest hash`
+    -> `RE-EVALUATE-REQUIRED`
+    -> branch at envelope.py "Row 4: manifest_sha256 mismatch".
+       Canon basis: section 7 + section 12.4 ("manifest version /
+       schema transition").
+  - Row 5: all hashes match AND `decision_sha256` verifies
+    -> `REASSERTED`
+    -> default return at envelope.py "Row 5: all hashes match +
+       decision_sha256 verified". Canon basis: section 12.3
+       ("continuity holds; d_{t+1} = d_t provably"). The only
+       state in which a past `ELIGIBLE` may be honored without
+       re-evaluation per artifact 05.
+
+Check order matches table order. Row 1 fires before Row 2 because
+canon-lock invalidation is logically prior to tamper detection
+(an envelope under an old canon hash is not under the same rules
+of the game as the live repo, regardless of its internal
+consistency). Row 2 fires before Row 3 and Row 4 because a
+tampered envelope's hash claims cannot be trusted as evidence of
+matching/mismatching live hashes - the tamper detection must come
+first. Rows 3 and 4 are independent (both produce the same
+outcome); their ordering is artifact 05's listed order and is not
+load-bearing for correctness.
+
+### Smoke test results
+
+A pre-commit smoke test exercised the integration boundary
+end-to-end (validator -> evaluator -> envelope, then reassert
+round-trip and four tamper paths). All seven checks pass:
+
+  1. Schema validation: ACCEPTED (real wire shape).
+  2. Conditions ac3=True, t26=True, manifest_integrity=True;
+     decision=ELIGIBLE.
+  3. Envelope structure matches artifact 05's "Envelope structure"
+     JSON block top-key set and `request_context` key set; ccs
+     null on first issuance; decision_sha256 64-char hex.
+  4. Determinism (identical inputs -> identical envelope) +
+     timestamp-invariance (decision_sha256 stable across
+     different timestamp_utc).
+  5. reassert(unmodified) -> REASSERTED.
+  6. Reassertion table: body tamper -> INVALIDATED;
+     canon_sha256 forge -> INVALIDATED (Row 1 precedes Row 2);
+     evaluator_sha256 mismatch + recomputed decision_sha256
+     -> RE-EVALUATE-REQUIRED; manifest_sha256 mismatch +
+     recomputed decision_sha256 -> RE-EVALUATE-REQUIRED.
+  7. Purity: reassert() does not mutate input envelope.
+
+The smoke test is not committed (VL-026 owns the test artifacts);
+it is documented here for build-time traceability.
+
+### Gap candidates
+
+(1) **`condition_results.ccs` reassertion semantic.** On first
+    issuance `ccs` is `null` per artifact 05's open question 1
+    (locked by VL-025 opener constraint (e)). At reassertion
+    time, canon section 12.3 specifies `d_{t+1} = u_{t+1} AND
+    c_{t+1}` - a true boolean. Artifact 05 does not specify
+    which function performs this derivation, where the resulting
+    boolean is stored, or whether `reassert()` is expected to
+    return a modified envelope. The VL-025 contract resolves
+    this by keeping `reassert()` pure: the function returns only
+    an outcome string and does not modify the envelope. The
+    reassert-time `ccs` boolean's owner is unspecified.
+
+    Resolution: spec edit to artifact 05 before VL-027, naming
+    where the reassert-time `ccs` boolean is computed and stored.
+    Two plausible designs: (a) `reassert()` returns a
+    `(outcome, updated_envelope)` tuple on REASSERTED with `ccs`
+    set; (b) the pep.py wiring at VL-027 computes a fresh
+    envelope on REASSERTED via `build_envelope()` with the
+    derived `ccs` value. Design (b) preserves `reassert()`'s
+    purity and is the recommended direction; the spec edit should
+    formalize this.
+
+    Surface event: VL-025 opener risk-reduction observation 4
+    + this build's deferral. First instance; spec edit candidate
+    rather than artifact-04 gap row pending the spec edit.
+
+(2) **`evaluate()` aggregate return shape vs. condition_results
+    needs.** `evaluator.evaluate()` returns only the aggregate
+    string ("ELIGIBLE" / "REFUSE"); `condition_results` in the
+    envelope needs the three individual booleans (ac3, t26,
+    manifest_integrity). VL-025 resolves this via Option A:
+    `build_envelope()` accepts condition booleans as parameters;
+    the caller (VL-027's pep.py) calls the condition functions
+    separately. The provisional handling is clean at the
+    envelope.py layer but pushes complexity into VL-027.
+
+    Resolution: VL-027 may either (a) call the condition
+    functions in pep.py before calling `build_envelope()`, or
+    (b) refactor `evaluator.evaluate()` to return a structured
+    result containing both aggregate and per-condition values.
+    Design (a) is the smaller change and the default; design (b)
+    is more invasive but unifies the integration boundary.
+    Spec/code decision parked for VL-027.
+
+    Surface event: VL-025 integration analysis pre-build. First
+    instance; not an artifact-04 row.
+
+(3) **Canon section 12.3 `c_{t+1}` vs T^26's relationship.**
+    Canon section 12.3's continuity constraint cites
+    `c_{t+1} = T^26(I_{t+1})` (the new coverage evaluation at
+    the new state). The envelope at VL-025 records `t26` as
+    point-in-time at decision time, not as a transition
+    re-evaluation. On reassertion, the live `t26` would need to
+    be re-evaluated against the live manifest's `R` and the
+    live request's `OP`, which is information not preserved in
+    the envelope (the envelope preserves `OP` from the original
+    request, but the original request's `OP` is the OP at time
+    `t`, not at time `t+1`). The reassertion at VL-025
+    correctly returns `RE-EVALUATE-REQUIRED` on hash mismatch
+    rather than attempting to compute `c_{t+1}` from stale data;
+    the gap is that artifact 05 does not explicitly name this
+    limitation.
+
+    Resolution: spec annotation to artifact 05 noting that
+    `c_{t+1}` and `u_{t+1}` are computed at re-evaluation time
+    in the pep.py wiring (post-VL-027), not in `reassert()`.
+    Cosmetic; not blocking.
+
+    Surface event: VL-025 build-time analysis. First instance;
+    spec annotation candidate.
+
+(4) **`ensure_ascii=True` in envelope.py vs `ensure_ascii=False`
+    in receipt.py.** envelope.py's `canonical_json` uses
+    `ensure_ascii=True`, matching the VL-009 ASCII-safe standard
+    and the VL-012 process finding's recommended direction.
+    `receipt.py`'s `canonical_json` uses `ensure_ascii=False`
+    (the latent inconsistency surfaced at VL-012). The two
+    modules now have divergent canonical-JSON disciplines.
+
+    Resolution: either (a) update `receipt.py` to
+    `ensure_ascii=True`, retroactively making the entire repo
+    consistent; or (b) document both modules' choices in their
+    docstrings and accept the divergence. Design (a) is the
+    clean direction; receipts currently in the wild are
+    presumably ASCII-only so the change would be backward-
+    compatible. Candidate for a future queue-drain commit.
+
+    Surface event: VL-025 build pre-write analysis. Second
+    instance of the receipt.py inconsistency (VL-012 was the
+    first); not yet an artifact-04 row but the two-instance
+    threshold is now met for a methodology observation.
+
+(5) **`canon_sha256` source: lockfile read vs canon.md hash
+    recomputation.** envelope.py reads `CANON/canon.lock`
+    directly (per VL-006: the lockfile contains canon.md's
+    SHA-256). An alternative would be to recompute canon.md's
+    hash on every envelope build. The lockfile-read approach
+    trusts the lockfile's integrity; recomputation would catch
+    a case where canon.md is mutated without updating
+    canon.lock. The VL-025 opener implicitly endorses the
+    lockfile read (line 211); this build follows the opener.
+
+    Resolution: not a gap, just an explicit design choice worth
+    recording. If recomputation is preferred for defense-in-depth,
+    the change is small (replace `_read_canon_lock()` with
+    `_sha256_file("CANON/canon.md")`); the trade-off is a file
+    read of canon.md per envelope build vs. trust in the
+    lockfile maintenance discipline (which is governed by
+    `scripts/lock_canon.sh`). Not blocking; recorded for
+    completeness.
+
+### Process findings
+
+**Pre-build integration analysis caught Option A vs Option B
+divergence.** The session opener named `build_envelope()`'s
+integration with the evaluator without specifying who calls the
+condition functions. Reading `evaluator.py`'s actual return
+shape (a string, not a structured object) surfaced the
+divergence pre-build. Option A (condition booleans as
+parameters) was chosen and locked before drafting. Without the
+source read, the build would have either silently called
+`evaluate()` and lost the per-condition booleans, or invented
+a parallel calling pattern. Source-first (Lesson 3) prevented
+the silent loss. The Option A choice's downstream cost is
+recorded as Gap candidate (2).
+
+**`receipt.py` divergence pre-decided rather than discovered
+post-commit.** envelope.py's `ensure_ascii=True` choice was made
+explicitly in the opener (constraint (j)) and confirmed at build
+time. Without the opener's pre-naming, the build would likely
+have either silently matched `receipt.py`'s `ensure_ascii=False`
+(propagating the VL-012 inconsistency) or silently diverged
+without noting it. The opener's pre-naming converted the choice
+from a silent post-commit finding into an explicit pre-commit
+decision with the divergence flagged as Gap candidate (4).
+
+**Build-resumption template's second behavioral instance and
+first with Claude as executing agent.** VL-018 was the
+template's first behavioral instance (external-model executors,
+i.e., the Grok and OpenAI dry-runs ahead of VL-018's live
+build). VL-025 is the second behavioral instance and the first
+where Claude is the executing agent. The template's caller-side
+evaluation criteria (procedure confirmation, spec-citation map,
+mapping-artifact internal consistency, gap candidates) all
+applied symmetrically to Claude's own work in this session
+without modification. The template's two-instance threshold
+per `session_mechanics_lessons.md` line 47 is met for
+build-resumption-as-protocol (paralleling VL-024's two-instance
+threshold for the cross-model evaluate template).
+
+**Smoke test as pre-commit verification pattern.** The smoke
+test at `/home/claude/work/smoke_test_envelope.py` exercised
+the integration boundary end-to-end before commit, catching any
+runtime issues before they appeared as 61/61 regressions. The
+test is not committed (VL-026 owns the test artifacts) but its
+pattern is worth noting: a self-contained script that mocks the
+repository layout, runs the integration end-to-end, and reports
+pass/fail. Candidate addition to a future
+`session_mechanics_lessons.md` lesson on build-verification
+patterns; not actioned. First instance.
+
+**The "framework practicing what its derivations found"
+proposition from VL-024 bridge section is now operative.**
+VL-024 closed with the bridge proposition that VL-025 would be
+the first commit since VL-024 to touch the framework's Layer A
+(declared purpose / gate behavior). With envelope.py landing,
+canonical CCS moves from UNIMPLEMENTED to IMPLEMENTED for the
+envelope-construction-and-reassertion portion. The canon's
+section 12 has had a deterministic implementation in the code
+for the first time in the project's history. Per VL-024's Step
+3 synthesis, this is a Layer A change that follows from Layer B
+(epistemic discipline) and Layer C (reading-aid track) work
+upstream. The strengthening verdict at VL-024 explicitly did
+NOT include Layer A; VL-025 IS a Layer A change. The two
+findings are compatible: VL-024 did not strengthen Layer A
+(because methodology work cannot, on its own, strengthen what
+the gate does); VL-025 changes Layer A directly (because
+implementing the canonical invariant changes what the gate
+does). The framework's purpose layer now has the implementation
+half that the canon has specified since v0.9.8.4 was locked.
+
+### Files affected
+
+  - `IMPLEMENTATION/envelope.py` (new file; this commit's
+    primary deliverable)
+  - `EVIDENCE/verification_ledger.md` (this entry appended)
+  - `STATE.md` (Last updated parenthetical; Current verified
+    state bullet for VL-025 appended; Next open action item 20
+    transitions from OPEN to PARTIALLY RESOLVED; item 21
+    inserted for VL-026 build of tests; item 22 inserted for
+    VL-027 pep.py wiring + G7 close)
+
+### Files NOT affected
+
+  - `CANON/canon.md` (locked per GR-1; VL-007)
+  - `MANIFEST/manifest.json` (untouched)
+  - `IMPLEMENTATION/evaluator.py` (untouched; envelope.py
+    imports from it but does not modify it)
+  - `IMPLEMENTATION/request_validator.py` (untouched; envelope.py
+    consumes its return shape but does not modify it)
+  - `IMPLEMENTATION/replay/receipt.py` (untouched; the
+    `ensure_ascii` divergence is recorded as Gap candidate 4
+    for a future commit, not addressed here)
+  - `IMPLEMENTATION/pep.py` (untouched; wiring is VL-027's
+    domain)
+  - `SPEC/request_schema.md` (untouched; envelope.py consumes
+    the validated interaction without modifying the schema)
+  - `TESTS/*` (untouched; tests are VL-026's domain)
+  - `docs/restructure/05_admissibility_envelope_spec.md`
+    (untouched; the gap candidates for spec edits are recorded
+    here without modifying the spec)
+  - `docs/restructure/06_spec_to_code_traceability.md` (the
+    transition of canonical CCS from UNIMPLEMENTED to PARTIALLY
+    IMPLEMENTED is recorded in STATE.md; artifact 06's
+    structured update is deferred to a follow-up commit
+    paralleling VL-018's artifact-04-update-as-separate-commit
+    choice)
+
+### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not
+cite its own commit hash. VL-024 is cited as commit `c944a76`;
+VL-023 follow-up as `49b797a`; VL-023 as `83fa5a7`; VL-022 as
+`dbd65aa`. The build-resumption template's first behavioral
+instance is cited as VL-018 (cc08844 + f24c837); the schema
+work track is cited as VL-014..VL-019. Artifact 05's current
+state is at the commit landing VL-020 (`d81de1d`).
+
+The `07_continuity_recursion.md` artifact candidate remains
+deferred per VL-023's post-G0-build scheduling recommendation;
+VL-025 closes only the envelope-construction-and-reassertion
+half of the G0 build; the pep.py-wiring half remains for
+VL-027; after VL-027 the artifact becomes schedulable. VL-025's
+specific contribution to the artifact's eventual composition is
+the conversion of VL-024 Implication 2's inference flag on
+evaluator-versioning's fail-closed component to a direct
+citation (this entry's Reassertion-protocol mapping Row 3).
+
