@@ -7079,3 +7079,119 @@ The synthetic-fixture verification step caught this before the real-file run. Th
 This is the first session in which the synthetic-fixture verification step demonstrably caught a bug that would otherwise have shipped to a real file. Finding 1's methodology-promotion candidate strengthens: the pattern is not just a discipline-redundant safety check but a real value-add. The bug pattern itself - sub-edits ordered such that an earlier sub-edit modifies bytes that a later sub-edit will copy verbatim - is a generalizable hazard for any multi-step apply-script and is worth recording as a generic warning in `docs/methodology/apply_script_template.md` when the synthetic-fixture step is promoted there.
 
 Self-discipline finding: during the bug diagnosis, Claude attempted to apply the fix to the apply-script via str_replace without explicit user approval first. The opener's session discipline (lines 354-386) is explicit that fixes during a session require the same byte-copy + verify pattern that initial edits do, including user sign-off. The premature edit broke the function header by removing slightly too much, requiring two further repair steps. The recovery worked, but the lesson is: bug diagnosis and bug fix are two distinct turns; the diagnosis turn presents the bug and proposed fix; the fix turn applies the fix only after user approval. This calibration matches the apply-script template's pattern (diagnose-then-apply, not diagnose-and-apply-in-one-step) and should be noted as a Claude-side behavioral discipline.
+
+### VL-027 - 2026-05-22 - envelope.py import fix; bug surfaced by planned VL-028 test session
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** One-line code change to `IMPLEMENTATION/envelope.py` to bring it into convention parity with the rest of the repository.
+
+#### Background
+
+The planned VL-028 session (originally scheduled as VL-027 per the VL-026-close session opener) was a canon-derived-tests session producing `TESTS/adversarial/test_envelope.py` and `TESTS/adversarial/test_ccs_canonical.py`. The session-close pytest run `python -m pytest TESTS/` in the user's real environment failed at collection with:
+
+```
+ModuleNotFoundError: No module named 'evaluator'
+  at IMPLEMENTATION/envelope.py line 96:
+    from evaluator import manifest_sha256
+```
+
+Root cause: envelope.py at VL-025 imported `manifest_sha256` via `from evaluator import manifest_sha256` (top-level, no `IMPLEMENTATION.` prefix), diverging from the convention used by every other file in the repository:
+
+- `TESTS/test_adversarial_evaluator.py` line 3: `from IMPLEMENTATION.evaluator import evaluate, load_manifest`
+- `TESTS/adversarial/test_request_schema.py`: `from IMPLEMENTATION.pep import app` (analogous prefixed pattern)
+
+The bug was latent at VL-025 because nothing in the repository had imported envelope.py before the planned VL-028 test session: VL-025 was a build-only commit; VL-025 follow-up's two-bundle cross-model verification was static-reading-based (verifiers read envelope.py as text and classified it against artifact 05 and canon section 12-13, but did not execute `import IMPLEMENTATION.envelope`); and nothing in `IMPLEMENTATION/pep.py` or elsewhere imports envelope.py at VL-026 (per STATE.md item 22 forward-reference at the time of VL-026: "envelope.py is NOT imported by pep.py at VL-025"). The planned VL-028 test files are the first artifact in the repository that imports envelope.py.
+
+Per the planned-VL-028 (was-VL-027) opener constraint (l) bug-fix discipline: "If a bug is discovered in envelope.py or in the spec during test authoring, do NOT apply a fix mid-session. Record the bug as a gap candidate in the ledger entry and surface it explicitly. Fix lands in a subsequent commit after explicit user approval. Diagnose-then-apply, not diagnose-and-apply-in-one-step." The planned session halted before any commit; the import-fix is being committed first as a separate trajectory action; the test-write work is rebased onto post-VL-027 state as VL-028 under VL-026's Order B ledger-renumbering precedent.
+
+#### Renumbering under VL-026 Order B precedent
+
+VL-026 itself renumbered when an interstitial spec-revision commit became necessary (the original VL-026 = tests / VL-027 = pep.py plan was renumbered to VL-026 = spec-revision / VL-027 = tests / VL-028 = pep.py). The same logic applies here:
+
+- **VL-027** (this commit): envelope.py import fix.
+- **VL-028**: canon-derived tests for envelope.py (was VL-027 in the VL-026-close opener).
+- **VL-029**: pep.py wiring + G0 build half close (was VL-028 in the VL-026-close opener).
+
+#### Procedure confirmation
+
+Per VL-008 procedure adapted for a bug-fix commit:
+
+- **(a) Scope-bound to a single one-line code change.** No other code modified; no canon/manifest/spec/test/structural-doc change in this commit.
+- **(b) Scope-adherence is checkable.** The change is verifiable by `diff envelope.py.original envelope.py.patched`: exactly one line changes; the file size delta is +15 bytes (16641 -> 16656).
+- **(c) The bug was reproduced under the user's real environment conditions and the fix verified under the same conditions.** A working-container sandbox (the same one used to develop the planned-VL-028 tests) was reconfigured to drop `IMPLEMENTATION` from `PYTHONPATH`, matching the user's pytest invocation. With the original envelope.py: `python -m pytest TESTS/adversarial/` aborts at collection with the user's reported `ModuleNotFoundError`. With the patched envelope.py: `python -m pytest TESTS/adversarial/` produces 19 passed + 3 xfailed in 0.05s.
+
+#### What this commit does
+
+**Single edit to `IMPLEMENTATION/envelope.py` line 96:**
+
+```
+- from evaluator import manifest_sha256
++ from IMPLEMENTATION.evaluator import manifest_sha256
+```
+
+The change brings envelope.py into convention parity with every other file in the repository. envelope.py file size: 16641 -> 16656 bytes (+15).
+
+No other edits to envelope.py. The module docstring's "Integration boundary" section (lines 29-43) still accurately describes envelope.py's import shape ("This module imports from evaluator.py only via manifest_sha256()"); the docstring is convention-agnostic and does not require an update.
+
+#### Verification
+
+- **Pre-commit sandbox reproduction**: original envelope.py reproduces the user's reported `ModuleNotFoundError: No module named 'evaluator'` exactly, in the working container with no `PYTHONPATH=IMPLEMENTATION` masking. The error is at envelope.py line 96, triggered at test collection time when `from IMPLEMENTATION.envelope import ...` invokes envelope.py's own import chain.
+- **Pre-commit sandbox fix verification**: patched envelope.py runs cleanly under the same sandbox conditions. The patched module is import-clean (`python -c "import IMPLEMENTATION.envelope"` succeeds without `PYTHONPATH` adjustment), and the planned-VL-028 test files run 19 passed + 3 xfailed in 0.05s against the patched module.
+- **ASCII-safe per VL-009**: zero non-ASCII bytes in the patched envelope.py.
+- **Diff sanity**: exactly one line changes between original and patched envelope.py.
+- **Repo test set**: expected 61/61 after this commit (no new tests added; envelope.py is import-clean but still not imported by any test file at HEAD  -  that arrives at VL-028).
+
+#### Why VL-025's cross-model verification did not catch this
+
+VL-025 follow-up Bundle A verified envelope.py against artifact 05 spec; Bundle B verified `reassert()` behavior against canon section 12-13. Both verifications were static-reading-based: the verifiers read envelope.py as text and classified each named feature against the cited source. The `from evaluator import manifest_sha256` line was visible to both verifiers and was classified Match (Grok) / Spec-undetermined (OpenAI) per the standard Match-criterion divergence recorded in VL-025 follow-up.
+
+Neither classification fires on a runtime-only failure that requires actually importing the module. Match-as-design-space (Grok) does not exercise import resolution; Match-as-directly-named (OpenAI) finds the spec silent on import-path-prefix conventions and classifies the line as Spec-undetermined without surfacing the runtime risk. The verification methodology has a structural gap on runtime importability that is distinct from its substantive coverage of spec/canon fidelity.
+
+This is recorded as a process finding (Finding 1 below), not as a methodology failure  -  the cross-model verification did exactly what it was designed to do; the methodology candidate is to add a complementary runtime-import test, not to revise the static-reading-based verification.
+
+#### Process findings
+
+**Finding 1 - "Every module in `IMPLEMENTATION/` should be import-tested" as a Lesson 5 set-exhaustiveness candidate at the test-coverage layer.** The set "files that are import-tested by the existing test suite" was implicitly claimed exhaustive over `IMPLEMENTATION/`'s contents at VL-025, but was not enumerated. envelope.py was the missing member. The Lesson 5 corrective rule ("Before asserting that a set is exhaustive, list the set's members explicitly and verify against the source-of-truth that no members are missing") applies directly: enumerating `IMPLEMENTATION/*.py` against the import statements in `TESTS/**/*.py` would have flagged envelope.py as un-imported and prompted the addition of a trivial `import IMPLEMENTATION.envelope` test. Candidate methodology refinement: add a single test file (e.g., `TESTS/test_module_imports.py`) that imports every module in `IMPLEMENTATION/` at collection time; the test passes if all imports succeed and fails loud if any import is broken. This is the explicit form of what the planned VL-028 session accidentally exercised. The candidate refinement is not in VL-027 scope; queue-drain candidate for a future bookkeeping commit.
+
+**Finding 2 - Cross-model verification has a structural gap on runtime importability.** VL-025 follow-up's two-bundle, two-recipient verification confirmed envelope.py's structural and behavioral fidelity to artifact 05 and canon section 12-13 but did not exercise the module's runtime import. The gap is structural to static-reading-based verification: a verifier reading code as text cannot, in general, detect runtime path-resolution failures that depend on the executing environment's `sys.path`. The candidate corrective is not to revise the verification methodology (which does what it is designed to do) but to add a complementary runtime-check pass: after a code-landing commit (like VL-025), run `python -c "import <new_module>"` from the repo root as a one-line verification before declaring the build complete. Candidate methodology addition: a build-resumption-template clause specifying that any new IMPLEMENTATION/ file requires a post-build import-check from the repo root. Not in VL-027 scope; queue-drain candidate.
+
+**Finding 3 - Working-container sandbox conditions can mask repo-environment bugs.** During the planned-VL-028 session's pre-commit smoke test, Claude ran `PYTHONPATH=".:IMPLEMENTATION" python -m pytest TESTS/adversarial/` in the working-container sandbox; the `IMPLEMENTATION` segment on `PYTHONPATH` made `import evaluator` resolve directly against `IMPLEMENTATION/evaluator.py`, masking the bug. The user's real-environment invocation does not include `IMPLEMENTATION` on `PYTHONPATH`; the bug surfaced immediately. Candidate refinement: when developing tests against an uploaded-code sandbox, the sandbox's `PYTHONPATH` should match the user's expected production invocation, not the most-permissive form that lets all imports resolve. Specifically: for an Elyon-Sol-shaped repo where tests are run as `python -m pytest TESTS/` from the repo root with no `PYTHONPATH` adjustment, the working-container sandbox should be configured identically. The masking PYTHONPATH was a Claude-side discipline failure proportional to the bug's load-bearingness; the planned VL-028 session would have caught the bug pre-write if the sandbox had been correctly configured. Not in VL-027 scope; recorded here for the planned-VL-028 (now actual-VL-028) session's pre-commit smoke discipline.
+
+**Finding 4 - Em-dash typographic-punctuation drift in Claude-side drafted prose.** During drafting of `edit1_new.txt` (the new Last-updated parenthetical), an em-dash character (U+2014, UTF-8 `e2 80 94`) appeared in the drafted text where ASCII `--` or ` - ` would be conventional. Caught by the apply-script's ASCII-safety pre-flight check (which aborts before write if non-ASCII bytes are present in the input or output). This is the second instance this session of an ASCII-safety issue requiring post-hoc cleanup; the first was a literal `\u00e9` character in the planned-VL-028 `test_envelope.py`'s ensure_ascii test, also caught and fixed pre-write. Two-instance threshold per `session_mechanics_lessons.md` line 47 met for a candidate methodology refinement: Claude-side prose drafting tools (the `create_file` and `str_replace` tool calls) silently accept typographic punctuation by default; the corrective is to add an explicit ASCII-safety pre-check whenever drafting text destined for VL-009-bound files (canon, ledger, STATE.md, code). Candidate addition to `session_mechanics_lessons.md` (potentially as a Lesson 7 or as a refinement to Lesson 3); not in VL-027 scope; queue-drain candidate.
+
+#### Files affected
+
+- `IMPLEMENTATION/envelope.py` (one-line edit at line 96; +15 bytes; 16641 -> 16656)
+- `STATE.md` (Last-updated parenthetical updated; new Current-verified-state bullet for VL-027 appended; Next-open-action items 22 and 23 replaced with a three-item block where new item 22 = VL-027 import fix Done, new item 23 = canon-derived tests OPEN (proposed VL-028), new item 24 = pep.py wiring OPEN (proposed VL-029); total STATE.md delta -148 bytes)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/evaluator.py` (untouched)
+- `IMPLEMENTATION/request_validator.py` (untouched)
+- `IMPLEMENTATION/replay/receipt.py` (untouched)
+- `IMPLEMENTATION/pep.py` (untouched; VL-029's domain)
+- `SPEC/request_schema.md` (untouched)
+- `TESTS/*` (untouched; the planned-VL-028 test files are archived in the working container at `/home/claude/work/vl028_archived/` pending the VL-028 commit, which rebases them onto post-VL-027 state with a VL-027 -> VL-028 substring rename plus an updated ledger entry adding a fifth process finding crediting the VL-027 import-fix surfacing as the bug-detection mechanism)
+- `docs/restructure/05_admissibility_envelope_spec.md` (untouched; the spec at post-VL-026 is unchanged)
+- `docs/restructure/04_current_vs_claimed.md` (untouched; G-row status unchanged)
+- `docs/restructure/06_spec_to_code_traceability.md` (untouched; canonical CCS remains PARTIALLY IMPLEMENTED)
+- `docs/methodology/*` (untouched; the methodology-refinement candidates from Findings 1-4 are queue-drain items for a future bookkeeping commit)
+
+The session-local scripts (`diagnose_anchors_statemd_vl027.py`, `apply_statemd_vl027.py`, `apply_ledger_vl027.py`, the anchor files, the synthetic-fixture artifact) are not committed as repo artifacts; they follow the session-script pattern (used and discarded, not durable).
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash. Prior entries cited:
+
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-018 at commit `cc08844` (with follow-up `f24c837`)
+- VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
+
+The planned-VL-028 session opener referenced throughout this entry is the document originally drafted at VL-026's close (described in VL-026's ledger entry as the post-renumbering opener for the canon-derived tests session). The opener's text was the source of constraint (l) (bug-fix discipline) and of the apply-script-discipline carried forward (diagnose-anchors-first, byte-copy anchors, synthetic-fixture verification, ship-via-download). The opener's text is not committed as a repo artifact; it travels with the working session.

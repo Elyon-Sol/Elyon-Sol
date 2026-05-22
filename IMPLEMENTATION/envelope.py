@@ -93,7 +93,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from evaluator import manifest_sha256
+from IMPLEMENTATION.evaluator import manifest_sha256
 
 
 # ---------------------------------------------------------------------------
