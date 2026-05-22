@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-22 (commit: see `git log` for STATE.md; VL-027 envelope.py import fix (trajectory entry: one-line fix to `IMPLEMENTATION/envelope.py` line 96, changing `from evaluator import manifest_sha256` to `from IMPLEMENTATION.evaluator import manifest_sha256` to match the repo's established import convention used by every other file (`TESTS/test_adversarial_evaluator.py` line 3, `TESTS/adversarial/test_request_schema.py`, etc.); the bug was latent at VL-025 because nothing in the repo had imported envelope.py before VL-028's test files  -  VL-025 follow-up's two-bundle cross-model verification was static-reading-based and did not exercise the runtime import; bug surfaced at the planned VL-028 session when `python -m pytest TESTS/` failed at collection with `ModuleNotFoundError: No module named 'evaluator'`; per VL-027 opener (planned VL-028) constraint (l) bug-fix discipline, the planned-VL-028 session was halted before any commit and the import fix is being committed first as a separate trajectory action; renumbering under VL-026 Order B precedent: this commit = VL-027 (import fix); was-VL-027 (canon-derived tests) becomes VL-028; was-VL-028 (pep.py wiring) becomes VL-029; envelope.py file size delta is +15 bytes (16641 -> 16656); two-line addition to envelope.py's module docstring would have been load-bearing for the methodology layer's coverage of runtime-import testing but is deferred to a separate follow-up; one process finding recorded: "every module in IMPLEMENTATION/ should be import-tested" as a Lesson 5 set-exhaustiveness candidate at the test-coverage layer (the fact that `import IMPLEMENTATION.envelope` was never exercised by any test until the planned VL-028 was the coverage gap that allowed the bug to ship at VL-025); G0 build half remains PARTIALLY RESOLVED with envelope.py now import-clean and the canon-derived tests + pep.py wiring still open for VL-028 and VL-029 respectively; no canon/manifest/spec/test/structural-doc change in this commit; only the one-line code change to envelope.py and the STATE.md + ledger updates land here) lands in this commit; prior ledger entry VL-026 at commit 3c4c9b5; next trajectory action is VL-028 (canon-derived tests for envelope.py per the original VL-027 session opener, renumbered) followed by VL-029 (pep.py wiring + G0 build half close)
+Last updated: 2026-05-22 (commit: see `git log` for STATE.md; VL-028 canon-derived tests for envelope.py (trajectory entry: two new test files at `TESTS/adversarial/`: `test_envelope.py` (13 spec-derived tests citing post-VL-026 `docs/restructure/05_admissibility_envelope_spec.md`) and `test_ccs_canonical.py` (6 non-xfail canon-derived tests citing CANON/canon.md sections 11.9, 12.1-12.4, 13 + 1 Row-2 test with artifact-05-layer acknowledgment + 3 xfail tests for the post-VL-026 forward-looking ccs-derivation rule); rebase from archived VL-027-drafted work onto post-VL-027 state involved a substring-rename pass per opener rules (test_envelope.py: 7 VL-027 -> VL-028 current-opener refs; test_ccs_canonical.py: 11 VL-028 -> VL-029 forward-refs first then 9 VL-027 -> VL-028 current-opener refs; order load-bearing); all renames same-length (zero byte-delta both files); synthetic-fixture pre-verification confirmed rename math exactly before real-file run per VL-026 Finding 1 / VL-027 Finding 2 / this entry's Finding 3 methodology; G7 (tests are code-derived, not canon-derived) partially closes for the envelope domain via the canon-derived test file; canonical CCS in `docs/restructure/06_spec_to_code_traceability.md` remains PARTIALLY IMPLEMENTED pending VL-029 pep.py wiring + envelope.py ccs-derivation-rule update; xfail registry: 3 tests with strict=True asserting post-VL-029 dict-shaped reassert() return, will fire xpass when VL-029 implements the ccs-derivation rule per Decision A; two gap candidates recorded (envelope.py docstring drift with 5 VL-027 refs to now-VL-029 pep.py session - load-bearing for VL-029; apply-script template extension typo in opener line 94 - cosmetic); five process findings recorded (opener-prediction-vs-file-content as Lesson 3/5 second-instance candidate; opener typo; synthetic-fixture methodology threshold met formally; zero-byte-delta-rename invariant as candidate template addition; Finding 5 closes VL-027 Finding 1's bug-detection-mechanism recursion honestly); pytest verification deferred to user's real environment per constraint (m) sandbox discipline (expected: 80 passed + 3 xfailed); no canon/manifest/spec/implementation change in this commit) lands in this commit; prior ledger entry VL-027 at commit 05e27a0; next trajectory action is VL-029 (pep.py wiring + G0 build half close + envelope.py ccs-derivation-rule update for xfail-to-xpass transition + envelope.py docstring drift fix)
 
 
 ---
@@ -718,6 +718,81 @@ manifest layer. CCS has drifted - see G0 below.
   `IMPLEMENTATION/`, with structural-doc updates only in
   STATE.md and the ledger). No canon/manifest/spec/test/
   structural-doc change in this commit.
+- **VL-028 canon-derived tests for envelope.py (this commit).**
+  Two new test files at `TESTS/adversarial/`:
+  `test_envelope.py` (13 spec-derived tests against post-VL-026
+  `docs/restructure/05_admissibility_envelope_spec.md`) and
+  `test_ccs_canonical.py` (6 non-xfail canon-derived tests citing
+  CANON/canon.md sections 11.9, 12.1-12.4, 13 + 1 Row-2 test with
+  artifact-05-layer acknowledgment per VL-028 opener Decision B + 3
+  xfail tests for the post-VL-026 forward-looking ccs-derivation
+  rule per Decision A). Rebase from archived VL-027-drafted work
+  onto post-VL-027 state: substring-rename pass per opener rules
+  (test_envelope.py: 7 occurrences of VL-027 -> VL-028 for
+  current-opener references, all same-length; test_ccs_canonical.py:
+  11 occurrences of VL-028 -> VL-029 for forward-references then 9
+  occurrences of VL-027 -> VL-028 for current-opener references,
+  order load-bearing because two-pass-reversed would over-convert
+  current-opener refs to VL-029). All renames same-length (6
+  chars); zero byte-delta in both files. Synthetic-fixture
+  pre-verification confirmed rename math exactly (counts and
+  byte-delta-zero invariant) before real-file run per VL-026
+  Finding 1 / VL-027 Finding 2 / this entry's Finding 3
+  methodology. Post-rename verification: 0/7/0 (VL-027/VL-028/VL-029)
+  in test_envelope.py; 0/9/11 in test_ccs_canonical.py; both files
+  ASCII-clean (zero non-ASCII bytes); both compile cleanly under
+  Python 3. G7 (tests are code-derived, not canon-derived) partially
+  closes for the envelope domain via the canon-derived test file;
+  full G7 closure requires canon-derived tests for the evaluator
+  domain (AC^3, T^26, manifest-integrity) which remain code-derived
+  at TESTS/test_adversarial_evaluator.py and
+  TESTS/adversarial/test_request_schema.py. Canonical CCS in
+  `docs/restructure/06_spec_to_code_traceability.md` remains
+  PARTIALLY IMPLEMENTED; full transition to IMPLEMENTED at VL-029
+  with pep.py wiring + envelope.py ccs-derivation-rule update.
+  xfail registry: three tests
+  (`test_canon_12_3_ccs_derived_true_on_REASSERTED`,
+  `test_canon_12_4_ccs_derived_false_on_INVALIDATED`,
+  `test_canon_12_4_ccs_derived_false_on_RE_EVALUATE_REQUIRED`) all
+  marked `@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)`
+  asserting provisional dict-shaped `reassert()` return
+  `{"outcome": ..., "ccs": ...}`. When VL-029 implements the
+  ccs-derivation rule, strict=True will fire xpass and the markers
+  must be removed plus the result-indexing shape reconciled with
+  VL-029's chosen interface in the same commit. Two gap candidates
+  recorded: (1) envelope.py docstring drift, five references to
+  VL-027 in envelope.py lines 36, 43, 77, 79, 319 now refer
+  historically-incorrectly to the now-VL-029 pep.py wiring session,
+  load-bearing for VL-029 (which is already in scope for envelope.py
+  changes per Decision A); (2) apply-script template extension typo
+  in VL-028 opener line 94 (`.md` vs canonical `.py`), cosmetic.
+  Five process findings recorded: (1) opener-prediction-vs-file-
+  content surface divergence as a Lesson 3 / Lesson 5 second-instance
+  candidate at the rebase layer (opener predicted ~0 + 4 renames;
+  actual was 7 + 20 string-replacements); (2) apply-script template
+  extension typo (single-instance, traceability only); (3)
+  synthetic-fixture verification methodology threshold met formally
+  with this run as third instance after VL-026 and VL-027 (queue-
+  drain candidate to promote into apply_script_template.py's
+  docstring); (4) zero-byte-delta-rename invariant as candidate
+  template addition for rename-shape edits where every old_str and
+  new_str are same-length (queue-drain candidate); (5) VL-027's
+  import-fix session was the first practical test of envelope.py's
+  runtime importability, validating VL-027 Finding 1's
+  "every module in IMPLEMENTATION/ should be import-tested"
+  candidate at the methodology layer; VL-028's two test files are
+  the de-facto import-test for envelope.py but the dedicated
+  TESTS/test_module_imports.py artifact remains a queue-drain
+  candidate. The recursion is honest: VL-027 was triggered by
+  VL-028's drafting; VL-028's commit validates VL-027 Finding 1 by
+  closing the import-coverage gap for envelope.py. Pytest
+  verification deferred to user's real environment per constraint
+  (m) sandbox discipline; expected at session-close per opener
+  line 226: 80 passed + 3 xfailed (61 pre-existing + 19 new
+  non-xfail + 3 xfail). Classification: trajectory move per
+  VL-017a's distinction (two new test files in `TESTS/`, with
+  structural-doc updates only in STATE.md and the ledger). No
+  canon/manifest/spec/implementation change in this commit.
 
 ## What is locked vs. open
 
@@ -994,41 +1069,34 @@ the G0 build track is underway:
     fix); was-VL-027 (canon-derived tests) -> VL-028;
     was-VL-028 (pep.py wiring) -> VL-029.
 23. **G0 build half (cont.): canon-derived tests for the
-    envelope.** OPEN. Next trajectory action after VL-027.
-    Per artifact 05 build-order step 4 (now post-VL-026
-    spec state and post-VL-027 envelope.py import fix):
-    `TESTS/adversarial/test_envelope.py` (construction
-    determinism, the reassertion table, tamper detection)
-    plus a canon-derived `test_ccs_canonical.py` citing
-    canon section 12 directly. The Bundle B verifier-runs
-    recorded in VL-025 follow-up's "Substantive convergence"
-    section provide authoritative per-branch canon citations
-    for `test_ccs_canonical.py` docstrings. VL-026's Edit 5
-    forward-looking ccs-derivation rule introduces a
-    test-vs-code timing question (per VL-026 ledger Finding
-    4): tests that exercise the ccs-derivation rule may need
-    xfail status until envelope.py is updated, or a small
-    envelope.py update commit can precede VL-028 to make all
-    tests pass-not-xfail; the VL-028 author should make this
-    decision explicit at session start. (The VL-027 session
-    confirmed via the user's explicit choice that the
-    xfail-with-VL-029-transition path was taken in the
-    archived draft work; the same decision applies when the
-    draft work is rebased onto VL-027.) G7 (tests are
-    code-derived, not canon-derived) partially closes for
-    the envelope domain via the canon-derived test file.
-    The archived VL-027 draft work at the user's workspace
-    (`/home/claude/work/vl028_archived/` in the working
-    container) is the starting point; rebasing requires
-    a VL-027 -> VL-028 substring rename pass plus an
-    updated ledger entry that adds a fifth process finding
-    crediting the VL-027 import-fix surfacing as the
-    bug-detection mechanism (the now-VL-028 session learned
-    that running pytest in the user's real environment is
-    the first practical test of envelope.py's runtime
-    importability; the methodology candidate for explicit
-    import-cleanliness testing surfaces here). Proposed
-    ledger entry: VL-028.
+    envelope.** Done (VL-028, this commit). Two new test files
+    at `TESTS/adversarial/`: `test_envelope.py` (13 spec-derived
+    tests against post-VL-026 artifact 05) and
+    `test_ccs_canonical.py` (6 non-xfail canon-derived tests
+    citing CANON/canon.md sections 11.9, 12.1-12.4, 13 + 1 Row-2
+    test with artifact-05-layer acknowledgment per opener
+    Decision B + 3 xfail tests for the post-VL-026 forward-
+    looking ccs-derivation rule per opener Decision A). Rebase
+    from archived VL-027-drafted work onto post-VL-027 state:
+    substring-rename pass per opener rules (test_envelope.py:
+    7 occurrences of VL-027 -> VL-028; test_ccs_canonical.py:
+    11 occurrences of VL-028 -> VL-029 then 9 occurrences of
+    VL-027 -> VL-028, order load-bearing). All renames
+    same-length (zero byte-delta both files). Synthetic-fixture
+    pre-verification confirmed rename math exactly before
+    real-file run per VL-026 Finding 1 / VL-027 Finding 2
+    methodology. G7 (tests are code-derived, not canon-derived)
+    partially closes for the envelope domain via the
+    canon-derived test file; full G7 closure requires
+    canon-derived tests for the evaluator domain. Five process
+    findings recorded including Finding 5 crediting VL-027's
+    import-fix surfacing as the bug-detection mechanism per
+    VL-027 Finding 1 closure path. Two gap candidates: (1)
+    envelope.py docstring drift (load-bearing for VL-029); (2)
+    opener line 94 apply-script template extension typo
+    (cosmetic). Pytest verification deferred to user's real
+    environment per constraint (m); expected at session-close:
+    80 passed + 3 xfailed.
 24. **G0 build half (cont.): pep.py wires to emit envelopes
     per decision; G7 close.** OPEN. Per artifact 05
     build-order step 5. Resolves gap candidate 2 from VL-025

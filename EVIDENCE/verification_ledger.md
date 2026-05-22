@@ -7195,3 +7195,191 @@ Per VL-012's self-referencing-hash finding: this entry does not cite its own com
 - VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
 
 The planned-VL-028 session opener referenced throughout this entry is the document originally drafted at VL-026's close (described in VL-026's ledger entry as the post-renumbering opener for the canon-derived tests session). The opener's text was the source of constraint (l) (bug-fix discipline) and of the apply-script-discipline carried forward (diagnose-anchors-first, byte-copy anchors, synthetic-fixture verification, ship-via-download). The opener's text is not committed as a repo artifact; it travels with the working session.
+
+
+---
+
+### VL-028 - 2026-05-22 - Canon-derived tests for envelope.py; G7 partial closure for envelope domain
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** Two new test files at `TESTS/adversarial/` lock envelope.py's behavior against post-VL-026 artifact 05 and against CANON/canon.md sections 11.9, 12.1-12.4, 13. The G7 gap (tests are code-derived, not canon-derived) closes partially for the envelope domain.
+
+#### Background
+
+Per STATE.md item 23 (post-VL-027): the canon-derived tests for envelope.py were drafted in the pre-renumbering session that became VL-027 (envelope.py import fix). The test-writing session surfaced a runtime-import bug in envelope.py at pytest collection time; per opener constraint (l) bug-fix discipline, the session halted before commit, the bug fix landed first as VL-027, and the test-writing work was archived for re-attempt at VL-028 with the rebase mechanics specified in the VL-028 session opener.
+
+This session executes that rebase. The two test files have substantive content unchanged from the archived draft; the rebase work was three things:
+
+1. Substring-rename pass against both files to absorb the VL-026 Order B renumbering: the test files' pre-renumbering references to "VL-027" (current session opener) become "VL-028" (this session); pre-renumbering forward-references to "VL-028" (pep.py wiring) become "VL-029".
+2. Drafting of this ledger entry against post-VL-027 state including a fifth process finding crediting VL-027's import-fix as the bug-detection mechanism (per VL-027 Finding 1 closure path).
+3. STATE.md updates (Last-updated parenthetical, new Current-verified-state bullet, item 23 OPEN -> Done transition).
+
+The test files are spec-derived (`test_envelope.py` cites `docs/restructure/05_admissibility_envelope_spec.md` post-VL-026) and canon-derived (`test_ccs_canonical.py` cites CANON/canon.md sections directly), respectively. The canon-derived file is the G7 partial-closure signal: a reader of canon section 12 can verify that envelope.py honors the canonical CCS invariant by reading the test docstrings against the canon, without reading envelope.py itself.
+
+#### Procedure confirmation
+
+Scope-adherence per VL-008 procedure adapted for the test-shape constraint set (a) through (m) of the VL-028 opener:
+
+- **(a) Scope-bound to spec + canon + envelope.py.** Every test exercises behavior named in post-VL-026 artifact 05 or in canon sections 11.9, 12.1-12.4, 13. No test exercises behavior outside those sources.
+- **(b) Scope-adherence checkable.** Each test cites a specific spec passage (`test_envelope.py`) or canon clause (`test_ccs_canonical.py`) in its docstring.
+- **(c) VL-025 smoke test treated as precedent, not source.** The smoke test demonstrated the integration boundary worked; the test surface is derived from artifact 05 and canon directly, not from the smoke test's coverage choices.
+- **(d) Post-VL-027 baseline.** Pre-commit baseline is the user's responsibility to enumerate in the real environment (constraint (m) discipline: this session's sandbox cannot authoritatively establish the baseline; the user's `python -m pytest TESTS/` from repo root is the verification of record). Expected at session-close per opener line 226: 80 passed + 3 xfailed (61 pre-existing + 19 new non-xfail + 3 xfail).
+- **(e) `test_ccs_canonical.py` is canon-derived.** Each docstring quotes a specific canon section clause; Row 2 (tamper detection) is included per opener Decision B with explicit artifact-05-layer acknowledgment.
+- **(f) Source-first (Lesson 3) applied.** Phase 1 of this session read each input file from disk directly: post-VL-026 artifact 05, post-VL-027 envelope.py, canon sections 11.7-11.9 / 12.1-12.4 / 13, both precedent test files, session_mechanics_lessons.md, apply_script_template.py, SESSION_PROTOCOL.md, STATE.md, and the verification ledger. The substring-rename enumeration was derived from the file content via grep, not inferred from the opener's predictions (see Finding 1).
+- **(g) Set-exhaustiveness (Lesson 5) applied.** The envelope-structure top-level keys (10), the request_context sub-block keys (5), the reassertion-protocol table rows (5), and the test-file rename surface were enumerated explicitly before any apply-script. The baseline of 80+3 expected at session-close is a user-environment-only claim; this session did not enumerate `pytest --collect-only` because no pytest environment exists in this session's container (Path A discipline).
+- **(h) Mode discipline (Lesson 6).** Each test docstring's claim is bounded to what the test verifies. The xfail tests' docstrings explicitly name the deferred semantic (post-VL-026 spec Open question 1 ccs-derivation rule) rather than asserting it as current envelope.py behavior.
+- **(i) No `decision_sha256` value pinning.** Tests verify structural properties (length, hex format, determinism, timestamp-invariance, purity) and reassertion outcomes (REASSERTED, INVALIDATED, RE-EVALUATE-REQUIRED). No test asserts a specific hash value.
+- **(j) VL-009 ASCII-safe standard applied pre-write.** Both test files verified zero non-ASCII bytes before and after the rename pass. The ledger entry, commit message, and STATE.md edits are ASCII-pre-flight-checked in their respective apply-scripts before write. Per VL-027 Finding 4 (em-dash typographic drift): the discipline fires at write time, not commit time.
+- **(k) xfail discipline (per Decision A).** Three xfail tests in `test_ccs_canonical.py` (`test_canon_12_3_ccs_derived_true_on_REASSERTED`, `test_canon_12_4_ccs_derived_false_on_INVALIDATED`, `test_canon_12_4_ccs_derived_false_on_RE_EVALUATE_REQUIRED`) are marked `@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)`. The provisional dict-shaped return `{"outcome": ..., "ccs": ...}` is asserted; VL-029 may revise the shape (tuple, attribute, companion function) and must reconcile in the same commit when xpass fires.
+- **(l) Bug-fix discipline.** No bug surfaced in envelope.py or the spec during test polishing. Envelope.py docstring drift (five `VL-027` references to the pep.py wiring session, now historically incorrect post-renumbering) recorded as a gap candidate for VL-029, not fixed in this session.
+- **(m) Sandbox conditions enumerated against user's expected production conditions.** This session's container does not run pytest; verification of the 80+3 baseline is deferred to the user's `python -m pytest TESTS/` from repo root with no PYTHONPATH adjustment. The Phase 2 apply-scripts run in `/home/claude/vl028/` (working copies; not the user's repo) with no PYTHONPATH manipulation; the apply-script work is byte-exact rename work that does not depend on Python import resolution.
+
+#### What this commit does
+
+Four files change:
+
+1. **`TESTS/adversarial/test_envelope.py`** added. 13 spec-derived tests against post-VL-026 artifact 05. Each test cites a specific passage of the spec in its docstring. Module docstring documents the set-exhaustiveness check (10 top-level keys, 5 request_context keys, 5 reassertion-protocol rows with 4 in this file and Row 2 in the canon-derived file per Decision B).
+
+2. **`TESTS/adversarial/test_ccs_canonical.py`** added. 6 non-xfail canon-derived tests + 1 Row-2 test with artifact-05-layer acknowledgment + 3 xfail tests for the post-VL-026 forward-looking ccs-derivation rule. Canon-citation set: section 12.1 (state transition), 12.3 (continuity constraint), 12.4 (failure condition), 11.9 (manifest determinism, joint with 12.4), 13 (eligibility does not persist). The Bundle B verifier-runs from VL-025 follow-up (commit `f0c76cd`) provided the per-branch canon citations the docstrings paraphrase; each docstring cites the canon clause directly, not the verifier-run by reference.
+
+3. **`STATE.md`** updated. Last-updated parenthetical replaced with VL-028 entry summary. New Current-verified-state bullet for VL-028 appended after the VL-027 bullet. Item 23 transitions OPEN -> Done with G7 partial-closure noted.
+
+4. **`EVIDENCE/verification_ledger.md`** updated. This entry appended.
+
+#### Verification
+
+**Pre-rename file state (md5):**
+
+- `test_envelope.py`: `80ea41d5400221fa57eed55292552ede` (14948 bytes)
+- `test_ccs_canonical.py`: `2f4ac29ce70604feefc85a28edae7402` (15742 bytes)
+
+**Rename pass (apply-script `apply_test_renames_vl028.py`, session-local):**
+
+- `test_envelope.py`: 7 occurrences of `VL-027` -> `VL-028` (+0 bytes per occurrence; +0 bytes total)
+- `test_ccs_canonical.py`: 11 occurrences of `VL-028` -> `VL-029` (forward-references; +0 bytes), then 9 occurrences of `VL-027` -> `VL-028` (current-opener references; +0 bytes). Order load-bearing.
+
+**Synthetic-fixture pre-verification.** A synthetic fixture mirroring the rename-surface counts (7 / 11 + 9) was built and rename-passed before the real-file run; post-fixture invariants (byte-delta zero; expected counts) verified the rename math exactly. Per VL-026 Finding 1 / VL-027 Finding 2 methodology.
+
+**Post-rename file state (md5):**
+
+- `test_envelope.py`: `3935c1463f03bbd134dc6bb1ede93b31` (14948 bytes; 0-byte delta)
+- `test_ccs_canonical.py`: `fbc39006377a297201bbbb81b17c9c45` (15742 bytes; 0-byte delta)
+
+**Post-rename count verification:**
+
+- `test_envelope.py`: 0 VL-027, 7 VL-028, 0 VL-029
+- `test_ccs_canonical.py`: 0 VL-027, 9 VL-028, 11 VL-029
+
+**Post-rename ASCII-safety:** 0 non-ASCII bytes in either file.
+
+**Post-rename syntax check:** both files compile cleanly under Python 3.
+
+**Pytest verification:** **deferred to user's real environment per constraint (m).** This session's container does not run pytest because the sandbox cannot replicate the user's production PYTHONPATH conditions authoritatively. Expected result at session-close: 80 passed + 3 xfailed (per opener line 226).
+
+#### Spec-citation map for `test_envelope.py`
+
+| Test | Artifact 05 passage cited |
+|---|---|
+| `test_build_envelope_returns_canonical_top_keys` | "Envelope structure" JSON block; 10 top-level keys |
+| `test_build_envelope_request_context_shape` | "Envelope structure" JSON block; request_context sub-block, 5 keys |
+| `test_build_envelope_ccs_null_on_first_issuance` | Open question 1 resolution: Python `None` first-issuance sentinel |
+| `test_build_envelope_decision_sha256_format` | decision_sha256 field rationale: canonical-JSON-with-ensure_ascii=True |
+| `test_build_envelope_canonical_json_ensure_ascii` | Edit 1: `ensure_ascii=True` per VL-009 |
+| `test_build_envelope_determinism` | Canon-mapping section 9 reproducibility row |
+| `test_build_envelope_timestamp_invariance` | timestamp_utc field rationale: excluded from decision_sha256 |
+| `test_reassert_row_5_REASSERTED` | Reassertion protocol Row 5; canon basis section 12.3 |
+| `test_reassert_row_1_INVALIDATED_on_canon_forge` | Reassertion protocol Row 1; canon basis "canon changed" |
+| `test_reassert_row_3_RE_EVALUATE_REQUIRED_on_evaluator_mismatch` | Reassertion protocol Row 3; canon basis section 12.4 |
+| `test_reassert_row_4_RE_EVALUATE_REQUIRED_on_manifest_mismatch` | Reassertion protocol Row 4; canon basis section 7/12.4 |
+| `test_reassert_purity` | Edit 2: reassert() purity contract |
+| `test_canonical_json_sort_keys_and_no_whitespace` | decision_sha256 field rationale: sorted keys, no whitespace |
+
+#### Canon-citation map for `test_ccs_canonical.py`
+
+| Test | Canon clause cited |
+|---|---|
+| `test_canon_12_1_state_transition_detected_via_hash_change` | Section 12.1 state transition definition + 12.4 invalid-transition examples |
+| `test_canon_12_3_d_consistency_first_issuance_null` | Section 12.3 continuity constraint (d_{t+1} = u_{t+1} AND c_{t+1}); inapplicable on first issuance |
+| `test_canon_12_4_evaluator_change_invalidates_continuity` | Section 12.4 failure condition; evaluator hash = decision-logic transition (VL-024 Implication 2 instantiation) |
+| `test_canon_11_9_manifest_change_invalidates_continuity` | Section 11.9 manifest deterministic/versioned/integrity-verifiable + 12.4 governing manifest version change |
+| `test_canon_13_eligibility_does_not_persist` | Section 13 eligibility does not persist without revalidation |
+| `test_row_2_tamper_detection_via_artifact_05_mechanism` | Sections 12.3/12.4 fail-closed semantics + artifact-05-layer mechanism (post-VL-026 Edit 4) |
+
+#### xfail registry
+
+Three xfail tests, all in `test_ccs_canonical.py`, all sharing `XFAIL_REASON_DICT_SHAPE`:
+
+| Test | Asserts | Why xfail |
+|---|---|---|
+| `test_canon_12_3_ccs_derived_true_on_REASSERTED` | `reassert(env)["outcome"] == REASSERTED` and `["ccs"] is True` | envelope.py at HEAD returns bare string, not dict; ccs-derivation rule from post-VL-026 spec Open question 1 not yet implemented |
+| `test_canon_12_4_ccs_derived_false_on_INVALIDATED` | `reassert(env)["outcome"] == INVALIDATED` and `["ccs"] is False` | Same |
+| `test_canon_12_4_ccs_derived_false_on_RE_EVALUATE_REQUIRED` | `reassert(env)["outcome"] == RE_EVALUATE_REQUIRED` and `["ccs"] is False` | Same |
+
+All three marked `@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)`. When VL-029 implements the ccs-derivation rule, strict=True will fire xpass; the xfail markers must be removed and the result-indexing shape reconciled with VL-029's actual interface choice (the dict shape is provisional).
+
+#### G7 status
+
+G7 (tests are code-derived, not canon-derived) **partially closes for the envelope domain.** The canon-derived `test_ccs_canonical.py` file demonstrates that envelope.py's behavior can be verified against canon section 12 directly without referencing envelope.py's code. G7 remains open for the evaluator domain (where `test_adversarial_evaluator.py` and `test_request_schema.py` are code-derived rather than canon-derived). Full G7 closure requires canon-derived test files for the AC^3 / T^26 / manifest-integrity domains.
+
+#### Gap candidates
+
+1. **envelope.py docstring drift** (load-bearing for VL-029). Five references to `VL-027` in envelope.py lines 36, 43, 77, 79, 319 (the module docstring's "Integration boundary" section, "ccs field on first issuance" section, and `reassert()` docstring) refer to the pep.py wiring session, which under post-VL-027 Order B renumbering is VL-029, not VL-027. envelope.py at HEAD is functionally correct but historically inaccurate in its self-reference. Recorded as gap candidate to be fixed in the same VL-029 commit that implements the ccs-derivation rule (per Decision A's xfail-to-xpass transition, envelope.py is already in scope for that commit).
+
+2. **Apply-script template extension typo** (cosmetic). VL-028 opener line 94 references `docs/methodology/apply_script_template.md`; the canonical extension is `.py`. The actual file content makes the type clear and the rebase work was unaffected. Recorded for traceability.
+
+#### Process findings
+
+**Finding 1 - Opener prediction vs file-content surface (Lesson 3 / Lesson 5 second-instance candidate at the rebase layer).** The VL-028 opener's section "Build structure (rebase mechanics)" predicted "Possible substring renames: none expected" for `test_envelope.py` (line 122) and "4 matches" for `VL-028` in `test_ccs_canonical.py` (line 143). The actual rename surface enumerated by Phase 1 was 7 renames in test_envelope.py and 11+9 (twenty) string-replacements in test_ccs_canonical.py. The opener's rename **rules** (lines 166-168 of the ledger-entry rebase mechanics, applied analogously to the test files) cover the actual surface; the opener's **predictions** did not. Lesson 3 source-first applies: the file content is the source of truth, not the opener's prose about it. This is the second instance of opener-prediction-vs-file-content divergence as a recurring failure mode (first instance: VL-019 session intent's Pydantic-model architecture predicted 27/27 pass but actually 23/27 fail; recorded in VL-019 ledger entry and session_mechanics_lessons.md Lesson 5 surface events). Two-instance threshold per session_mechanics_lessons.md line 47 is met for promotion of "opener predictions are not authoritative for file-content claims; enumerate against the source" as a candidate Lesson 5 surface-event sub-pattern or as its own lesson. Queue-drain candidate.
+
+**Finding 2 - Apply-script template extension typo in opener.** VL-028 opener line 94 references `docs/methodology/apply_script_template.md`; canonical extension is `.py` (template file's date-stamp predates the opener and the `.py` extension has held consistently across all prior apply-script work). Single-instance; recorded for traceability without action.
+
+**Finding 3 - Synthetic-fixture verification methodology threshold met (formally).** This session's rename apply-script was verified against a synthetic fixture before the real-file run, with the fixture's pre-existence pass + post-rename invariants matching the real-file deltas exactly. VL-026's Finding 1 introduced the pattern (first instance); VL-027's Finding 2 strengthened it with the post-write diff catch (second instance, opener line 198 references this); this session's run is the third instance. Two-instance threshold per session_mechanics_lessons.md line 47 was already met at VL-027; this session is the durability confirmation. The pattern is operative as session-local discipline; methodology-promotion to `docs/methodology/apply_script_template.py`'s docstring remains a queue-drain candidate. Recommended language for the template update: a new section between "How to use" and the `apply_edits()` function definition titled "Pre-run verification (synthetic-fixture)" with the steps from VL-026/VL-027/VL-028's runs.
+
+**Finding 4 - Zero-byte-delta renames are themselves a signal worth verifying separately.** All renames in this session were same-length string substitutions (`VL-027` / `VL-028` / `VL-029` are all 6 characters). The total byte-delta is zero for both files. This is the strongest possible invariant for a synthetic-fixture pre-check: any deviation from zero is a guaranteed bug. Recorded as a methodology observation: for rename-shape edits where every old_str and new_str are same-length, the synthetic-fixture pre-check should assert byte-delta zero as a hard invariant. The general apply-script template assumes non-zero deltas (the template's per-edit output prints the delta-per-occurrence); a specialized zero-delta-rename mode is a candidate template addition. Queue-drain candidate.
+
+**Finding 5 - VL-027's import-fix session was the first practical test of envelope.py's runtime importability.** The planned-VL-027 session (now VL-028) drafted these test files and ran `python -m pytest TESTS/` in the user's real environment for the first time; the pytest collection failed with `ModuleNotFoundError: No module named 'evaluator'`, surfacing the latent envelope.py import bug. This validates VL-027 Finding 1's "every module in IMPLEMENTATION/ should be import-tested" candidate at the methodology layer: the corrective is to make import-cleanliness an explicit test rather than a side-effect of other tests' module-loading. VL-028's two test files are the de-facto import-test for envelope.py (both files do `from IMPLEMENTATION.envelope import ...`), but the dedicated import-test artifact (a `TESTS/test_module_imports.py` per VL-027 Finding 1's recommendation) remains a queue-drain candidate. Recorded for traceability: VL-027 was triggered by VL-028's drafting; VL-028's commit validates VL-027's Finding 1 by closing the import-coverage gap for envelope.py. The recursion is honest: the framework's bug-fix discipline (constraint (l) of the VL-027 opener, demonstrated at VL-027, restated as constraint (l) of the VL-028 opener) held under pressure, separated the bug-fix and the test-write into two distinct commits, and produced cleaner provenance than a single bundled commit would have.
+
+#### Files affected
+
+- `TESTS/adversarial/test_envelope.py` (new file, 14948 bytes; 7 VL-027 -> VL-028 substring renames from archived draft)
+- `TESTS/adversarial/test_ccs_canonical.py` (new file, 15742 bytes; 11 VL-028 -> VL-029 + 9 VL-027 -> VL-028 substring renames from archived draft)
+- `STATE.md` (Last-updated parenthetical replaced; new Current-verified-state bullet for VL-028 appended; item 23 OPEN -> Done transition)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/envelope.py` (untouched; docstring drift recorded as gap candidate 1 for VL-029)
+- `IMPLEMENTATION/evaluator.py` (untouched)
+- `IMPLEMENTATION/request_validator.py` (untouched)
+- `IMPLEMENTATION/replay/receipt.py` (untouched; `ensure_ascii=False` divergence remains methodology-debt)
+- `IMPLEMENTATION/pep.py` (untouched; VL-029's domain)
+- `SPEC/request_schema.md` (untouched)
+- `docs/restructure/05_admissibility_envelope_spec.md` (untouched; post-VL-026 state is what these tests verify against)
+- `docs/restructure/04_current_vs_claimed.md` (untouched; G7 partial-closure recorded in STATE.md and in this ledger entry; structured artifact 04 update deferred per VL-018's pattern)
+- `docs/restructure/06_spec_to_code_traceability.md` (untouched; canonical CCS remains PARTIALLY IMPLEMENTED; full closure at VL-029)
+- `docs/methodology/*` (untouched; methodology-promotion candidates from Findings 1, 3, 4 are queue-drain items for a future bookkeeping commit)
+- `docs/SESSION_PROTOCOL.md` (untouched; close protocol step 2's "STATE.md as its own commit" wording vs recent bundled-commit practice noted but not actioned per opener strict-scope)
+
+The session-local apply-scripts (`apply_test_renames_vl028.py`, `verify_fixture.py`, `apply_statemd_vl028.py`, `apply_ledger_vl028.py`) and the ledger-draft file are not committed as repo artifacts; they follow the established session-script pattern (used and discarded, not durable).
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash. Prior entries cited:
+
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-018 at commit `cc08844` (with follow-up `f24c837`)
+- VL-017 at commit unspecified; canon-derived-tests precedent
+- VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
+
+Per VL-015/VL-016 + VL-023 follow-up + VL-025 follow-up + VL-026 + VL-027 precedent: the cross-model verifier-runs from VL-025 follow-up are referenced by their landing commit (`f0c76cd`) and by the per-branch canon citations preserved in this session's `test_ccs_canonical.py` docstrings; the verifier responses themselves are not committed as standalone artifacts.
+
+The VL-028 session opener referenced throughout this entry was drafted at VL-027's close and uploaded to this session. The opener's text is not committed as a repo artifact; it travels with the working session (matching the VL-027 opener's pattern). The opener is the source of constraints (a)-(m), Decisions A and B, and the rebase mechanics.
+
+Next trajectory action per STATE.md item 24: VL-029 (pep.py wiring + G0 build half close + envelope.py update for the ccs-derivation rule per Decision A's xfail-to-xpass transition + envelope.py docstring drift fix per gap candidate 1).
