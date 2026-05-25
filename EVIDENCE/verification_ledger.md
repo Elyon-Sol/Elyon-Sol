@@ -7690,3 +7690,57 @@ Other open trajectories remain in the priority order at artifact 04: G3 (public 
 Methodology bookkeeping commit absorbing the accumulated process findings from VL-025 through VL-029 (gap candidate 3 of this entry) is a near-term natural commit.
 
 G0 build half closure represents the convergence of the project's anchor trajectory. Three years of derivation, build, and verification land in this commit. The next session reader will see canon section 12 as a deterministic implementation in code, exercised on every ELIGIBLE response, verified against canon-derived tests.
+
+---
+
+### VL-029 follow-up - 2026-05-25 - README post-VL-029 staleness corrective (one-off; not a trajectory move)
+
+**Status:** COMMITTED at `5f833fb` (parent `79012d7`).
+**Author:** Claude (working session with the project author)
+**Scope:** README.md only. No code, test, canon, manifest, spec, structural-doc, STATE.md, or methodology change.
+
+#### Why this entry exists
+
+`5f833fb` is a real commit on the trajectory tree but is not a trajectory move. It is a public-framing-staleness corrective that brought README.md into alignment with post-VL-029 reality. Without this entry, the next session reader would see an unrecorded commit between VL-029 (`79012d7`) and the next VL-NNN entry, which would weaken framework claim 7 (honest provenance). This entry preserves the trace.
+
+The session decided explicitly that `5f833fb` is **not** a VL-030 trajectory move. VL-030 is reserved for the next genuine trajectory action (T-07, T-G3 multi-surface, T-methodology, T-G7-eval, or T-bookkeeping per the VL-030 opener draft circulating at session-close).
+
+#### What changed
+
+README.md rewritten for post-VL-029 honest framing. Key changes:
+- Header paragraph: now claims "faithful implementation of all three canonical invariants" (was: "faithful partial implementation"); ELIGIBLE description includes envelope construction + return.
+- Three-invariants block: CCS row promoted from "DRIFTED" to "FULL (envelope layer; see Admissibility envelope below)".
+- New "Admissibility envelope" section (~50 lines) describing the 10-key envelope structure, reassertion behavior, runtime-return-only scope per Decision D.
+- ELIGIBLE example response shape: updated to `{"decision": "ELIGIBLE", "envelope": {...}}` per Decision E SD-3-a; all 10 envelope keys shown.
+- New "Resolved gaps" section: G0 (RESOLVED at VL-029 with both halves explained), G2 (RESOLVED at VL-019), G6/G10 (Resolved at VL-012).
+- Known limitations: G0 removed from "Open and material"; G7 marked "PARTIALLY ADDRESSED" with envelope-domain-closed note; new "Structural-position question" subsection for D.3.
+- Tests section: test_envelope.py + test_ccs_canonical.py added to the listing (these landed at VL-028 but the README was never updated).
+- Status section: "G0 closed (rename half VL-012 + build half VL-029, commit 79012d7)"; named 5 active trajectories with T-NAME labels.
+
+Net delta: +240 insertions, -64 deletions; +7692 bytes; 13680 -> 21372 bytes.
+
+#### Sub-decisions
+
+Q-README-1 R-honest-build-outward (header foregrounds build-outward items rather than burying them); Q-README-2 separate "Resolved gaps" section (rather than "Recently resolved" subsection of Known limitations); Q-README-3 brief in header + brief subsection on the envelope; Q-README-4 TEST-update-now (added test_envelope.py + test_ccs_canonical.py to the listing); Q-README-5 specific trajectory names in Status section (couples README to internal T-NAME vocabulary; deliberate); Q-README-6 G1-separate (G1 stays in bookkeeping list; artifact 04 NOT touched).
+
+#### Verification
+
+ASCII-clean (0 non-ASCII bytes). Set-exhaustiveness check on every `terminal_state`, `ELIGIBLE`, `REFUSE`, `upstream_status`, `upstream_response`, `G0`, `G7`, `DRIFTED` reference in pre-edit + post-edit per Finding 8 discipline. 2 `terminal_state` references remain post-edit, both legitimately documenting the REFUSE response shape (unchanged from VL-019 per Decision E; envelope-on-REFUSE is build-outward scope per artifact 05 open question 3).
+
+REFUSE example response body (`{"detail":{"terminal_state":"REFUSE"}}`) verified against actual pep.py behavior at lines 152-160 (unchanged from VL-019). ELIGIBLE example response body verified against actual envelope structure in envelope.py at lines 260-294 (10 top-level keys; ccs=None on first issuance).
+
+No code/test change in this commit, so no pytest verification needed. `git status` clean before and after.
+
+#### Process notes
+
+This is the first session-touch on the repo since VL-029 that did not produce a numbered VL-NNN entry at commit time. The user and Claude discussed the precedent implication explicitly and concluded that a follow-up entry (this entry) preserves honest-provenance discipline without claiming trajectory status for a one-off staleness fix. The pattern is consistent with prior follow-up entries (VL-018 follow-up `f24c837`, VL-023 follow-up `49b797a`, VL-025 follow-up `f0c76cd`).
+
+Methodology candidate (queue-drain item, not promoted in this entry): "README-class commits are scope-bound to public surfaces, do not require full-format ledger entries, but DO require brief follow-up entries citing the prior numbered entry they trace to." Same family as the methodology backlog accumulated in VL-029 ledger entry gap candidate 3.
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash (the entry's commit is the ledger update itself, which by precedent does not require a separate entry). The entry cites the commit it documents: `5f833fb` (parent `79012d7`).
+
+#### Next trajectory action
+
+Per the user's session-close note: VL-030 is the next session, with trajectory selection deferred to that session opener. The VL-030 opener draft (circulating at this session's close) names five candidate trajectories (T-07, T-G3 multi-surface, T-methodology, T-G7-eval, T-bookkeeping) with conditional opener content for each. T-G3 is now partially-progressed via `5f833fb` if next session continues with public-framing work, or remains open as a multi-surface trajectory if next session goes elsewhere.
