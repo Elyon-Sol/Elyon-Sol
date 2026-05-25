@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-05-22 (commit: see `git log` for STATE.md; VL-028 canon-derived tests for envelope.py (trajectory entry: two new test files at `TESTS/adversarial/`: `test_envelope.py` (13 spec-derived tests citing post-VL-026 `docs/restructure/05_admissibility_envelope_spec.md`) and `test_ccs_canonical.py` (6 non-xfail canon-derived tests citing CANON/canon.md sections 11.9, 12.1-12.4, 13 + 1 Row-2 test with artifact-05-layer acknowledgment + 3 xfail tests for the post-VL-026 forward-looking ccs-derivation rule); rebase from archived VL-027-drafted work onto post-VL-027 state involved a substring-rename pass per opener rules (test_envelope.py: 7 VL-027 -> VL-028 current-opener refs; test_ccs_canonical.py: 11 VL-028 -> VL-029 forward-refs first then 9 VL-027 -> VL-028 current-opener refs; order load-bearing); all renames same-length (zero byte-delta both files); synthetic-fixture pre-verification confirmed rename math exactly before real-file run per VL-026 Finding 1 / VL-027 Finding 2 / this entry's Finding 3 methodology; G7 (tests are code-derived, not canon-derived) partially closes for the envelope domain via the canon-derived test file; canonical CCS in `docs/restructure/06_spec_to_code_traceability.md` remains PARTIALLY IMPLEMENTED pending VL-029 pep.py wiring + envelope.py ccs-derivation-rule update; xfail registry: 3 tests with strict=True asserting post-VL-029 dict-shaped reassert() return, will fire xpass when VL-029 implements the ccs-derivation rule per Decision A; two gap candidates recorded (envelope.py docstring drift with 5 VL-027 refs to now-VL-029 pep.py session - load-bearing for VL-029; apply-script template extension typo in opener line 94 - cosmetic); five process findings recorded (opener-prediction-vs-file-content as Lesson 3/5 second-instance candidate; opener typo; synthetic-fixture methodology threshold met formally; zero-byte-delta-rename invariant as candidate template addition; Finding 5 closes VL-027 Finding 1's bug-detection-mechanism recursion honestly); pytest verification deferred to user's real environment per constraint (m) sandbox discipline (expected: 80 passed + 3 xfailed); no canon/manifest/spec/implementation change in this commit) lands in this commit; prior ledger entry VL-027 at commit 05e27a0; next trajectory action is VL-029 (pep.py wiring + G0 build half close + envelope.py ccs-derivation-rule update for xfail-to-xpass transition + envelope.py docstring drift fix)
+Last updated: 2026-05-25 (commit: see `git log` for STATE.md; VL-029 pep.py wires to emit envelopes + envelope.py ccs-derivation-rule update + envelope.py docstring drift fix + xfail-to-xpass transition + artifact 04/06 G-row movements (F1 bundled): G0 build half closes completely; canonical CCS implemented at the envelope layer for the first time in project history (envelope.py `reassert()` now returns dict {"outcome": <str>, "ccs": <bool>} per VL-028 Decision A; pep.py constructs the envelope after evaluate()-returned-ELIGIBLE via three condition functions on safe_manifest per Decision C1, wraps the construction in try/except per W2 fail-closed discipline, attaches the envelope to the response payload per Decision E SD-3-a {"decision": "ELIGIBLE", "envelope": <envelope>}); 9 non-xfail callers updated to dict-shape indexing (Option alpha surface event - 5 sites in test_ccs_canonical.py + 4 sites in test_envelope.py); 3 xfail markers removed in same commit (Decision A-extended strict=True discipline); XFAIL_REASON_DICT_SHAPE constant removed; module-docstring B' light-edit + honest rewrite of xfail-section comment block; envelope.py 3 minimal renames (VL-027 -> VL-029 at lines 36, 43, 77, zero byte-delta) + C-honest substantive rewrites (C1 line 79 tense-shift + C2 lines 74-77 + C3 lines 316-319 reflecting post-Edit-1a state); new test_pep_eligible_response_contains_envelope verifying response shape + 10 envelope top-level keys + ELIGIBLE-path invariants (ac3/t26/manifest_integrity all True per Decision C1) + ccs=None on first issuance; artifact 04 G0 row PARTIALLY RESOLVED -> RESOLVED + G7 row gets Status: PARTIALLY ADDRESSED (VL-028 + VL-029) + priority-order polish (G0 anchor RESOLVED + G7 PARTIALLY ADDRESSED); artifact 06 7 row promotions to FULL (section 3 CCS, section 12.1, section 12.2, section 12.3, section 12.4, section 13 per R-trajectory reading) + Appendix D.3 stays UNIMPLEMENTED with refined note + summary status counts updated FULL 8->15 / PARTIALLY 6->4 / DRIFTED 0 note update / UNIMPLEMENTED 7->3 + read-of-the-whole-picture paragraph full rewrite + pre-existing FULL-(8)-listed-9 miscount fix; per-file apply-script + synthetic-fixture discipline applied throughout (5 apply-scripts: test_ccs_canonical, test_envelope, pep, test_pep, artifact04, artifact06; envelope.py via str_replace direct with one R1 recovery for scope-expansion + one apply-script halt-and-restore for str_replace argument confusion); N3 source-first re-read after pep.py wiring caught one real spec divergence (envelope construction not fail-closed; fixed via W2) before commit; pytest verification deferred to user's real environment per constraint (m) sandbox discipline (expected: 84 passed + 0 xfailed = 80 prior - 3 xfail + 3 xpass + 1 new test_pep envelope coverage); ledger entry records 7 process findings including the Option-alpha second-instance of opener-prediction-vs-file-content surface divergence and two self-discipline failures (R1 envelope.py scope-expansion + str_replace argument confusion in test_ccs_canonical.py recovered via apply-script + synthetic-fixture promotion) lands in this commit; prior ledger entry VL-028 at commit 7efcefc; next trajectory action is post-G0-build scope (the `07_continuity_recursion.md` artifact candidate is now eligible to schedule per VL-023 PARTIAL HOLDS + VL-024 STRENGTHENS bounded to layers B and C)
 
 
 ---
@@ -793,6 +793,78 @@ manifest layer. CCS has drifted - see G0 below.
   VL-017a's distinction (two new test files in `TESTS/`, with
   structural-doc updates only in STATE.md and the ledger). No
   canon/manifest/spec/implementation change in this commit.
+- **VL-029 G0 build half closes completely: pep.py wires to emit
+  envelopes + envelope.py ccs-derivation rule + xfail-to-xpass
+  transition + artifact 04/06 F1 bundle (this commit).**
+  `IMPLEMENTATION/envelope.py` updated: `reassert()` now returns
+  dict `{"outcome": <str>, "ccs": <bool>}` per VL-028 Decision A;
+  6 return points each carry the derived ccs (True on REASSERTED,
+  False on INVALIDATED or RE-EVALUATE-REQUIRED per post-VL-026
+  Edit 5 + canon section 12.4); module + reassert() docstrings
+  honestly reflect the new behavior (3 minimal VL-027 -> VL-029
+  renames at lines 36/43/77 zero-byte-delta + C-honest substantive
+  rewrites at lines 74-77/79/316-319 per the R1 self-discipline
+  recovery from a session-internal scope-expansion). `IMPLEMENTATION/pep.py`
+  wires envelope emission on ELIGIBLE: after `evaluate()` returns
+  ELIGIBLE, pep.py calls `safe_manifest()` + three condition functions
+  (`ac3_valid`, `t26_valid`, `manifest_integrity_valid`) per Decision C1
+  to derive the booleans independently, then calls `build_envelope()`
+  to construct the envelope, then returns `{"decision": "ELIGIBLE",
+  "envelope": <envelope>}` per Decision E SD-3-a. The envelope-
+  construction block is wrapped in try/except per W2 fail-closed
+  discipline (post-N3-review fix): any exception in the condition
+  functions or in build_envelope() raises REF_PEP_FAIL_CLOSED,
+  matching the symmetric protection around evaluate() and the
+  upstream POST. Test surface: `TESTS/adversarial/test_ccs_canonical.py`
+  3 xfail markers removed (Decision A-extended strict=True discipline)
+  + XFAIL_REASON_DICT_SHAPE constant removed + module-docstring B'
+  light-edit (past-tense + landing-note) + honest rewrite of xfail-
+  section comment block + 5 non-xfail callers updated to dict-shape
+  `["outcome"]` indexing (Option alpha: opener-prediction-vs-file-content
+  surface divergence second-instance per VL-028 Finding 1; two-instance
+  threshold met for Lesson 5 surface-event sub-pattern); 4 callers in
+  `test_envelope.py` likewise updated; `test_pep.py` gains
+  `test_pep_eligible_response_contains_envelope` verifying response
+  shape + 10 envelope top-level keys + ELIGIBLE-path invariants
+  (ac3/t26/manifest_integrity all True per Decision C1) + ccs=None on
+  first issuance + decision_sha256 format (no value pinning per
+  inherited constraint (i)). F1 bundle applied:
+  `docs/restructure/04_current_vs_claimed.md` G0 row PARTIALLY
+  RESOLVED -> RESOLVED + G7 row gets Status: PARTIALLY ADDRESSED
+  (VL-028 + VL-029) + priority-order polish (G0 anchor RESOLVED + G7
+  PARTIALLY ADDRESSED); `docs/restructure/06_spec_to_code_traceability.md`
+  7 row promotions to FULL (section 3 CCS, section 12.1, section 12.2
+  PARTIAL -> FULL since u/c/d now stored in envelope, section 12.3,
+  section 12.4, section 13 per R-trajectory reading) + Appendix D.3
+  stays UNIMPLEMENTED with refined note (D.3's literal in-evaluate
+  CCS-isolated failure case doesn't occur on first issuance since
+  envelope.condition_results.ccs=None; the CCS-isolated failure does
+  occur at reassertion via section-12.4 path) + summary status counts
+  updated (FULL 8->15 with pre-existing miscount fix where the "8"
+  listed 9 sections; PARTIAL 6->4; DRIFTED 0 note update naming
+  VL-029 build-half closure; UNIMPLEMENTED 7->3) + read-of-the-whole-
+  picture paragraph full rewrite ("All three canonical invariants
+  (AC^3, T^26, CCS) are FULL post-VL-029"). Per-file apply-script
+  + synthetic-fixture discipline applied (5 apply-scripts: test_ccs_canonical,
+  test_envelope, pep, test_pep, artifact04, artifact06; envelope.py
+  via str_replace direct with one R1 self-discipline recovery for
+  mid-edit scope-expansion + one apply-script halt-and-restore for
+  str_replace old_str/new_str argument confusion in test_ccs_canonical.py,
+  recovered via copy-from-pristine + apply-script promotion). N3
+  source-first re-read after pep.py wiring caught one spec divergence
+  (envelope construction not fail-closed; fixed via W2 + governed_call
+  docstring step-6 extension before commit). Layer A inflection point
+  per VL-024's bridge proposition: canon section 12 has a deterministic
+  implementation in code wired into the gate for the first time in
+  project history. The `07_continuity_recursion.md` artifact candidate
+  is now eligible to schedule per VL-023's post-G0-build recommendation.
+  Pytest verification deferred to user's real environment per constraint
+  (m) sandbox discipline; expected at session-close: 84 passed + 0
+  xfailed (80 pre-existing - 3 xfail + 3 xpass-now-pass + 1 new
+  test_pep envelope coverage). Trajectory move per VL-017a's distinction
+  (two implementation files + three test files + two structural docs +
+  STATE.md + ledger; eight files modified, one untouched at evaluator.py
+  per Decision C1 preserving evaluator's contract).
 
 ## What is locked vs. open
 
@@ -1098,22 +1170,59 @@ the G0 build track is underway:
     environment per constraint (m); expected at session-close:
     80 passed + 3 xfailed.
 24. **G0 build half (cont.): pep.py wires to emit envelopes
-    per decision; G7 close.** OPEN. Per artifact 05
-    build-order step 5. Resolves gap candidate 2 from VL-025
-    (the evaluate aggregate return vs condition_results
-    needs; the choice between pep.py-calls-condition-functions
-    vs. evaluator-refactor-to-structured-return is made here).
-    VL-025 gap candidate 1 (the condition_results.ccs
-    reassertion semantic) was resolved at VL-026's Edit 5.
-    After VL-029, canonical CCS in
+    per decision; envelope.py ccs-derivation rule; xfail-to-xpass;
+    artifact 04/06 F1 bundle.** Done (VL-029, this commit).
+    Per artifact 05 build-order step 5. Resolves VL-025 gap
+    candidate 2 via Decision C1 (pep.py calls the three
+    condition functions individually on safe_manifest after
+    evaluate()-returned-ELIGIBLE; preserves evaluator.evaluate()'s
+    contract; no impact on the 23 test_adversarial_evaluator.py
+    cases). VL-025 gap candidate 1 (the condition_results.ccs
+    reassertion semantic) was resolved at VL-026's Edit 5 and
+    implemented in envelope.py at VL-029 per Decision A
+    (reassert() returns dict {"outcome": ..., "ccs": ...}; True
+    on REASSERTED, False on INVALIDATED / RE-EVALUATE-REQUIRED
+    per canon section 12.4). The 3 xfail markers in
+    `test_ccs_canonical.py` were removed in the same commit
+    (Decision A-extended strict=True discipline). VL-028 gap
+    candidate 1 (envelope.py docstring drift) was resolved via
+    the 3 minimal renames (lines 36/43/77 VL-027 -> VL-029 zero
+    byte-delta) plus C-honest substantive rewrites at lines
+    74-77/79/316-319 reflecting post-Edit-1a state. Bundled
+    per F1: `docs/restructure/04_current_vs_claimed.md` G0
+    PARTIALLY RESOLVED -> RESOLVED + G7 OPEN -> PARTIALLY
+    ADDRESSED (VL-028 + VL-029); `docs/restructure/06_spec_to_code_traceability.md`
+    7 row promotions to FULL (the CCS-transition cluster
+    closes) + summary count updates with pre-existing miscount
+    fix + read-of-the-whole-picture paragraph rewrite.
+    Canonical CCS in
     `docs/restructure/06_spec_to_code_traceability.md`
-    transitions from PARTIALLY IMPLEMENTED to IMPLEMENTED;
-    G0 closes completely; G7 closes for the envelope domain.
+    transitions from PARTIALLY IMPLEMENTED to FULL.
     The `07_continuity_recursion.md` artifact candidate
-    becomes eligible for scheduling. Proposed ledger entry:
-    VL-029.
-
-With priority item 3 (G0 rename + G6 + G10) resolved, item
+    becomes eligible to schedule per VL-023's recommendation;
+    new STATE.md item 25 records this.
+25. **`docs/restructure/07_continuity_recursion.md`
+    drafting (post-G0-build artifact candidate).** OPEN
+    (newly eligible to schedule post-VL-029). Per VL-023's
+    PARTIAL HOLDS verdict and VL-024's STRENGTHENS-bounded-to-
+    layers-B-and-C refinement, plus VL-025 follow-up's
+    convergent confirmation of the recursive-continuity
+    hypothesis: the four-part abstract shape extracted from
+    canon section 12 (state + enumerated transitions +
+    invalidation/revalidation mechanism + fail-closed on
+    unverified continuation) fits five layers of the framework
+    (decision, manifest, methodology, session, evaluator-
+    versioning) and does NOT fit one (request, which is a
+    precondition layer, not a continuity layer). The proposed
+    artifact would name the five fitting layers, the non-fit,
+    the per-layer detector mechanism, and the layer A/B/C
+    bounding per VL-024. The VL-025 follow-up Bundle B
+    verifier-runs provide one supplementary finding
+    (evaluator-versioning) and one inference caveat the post-
+    VL-029 envelope.py implementation has now dissolved on
+    direct read. Schedulable in a future trajectory action;
+    not blocking any open gap. Classification: methodology /
+    analysis entry candidate. Proposed ledger entry: TBD.
 4 (SPEC/request_schema.md drafted + verified + corrected)
 complete, the failing-tests sub-step of item 4 done (VL-017),
 the build-resumption invocation tested against two models
@@ -1322,10 +1431,16 @@ session-mechanics-lessons file to `docs/` so these
 
 See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
 
-- **G0** - CCS specification/implementation drift. **PARTIALLY RESOLVED**
-  (VL-012): rename half closed (function renamed; name reserved in code
-  and test IDs). Build half open (canonical CCS implementation is the
-  G0 build track).
+- **G0** - CCS specification/implementation drift. **RESOLVED**
+  (VL-012 + VL-029): rename half closed at VL-012 (function renamed;
+  name "CCS" reserved in code and test IDs); build half closed at
+  VL-029 (envelope.py `build_envelope()` + `reassert()` implement
+  canonical CCS per artifact 05 + canon section 12; pep.py wires
+  envelope emission on every ELIGIBLE response per artifact 05
+  build-order step 5). The post-VL-026 ccs-derivation rule
+  implemented in `reassert()`'s dict return per Decision A; 3 xfail
+  markers in `test_ccs_canonical.py` xpassed and removed in the
+  same commit.
 - **G1** - README test count stale / no commit-pinned source of truth.
 - **G2** - request schema drift (interception proofs document a dead API).
   **RESOLVED** (VL-014 + VL-015 + VL-016 + VL-017 + VL-018 + VL-019):
@@ -1349,6 +1464,13 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
 - **G4** - the gate is bypassable (opt-in, not enforced).
 - **G5** - "external" verification is not durable (ephemeral webhook).
 - **G7** - tests are code-derived, not canon-derived.
+  **PARTIALLY ADDRESSED** (VL-028 + VL-029): envelope domain closed
+  via `TESTS/adversarial/test_ccs_canonical.py` which derives 9 tests
+  from canon sections 11.9, 12.1, 12.3, 12.4, 13 with explicit
+  citations in each docstring; the post-VL-029 envelope.py + pep.py
+  wiring exercise those tests on every ELIGIBLE response. Evaluator-
+  domain canon-derived tests (AC^3 / T^26 / manifest-integrity)
+  remain open as a future trajectory action.
 - **G8** - evidence proofs are narrated, not executable.
 - **G9** - `stability_proof_001.md` is truncated.
 - **G11** - manifest-source asymmetry: `manifest_sha256()` reads from

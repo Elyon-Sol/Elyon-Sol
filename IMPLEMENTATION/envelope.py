@@ -33,14 +33,14 @@ Integration boundary (one-sided per VL-025 opener risk-reduction note)
 This module imports from evaluator.py only via manifest_sha256() (the
 on-disk MANIFEST/manifest.json hash). It does NOT import the
 evaluate() function or the condition functions (ac3_valid, t26_valid,
-manifest_integrity_valid). The caller (VL-027's pep.py wiring) is
+manifest_integrity_valid). The caller (VL-029's pep.py wiring) is
 responsible for calling those condition functions and passing the
 resulting booleans into build_envelope() as parameters. This keeps
 the integration boundary one-sided and matches receipt.py's pattern
 (caller passes decision and condition results in).
 
 This module is NOT imported by evaluator.py or by pep.py at VL-025.
-Wiring pep.py to emit envelopes is VL-027's domain.
+Wiring pep.py to emit envelopes is VL-029's domain.
 
 ==============================================================
 Canonicalization discipline
@@ -72,11 +72,18 @@ On first issuance there is no S_t to compare against; only S_{t+1}.
 Per artifact 05's first listed proposal and the VL-025 opener's lock
 (constraint (e)), condition_results.ccs is recorded as None (Python's
 representation of JSON null) on first issuance. The ccs field becomes
-a true boolean only at first reassertion - and per VL-025's pure
-reassert() contract, that boolean-setting happens elsewhere (in
-VL-027's pep.py wiring or a future revision), not in this module.
-The reassert-time ccs semantic is recorded as a gap candidate in the
-VL-025 ledger entry; spec edit deferred to before VL-027.
+a true boolean only at reassertion: per post-VL-026 Edit 5's
+forward-looking rule, reassert() in this module performs the
+derivation as part of its return value (True on REASSERTED;
+False on INVALIDATED or RE-EVALUATE-REQUIRED per canon section
+12.4 "if any condition is violated: CCS = 0"). The envelope's
+stored condition_results.ccs remains None per the post-VL-026
+Edit 2 purity contract; the derivation is in reassert()'s return,
+not in the input envelope.
+The reassert-time ccs semantic was recorded as a gap candidate in
+the VL-025 ledger entry; the spec edit landed at VL-026 (Open
+question 1 resolution, Edit 5) and the implementation lands at
+VL-029 per Decision A (this commit).
 
 ==============================================================
 Spec citations
@@ -314,9 +321,14 @@ def reassert(envelope: Dict[str, Any]) -> str:
     function is pure with respect to the input envelope. It reads
     live file hashes (side effect: file I/O) but does not modify the
     envelope. The condition_results.ccs reassertion semantic (canon
-    section 12.3 d-consistency derivation) is NOT performed here;
-    that semantic is a gap candidate recorded in the VL-025 ledger
-    entry and is the subject of a spec edit deferred to before VL-027.
+    section 12.3 d-consistency derivation) is performed here per
+    post-VL-026 Edit 5's forward-looking rule and VL-029's Decision A:
+    reassert() returns a dict {"outcome": <str>, "ccs": <bool>} where
+    ccs is True on REASSERTED (canon section 12.3 holds per row 5),
+    False on INVALIDATED or RE-EVALUATE-REQUIRED (per canon section
+    12.4 "if any condition is violated: CCS = 0"). The derivation
+    is in the return value, not in the input envelope (purity contract
+    per post-VL-026 Edit 2).
 
     Reassertion-protocol mapping (artifact 05 table rows -> branches):
 
@@ -339,7 +351,13 @@ def reassert(envelope: Dict[str, Any]) -> str:
         envelope: A dict in the shape returned by build_envelope().
 
     Returns:
-        One of REASSERTED, INVALIDATED, RE_EVALUATE_REQUIRED.
+        A dict of shape {"outcome": <str>, "ccs": <bool>} where
+        `outcome` is one of REASSERTED, INVALIDATED, RE_EVALUATE_REQUIRED
+        and `ccs` is True only when outcome is REASSERTED (canon
+        section 12.3 holds; d_{t+1} = u_{t+1} AND c_{t+1}), False
+        otherwise (canon section 12.4: "if any condition is violated:
+        CCS = 0"). Per VL-028 Decision A; implementation lands at
+        VL-029.
     """
     # ----- Row 1: canon_sha256 mismatch -> INVALIDATED -----
     # Canon basis: canon is locked (GR-1); a hash mismatch means the
@@ -347,7 +365,7 @@ def reassert(envelope: Dict[str, Any]) -> str:
     # the game no longer apply.
     live_canon_sha256 = _read_canon_lock()
     if envelope["canon"]["canon_sha256"] != live_canon_sha256:
-        return INVALIDATED
+        return {"outcome": INVALIDATED, "ccs": False}
 
     # ----- Row 2: decision_sha256 verification -> INVALIDATED -----
     # Canon basis: tampered or corrupt envelope. Re-canonicalize the
@@ -356,7 +374,7 @@ def reassert(envelope: Dict[str, Any]) -> str:
     # envelope's stored decision_sha256.
     stored_decision_sha256 = envelope.get("decision_sha256")
     if not isinstance(stored_decision_sha256, str):
-        return INVALIDATED
+        return {"outcome": INVALIDATED, "ccs": False}
     hashable = {
         k: v
         for k, v in envelope.items()
@@ -364,14 +382,14 @@ def reassert(envelope: Dict[str, Any]) -> str:
     }
     computed_decision_sha256 = _sha256_text(canonical_json(hashable))
     if stored_decision_sha256 != computed_decision_sha256:
-        return INVALIDATED
+        return {"outcome": INVALIDATED, "ccs": False}
 
     # ----- Row 3: evaluator_sha256 mismatch -> RE-EVALUATE-REQUIRED -----
     # Canon basis: whitepaper section 12.4 - "decision logic transition."
     # See VL-024 Implication 2 attention point above.
     live_evaluator_sha256 = _evaluator_sha256()
     if envelope["evaluator"]["evaluator_sha256"] != live_evaluator_sha256:
-        return RE_EVALUATE_REQUIRED
+        return {"outcome": RE_EVALUATE_REQUIRED, "ccs": False}
 
     # ----- Row 4: manifest_sha256 mismatch -> RE-EVALUATE-REQUIRED -----
     # Canon basis: whitepaper section 7 / section 12.4 - "manifest version/
@@ -381,11 +399,11 @@ def reassert(envelope: Dict[str, Any]) -> str:
     # the existing-pattern boundary.
     live_manifest_sha256 = manifest_sha256()
     if envelope["evaluated_against"]["manifest_sha256"] != live_manifest_sha256:
-        return RE_EVALUATE_REQUIRED
+        return {"outcome": RE_EVALUATE_REQUIRED, "ccs": False}
 
     # ----- Row 5: all hashes match + decision_sha256 verified -> REASSERTED -----
     # Canon basis: whitepaper section 12.3 - continuity holds across the
     # transition; d_{t+1} = d_t provably for the d that is decision-equal-
     # to-the-envelope's decision. Per artifact 05: "the only state in
     # which a past ELIGIBLE may be honored without re-evaluation."
-    return REASSERTED
+    return {"outcome": REASSERTED, "ccs": True}

@@ -28,18 +28,18 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   semantics in view; the shared name (input field `ccs_valid`, function `ccs_valid()`,
   invariant CCS) masked the gap; tests were written against the code, not the canon, so
   green tests created false confidence.
-- **Status: PARTIALLY RESOLVED** - rename half closed (VL-012); build half open.
+- **Status: RESOLVED** (VL-029) - rename half closed (VL-012); build half closed (VL-029).
 - **Action:**
   1. Rename the implemented check to its true scope (e.g. `manifest_integrity_valid()`).
      **DONE under VL-012.**
   2. **Reserve** the name "CCS"  -  unused in code  -  until section 12 is implemented.
      **DONE under VL-012**; reservation extended to test IDs.
   3. Implement section 12 transition logic via the admissibility envelope (see Deliverable 05).
-     **OPEN** - this is the G0 build track.
+     **DONE under VL-029** (envelope.py with build_envelope() and reassert() landed at VL-025; ccs-derivation rule landed at VL-029; pep.py wires envelope emission on ELIGIBLE at VL-029).
   4. Add canon-derived tests for section 12 (see G7).
-     **OPEN.**
+     **PARTIALLY ADDRESSED at VL-028** (envelope domain canon-derived via test_ccs_canonical.py; evaluator domain canon-derived tests for AC^3, T^26, manifest-integrity still open).
   5. Until step 3 lands, the project must claim only "manifest integrity is enforced," **not**
-     "CCS is implemented." **STANDING** - applies until step 3 lands.
+     "CCS is implemented." **RESOLVED at VL-029** - step 3 landed; the project may now claim "canonical CCS is implemented at the envelope layer" (with G7 partial-closure caveat re evaluator-domain test coverage).
 
 ---
 
@@ -105,12 +105,19 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 ### G7  -  Tests are code-derived, not canon-derived
 - **Code:** `test_pep.py` asserts the *implemented* behavior  -  version drift, SHA256 match,
   fail-closed forwarding. All four pass.
-- **Canon:** No test in the repo is derived from a whitepaper section and cites it.
+- **Canon:** Envelope domain: `TESTS/adversarial/test_ccs_canonical.py` (VL-028) derives nine tests
+  from canon sections 11.9, 12.1, 12.3, 12.4, 13 with explicit citations in each docstring. Evaluator
+  domain: AC^3, T^26, manifest-integrity tests still code-derived.
 - **Delta:** Code-derived tests confirm the code; they cannot detect drift *from canon*  -
   this is precisely how G0 went unnoticed. Green tests certified "CCS" that does not match section 12.
-- **Action:** Add `TESTS/adversarial/` with a distinct category of **canon-derived tests**,
-  each citing the whitepaper section it verifies. A section 12 test should currently **fail or be
-  marked expected-fail**  -  that failure is the honest signal that CCS is not yet implemented.
+- **Status: PARTIALLY ADDRESSED** (VL-028 + VL-029) - envelope domain closed via canon-derived
+  tests at VL-028; the post-VL-029 envelope.py and pep.py wiring exercise those tests on every
+  ELIGIBLE response. Evaluator-domain canon-derived tests still open.
+- **Action:**
+  1. Add canon-derived tests for the envelope domain (section 12.1, 12.3, 12.4, 13).
+     **DONE under VL-028** (`test_ccs_canonical.py`).
+  2. Add canon-derived tests for the evaluator domain (section 11.7 AC^3, section 11.8 T^26,
+     section 11.9 manifest-integrity). **OPEN.**
 
 ### G8  -  Proof docs are narrated, not executable
 - **Code:** The real evidence is the pytest suite.
@@ -250,8 +257,8 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 
 ## Priority order
 
-1. **G0**  -  the anchor. Everything else is hygiene; this is the substantive finding.
-2. **G7**  -  without canon-derived tests, the next G0 is invisible.
+1. **G0**  -  the anchor. **RESOLVED** (VL-012 rename half + VL-029 build half). The substantive finding is now closed.
+2. **G7**  -  without canon-derived tests, the next G0 is invisible. **PARTIALLY ADDRESSED** (VL-028 closed envelope domain; evaluator-domain canon-derived tests still open).
 3. **G0 rename + G6 + G10**  -  RESOLVED (VL-012). See Resolved gaps.
 4. **G2 + G12 + G13**  -  schema-layer work. PARTIALLY closed (VL-014 + VL-015 + VL-016: schema drafted, cross-model-verified, corrected). Full G2 closure pairs with proposed VL-017 (failing schema-shape tests), VL-018 (validator), VL-019 (PEP wiring). G12 and G13 canon-layer halves remain open pending canon-version event under GR-1.
 5. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete.

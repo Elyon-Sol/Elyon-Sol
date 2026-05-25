@@ -7383,3 +7383,310 @@ Per VL-015/VL-016 + VL-023 follow-up + VL-025 follow-up + VL-026 + VL-027 preced
 The VL-028 session opener referenced throughout this entry was drafted at VL-027's close and uploaded to this session. The opener's text is not committed as a repo artifact; it travels with the working session (matching the VL-027 opener's pattern). The opener is the source of constraints (a)-(m), Decisions A and B, and the rebase mechanics.
 
 Next trajectory action per STATE.md item 24: VL-029 (pep.py wiring + G0 build half close + envelope.py update for the ccs-derivation rule per Decision A's xfail-to-xpass transition + envelope.py docstring drift fix per gap candidate 1).
+
+---
+
+### VL-029 - 2026-05-25 - G0 build half closes: pep.py wires envelope emission + envelope.py ccs-derivation rule + xfail-to-xpass + artifact 04/06 F1 bundle
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** Canonical CCS (whitepaper section 12) is implemented in code and wired into the gate for the first time in project history. envelope.py's `reassert()` returns a dict carrying the derived ccs value per the post-VL-026 forward-looking rule (Decision A); pep.py emits an admissibility envelope on every ELIGIBLE response (artifact 05 build-order step 5); the three xfail tests in test_ccs_canonical.py xpassed and were marker-removed in the same commit (Decision A-extended strict=True discipline); artifact 04 records G0 RESOLVED + G7 PARTIALLY ADDRESSED; artifact 06 records 7 row promotions to FULL with summary count consistency.
+
+#### Background
+
+VL-029 is the trajectory-closing commit for the G0 build half. The substantive work was pre-derived across the prior sessions: VL-014 through VL-019 laid down the schema and PEP wiring; VL-025 built envelope.py with `build_envelope()` and `reassert()`; VL-026 revised artifact 05 with the forward-looking ccs-derivation rule (Open question 1 resolution); VL-027 fixed the envelope.py import bug surfaced during VL-028's test-drafting; VL-028 landed the canon-derived tests with the three xfail markers asserting the post-VL-026 dict-shaped `reassert()` return that VL-029 would implement.
+
+VL-029's job: make the test xpass, wire envelopes into the response path, close the G0 build half completely, and bundle the F1 artifact 04/06 G-row movements per the opener's locked F1 decision. Three years of project history converge in this commit.
+
+#### Pre-session locked decisions (carried from the VL-029 opener)
+
+- **Decision A (from VL-028, EXTENDED at VL-029 opener):** `reassert()` returns dict `{"outcome": <str>, "ccs": <bool>}`. The dict shape is locked at VL-029; the three xfail markers in `test_ccs_canonical.py` were removed in the same commit per `strict=True` discipline.
+- **Decision A-extended:** xfail-marker removal lands in the same commit as the envelope.py update.
+- **Decision B (from VL-027/VL-028):** Row 2 (tamper detection) test placement unchanged.
+- **Decision C1:** condition booleans (ac3, t26, manifest_integrity) derived independently in pep.py via `safe_manifest()` + three condition functions, NOT via an evaluator.evaluate() refactor. Preserves evaluator.evaluate()'s aggregate-decision-string contract; zero impact on the 23 test_adversarial_evaluator.py cases.
+- **Decision D:** envelopes are runtime return only at VL-029; persistence (G5 territory) is build-outward.
+- **Decision E SD-3-a:** ELIGIBLE response shape is `{"decision": "ELIGIBLE", "envelope": <envelope>}`. REFUSE shape unchanged from VL-019. Drops `upstream_status` and `upstream_response` (no existing test asserted on those fields; literal Decision-E reading).
+- **Decision F1:** artifact 04 + artifact 06 G-row movements bundled into the VL-029 commit (not deferred to a follow-up per VL-018's pattern).
+
+#### In-session sub-decisions
+
+Recorded for traceability; not pre-session but explicit user-confirmed at decision-point per P2 checkpoint discipline:
+
+- **SD-4-before:** envelope built after evaluate()-returned-ELIGIBLE, before the upstream POST. Records state at decision time per artifact 05.
+- **Q-comment brief:** pep.py code-comment verbosity is brief (3-line header citing C1 + integration boundary), not verbose (the module docstring already provides extensive context).
+- **W2 (post-N3 fix):** envelope construction block wrapped in try/except raising REF_PEP_FAIL_CLOSED on any exception. Matches the symmetric protection around evaluate() and the upstream POST. Closes the spec divergence surfaced by N3 source-first re-read before commit.
+- **D7-tense-shift:** envelope.py docstring drift fix applied as 3 minimal renames at lines 36/43/77 (zero byte-delta) + tense-shift at lines 79 and 316-319 where pre-existing prose described a "future" event that's now in the past.
+- **C-honest:** the C2 (lines 74-77) and C3 (lines 316-319) docstring rewrites are substantive rather than minimal tense-shifts, reflecting the post-Edit-1a state where reassert() now performs the ccs-derivation (was previously: "boolean-setting happens elsewhere ... not in this module"; now: "reassert() in this module performs the derivation as part of its return value").
+- **Option alpha (=gamma):** the dict-shape `reassert()` return shape change broke 9 existing non-xfail tests' bare-string assertions (4 in test_envelope.py, 5 in test_ccs_canonical.py). Treated as a sixth implicit edit set, updated to `assert reassert(env)["outcome"] == X` (2d-bare pattern) in the same commit as the envelope.py shape change. Same-commit discipline parallel to Decision A-extended. Surfaced as Finding 1 of this entry (second instance of VL-028 Finding 1's opener-prediction-vs-file-content surface divergence pattern).
+- **TP-1 (test_pep.py): new test function** rather than extending the existing test_governed_call_eligible_forwards_once.
+- **TP-2:** EXPECTED_ENVELOPE_TOP_KEYS redefined locally in test_pep.py per the established "self-contained adversarial test files" precedent.
+- **TP-3:** structural-properties + select-deterministic-values assertions; no hash-value pinning (constraint (i) inherited).
+- **Q-artifact04-1:** priority-order polish (G0 anchor RESOLVED + G7 PARTIALLY ADDRESSED) included alongside the 5 substantive row-status edits.
+- **Q-artifact04-2:** G3 cross-reference in artifact 04 row line 75 NOT touched (G3 reframe is a separate trajectory action explicitly OPEN per the opener).
+- **Q-artifact06-1 R-trajectory:** section 13 row PARTIAL -> FULL per the canon's-intent-is-the-system-as-a-whole reading.
+- **Q-artifact06-2:** section 12.2 row PARTIAL -> FULL (u/c/d now stored in envelope for cross-transition comparison).
+- **Q-artifact06-3:** read-of-the-whole-picture paragraph fully rewritten to reflect post-VL-029 state.
+- **Q-artifact06-4:** pre-existing "FULL (8) listed 9" miscount fixed in the new summary line.
+- **S-1 (STATE.md ST-1 strict):** the stale trajectory-summary prose at STATE.md lines 1116-1152 ("With priority item 3..." + "Suggested next move" + "Decisions parked") is NOT touched in this commit; the drift is recorded as a gap candidate (gap candidate 1 of this entry).
+- **S-2 brief item 25:** the new STATE.md item 25 (07_continuity_recursion.md candidate) is brief; the comprehensive multi-layer derivation belongs in the artifact itself when drafted.
+- **S-3 verbose Last-updated:** the Last-updated parenthetical matches the VL-026/VL-027/VL-028 prior bullets' verbose-single-line pattern for consistency.
+
+#### Procedure confirmation (a)-(n)
+
+(a) **Scope-bound** to artifact 05 (post-VL-026) + canon section 12 + the eight trajectory files (envelope.py, pep.py, the three test files, artifact 04, artifact 06, STATE.md, the ledger). No canon, manifest, evaluator.py, request_validator.py, replay/receipt.py, SPEC/request_schema.md, or methodology-file changes in this commit.
+
+(b) **Scope-adherence checkable.** Each code change cites a spec passage or canon clause inline. Each row-status change in artifact 06 cites the implementing code construct. Each new test docstring cites the artifact 05 or canon passage it verifies.
+
+(c) **VL-025 smoke test treated as precedent, not source.** The pre-commit verification was per-file synthetic-fixture verification + cross-file source-first re-read (N3), not the in-memory smoke-test pattern.
+
+(d) **Pre-commit baseline 80 passed + 3 xfailed; post-commit baseline 84 passed + 0 xfailed** (80 prior - 3 xfail + 3 xpass + 1 new test_pep envelope coverage). Both are constraints, not predictions. Verification deferred to the user's real environment per constraint (m).
+
+(e) **No new canon-derived test files.** The new test_pep_eligible_response_contains_envelope is spec-derived + wire-shape-derived, not canon-derived. Per the opener constraint (e) carried forward.
+
+(f) **Source-first applied.** Phase 1 of this session read each input file from disk: post-VL-026 artifact 05, post-VL-027 envelope.py, post-VL-028 both test files, current pep.py + evaluator.py, both structural-doc files, STATE.md, the verification ledger tail. The opener's enumeration of edit sites was verified against the actual file content before any apply-script.
+
+(g) **Set-exhaustiveness applied.** Enumerated explicitly: the 3 xfail tests by name (Decision A removal); the 5 envelope.py docstring drift sites by line (VL-028 gap candidate 1; verified at lines 36/43/77/79/319 exactly); the 9 non-xfail callers of `reassert()` affected by the dict-shape change (surfaced as Option-alpha second-instance per Finding 1); the 6 return statements in reassert() (verified at lines 350/359/367/374/384/391 in pre-edit; shifted to 368/377/385/392/402/409 after docstring edits); the 14 row + summary edits in artifact 06; the 7 edits in artifact 04. Status-count internal consistency verified post-apply for artifact 06 (15 FULL + 4 PARTIAL + 0 DRIFTED + 3 UNIMPLEMENTED + 3 N/A = 25 = pre-existing row count).
+
+(h) **Mode discipline.** Each test docstring's claim is bounded to what the test verifies. The 3 formerly-xfail tests' docstrings were tense-shifted to past-tense ("Implemented at VL-029 per Decision A") rather than carrying historical xfail framing.
+
+(i) **No decision_sha256 value pinning.** test_pep_eligible_response_contains_envelope verifies the hash is a 64-character lowercase hex string; the specific value is not asserted.
+
+(j) **VL-009 ASCII-safe standard applied at write time.** Each apply-script performed a pre-write ASCII check; the STATE.md apply-script caught 3 instances of Greek-alpha typographic drift (Finding 4 of this entry) before write. All 8 modified files are ASCII-clean post-commit; the VL-027 Finding 4 discipline fired correctly.
+
+(k) **xfail discipline.** The 3 xfail markers in test_ccs_canonical.py were removed in the same commit as the envelope.py update per Decision A-extended; xpass-without-marker-removal would have made the commit dirty. No new xfails introduced.
+
+(l) **Bug-fix discipline.** One real spec divergence surfaced during the N3 source-first re-read (envelope construction not fail-closed in pep.py); fixed via the W2 try/except wrap in the same session. The fix landed before commit, not deferred to a follow-up; the opener constraint (l) ordinarily defers bug fixes to subsequent commits but the W2 fix is structurally part of the pep.py wiring (which had not yet been "committed" inside this session at the time of N3  -  the in-memory state allowed correction without scope violation).
+
+(m) **Sandbox conditions match user's expected production conditions.** Per VL-027 Finding 3: per-file pytest verification was deferred to the user's real environment because this session's container does not run pytest authoritatively. Per-file apply-scripts performed `ast.parse()` syntax verification + module-level import structure verification (via ast walks) as the closest in-sandbox proxy.
+
+(n) **Multi-file build commit ordering** per opener constraint (n): envelope.py first (Edit 1a/1b + docstring edits) -> test_ccs_canonical.py (xfail removal + dict-shape callers) -> test_envelope.py (dict-shape callers) -> pep.py (wiring + W2 fix) -> test_pep.py (envelope coverage) -> artifact 04 -> artifact 06 -> STATE.md -> ledger (this entry). Per-file ASCII + syntax verification at each step. The N3 source-first re-read interleaved between pep.py and test_pep.py was an additional checkpoint not in the opener's ordered list but warranted by accumulated session methodology lessons.
+
+#### What this commit does
+
+Eight files modified:
+
+1. **`IMPLEMENTATION/envelope.py`** (16656 -> 17848 bytes, +1192b).
+   - `reassert()` returns dict `{"outcome": <str>, "ccs": <bool>}` per Decision A (6 return statements updated).
+   - Module docstring "ccs field on first issuance" section (lines 71-86) rewritten to reflect that reassert() in this module performs the ccs-derivation.
+   - reassert() docstring "Returns" block updated for dict shape; "is NOT performed here" paragraph rewritten to "is performed here per post-VL-026 Edit 5".
+   - 3 docstring drift sites at lines 36, 43, 77 received minimal VL-027 -> VL-029 renames (zero byte-delta each).
+   - 2 docstring drift sites at lines 79 and 316-319 received tense-shift + substantive update (post-Edit-1a accuracy).
+2. **`IMPLEMENTATION/pep.py`** (6810 -> 9337 bytes, +2527b).
+   - Imports extended: `safe_manifest`, `ac3_valid`, `t26_valid`, `manifest_integrity_valid` from evaluator; `build_envelope` from envelope.
+   - Module docstring extended with VL-029 envelope-emission paragraph.
+   - governed_call docstring step 6 extended to mention envelope construction explicitly.
+   - Envelope construction block inserted between the evaluator-layer-REFUSE handling and the upstream forwarding. Wrapped in try/except raising REF_PEP_FAIL_CLOSED on any exception (W2 fail-closed discipline; symmetric with the existing pattern around evaluate() and requests.post).
+   - Final return shape changed from `{"terminal_state": "ELIGIBLE", "upstream_status": ..., "upstream_response": ...}` to `{"decision": "ELIGIBLE", "envelope": envelope}` per Decision E SD-3-a.
+3. **`TESTS/adversarial/test_ccs_canonical.py`** (15742 -> 14825 bytes, -917b).
+   - 3 `@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)` decorators removed.
+   - `XFAIL_REASON_DICT_SHAPE` constant block removed.
+   - 5 non-xfail callers updated to `assert reassert(env)["outcome"] == X` (Option-alpha second-instance per Finding 1).
+   - Module docstring xfail-tests passage light-edited to past-tense + landing-note (S-3 B' choice).
+   - xfail-section comment block at lines 286-299 honestly rewritten (post-VL-029 framing replacing the now-historical pre-VL-029 framing).
+   - 3 formerly-xfailed tests' docstrings tense-shifted ("xfail until..." -> "Implemented at VL-029 per Decision A").
+4. **`TESTS/adversarial/test_envelope.py`** (14948 -> 14992 bytes, +44b).
+   - 4 non-xfail callers updated to `assert reassert(env)["outcome"] == X` (Option-alpha second-instance per Finding 1; same pattern as test_ccs_canonical.py 2d updates).
+5. **`TESTS/test_pep.py`** (5552 -> 9316 bytes, +3764b).
+   - New test `test_pep_eligible_response_contains_envelope` appended. Verifies 200 OK + response body has `"decision": "ELIGIBLE"` and `"envelope"` keys + envelope has the 10 expected top-level keys per artifact 05 + envelope.decision == "ELIGIBLE" + envelope.target_url matches input + condition_results.ac3/t26/manifest_integrity all True (ELIGIBLE-path invariant per Decision C1) + condition_results.ccs is None (first issuance) + decision_sha256 is a 64-character lowercase hex string (no value pinning).
+   - Local EXPECTED_ENVELOPE_TOP_KEYS constant per the self-contained-test-file precedent.
+6. **`docs/restructure/04_current_vs_claimed.md`** (16477 -> 17535 bytes, +1058b).
+   - G0 Status: PARTIALLY RESOLVED -> RESOLVED (VL-012 + VL-029).
+   - G0 Action item 3: OPEN -> DONE under VL-029.
+   - G0 Action item 4: OPEN -> PARTIALLY ADDRESSED at VL-028.
+   - G0 Action item 5: STANDING -> RESOLVED at VL-029.
+   - G7 row: added Status: PARTIALLY ADDRESSED (VL-028 + VL-029) + Action prose updated to past-tense with carry-forward.
+   - Priority order: G0 anchor RESOLVED note added; G7 PARTIALLY ADDRESSED note added.
+7. **`docs/restructure/06_spec_to_code_traceability.md`** (9328 -> 14461 bytes, +5133b).
+   - 7 row promotions to FULL: section 3 CCS, section 12.1, section 12.2, section 12.3, section 12.4, section 13 (R-trajectory reading per Q-artifact06-1).
+   - Appendix D.3 stays UNIMPLEMENTED with refined note (D.3's literal in-evaluate CCS-isolated failure case doesn't occur on first issuance since condition_results.ccs=None; the CCS-isolated failure does occur at reassertion via the section-12.4 path).
+   - section 2 Evaluation pipeline + section 6 Lightweight formal model: stay PARTIAL with notes updated to reflect that canonical CCS is at the envelope layer rather than at the structural position the canon's pseudocode names.
+   - Summary status counts: FULL 8 -> 15 (pre-existing "FULL (8) listed 9" miscount fixed); PARTIAL 6 -> 4; DRIFTED 0 with note update naming VL-029 build-half closure; UNIMPLEMENTED 7 -> 3; N/A 3 unchanged.
+   - Read-of-the-whole-picture paragraph fully rewritten: "All three canonical invariants (AC^3, T^26, CCS) are FULL post-VL-029."
+8. **`STATE.md`** (82263 -> 91154 bytes, +8891b).
+   - Last-updated line: VL-028 summary replaced with VL-029 summary (S-3 verbose).
+   - New Current-verified-state bullet for VL-029 appended after the VL-028 bullet.
+   - Item 24 in Next-open-action: OPEN -> Done at VL-029.
+   - New item 25 (07_continuity_recursion.md candidate; OPEN, newly eligible).
+   - Known open gaps: G0 entry PARTIALLY RESOLVED -> RESOLVED; G7 entry gains PARTIALLY ADDRESSED status note.
+
+#### Verification
+
+Per-file synthetic-fixture verification was applied to test_ccs_canonical.py, test_envelope.py, pep.py (twice: original wiring + W2 fix), test_pep.py, artifact 04, artifact 06, STATE.md. Each apply-script performed:
+- Pre-state md5 verification against the expected pre-edit md5
+- Per-edit anchor uniqueness check (count == 1)
+- Per-edit byte-delta reporting
+- Post-state ASCII pre-check (VL-009; caught 3 Greek-alpha instances in STATE.md pre-write)
+- Post-state Python `ast.parse()` syntax check for code files
+- Atomic write (tmpfile + rename)
+
+envelope.py was edited via str_replace direct (not apply-script) per the smaller-edit-batch heuristic in early session, with one R1 self-discipline recovery for mid-edit scope-expansion (Finding 2 of this entry).
+
+Final modified-file md5s:
+- envelope.py: `b1b1e5d7a06a847121034eaa420a064f` (17848 bytes, 409 lines)
+- test_ccs_canonical.py: `9f35c51b7f0918d8ef0d74eb1cb8a5d0` (14825 bytes, 352 lines)
+- test_envelope.py: `7fa290094fd3a3143f28cbe125bcf92f` (14992 bytes, 383 lines)
+- pep.py: `2a26d41ebe896f4739aec4ad7f39818b` (9337 bytes, 234 lines)
+- test_pep.py: `73df5247d30d2af9b6686f150f96160b` (9316 bytes, 278 lines)
+- 04_current_vs_claimed.md: `879a50c0ff9f05f2129941b5c629227b` (17535 bytes, 266 lines)
+- 06_spec_to_code_traceability.md: `2fca2d667628b4c406b9d899ab3a3864` (14461 bytes, 88 lines)
+- STATE.md: `95f446c5a32f0225d667b377706c0545` (91154 bytes, 1515 lines)
+
+ASCII-safety per VL-009: 0 non-ASCII bytes in any of the 8 modified files post-commit.
+
+Pytest verification ran in the user's real environment per constraint (m). **Pre-fix run: 83 passed + 1 failed** at `TESTS/adversarial/test_request_schema.py::test_schema_accepts_valid_request` (the test asserted on `body.get("terminal_state") == "ELIGIBLE"` against the pre-VL-019 response shape; Decision E SD-3-a changed the ELIGIBLE response to `{"decision": "ELIGIBLE", "envelope": ...}`, dropping `terminal_state`). Per constraint (l) carried forward, the test-shape fix lands as a same-commit edit to the VL-029 bundle (Finding 8 below records the missed caller-enumeration discipline). **Post-fix run: 84 passed + 0 xfailed** (80 prior - 3 xfail + 3 xpass-now-pass + 1 new test_pep envelope coverage). The post-fix state matches the bundle's pre-fix verification claim; the pre-fix divergence is honestly recorded rather than glossed over.
+
+#### Spec-citation map for envelope.py changes
+
+| Edit | Artifact 05 / canon passage |
+|---|---|
+| reassert() dict return shape | Post-VL-026 Open question 1 resolution: "True on REASSERTED ... False on INVALIDATED or RE-EVALUATE-REQUIRED" |
+| 6 dict-return statements | Post-VL-026 Edit 5 ccs-derivation rule + canon section 12.4 ("if any condition is violated: CCS = 0") |
+| Module-docstring ccs-on-first-issuance section rewrite | Post-VL-026 Open question 1 resolution + Edit 2 purity contract |
+| reassert() docstring "performed here" paragraph | Post-VL-026 Edit 5 forward-looking rule + Decision A |
+| Returns block dict-shape documentation | Decision A |
+
+#### Spec-citation map for pep.py wiring
+
+| Edit | Spec / decision basis |
+|---|---|
+| Imports of safe_manifest + 3 condition functions + build_envelope | Decision C1 (preserve evaluator.evaluate() contract) |
+| Module docstring envelope-emission paragraph | Artifact 05 build-order step 5 |
+| governed_call docstring step 6 extension | Reflects post-VL-029 endpoint behavior |
+| Envelope construction block (5 statements) | Decision C1 + artifact 05 envelope structure |
+| try/except wrap on envelope construction | W2 fail-closed discipline + symmetric with existing pattern |
+| Response shape `{"decision": "ELIGIBLE", "envelope": envelope}` | Decision E SD-3-a |
+
+#### xfail-marker-removal verification
+
+Three `@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)` decorators removed at pre-edit lines 312, 332, 353 of test_ccs_canonical.py:
+- `test_canon_12_3_ccs_derived_true_on_REASSERTED`
+- `test_canon_12_4_ccs_derived_false_on_INVALIDATED`
+- `test_canon_12_4_ccs_derived_false_on_RE_EVALUATE_REQUIRED`
+
+`XFAIL_REASON_DICT_SHAPE` constant block (8 lines) removed; no remaining users.
+
+Per Decision A-extended strict=True discipline: the marker removal lands in the same commit as the envelope.py update; xpass-without-marker-removal would cause pytest to report XPASS (red) and the commit would be dirty.
+
+The 3 formerly-xfailed tests' docstrings were tense-shifted: "xfail until envelope.py implements the ccs-derivation rule ... deferred to VL-029" became "Implemented at VL-029 per Decision A (formerly xfail at VL-028 awaiting envelope.py's implementation of the post-VL-026 Open question 1 resolution)."
+
+#### G0 status
+
+**G0 (CCS specification/implementation drift): RESOLVED at VL-029.** Both halves closed:
+- Rename half: closed at VL-012 (`ccs_valid()` renamed to `manifest_integrity_valid()`; the name "CCS" reserved in code and test IDs).
+- Build half: closed at VL-029. envelope.py's `build_envelope()` constructs the envelope per artifact 05's "Envelope structure"; `reassert()` implements the reassertion-protocol table with the post-VL-026 ccs-derivation rule. pep.py emits envelopes on every ELIGIBLE response per artifact 05 build-order step 5. The canon's section 12 transition invariant is now deterministic in code, exercised on every ELIGIBLE response, and verifiable via canon-derived tests at TESTS/adversarial/test_ccs_canonical.py.
+
+In artifact 06: section 3 CCS row transitions UNIMPLEMENTED -> FULL. Section 12.1, section 12.3, section 12.4 likewise FULL. Section 12.2 PARTIAL -> FULL (u, c, d now stored in envelope for cross-transition comparison). Section 13 PARTIAL -> FULL per R-trajectory reading (the canon's `G(I) = AC^3 AND T^26 AND CCS` is realized across the evaluate-then-envelope pipeline).
+
+#### G7 status
+
+**G7 (tests are code-derived, not canon-derived): PARTIALLY ADDRESSED (VL-028 + VL-029).**
+- **Envelope domain closed.** `TESTS/adversarial/test_ccs_canonical.py` derives 9 tests from canon sections 11.9, 12.1, 12.3, 12.4, 13 with explicit citations in each docstring. The post-VL-029 envelope.py + pep.py wiring exercise those tests on every ELIGIBLE response.
+- **Evaluator domain still open.** Canon-derived tests for section 11.7 (AC^3), section 11.8 (T^26), and section 11.9 (manifest-integrity) remain code-derived (`TESTS/test_adversarial_evaluator.py` and `TESTS/adversarial/test_request_schema.py` derive from code shape, not from canon clauses). Future trajectory action; not blocking.
+
+#### Gap candidates
+
+1. **STATE.md trajectory-summary prose drift** (load-bearing; recorded per S-1 strict-scope choice). STATE.md lines 1116-1152 ("With priority item 3..." + "Suggested next move: VL-021 queue-drain" + "Decisions parked: VL-014 open questions") was written at VL-020 and never refreshed; post-VL-029 it references trajectory states that are 7+ sessions in the past (VL-021 queue-drain landed at VL-021 itself; the "G0 build half: canonical CCS implementation via the envelope spec (now current at VL-020)" suggestion landed across VL-025/VL-026/VL-027/VL-028/VL-029). The next session's reader will see freshly-updated item 24/25 immediately followed by stale 7-sessions-old prose. Resolution candidate: a focused str_replace commit refreshing the three stale passages with post-VL-029 trajectory state. Not blocking; not actioned in this commit per S-1.
+
+2. **STATE.md "Known items open but not scheduled" subsection** (lines 1154+) accumulates entries from VL-011 onward and was not pruned across the 8-session interval. Some entries are now historical (e.g., VL-014's `-m` block failure, addressed at VL-016 via `git commit -F`). Resolution candidate: a focused review-and-prune commit. Not blocking; not actioned. Same family as gap candidate 1.
+
+3. **Methodology-promotion candidates** accumulated from VL-025 through VL-029, not yet absorbed into the methodology files:
+   - VL-026 Finding 1 / VL-027 Finding 2 / VL-028 Finding 3 / VL-029 Finding 6: synthetic-fixture pre-verification methodology (promote to `docs/methodology/apply_script_template.py` docstring).
+   - VL-027 Finding 1 / VL-028 Finding 5: every IMPLEMENTATION/ module should be import-tested (candidate `TESTS/test_module_imports.py`).
+   - VL-027 Finding 4 / VL-029 Finding 4: typographic punctuation drift in Claude-side prose drafting (candidate Lesson 7 in `session_mechanics_lessons.md`).
+   - VL-028 Finding 1 / VL-029 Finding 1: opener-prediction-vs-file-content surface divergence (candidate Lesson 5 surface-event sub-pattern; two-instance threshold now met at the rebase layer AND at the dict-shape-callers layer).
+   - VL-029 Finding 2: R1 mid-edit scope-expansion discipline (candidate refinement to bug-diagnose-vs-bug-fix pattern recorded at VL-026's self-discipline finding).
+   - VL-029 Finding 3: str_replace argument-confusion failure mode and apply-script promotion as the corrective (candidate Lesson 8 in `session_mechanics_lessons.md`).
+   - VL-029 Finding 5: cross-file source-first re-read (N3) discipline for multi-file build commits (candidate methodology addition).
+   Resolution candidate: a bookkeeping commit absorbing the accumulated findings into the methodology files. Not blocking; not actioned. Same family as gap candidates 1 and 2.
+
+4. **Latent VL-009 inconsistency at `IMPLEMENTATION/replay/receipt.py`** (`canonical_json` uses `ensure_ascii=False`). Now acknowledged in artifact 05 at VL-026 Edit 1 but still not corrected. Carried forward. Not blocking.
+
+5. **STATE.md trajectory-summary "Decisions parked" subsection at lines 1147-1152** is now historically resolved (all referenced open questions are closed); subsumed in gap candidate 1.
+
+#### Process findings
+
+**Finding 1 - Option-alpha second-instance of opener-prediction-vs-file-content surface divergence (Lesson 5 surface-event two-instance threshold met).** The VL-029 opener's edit enumeration for test_ccs_canonical.py covered xfail-marker-removal + XFAIL_REASON_DICT_SHAPE removal + 3 docstring tense-fixes but did NOT cover the 9 non-xfail callers of `reassert()` whose bare-string assertions break when reassert()'s return shape changes from string to dict. Source-first reading enumerated 4 non-xfail callers in test_envelope.py (lines 294/309/325/339) + 5 in test_ccs_canonical.py (lines 157/205/230/254/282) = 9 sites that the opener did not name. Treated as Option-alpha (== gamma): a sixth implicit edit set in the same commit, updated to `assert reassert(env)["outcome"] == X` (2d-bare pattern). Same-commit discipline parallel to Decision A-extended's xfail-marker removal. This is the second instance of opener-prediction-vs-file-content surface divergence (first instance: VL-028 Finding 1's rename-count divergence). Two-instance threshold per `session_mechanics_lessons.md` line 47 met. Candidate methodology refinement: at session start, after source-first read, enumerate all callers of any function whose contract is changing. Queue-drain candidate.
+
+**Finding 2 - R1 mid-edit scope-expansion discipline failure and recovery.** During the envelope.py Edit 1c-tense-shift (D7 authorized: rename at lines 36/43/77 + tense-shift at lines 79/319), Claude expanded scope mid-edit to substantively rewrite lines 71-86 (originally 9 lines) into a 16-line post-Edit-1a-accurate block without explicit user approval. The expansion was factually correct (the post-Edit-1a state requires the rewrite) but exceeded the approved scope. Surfaced as a discipline failure; reverted via str_replace; the collateral edits (C1/C2/C3) were then surfaced separately for explicit user approval (C-honest locked). The discipline pattern that fired correctly: "diagnose-then-apply, not diagnose-and-apply-in-one-step" (recorded as VL-026 self-discipline finding; now reinforced at VL-029). Candidate methodology refinement: when a smaller edit's collateral effects require larger edits to maintain factual consistency, the collateral must be surfaced for explicit approval before applying, not bundled silently.
+
+**Finding 3 - str_replace argument-confusion failure mode (twice in a row) and apply-script promotion as the corrective.** During the test_ccs_canonical.py edits, two consecutive str_replace tool calls had `old_str` and `new_str` arguments effectively inverted, producing a malformed file (three copies of the XFAIL_REASON_DICT_SHAPE constant, two of them with `@pytest.mark.xfail` decorators directly preceding constant definitions  -  syntactically invalid Python). Recovery: copy from pristine upload (md5 verification confirmed clean restore), then build apply-script + synthetic-fixture pattern. The apply-script pattern's explicit (label, old_str, new_str) tuple structure makes argument confusion structurally harder than free-form str_replace tool calls. This session adopted apply-script-with-synthetic-fixture for all remaining file edits after this failure; the pattern produced 0 further mechanical errors across pep.py (twice), test_envelope.py, test_pep.py, artifact 04, artifact 06, STATE.md. Candidate methodology promotion: "use apply-script + synthetic-fixture for any file edit with more than 2 sites, even if it feels like overkill for small batches." Strongest possible argument for the discipline since the same session demonstrated both the failure mode and the corrective.
+
+**Finding 4 - VL-027 Finding 4 typographic-drift discipline fired a third time at VL-029.** The STATE.md apply-script's pre-write ASCII check caught 3 instances of U+03B1 GREEK SMALL LETTER ALPHA (`alpha`) introduced during Claude-side prose drafting (the in-session vocabulary "Option alpha (= gamma)" for the dict-shape caller updates leaked into the new_str text of the STATE.md edits). VL-027 Finding 4 already met the two-instance threshold; this is a third surface event. The methodology-promotion candidate for `session_mechanics_lessons.md` (Lesson 7: "Claude-side prose drafting silently accepts typographic punctuation; ASCII pre-check at write time is the corrective") is now strongly motivated. Queue-drain candidate. The pre-write ASCII check is operative session-internal discipline; the apply-script template already encodes it.
+
+**Finding 5 - N3 source-first cross-file re-read caught one real spec divergence before commit.** After all per-file synthetic-fixture invariants passed for the pep.py wiring (initial state, pre-W2), the N3 source-first re-read of pep.py + envelope.py + artifact 05 against each other surfaced a spec divergence: the envelope construction block was not wrapped in try/except, so an unexpected exception in any of the condition functions or in build_envelope() would produce a 500 rather than the fail-closed 403 the spec mandates. Fixed via W2 (try/except wrap raising REF_PEP_FAIL_CLOSED) before commit. Per-file apply-script discipline caught the mechanical errors; per-trajectory source-first re-read caught the integration-level spec divergence. Both are needed at different points. Candidate methodology refinement: "for multi-file build commits, schedule a cross-file source-first re-read pass between the last code/test file and the structural-doc updates; the per-file synthetic-fixture verification cannot detect integration-level spec divergences."
+
+**Finding 6 - Synthetic-fixture verification methodology threshold met for the fourth-plus instance.** VL-026 Finding 1 introduced the pattern; VL-027 Finding 2 strengthened it with a real bug catch during STATE.md apply-script build; VL-028 Finding 3 was the formal third-instance durability confirmation; VL-029 ran 7 apply-scripts each with synthetic-fixture pre-verification (test_ccs_canonical.py, test_envelope.py, pep.py original, pep.py W2 fix, test_pep.py, artifact 04, artifact 06, STATE.md). The pattern is durable operative session-local discipline. Methodology-promotion to `docs/methodology/apply_script_template.py` docstring remains a queue-drain candidate (subsumed in gap candidate 3).
+
+**Finding 7 - P2 checkpoint discipline value-demonstrated repeatedly across the session.** Multiple inter-file checkpoints (after envelope.py + test_ccs_canonical.py + test_envelope.py, after pep.py + test_pep.py with N3 re-read, after artifact 04, after artifact 06) gave the user explicit decision points for trajectory direction, scope-expansion approval, and methodology-pattern choice. Each checkpoint surfaced sub-decisions the opener didn't enumerate. The checkpoint pattern made the user's role load-bearing on real decisions (W2, ST-1, S-1/2/3, Q-comment brief, etc.) rather than purely-rubber-stamping a pre-determined plan. Candidate methodology: for multi-file build commits, schedule explicit checkpoints between substantive file groups, not just at session-open and session-close.
+
+**Finding 8 - Missed caller-enumeration at the response-shape layer; third instance of opener-prediction-vs-file-content surface divergence; pytest-surfaced rather than session-internally caught.** The Decision E SD-3-a response-shape change (`{"terminal_state": "ELIGIBLE", "upstream_status": ..., "upstream_response": ...}` -> `{"decision": "ELIGIBLE", "envelope": <envelope>}`) dropped the `terminal_state` key from the ELIGIBLE response. The N3 source-first re-read (Finding 5) covered pep.py + envelope.py + artifact 05 + test_pep.py's existing tests, and the new test_pep_eligible_response_contains_envelope test asserts on the post-VL-029 shape. But `TESTS/adversarial/test_request_schema.py::test_schema_accepts_valid_request` at line 529 also asserted `body.get("terminal_state") == "ELIGIBLE"` (the test was written at VL-017 as a failing schema-shape test and was never refreshed when Decision E landed). The session's caller enumeration covered callers of `reassert()`'s return value (caught the 9 Option-alpha sites at Finding 1) but did NOT enumerate callers of pep.py's ELIGIBLE response shape across the entire `TESTS/` tree. Surfaced by the user's real-environment pytest run: 83 passed + 1 failed. Per constraint (l) carried forward and the same-commit discipline operative throughout VL-029, the fix landed as a same-commit FX-consistent edit to test_request_schema.py (3 sites: docstring step 2 + assertion + error message; lines 506/529/530 of the pre-fix file). Out-of-scope: the pre-VL-019 docstring drift at lines 511-515 ("Against pep.py at HEAD ... HTTP 422 ... must change as part of VL-019") is 4-session-old historical drift, not VL-029's introduction; flagged for a separate trajectory action (same family as the STATE.md trajectory-summary drift recorded as gap candidate 1).
+
+This is the **third instance** of opener-prediction-vs-file-content surface divergence in this session:
+  - First instance: VL-028 Finding 1's rename-count divergence (pre-session)
+  - Second instance (Finding 1 of this entry): Option-alpha 9-caller divergence at the dict-shape callers layer (session-internal, source-first-caught pre-pytest)
+  - Third instance (this finding): test_request_schema.py 1-caller divergence at the response-shape layer (session-external, pytest-caught post-bundle-delivery)
+
+The two-instance threshold for Lesson 5 promotion (Finding 1 of this entry) is **strengthened** by this third instance. The methodology refinement candidate is now load-bearing: "at session start, after source-first read, enumerate all callers of any function whose contract OR return shape is changing, across the entire affected directory tree, not just the files explicitly named in the opener." The N3 source-first cross-file re-read pass (Finding 5) is necessary but not sufficient; it must include explicit caller-enumeration at every contract-changing surface.
+
+Self-discipline accountability: the session had three discipline failures, not two. Findings 1 and 2 caught their respective failures via source-first reading and R1 recovery; Finding 3 caught its failure via apply-script promotion; Finding 8 was caught only by the user's pytest run. The pytest-as-final-arbiter pattern is the framework's intended safety net (constraint (m) and (d)); it fired correctly here. The framework held under pressure; my session-internal discipline did not catch this one.
+
+#### Files affected
+
+- `IMPLEMENTATION/envelope.py` (+1192b; 16656 -> 17848)
+- `IMPLEMENTATION/pep.py` (+2527b; 6810 -> 9337)
+- `TESTS/adversarial/test_ccs_canonical.py` (-917b; 15742 -> 14825)
+- `TESTS/adversarial/test_envelope.py` (+44b; 14948 -> 14992)
+- `TESTS/test_pep.py` (+3764b; 5552 -> 9316)
+- `docs/restructure/04_current_vs_claimed.md` (+1058b; 16477 -> 17535)
+- `docs/restructure/06_spec_to_code_traceability.md` (+5133b; 9328 -> 14461)
+- `STATE.md` (+8891b; 82263 -> 91154)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+
+Total code/test/doc delta: +21692 bytes across 8 files (excluding the ledger append).
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json` (untouched)
+- `IMPLEMENTATION/evaluator.py` (untouched; Decision C1 preserved evaluator.evaluate()'s contract)
+- `IMPLEMENTATION/request_validator.py` (untouched)
+- `IMPLEMENTATION/replay/receipt.py` (untouched; `ensure_ascii=False` divergence acknowledged in artifact 05 at VL-026 but receipt.py itself unchanged; carried as gap candidate 4)
+- `SPEC/request_schema.md` (untouched)
+- `docs/restructure/05_admissibility_envelope_spec.md` (untouched; the post-VL-026 spec is what this commit implements rather than respecifies)
+- `docs/methodology/*` (untouched; methodology-promotion candidates from Findings 1-7 are queue-drain items per gap candidate 3)
+- `docs/SESSION_PROTOCOL.md` (untouched)
+- `docs/MAINTENANCE_PROTOCOL.md` (untouched)
+
+The session-local apply-scripts (`apply_test_ccs_canonical_vl029.py`, `apply_test_envelope_vl029.py`, `apply_pep_vl029.py`, `apply_pep_w2_vl029.py`, `apply_test_pep_vl029.py`, `apply_artifact04_vl029.py`, `apply_artifact06_vl029.py`, `apply_statemd_vl029.py`) and the synthetic-fixture files were used in-session and discarded per the established session-script pattern; they are not committed as repo artifacts.
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash. Prior entries cited:
+
+- VL-028 at commit `7efcefc`
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-023 follow-up at commit `49b797a`
+- VL-023 at commit `83fa5a7`
+- VL-022 at commit `dbd65aa`
+- VL-020 at commit `d81de1d`
+- VL-019 at commit unspecified (will pull at session start; pep.py wiring precedent)
+- VL-018 at commit `cc08844` (with follow-up `f24c837`)
+- VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
+
+Per VL-015 + VL-016 + VL-023 follow-up + VL-025 follow-up + VL-026 + VL-027 + VL-028 precedent: no cross-model verification of VL-029 was scheduled in-session. A future VL-029 follow-up could schedule cross-model verification of the wired envelope-emission path (paralleling VL-025 follow-up's pattern for the build-only commit), but it is not blocking.
+
+The VL-029 session opener referenced throughout this entry was drafted at VL-028's close and uploaded to this session. The opener's text is not committed as a repo artifact; it travels with the working session (matching VL-026/VL-027/VL-028 opener patterns). The opener is the source of constraints (a)-(m), Decisions A through F, and the multi-file build commit ordering (constraint (n)).
+
+#### Next trajectory action
+
+Per STATE.md item 25 (newly added in this commit): the `docs/restructure/07_continuity_recursion.md` artifact candidate is now eligible to schedule. Per VL-023's PARTIAL HOLDS verdict + VL-024's STRENGTHENS-bounded-to-layers-B-and-C refinement + VL-025 follow-up's convergent confirmation, the artifact would name the five fitting layers of the framework's recursive-continuity hypothesis (decision, manifest, methodology, session, evaluator-versioning), the request-layer non-fit, the per-layer detector mechanism, and the layer A/B/C bounding. Schedulable; not blocking.
+
+Other open trajectories remain in the priority order at artifact 04: G3 (public framing) is now schedulable since artifact 06 makes the FULL/PARTIAL/UNIMPLEMENTED picture concrete; G7 evaluator-domain canon-derived tests are open; the bookkeeping batch (G1, G8, G9, G11, G14) accumulates; G4 and G5 are build-outward scope.
+
+Methodology bookkeeping commit absorbing the accumulated process findings from VL-025 through VL-029 (gap candidate 3 of this entry) is a near-term natural commit.
+
+G0 build half closure represents the convergence of the project's anchor trajectory. Three years of derivation, build, and verification land in this commit. The next session reader will see canon section 12 as a deterministic implementation in code, exercised on every ELIGIBLE response, verified against canon-derived tests.

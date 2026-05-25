@@ -291,7 +291,7 @@ def test_reassert_row_5_REASSERTED():
     REASSERTED.
     """
     env = _build_valid_envelope()
-    assert reassert(env) == REASSERTED
+    assert reassert(env)["outcome"] == REASSERTED
 
 
 def test_reassert_row_1_INVALIDATED_on_canon_forge():
@@ -306,7 +306,7 @@ def test_reassert_row_1_INVALIDATED_on_canon_forge():
     env = _build_valid_envelope()
     env["canon"]["canon_sha256"] = "0" * 64
     _rehash_decision_sha256(env)
-    assert reassert(env) == INVALIDATED
+    assert reassert(env)["outcome"] == INVALIDATED
 
 
 def test_reassert_row_3_RE_EVALUATE_REQUIRED_on_evaluator_mismatch():
@@ -322,7 +322,7 @@ def test_reassert_row_3_RE_EVALUATE_REQUIRED_on_evaluator_mismatch():
     env = _build_valid_envelope()
     env["evaluator"]["evaluator_sha256"] = "0" * 64
     _rehash_decision_sha256(env)
-    assert reassert(env) == RE_EVALUATE_REQUIRED
+    assert reassert(env)["outcome"] == RE_EVALUATE_REQUIRED
 
 
 def test_reassert_row_4_RE_EVALUATE_REQUIRED_on_manifest_mismatch():
@@ -336,7 +336,7 @@ def test_reassert_row_4_RE_EVALUATE_REQUIRED_on_manifest_mismatch():
     env = _build_valid_envelope()
     env["evaluated_against"]["manifest_sha256"] = "0" * 64
     _rehash_decision_sha256(env)
-    assert reassert(env) == RE_EVALUATE_REQUIRED
+    assert reassert(env)["outcome"] == RE_EVALUATE_REQUIRED
 
 
 def test_reassert_purity():

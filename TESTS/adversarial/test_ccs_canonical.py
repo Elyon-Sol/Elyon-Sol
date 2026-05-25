@@ -47,20 +47,18 @@ acknowledgment in the docstring -- canon section 12.3/12.4
 authorize the fail-closed semantics; the specific tamper-detection
 mechanism is artifact-05-layer per post-VL-026 Edit 4.
 
-xfail tests (per VL-028 opener Decision A and constraint (k)):
-the post-VL-026 spec's forward-looking ccs-derivation rule
-(Open question 1 resolution) is not implemented by envelope.py
-at HEAD. reassert() at VL-025 returns a bare string outcome; the
-xfail tests assert against a post-VL-029 dict-shaped return
-{"outcome": ..., "ccs": ...}. The dict shape is provisional;
-VL-029 may select a tuple, a companion function, or another
-shape. strict=True makes the xfail an honest signal: if the
-tests xpass, envelope.py has been updated and the test shape
-must be reconciled with VL-029's actual interface choice in the
-same commit.
+xfail-history (resolved at VL-029): three tests were xfail-marked
+at VL-028 (per the then-VL-028 opener Decision A and constraint (k))
+awaiting envelope.py's implementation of the post-VL-026 spec's
+forward-looking ccs-derivation rule (Open question 1 resolution).
+At VL-028, reassert() returned a bare string outcome; the xfail
+tests asserted against a then-provisional dict-shaped return
+{"outcome": ..., "ccs": ...}. VL-029 locked the dict shape per
+Decision A; the xfail markers were removed in the same commit.
 
-Ledger: VL-028 (proposed; canon-derived half of G7 envelope-domain
-partial closure).
+Ledger: VL-028 (canon-derived half of G7 envelope-domain partial
+closure); VL-029 (envelope.py ccs-derivation rule implementation +
+xfail-marker removal).
 """
 
 import hashlib
@@ -154,7 +152,7 @@ def test_canon_12_1_state_transition_detected_via_hash_change():
     env = _build_valid_envelope()
     env["canon"]["canon_sha256"] = "0" * 64
     _rehash_decision_sha256(env)
-    assert reassert(env) == INVALIDATED
+    assert reassert(env)["outcome"] == INVALIDATED
 
 
 def test_canon_12_3_d_consistency_first_issuance_null():
@@ -202,7 +200,7 @@ def test_canon_12_4_evaluator_change_invalidates_continuity():
     env = _build_valid_envelope()
     env["evaluator"]["evaluator_sha256"] = "0" * 64
     _rehash_decision_sha256(env)
-    assert reassert(env) == RE_EVALUATE_REQUIRED
+    assert reassert(env)["outcome"] == RE_EVALUATE_REQUIRED
 
 
 def test_canon_11_9_manifest_change_invalidates_continuity():
@@ -227,7 +225,7 @@ def test_canon_11_9_manifest_change_invalidates_continuity():
     env = _build_valid_envelope()
     env["evaluated_against"]["manifest_sha256"] = "0" * 64
     _rehash_decision_sha256(env)
-    assert reassert(env) == RE_EVALUATE_REQUIRED
+    assert reassert(env)["outcome"] == RE_EVALUATE_REQUIRED
 
 
 def test_canon_13_eligibility_does_not_persist():
@@ -251,7 +249,7 @@ def test_canon_13_eligibility_does_not_persist():
     applies.
     """
     env = _build_valid_envelope()
-    assert reassert(env) == REASSERTED
+    assert reassert(env)["outcome"] == REASSERTED
 
 
 def test_row_2_tamper_detection_via_artifact_05_mechanism():
@@ -279,37 +277,21 @@ def test_row_2_tamper_detection_via_artifact_05_mechanism():
     # case: the envelope's bytes change but decision_sha256 still
     # records the pre-tamper canonicalization.
     env["request_context"]["AP"] = ["identity", "role", "admin"]
-    assert reassert(env) == INVALIDATED
+    assert reassert(env)["outcome"] == INVALIDATED
 
 
 # ---------------------------------------------------------------------------
-# xfail tests: post-VL-026 forward-looking ccs-derivation rule
+# Tests for the post-VL-026 forward-looking ccs-derivation rule
+# (formerly xfail at VL-028; xpassed and marker-removed at VL-029)
 #
-# Per VL-028 opener Decision A and constraint (k): these tests assert
-# against the post-VL-026 spec's Open question 1 resolution, which
-# envelope.py at HEAD does not implement. strict=True makes the xfail
-# an honest signal of the spec/implementation gap.
-#
-# Provisional shape: dict return from reassert(),
-# {"outcome": <str>, "ccs": <bool>}. VL-029 may select a different
-# interface (tuple, attribute, companion function). When VL-029 lands
-# and these tests start passing, strict=True will fire xpass; the
-# xfail markers must be removed AND the result-indexing shape must be
-# reconciled with VL-029's actual interface choice in the same commit.
+# These three tests verify that reassert() derives condition_results.ccs
+# per post-VL-026 artifact 05 Open question 1 resolution: True on
+# REASSERTED, False on INVALIDATED or RE-EVALUATE-REQUIRED. The dict
+# shape {"outcome": <str>, "ccs": <bool>} is locked by VL-028 Decision A
+# and implemented at VL-029. xfail history per VL-028 ledger entry.
 # ---------------------------------------------------------------------------
 
 
-XFAIL_REASON_DICT_SHAPE = (
-    "VL-029: envelope.py update for ccs-derivation rule pending. "
-    "Post-VL-026 spec Open question 1 names reassert() as the "
-    "ccs-derivation site (True on REASSERTED, False on INVALIDATED / "
-    "RE-EVALUATE-REQUIRED); envelope.py at VL-025 returns the row "
-    "outcome only. Provisional return shape asserted here is "
-    "dict {'outcome': ..., 'ccs': ...}; VL-029 may revise."
-)
-
-
-@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)
 def test_canon_12_3_ccs_derived_true_on_REASSERTED():
     """
     Canon section 12.3: "decision consistency holds:
@@ -319,9 +301,9 @@ def test_canon_12_3_ccs_derived_true_on_REASSERTED():
     d_{t+1} = u_{t+1} AND c_{t+1} holds because all hashes match
     and decision_sha256 verifies, per artifact 05 row 5).
 
-    xfail until envelope.py implements the ccs-derivation rule
-    named in post-VL-026 Open question 1 resolution (deferred to
-    VL-029 or interstitial commit per VL-028 Decision A).
+    Implemented at VL-029 per Decision A (formerly xfail at VL-028
+    awaiting envelope.py's implementation of the post-VL-026 Open
+    question 1 resolution).
     """
     env = _build_valid_envelope()
     result = reassert(env)
@@ -329,7 +311,6 @@ def test_canon_12_3_ccs_derived_true_on_REASSERTED():
     assert result["ccs"] is True
 
 
-@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)
 def test_canon_12_4_ccs_derived_false_on_INVALIDATED():
     """
     Canon section 12.4: "if any condition is violated: CCS = 0."
@@ -338,9 +319,9 @@ def test_canon_12_4_ccs_derived_false_on_INVALIDATED():
     on INVALIDATED (continuity does not hold; the envelope's
     rules-of-the-game have changed or the envelope is tampered).
 
-    xfail until envelope.py implements the ccs-derivation rule
-    named in post-VL-026 Open question 1 resolution (deferred to
-    VL-029 or interstitial commit per VL-028 Decision A).
+    Implemented at VL-029 per Decision A (formerly xfail at VL-028
+    awaiting envelope.py's implementation of the post-VL-026 Open
+    question 1 resolution).
     """
     env = _build_valid_envelope()
     env["canon"]["canon_sha256"] = "0" * 64
@@ -350,7 +331,6 @@ def test_canon_12_4_ccs_derived_false_on_INVALIDATED():
     assert result["ccs"] is False
 
 
-@pytest.mark.xfail(strict=True, reason=XFAIL_REASON_DICT_SHAPE)
 def test_canon_12_4_ccs_derived_false_on_RE_EVALUATE_REQUIRED():
     """
     Canon section 12.4: "if any condition is violated: CCS = 0."
@@ -360,9 +340,9 @@ def test_canon_12_4_ccs_derived_false_on_RE_EVALUATE_REQUIRED():
     decision logic or the governing manifest has moved and
     re-evaluation is required).
 
-    xfail until envelope.py implements the ccs-derivation rule
-    named in post-VL-026 Open question 1 resolution (deferred to
-    VL-029 or interstitial commit per VL-028 Decision A).
+    Implemented at VL-029 per Decision A (formerly xfail at VL-028
+    awaiting envelope.py's implementation of the post-VL-026 Open
+    question 1 resolution).
     """
     env = _build_valid_envelope()
     env["evaluator"]["evaluator_sha256"] = "0" * 64

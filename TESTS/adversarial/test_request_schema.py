@@ -503,9 +503,10 @@ def test_schema_accepts_valid_request(client, upstream_guard):
     """
     A request that conforms to the schema in every respect must:
       1. reach evaluate(),
-      2. return HTTP 200 with terminal_state=ELIGIBLE (assuming
-         AC^3 and T^26 are satisfied, which they are for the
-         AP/OP supplied here against the live manifest),
+      2. return HTTP 200 with body containing decision="ELIGIBLE"
+         and an envelope (assuming AC^3 and T^26 are satisfied,
+         which they are for the AP/OP supplied here against the
+         live manifest),
       3. forward to target_url exactly once.
 
     Against pep.py at HEAD, this fails because GovernedCallRequest
@@ -526,8 +527,8 @@ def test_schema_accepts_valid_request(client, upstream_guard):
     )
 
     body = response.json()
-    assert body.get("terminal_state") == "ELIGIBLE", (
-        f"expected terminal_state=ELIGIBLE, got body={body}"
+    assert body.get("decision") == "ELIGIBLE", (
+        f"expected decision=ELIGIBLE, got body={body}"
     )
 
     assert len(upstream_guard) == 1, (

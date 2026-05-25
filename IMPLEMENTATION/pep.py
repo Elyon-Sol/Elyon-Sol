@@ -35,6 +35,16 @@ REF_SCHEMA_TOP_LEVEL is emitted directly by the validator (see
 request_validator.py lines 308 and 337-342); the PEP does not
 import it because it does not emit it. The PARSE_ERROR import is
 the only schema-vocabulary constant used at this boundary.
+
+Extended in VL-029 to emit admissibility envelopes on ELIGIBLE per
+docs/restructure/05_admissibility_envelope_spec.md build-order step 5.
+On ELIGIBLE, the PEP calls safe_manifest + the three condition
+functions (ac3_valid, t26_valid, manifest_integrity_valid) per
+Decision C1, then calls build_envelope() to construct the envelope,
+then attaches the envelope to the response payload per Decision E
+({"decision": "ELIGIBLE", "envelope": <envelope>}). REFUSE response
+shape is unchanged from VL-019; envelope-on-REFUSE is build-outward
+scope per artifact 05 open question 3 (G4 territory).
 """
 
 import json
@@ -42,7 +52,15 @@ import json
 import requests
 from fastapi import FastAPI, HTTPException, Request
 
-from IMPLEMENTATION.evaluator import load_manifest, evaluate
+from IMPLEMENTATION.evaluator import (
+    load_manifest,
+    evaluate,
+    safe_manifest,
+    ac3_valid,
+    t26_valid,
+    manifest_integrity_valid,
+)
+from IMPLEMENTATION.envelope import build_envelope
 from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
@@ -82,7 +100,12 @@ async def governed_call(request: Request):
          or REF_SCHEMA_TYPE_MISMATCH).
       6. evaluate() on the validator's normalized interaction. REFUSE
          -> HTTPException(403, terminal_state=REFUSE). ELIGIBLE ->
-         forward to target_url.
+         construct envelope (Decision C1: ac3/t26/manifest_integrity
+         derived via the three condition functions on safe_manifest;
+         build_envelope() per artifact 05 build-order step 5), then
+         forward to target_url, then return
+         {"decision": "ELIGIBLE", "envelope": <envelope>} per
+         Decision E.
 
     The endpoint reads the request body as raw bytes rather than
     binding to a Pydantic model because the validator owns
@@ -153,6 +176,41 @@ async def governed_call(request: Request):
             detail={"terminal_state": "REFUSE"},
         )
 
+    # ----- Envelope construction (G0 build half close at VL-029) -----
+    # Canonical CCS per artifact 05 + canon section 12. Decision C1:
+    # condition booleans derived independently in pep.py rather than
+    # from evaluator.evaluate()'s aggregate return. safe_manifest()
+    # is re-called here (it already succeeded inside evaluate()) so
+    # the envelope construction is locally self-consistent: each
+    # boolean passed to build_envelope has a direct visible derivation
+    # in pep.py. Wrapped in try/except (W2 fail-closed discipline):
+    # an unexpected exception in any condition function or in
+    # build_envelope() must raise REF_PEP_FAIL_CLOSED, matching the
+    # symmetric protection around evaluate() and the upstream POST.
+    try:
+        safe_mfst = safe_manifest(manifest)
+        ac3 = ac3_valid(normalized_interaction, safe_mfst["AR"])
+        t26 = t26_valid(normalized_interaction, safe_mfst["R"])
+        mi = manifest_integrity_valid(normalized_interaction, safe_mfst)
+        envelope = build_envelope(
+            decision="ELIGIBLE",
+            target_url=body["target_url"],
+            normalized_interaction=normalized_interaction,
+            manifest=safe_mfst,
+            ac3=ac3,
+            t26=t26,
+            manifest_integrity=mi,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "terminal_state": "REFUSE",
+                "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
+                "error": str(e),
+            },
+        )
+
     # ----- Upstream forwarding (ELIGIBLE) -----
     try:
         upstream = requests.post(
@@ -171,7 +229,6 @@ async def governed_call(request: Request):
         )
 
     return {
-        "terminal_state": "ELIGIBLE",
-        "upstream_status": upstream.status_code,
-        "upstream_response": upstream.text,
+        "decision": "ELIGIBLE",
+        "envelope": envelope,
     }
