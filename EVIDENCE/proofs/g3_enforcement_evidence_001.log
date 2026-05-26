@@ -1,0 +1,26 @@
+=== Elyon-Sol Enforcement Evidence ===
+Started: 2026-05-25T22:45:42Z
+Commit: 89ff2f9c02871d8641cebd3eb043d6c3c0d8471a
+
+=== Block 2: Temporal stability ===
+50 REFUSE then 50 ELIGIBLE in sequence
+Block 2 started: 2026-05-25T22:45:43Z
+Block 2 REFUSE: 50/50 returned 403, 0 unexpected
+Block 2 ELIGIBLE: 50/50 returned 200, 0 unexpected
+Block 2 ended: 2026-05-25T22:47:25Z
+
+=== Block 3: Aggregate continuity ===
+51 REFUSE and 51 ELIGIBLE alternating (102 total)
+Block 3 started: 2026-05-25T22:47:25Z
+Block 3 REFUSE: 51/51 returned 403, 0 unexpected
+Block 3 ELIGIBLE: 51/51 returned 200, 0 unexpected
+Block 3 ended: 2026-05-25T22:48:57Z
+
+=== Summary ===
+Total calls: 202
+REFUSE (403): 101
+ELIGIBLE (200): 101
+Unexpected: 0
+Expected new webhook.site POSTs from script: 101
+Expected final webhook.site inbox count: 155
+Completed: 2026-05-25T22:48:58Z

@@ -79,9 +79,10 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   *implementation* under-implements the *specification* on CCS, and the public framing claims
   the whole canon is realized. Rev. 1's "validator with delusions of grandeur" framing was
   wrong and is retracted.
+- **Status: RESOLVED** (VL-030) - README rewrite at VL-029 follow-up (`5f833fb`); Zenodo addendum Revision 2 (DOI `10.5281/zenodo.20387278`) published; enforcement evidence at `EVIDENCE/proofs/g3_enforcement_evidence_001.{log,md}`.
 - **Action:** Reframe public materials as "a formal admissibility specification (v0.9.8.4)
   with a faithful partial implementation." Use Deliverable 06 to state exactly which
-  invariants are FULL / PARTIAL / DRIFTED. Apply the vocabulary ledger.
+  invariants are FULL / PARTIAL / DRIFTED. Apply the vocabulary ledger. **DONE under VL-030.**
 
 ### G4  -  Bypassability
 - **Code:** `pep.py` forwards via plain `requests.post`. The target cannot verify a call
@@ -261,6 +262,6 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 2. **G7**  -  without canon-derived tests, the next G0 is invisible. **PARTIALLY ADDRESSED** (VL-028 closed envelope domain; evaluator-domain canon-derived tests still open).
 3. **G0 rename + G6 + G10**  -  RESOLVED (VL-012). See Resolved gaps.
 4. **G2 + G12 + G13**  -  schema-layer work. PARTIALLY closed (VL-014 + VL-015 + VL-016: schema drafted, cross-model-verified, corrected). Full G2 closure pairs with proposed VL-017 (failing schema-shape tests), VL-018 (validator), VL-019 (PEP wiring). G12 and G13 canon-layer halves remain open pending canon-version event under GR-1.
-5. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete.
+5. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete. **RESOLVED at VL-030** (README rewrite + Zenodo Revision 2).
 6. G1, G8, G9, G11  -  bookkeeping; do in a batch. (G11 added VL-012; G2 removed from bookkeeping by VL-016 since it now has its own active track at item 4.)
 7. **G4, G5**  -  build-outward scope, after the base is honest.

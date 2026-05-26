@@ -7744,3 +7744,181 @@ Per VL-012's self-referencing-hash finding: this entry does not cite its own com
 #### Next trajectory action
 
 Per the user's session-close note: VL-030 is the next session, with trajectory selection deferred to that session opener. The VL-030 opener draft (circulating at this session's close) names five candidate trajectories (T-07, T-G3 multi-surface, T-methodology, T-G7-eval, T-bookkeeping) with conditional opener content for each. T-G3 is now partially-progressed via `5f833fb` if next session continues with public-framing work, or remains open as a multi-surface trajectory if next session goes elsewhere.
+
+### VL-030 - 2026-05-26 - T-G3 public framing reframe closes: Zenodo addendum Revision 2 published; repo-internal evidence commit ratifies the substantive work
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** G3 (public framing overclaims relative to implementation) closes completely. Two-part substantive trajectory: Part 1 README rewrite landed at VL-029 follow-up commit `5f833fb` (ratified into trajectory by this entry); Part 2 Zenodo addendum Revision 2 published at DOI `10.5281/zenodo.20387278` with attached evidence PDF anchored to snapshot commit `89ff2f9c02871d8641cebd3eb043d6c3c0d8471a`. Part 3 (this commit): repo-internal evidence files plus structural-doc and STATE.md updates capturing the durable record.
+
+#### Background
+
+T-G3 was OPEN post-VL-029 per the VL-030 opener's trajectory menu. The opener identified T-G3 as partially-progressed via the README rewrite at `5f833fb` and named "remaining surface depends on whether the project has external materials beyond README" as a scope-unknown. Session opened with trajectory menu; user selected T-G3 after assessing fatigue and stamina.
+
+The session surfaced one external material the opener did not name: the Zenodo DOI deposit from a prior iterative-surface authoring session ("AI Governance Before Intelligence" title, "Version 0.9.8.5" addendum, with stale enforcement-evidence numbers). The "Version 0.9.8.5" in the prior title resolved to a presentation-layer addendum-versioning convention, not a canon-version increment under GR-1; no phantom canon. T-G3 scope expanded from README-only to README + Zenodo new-DOI.
+
+The session conducted a fresh local enforcement-evidence run at HEAD (`89ff2f9`, one commit ahead of VL-029's `79012d7` due to the README rewrite at `5f833fb`) to anchor the new DOI's evidence section to current state rather than carrying forward the prior addendum's stale numbers.
+
+#### Pre-session locked decisions
+
+- **Decision T-G3-A** (framing standard for Zenodo abstract): (ii) - build-outward gaps by short reference, not enumerated in the abstract.
+- **Decision T-G3-B** (scope of public materials): README + Zenodo. No other external surfaces named or affected.
+- **Decision T-G3-C** (test-count claim in README): G1 NOT bundled with T-G3. README continues to not hardcode a test count; STATE.md is the source of truth.
+- **Decision T-G3-D** (commit local enforcement-evidence artifacts to `EVIDENCE/proofs/`): (i) - yes, commit. Pattern parallels VL-019's `g2_pep_wiring_001.log`.
+
+#### In-session sub-decisions
+
+- **SD-1** (webhook.site stale-inbox-baseline arithmetic vs fresh URL): baseline arithmetic. The webhook.site URL had 53 prior items from unrelated testing dated 2026-05-04 (three weeks prior). Decision: name the baseline explicitly, measure delta. Result: 53 -> 155, delta = 102 = exactly the ELIGIBLE-call count.
+- **SD-2** (test bodies via file vs inline command-line `-d`): heredoc-to-file. Initial multi-line `-d` paste broke on shell-continuation; switched to `/tmp/refuse_body.json` and `/tmp/eligible_body.json` for the script's use of `-d @file`.
+- **SD-3** (evidence-section structure): three blocks (sanity, temporal stability, aggregate continuity) matching the prior Zenodo addendum's shape. Block 1 manual sanity (executed pre-script); Blocks 2 and 3 scripted.
+- **SD-4** (Zenodo title): Title (A) "Elyon-Sol v0.9.8.4 - Enforcement Evidence Addendum (Revision 2)" over Title (B) thematic preservation. User chose (A) explicitly; the prior thematic title is preserved in the version chain.
+- **SD-5** (Zenodo description format): description-only short Markdown over full Markdown after first-attempt full Markdown rendered poorly in Zenodo's description field. Full evidence in attached PDF.
+- **SD-6** (account-binding for Zenodo publication): user signed out of main-repo GitHub account and into archive-repo Zenodo account to publish; the prior deposits in the version chain are on that account. External coordination; does not affect repo-internal trajectory.
+- **SD-7** (session-close path under fatigue): option B (bank the substantive win, defer ledger to fresh session). This commit is the ledger-deferred session. The two-commit pattern is the first explicit instance in this project.
+
+#### In-session sub-decisions (bridge session, this commit)
+
+- **SD-bridge-1** (artifact 04 G3 row format): introduce a standalone Status bullet between Delta and Action (parallel to G0's pattern) AND annotate the existing Action bullet inline with `**DONE under VL-030.**`. Both bullets land, not either-or; matches G0 row's combined Status-bullet-plus-per-action-DONE-annotation pattern.
+- **SD-bridge-2** (artifact 04 priority-order line 264): annotate item 5 with `**RESOLVED at VL-030** (README rewrite + Zenodo Revision 2).` per the G0/G7 polish pattern from VL-029.
+- **SD-bridge-3** (STATE.md scope, alpha vs beta): alpha. Fold VL-029-follow-up reference into VL-030 bullet narrative rather than retroactively adding a separate VL-029-follow-up bullet to STATE.md. Scope-bound to T-G3 close; the STATE.md-missed-VL-029-follow-up pattern recorded as carry-forward gap candidate (gap candidate 5).
+- **SD-bridge-4** (no new STATE.md item 26): the methodology-bookkeeping backlog stays a queue-drain candidate in VL-029 gap candidate 3 and is reiterated in this entry's gap candidates; not promoted to a Next-open-action item.
+- **SD-bridge-5** (known-gaps G3 entry format): expand the single-line G3 entry to a multi-line entry with `**RESOLVED** (VL-030)` annotation matching G2's pattern.
+- **SD-bridge-6** (Last-updated line format): preserve the verbose-single-line style established by prior VL-NNN entries; replace the existing VL-029 summary with a VL-030 summary.
+
+#### Procedure confirmation (a)-(n)
+
+(a) **Scope-bound** to README + Zenodo + EVIDENCE/proofs/g3_* + artifact 04 G3 row and priority-order + STATE.md + ledger. No canon, no manifest, no implementation, no test, no spec, no schema change in this commit.
+
+(b) **Scope-adherence checkable** per-edit. Each str_replace anchors to a disk-verified pre-edit string; each new file's content cites either the script log (`g3_enforcement_evidence_001.log`) or the Zenodo DOI as authority.
+
+(c) **VL-025 smoke test pattern is precedent, not source.**
+
+(d) **Pre-commit baseline 84 passed + 0 xfailed.** Verified at the substantive session's start and end. Re-verifiable at this commit's session's start.
+
+(e) **No new canon-derived test files** - this is repo-internal bookkeeping, not test development.
+
+(f) **Source-first applied.** Phase 1 of this session reads each input file from disk before any apply-script: README at HEAD, artifact 04 G3 row (line 70 area) + priority-order item 5 (line 264) + G0 row format (line 14 area) for parity, STATE.md current state (Last-updated, current-verified-state bullets end at line 867, item 24 at line 1172, known-gaps G3 at line 1463), ledger tail.
+
+(g) **Set-exhaustiveness applied.** Edit sites enumerated: README G3 bullet (1 multi-line site, lines 410-414); artifact 04 G3 row (2 sites: new Status bullet between Delta and Action + DONE annotation on Action) plus priority-order item 5 (1 site); STATE.md Last-updated parenthetical (1 site, line 9) + new current-verified-state bullet (1 site appended between line 867 and the `## What is locked` heading) + known-open-gaps G3 (1 site, line 1463). Item 24 (VL-029's G0 build half close) NOT touched per source-first finding that T-G3 was never an item in the Next-open-action list pre-VL-030. Total 6 str_replace edits across 3 files plus 2 new files plus the ledger append.
+
+(h) **Mode discipline** maintained throughout.
+
+(i) **No hash-value pinning** in tests (no tests touched this commit).
+
+(j) **VL-009 ASCII-safe** at write time. Apply-scripts perform pre-write ASCII check.
+
+(k) **xfail discipline** not applicable (no test changes).
+
+(l) **Bug-fix discipline** not applicable (no bugs surfaced).
+
+(m) **Sandbox conditions match user's production conditions.** Apply-scripts run on the user's MINGW64 environment; CRLF-on-read normalization and always-write-LF discipline preserved per VL-017a apply-script template convention.
+
+(n) **Multi-file build commit ordering:** new EVIDENCE/proofs/ files first (already copied to disk during the bridge session: log md5 `4281341ec10088766d78f59b87917fa6`, md md5 `adf458a0f3b4840b67152ebc2d37423f`), then artifact 04, then README, then STATE.md, then ledger (this entry). Per-file ASCII + synthetic-fixture verification at each step.
+
+#### What this commit does
+
+Six files affected.
+
+1. **`EVIDENCE/proofs/g3_enforcement_evidence_001.log`** (new). Verbatim copy of the bridge session's `/tmp/enforcement_evidence.log` preserved at `~/elyon_handoff/g3_enforcement_evidence_001.log` pre-reboot. md5 `4281341ec10088766d78f59b87917fa6`, 843 bytes, 26 lines, pure LF, ASCII-clean. Captures: started 2026-05-25T22:45:42Z; ended 2026-05-25T22:48:58Z; commit anchor `89ff2f9c02871d8641cebd3eb043d6c3c0d8471a`; Block 2 REFUSE 50/50 returned 403; Block 2 ELIGIBLE 50/50 returned 200; Block 3 REFUSE 51/51 returned 403; Block 3 ELIGIBLE 51/51 returned 200; total 202 scripted calls + 2 manual sanity = 204 total; 0 unexpected.
+
+2. **`EVIDENCE/proofs/g3_enforcement_evidence_001.md`** (new). Prose proof. md5 `adf458a0f3b4840b67152ebc2d37423f`, 4351 bytes, ASCII-clean. Cites the log file, the snapshot commit, the Zenodo DOI, the webhook.site baseline arithmetic, the reproducibility steps. Reconciles the log's 202-scripted-call summary with the proof's 204-total claim by explicit Block-1 manual sanity accounting; not a divergence, but called out explicitly so a reader does not have to do the arithmetic from the log alone.
+
+3. **`docs/restructure/04_current_vs_claimed.md`** (3 edits). G3 row gains a `- **Status: RESOLVED** (VL-030)` bullet inserted between Delta and Action with resolution-criteria citation (README rewrite at `5f833fb`; Zenodo DOI `10.5281/zenodo.20387278`; `EVIDENCE/proofs/g3_enforcement_evidence_001.{log,md}`). G3 Action bullet gains inline `**DONE under VL-030.**` annotation. Priority-order item 5 (line 264) gains `**RESOLVED at VL-030** (README rewrite + Zenodo Revision 2).` annotation.
+
+4. **`README.md`** (1 edit). G3 bullet (lines 410-414) forward-tense ("rewrite landed as part of the VL-030 T-G3 trajectory") replaced with past-tense citation: "This README rewrite (initial pass at commit `5f833fb`) and the corresponding Zenodo addendum Revision 2 (DOI `10.5281/zenodo.20387278`) closed the T-G3 trajectory at VL-030."
+
+5. **`STATE.md`** (3 edits). Last-updated parenthetical refreshed (VL-029 summary replaced with VL-030 summary); new VL-030 current-verified-state bullet inserted between the VL-029 bullet's closing line (line 867) and the `## What is locked vs. open` heading (line 869); known-open-gaps G3 entry (line 1463) expanded from single-line to multi-line with `**RESOLVED** (VL-030)` annotation matching G2's pattern.
+
+6. **`EVIDENCE/verification_ledger.md`** (append). This entry.
+
+#### Verification
+
+Pre-commit baseline pytest: 84 passed + 0 xfailed at HEAD `89ff2f9` (verified per the handoff memo's status block; no test changes in this commit so the post-commit baseline is identical 84/0).
+
+Substantive evidence at the prior session-close (re-verifiable):
+- Enforcement run: 204 calls, 0 unexpected, webhook.site 53 -> 155.
+- Pytest: 84 passed + 0 xfailed.
+- Zenodo publication: DOI `10.5281/zenodo.20387278`, attached PDF md5 `b750a803eb31a44248dd5fa89b4c273b`, 57.8 kB.
+
+Per-file synthetic-fixture verification applied to artifact 04 (3 anchors), README (1 anchor), STATE.md (3 anchors) per VL-026 / VL-028 / VL-029 pattern. Each fixture mirrored the relevant anchor regions, verified anchor uniqueness, applied edits, and confirmed expected post-edit text + byte-delta + ASCII-clean invariants before real-file application.
+
+#### G3 status
+
+**G3 (public framing overclaims relative to implementation): RESOLVED at VL-030.** Two-part substantive trajectory:
+- **README half** closed at VL-029 follow-up (`5f833fb`): post-VL-029 honest framing applied to the README's invariants block, envelope section, gap-tracker reference, and example response shape.
+- **Zenodo half** closed at this commit (VL-030): Revision 2 of the enforcement-evidence addendum published with corrected title (no phantom canon version), abstract (build-outward gaps named by short reference), and PDF evidence (enforcement-evidence run anchored to snapshot commit `89ff2f9`).
+
+Public framing is now post-VL-029 honest at both surfaces. G3 closes completely.
+
+#### Gap candidates
+
+1. **Zenodo description-field structural-content limitation** (methodology candidate). Zenodo's description field is for abstracts; structural content (tables, citation maps, evidence sections) must be in attached PDFs. Surfaced during SD-5. Single-instance; two-instance threshold not yet met. Queue-drain candidate for `session_mechanics_lessons.md`.
+
+2. **Stale-baseline arithmetic for external observation surfaces** (methodology candidate). When an external observation surface (webhook.site, log file, attestation receiver) has prior state, name the baseline explicitly and measure delta rather than seeking fresh slate. Single-instance; two-instance threshold not yet met. Queue-drain candidate.
+
+3. **Zenodo subject-classification carry-over** (minor, traceability). Zenodo's auto-tagged subject classifications on the v20 deposit carry "Cross-Over Studies", "Athletes/statistics & numerical data", "Cloud Computing/ethics" from prior version metadata. These do not match the current deposit's content. Not load-bearing (author did not assert them); could be cleaned on a future minor revision. Not actioned.
+
+4. **Carry-forward gap candidates from prior entries** (no change this commit): STATE.md trajectory-summary prose drift (VL-029 gap candidate 1); STATE.md "Known items open but not scheduled" subsection prune (VL-029 gap candidate 2); methodology-promotion candidates from VL-025-VL-029 (VL-029 gap candidate 3); receipt.py `ensure_ascii=False` inconsistency (carried since VL-012); these remain queue-drain.
+
+5. **STATE.md never received a VL-029 follow-up bullet** (new at VL-030; same family as gap candidate 4's STATE.md prose drift). The VL-029 follow-up commit `5f833fb` (README rewrite) landed at the prior session and was logged via a ledger follow-up entry, but no corresponding current-verified-state bullet was appended to STATE.md. Discovered during VL-030's source-first read when the handoff memo's instruction "append after the VL-029 follow-up bullet" found no such bullet on disk. VL-030's bullet folds the VL-029 follow-up narrative as Part 1 per SD-bridge-3 alpha scope-bound decision. Resolution candidate: a focused str_replace adding a brief VL-029-follow-up bullet between the existing VL-029 bullet and VL-030 bullet, OR a forward-going methodology rule that every ledger follow-up entry triggers a parallel STATE.md bullet update; queue-drain candidate.
+
+#### Process findings
+
+**Finding 1 - Zenodo description-field plain-text rendering reality.** First-attempt full Markdown description rendered as effectively plain text; user-visible visual quality was poor. Corrective: short prose-only description; structured content in attached PDF. Lesson candidate for `session_mechanics_lessons.md` as a sub-pattern of "rendering-surface assumptions are not authoritative." Single-instance; two-instance threshold not met.
+
+**Finding 2 - webhook.site baseline-arithmetic methodology.** Stale prior state (53 inbox items, 3 weeks old) on the external observation surface was handled by explicit baseline-naming + delta-measurement rather than fresh-URL provisioning. Result: clean evidence (delta 102 = exactly ELIGIBLE count). Lesson candidate for handling external observation surfaces with prior state. Single-instance; two-instance threshold not met.
+
+**Finding 3 - Account-binding decision external to repo-internal provenance.** Zenodo publication required signing out of main-repo GitHub and into archive-repo account where prior deposits live. The account-binding decision affects "who published" but not "what was published"; not load-bearing for repo-internal trajectory but recorded for honest-provenance transparency.
+
+**Finding 4 - Real-world enforcement evidence at HEAD strengthens the post-VL-029 honest-provenance claim.** Internal consistency (pytest 84/84) was already verified at VL-029. The additional external interception evidence (204 calls, 0 unexpected, 102 ELIGIBLE -> 102 external POSTs, 102 REFUSE -> 0 external POSTs) at HEAD strengthens the strongest framework claim (honest provenance) from "the spec maps to the code and the tests verify the code" to "additionally, the deployed gate enforces the property in the real world against a third-party external receiver." This is the strongest empirical surface the project has produced. The Zenodo DOI carries this evidence to a public, citable, archivally-durable form.
+
+**Finding 5 - Session-close two-commit pattern for fatigue-bounded substantive work.** The substantive Zenodo publication completed in the prior bridge session (2h20m wall-clock from session-start; user signaled fatigue and requested session-close decision). The ledger work (this commit) deferred to a fresh session. This is the first explicit instance in this project of deferring ledger entry to a separate session for a non-bug-fix trajectory. Pattern works because the substantive artifact (the DOI) is externally anchored and does not require ledger discipline to remain durable. Candidate methodology addition to `session_mechanics_lessons.md`: "for high-cognitive-load trajectories where the substantive deliverable is externally anchored, prefer two-commit pattern (substantive + ledger) over single bundled commit; explicitly record the handoff between sessions." Single explicit instance; two-instance threshold not met.
+
+**Finding 6 (this session) - Handoff-memo + fresh-session continuity pattern validated end-to-end.** The bridge session drafted a comprehensive handoff memo (`vl030_handoff.md`) that packaged status, sub-decisions, drafted text for every affected file, verification evidence, citation discipline, process findings, pre-session checklist, and apply-script-ready edit specifications. The fresh session (this one) consumed the memo, source-first-read the files, surfaced two discrepancies between memo and disk (artifact 04 G3 row uses `###` not `##` header; STATE.md never received a VL-029 follow-up bullet despite the memo's instruction to append after it), and produced apply-scripts that work against actual disk state rather than memo-inferred state. The continuity layer (this repository) plus the handoff memo plus source-first discipline together preserved trajectory integrity across a session boundary with zero ambiguity at apply-time. This is a substantive endorsement of the two-commit pattern in Finding 5. Not new methodology per se, but an empirical validation of the discipline.
+
+#### Files affected
+
+- `EVIDENCE/proofs/g3_enforcement_evidence_001.log` (new, 843 bytes, md5 `4281341ec10088766d78f59b87917fa6`)
+- `EVIDENCE/proofs/g3_enforcement_evidence_001.md` (new, 4351 bytes, md5 `adf458a0f3b4840b67152ebc2d37423f`)
+- `docs/restructure/04_current_vs_claimed.md` (3 edits: G3 Status bullet insert + G3 Action DONE annotation + priority-order item 5 RESOLVED annotation)
+- `README.md` (1 edit: G3 bullet forward-tense to past-tense)
+- `STATE.md` (3 edits: Last-updated parenthetical refresh + new current-verified-state bullet + known-gaps G3 entry expansion)
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1)
+- `MANIFEST/manifest.json`
+- `IMPLEMENTATION/*` (none)
+- `TESTS/*` (none)
+- `SPEC/*` (none)
+- `docs/restructure/05_admissibility_envelope_spec.md`, `06_spec_to_code_traceability.md` (no row transitions affected; G3 is artifact 04's domain not 06's)
+- `docs/methodology/*` (methodology-promotion candidates remain queue-drain)
+- `docs/SESSION_PROTOCOL.md`, `docs/MAINTENANCE_PROTOCOL.md`
+
+The session-local apply-scripts (`apply_artifact04_vl030.py`, `apply_readme_vl030.py`, `apply_statemd_vl030.py`, `apply_ledger_vl030.py`) and the handoff memo (`vl030_handoff.md`) are used and discarded per session-script pattern.
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash. Prior entries cited:
+
+- VL-029 follow-up at commit `5f833fb`
+- VL-029 at commit `79012d7`
+- VL-028 at commit `7efcefc`
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-023 follow-up at commit `49b797a`
+- VL-023 at commit `83fa5a7`
+- VL-022 at commit `dbd65aa`
+- VL-020 at commit `d81de1d`
+- VL-018 at commit `cc08844` (with follow-up `f24c837`)
+- VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
+
+Substantive Zenodo publication: DOI `10.5281/zenodo.20387278`, published 2026-05-25, attached PDF md5 `b750a803eb31a44248dd5fa89b4c273b`.
+
+#### Next trajectory action
+
+T-G3 closes completely; no further G3 action. Per STATE.md item 25 (carried forward from VL-029): the `docs/restructure/07_continuity_recursion.md` artifact candidate remains eligible to schedule per VL-023's PARTIAL HOLDS verdict + VL-024's STRENGTHENS-bounded refinement + VL-025 follow-up's convergent confirmation. T-07, T-methodology, T-G7-eval, T-bookkeeping remain open with no priority blocker among them.

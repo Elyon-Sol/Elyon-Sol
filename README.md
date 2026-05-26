@@ -409,9 +409,10 @@ gap document with statuses, deltas, and required actions.
 
 - **G3** - Public framing reframe. Pre-VL-029 public materials
   overclaimed implementation completeness relative to canon
-  coverage. This README is the corrective surface for that
-  framing; rewrite landed as part of the VL-030 T-G3
-  trajectory.
+  coverage. This README rewrite (initial pass at commit
+  `5f833fb`) and the corresponding Zenodo addendum Revision 2
+  (DOI `10.5281/zenodo.20387278`) closed the T-G3 trajectory
+  at VL-030.
 - **G4** - **The gate is opt-in, not enforced.** A caller can
   hit the target directly and bypass the PEP. The canon
   ("operates pre-execution," "non-executing governance
