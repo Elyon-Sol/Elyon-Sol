@@ -9,7 +9,7 @@ The repository  -  not any model  -  is the continuity layer.
 **Rev. 2** incorporates the v0.9.8.4 canonical whitepaper, `manifest.json`, and the real
 `test_pep.py`. This materially changed the assessment  -  see "What the canon changed" below.
 
-## The six artifacts
+## The seven artifacts
 
 1. **`01_repository_structure.md`**  -  proposed directory layout. Canon as locked fixed
    point; everything else derivation.
@@ -26,6 +26,13 @@ The repository  -  not any model  -  is the continuity layer.
 6. **`06_spec_to_code_traceability.md` (new)**  -  every whitepaper section mapped to its
    code construct with a fidelity status (FULL / PARTIAL / DRIFTED / UNIMPLEMENTED). The
    artifact that prevents the next G0.
+
+7. **`07_continuity_recursion.md` (new)**  -  reading-aid naming the recursive
+   continuity-discipline pattern visible at five layers of the framework
+   (decision, manifest, methodology, session, evaluator-versioning), with
+   the request-layer non-fit, layer A/B/C bounding per VL-024, and direct
+   citation of the post-VL-029 envelope.py + pep.py implementation. No new
+   invariant, claim, or vocabulary; reading-aid track only.
 
 ## What the canon changed
 

@@ -7922,3 +7922,191 @@ Substantive Zenodo publication: DOI `10.5281/zenodo.20387278`, published 2026-05
 #### Next trajectory action
 
 T-G3 closes completely; no further G3 action. Per STATE.md item 25 (carried forward from VL-029): the `docs/restructure/07_continuity_recursion.md` artifact candidate remains eligible to schedule per VL-023's PARTIAL HOLDS verdict + VL-024's STRENGTHENS-bounded refinement + VL-025 follow-up's convergent confirmation. T-07, T-methodology, T-G7-eval, T-bookkeeping remain open with no priority blocker among them.
+
+### VL-031 - 2026-05-26 - T-07 trajectory close: `07_continuity_recursion.md` artifact lands; first pre-draft cross-model verification in project history
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** the recursive-continuity discipline pattern across five layers of the framework (decision, manifest, methodology, session, evaluator-versioning) plus one non-fit (request) is now named in a discoverable reading-aid artifact at `docs/restructure/07_continuity_recursion.md`. The artifact's load-bearing claims were independently re-derived by two recipient models (Grok and OpenAI) under VL-008 + Lesson 6 procedural discipline *before* the artifact was drafted; both verifiers procedurally clean, substantive convergence on all four verification questions including the load-bearing Q4 evaluator-versioning fail-closed dissolution.
+
+#### Background
+
+T-07 (drafting `docs/restructure/07_continuity_recursion.md`) was eligible to schedule since VL-029's G0 build half close per VL-023's "schedule the downstream artifact only after the G0 build half lands" recommendation. The artifact's content was pre-derived across four ledger entries: VL-023 produced the PARTIAL HOLDS verdict and four-part shape; VL-023 follow-up converged with a cross-model recipient and added the evaluator-versioning fifth layer; VL-024 produced the layer A/B/C bounding refining VL-023 follow-up's unqualified "strengthened" framing; VL-025 follow-up's Bundle B verifiers' canon citations supplied per-branch authority for the post-VL-026 envelope.py implementation that landed at VL-029.
+
+T-07's job: convert the accumulated derivation into a single discoverable artifact, with one substantive update over VL-023/VL-024 - the post-VL-029 envelope.py implementation now allows the evaluator-versioning layer's fail-closed component to be cited explicitly via Row 3 code rather than inferred from artifact 05's mapping. VL-024 Implication 1 instructed the future artifact to "carry the inference flag on evaluator-versioning's fail-closed component"; the post-VL-029 implementation dissolves that instruction.
+
+The decision to run cross-model verification *before* drafting (rather than after, as at VL-015/VL-016/VL-023 follow-up/VL-025 follow-up) was made at session-open. Rationale: the artifact's load-bearing structural claims are framework-methodology-level rather than canon-derivation-level; pre-draft verification tests whether the artifact's premises are defensible from primary sources by independent verifiers, not whether the artifact's prose reproduces a known result. This parallels VL-016's premise-verification-before-corrections pattern at the schema-edit layer.
+
+#### Pre-session locked decisions
+
+- **Decision T-07-A (verification timing):** cross-model verification runs *before* drafting (option a), not after. Rationale recorded in session-opener: framework-level claim-space is small enough that pre-draft verification serves as premise-testing rather than as draft-reproduction.
+- **Decision T-07-B (layer A/B/C bounding format):** literal verbatim quotation of VL-024's bounding, with citation. No paraphrase.
+- **Decision T-07-C (per-layer depth):** ~5 sentences per layer, with the contrasting request-layer non-fit treated at similar depth. Decision and evaluator-versioning layers slightly denser because they carry direct code citations.
+- **Decision T-07-s2 (structural ordering):** pattern-first structure (headline pattern -> shape -> per-layer -> bounding -> non-claims), matching the restructure package's existing conventions (00_README, 04, 05, 06). VL-023's derivation-order (s1) was admissible but the artifact lives in `docs/restructure/` where pattern-first is the established style.
+- **Decision T-07-D (citations):** inline citations within each section. Matches VL-023's pattern and the restructure package's general convention.
+- **Decision T-07-scope-1 (ledger numbering):** trajectory closes as VL-031, following VL-027/28/29/30 strict numeric convention. The T-07 trajectory name appears in the entry's title, not as the ledger entry number.
+- **Decision T-07-scope-2 (00_README scope):** include `docs/restructure/00_README.md` update in this commit's scope ("six artifacts" -> "seven artifacts" with item 7 added). Same family as VL-029's F1 bundling decision: structural-doc updates that immediately follow from the trajectory action land in the same commit, not as a follow-up.
+- **Decision T-07-scope-3 (artifact 04 scope):** artifact 04 stays untouched. T-07 is not a gap closure (the recursive-continuity hypothesis was never on the gap list); it is a reading-aid artifact addition.
+
+#### Verification procedure
+
+**Bundle composition.** Seven files, attached to verifiers separately:
+- `CANON/canon.md` (full canon for context; sections 11-13 load-bearing)
+- `vl023_entry.md` (carved from EVIDENCE/verification_ledger.md lines 4501-5002)
+- `vl024_entry.md` (carved from lines 5404-6109)
+- `docs/restructure/05_admissibility_envelope_spec.md`
+- `docs/restructure/06_spec_to_code_traceability.md`
+- `IMPLEMENTATION/envelope.py`
+- `IMPLEMENTATION/pep.py`
+
+The bundle was intentionally larger than VL-023's original bundle (which had 5 files and did not include post-VL-029 implementation evidence) because T-07's evaluator-versioning Q4 specifically required the post-VL-029 envelope.py code as primary source.
+
+Carved ledger excerpts (`vl023_entry.md`, `vl024_entry.md`) were extracted from the full ledger pre-bundle to give verifiers focused source-of-truth without the noise of unrelated entries. The carved files preserved entry headers + content verbatim; md5s recorded in apply-script comments for future provenance.
+
+`docs/SESSION_PROTOCOL.md` was deliberately omitted from the bundle. Rationale: cleaner test of derivability from the smaller bundle; session-layer evidence reachable via VL-023's quoted excerpts within the bundle. OpenAI surfaced this mediation explicitly as a source-bound caveat ("SESSION_PROTOCOL itself is not in the uploaded bundle, but the relevant passages are quoted or characterized inside VL-023") - a Lesson-6-disciplined acknowledgment of bundle mediation, not a failure. The artifact resolves the caveat at composition by citing `docs/SESSION_PROTOCOL.md` directly with current line numbers.
+
+`SPEC/request_schema.md` was also omitted; request-layer non-fit derivable via VL-023's quoted passage.
+
+**Four verification questions:**
+
+- **Q1.** Extract a four-part shape from canon section 12 independently; compare to VL-023's extraction after.
+- **Q2.** Apply the shape to five fitting-layer candidates + one non-fit candidate; verdict per layer.
+- **Q3.** Re-derive VL-024's layer A/B/C bounding; assess defensibility.
+- **Q4.** Determine whether post-VL-029 envelope.py implementation dissolves the evaluator-versioning inference flag VL-024 Implication 1 instructed to carry forward.
+
+**Recipients:** Grok and OpenAI. Two-recipient verification per VL-015/VL-016/VL-025-follow-up precedent.
+
+**Recipient outcomes:**
+
+| Question | Grok | OpenAI | Convergence |
+|---|---|---|---|
+| Q1 four-part shape | Match (state + transitions + revalidation + fail-closed; canon 12.1/12.3/12.4/13) | Match (state + transition + revalidation + fail-closed non-persistence; identical canon citations) | **Convergent** |
+| Q2 decision layer | Fits definitionally | Fits | **Convergent** |
+| Q2 manifest layer | Fits with refinement | Fits with refinement (verbatim alignment) | **Convergent** |
+| Q2 methodology layer | Fits (procedural detector) | Fits with source-bound caveat (derivable through ledger excerpts) | **Convergent verdict; OpenAI more cautious on mediation** |
+| Q2 session layer | Fits | Fits with source-bound caveat (SESSION_PROTOCOL not in bundle) | **Convergent verdict; OpenAI more cautious** |
+| Q2 evaluator-versioning | Fits | Fits | **Convergent** |
+| Q2 request layer | Does NOT fit | Does NOT fit | **Convergent** |
+| Q3 layer A/B/C | Match (decomposition + bound both derivable) | Match (decomposition + bound both derivable) | **Convergent** |
+| Q4 evaluator fail-closed | **Dissolves** (cites Row 3 explicit; ccs=False per 12.4) | **Dissolves** (cites Row 3 verbatim code block; ccs=False per 12.4) | **Convergent** |
+
+OpenAI's source-bound caveats on Q2 methodology and session layers are dissolved at the artifact-composition layer by attaching `docs/SESSION_PROTOCOL.md`, `docs/methodology/`, and `docs/restructure/04_current_vs_claimed.md` line 10 directly as citations within the corresponding per-layer subsections of the artifact. The caveat preserved as honest acknowledgment of bundle mediation in the verification record; resolved at artifact level.
+
+#### What this commit does
+
+Three files modified, one new file (already on disk pre-commit), plus the ledger append.
+
+1. **`docs/restructure/07_continuity_recursion.md`** (new). 19349 bytes, 381 lines, ASCII-clean, md5 `0ea94e694dfe3725776aaef12a9be412`. Reading-aid artifact naming the recursive-continuity pattern. Pattern-first structure: header (Status/Purpose/Scope) -> What this artifact names -> The continuity shape -> Per-layer instances (decision/manifest/methodology/session/evaluator-versioning/request non-fit) -> Layer A/B/C bounding -> What this artifact does NOT claim -> Provenance. Inline citations to canon section 11.1, 11.9, 12.1, 12.2, 12.3, 12.4, 13; `docs/restructure/04_current_vs_claimed.md` line 10; `docs/restructure/05_admissibility_envelope_spec.md`; `docs/restructure/06_spec_to_code_traceability.md`; `docs/SESSION_PROTOCOL.md` lines 23-26, 45-74, 64, 71-74, 80-83, 85-87, 10-41; `IMPLEMENTATION/envelope.py` with verbatim Row 3 code block (5 lines, lines 387-392 of envelope.py at HEAD `699da0d`). Provenance section maps VL-022 through T-07 verification with commit hashes.
+
+2. **`docs/restructure/00_README.md`** (2 edits). "## The six artifacts" -> "## The seven artifacts"; new item 7 added after item 6 with the new artifact's framing (reading-aid track, five fitting layers + request non-fit, layer A/B/C bounding, direct citation of post-VL-029 envelope.py + pep.py implementation, no new invariant/claim/vocabulary).
+
+3. **`STATE.md`** (3 edits). Last-updated parenthetical refreshed (VL-030 summary replaced with VL-031 summary); new VL-031 current-verified-state bullet inserted between the VL-030 bullet's closing line and the `## What is locked vs. open` heading; item 25 transitions from OPEN to Done with VL-031 citation + artifact md5 + size + lines + pattern-first/inline-citation decisions recorded.
+
+4. **`EVIDENCE/verification_ledger.md`** (append). This entry.
+
+#### Procedure confirmation (a)-(n)
+
+(a) **Scope-bound** to README + 00_README + STATE.md + ledger + the new artifact already on disk. No canon, manifest, implementation, test, spec, or schema change.
+
+(b) **Scope-adherence checkable.** Each str_replace anchors to a disk-verified pre-edit string; the new artifact's content is fully cited inline.
+
+(c) **VL-025 smoke test pattern is precedent, not source.**
+
+(d) **Pre-commit baseline 84 passed + 0 xfailed.** Verified at session start.
+
+(e) **No new canon-derived test files** - this is a reading-aid artifact and bookkeeping.
+
+(f) **Source-first applied.** Phase 1 of this session read each input file from disk: canon section 12 + 13; VL-023, VL-023 follow-up, VL-024 ledger entries; artifact 05 reassertion table; artifact 06 traceability rows; envelope.py Row 3 implementation; pep.py wiring; STATE.md head + VL-029/VL-030 bullets + item 25; 00_README artifact list; SESSION_PROTOCOL.md (in full; 87 lines).
+
+(g) **Set-exhaustiveness applied.** Five fitting layers enumerated against VL-023 + VL-023 follow-up; layer A/B/C decomposition enumerated against VL-024's Step 3 synthesis with explicit "this is what each contains" mapping; non-claims enumerated against VL-023's "What this derivation does NOT claim" list.
+
+(h) **Mode discipline.** No "[INFERENCE]" flags appear in the artifact body; the verification convergence on Q4 explicitly dissolves the prior inference flag.
+
+(i) **No hash-value pinning** in tests (no tests touched).
+
+(j) **VL-009 ASCII-safe** at write time. Apply-scripts pre-write ASCII check held cleanly for all three modified files plus the artifact. **Lesson-7-candidate ASCII-discipline holds: zero typographic-drift surface events for the third consecutive artifact** (VL-029 STATE.md, VL-030 outputs, and now T-07 artifact + this commit's three apply-scripts).
+
+(k) **xfail discipline** not applicable (no test changes).
+
+(l) **Bug-fix discipline** not applicable (no bugs surfaced).
+
+(m) **Sandbox conditions match production.** Apply-scripts on MINGW64; CRLF-on-read normalization + always-write-LF discipline preserved.
+
+(n) **Multi-file build commit ordering:** artifact already on disk pre-commit (landed via separate `cp` step at session-open); then 00_README, then STATE.md, then ledger (this entry). Per-file ASCII + synthetic-fixture verification at each apply-script step.
+
+#### Process findings
+
+**Finding 1 - Pre-draft cross-model verification pattern: two-instance threshold candidate.** This is the project's first instance of running cross-model verification *before* drafting a structural-doc artifact, paralleling VL-016's premise-verification-before-corrections pattern. VL-016 verified the premises beneath proposed schema corrections before applying the corrections; T-07 verified the premises beneath the artifact's load-bearing claims before drafting the artifact. The two are structurally analogous (premise verification rather than artifact verification), procedurally analogous (VL-008 + Lesson 6 binding), and serve the same epistemic purpose (testing whether claims survive independent re-derivation before being committed to a structural artifact). Two-instance threshold per `session_mechanics_lessons.md` line 47 is now met. Candidate methodology promotion: a new section in the cross-model evaluate template or a Lesson-7-candidate distinguishing pre-draft verification (premise-testing) from post-draft verification (reproduction-testing). Queue-drain candidate.
+
+**Finding 2 - Bundle+request co-upload prompt-recognition surface event.** When the verification request is uploaded as one file alongside the primary-source bundle (rather than as the chat-turn prompt with the bundle as attached files), some recipients may not recognize the request file as the operative instruction. OpenAI's initial response to the co-upload was a capability menu ("a bounded technical assessment, derivation-only analysis, ..."); its second response was a synopsis of the request file rather than an execution of it. Only after an explicit "Execute the four-question procedure in that file" re-prompt did OpenAI shift from descriptive to derivational mode. Grok recognized the request file immediately ("Primary-source bundle received in full (all seven files as listed in the request)"). Single-instance surface event at this point; two-instance threshold not yet met. Candidate methodology refinement: when running cross-model verification under co-upload pattern, either rename the request file with a load-bearing prefix (e.g., `REQUEST_*.md`) or include an explicit "execute the procedure in this file" inline turn after the upload.
+
+**Finding 3 - SESSION_PROTOCOL.md citation drift from VL-023.** VL-023 cites `docs/SESSION_PROTOCOL.md` "lines 84-86, 119-126" and "lines 64-100 / 20-58". The current SESSION_PROTOCOL.md is 87 lines. All of VL-023's substantive citations resolve to passages still present in the current file, but at different line numbers: VL-023's "lines 119-122 at-rest invariants" -> current lines 80-83; VL-023's "lines 124-126 fail-closed" -> current lines 85-87; VL-023's "for continuity purposes" passage -> current line 64; VL-023's close-protocol "lines 64-100" -> current lines 45-74; VL-023's resume-protocol "lines 20-58" -> current lines 10-41. The file shrank between VL-023 (2026-05-20) and now (2026-05-26) without a ledger entry tracking the edits. Same family as VL-029 gap candidates 1 and 2 (STATE.md trajectory-summary drift; STATE.md known-items-not-scheduled subsection drift): structural docs edited without ledger entries. The artifact cites current line numbers, not VL-023's stale ones. Queue-drain candidate for the methodology bookkeeping commit: a focused source-first audit comparing every structural-doc citation in every ledger entry against current line numbers, with corrections committed in a single bookkeeping pass.
+
+**Finding 4 - Lesson-7-candidate ASCII-pre-write-check discipline scope refined: caught at apply-script-write time, not at Claude-drafting time.** VL-027 surfaced typographic-punctuation drift as a Claude-side discipline candidate (Finding 4 of VL-027); VL-029's STATE.md apply-script caught Greek-alpha leaks pre-write (Finding 4 of VL-029); VL-030's outputs held clean at the artifact-creation layer. This commit produced two distinct surface events: (a) the T-07 artifact itself held clean at first write (zero non-ASCII bytes at the create_file step; an explicit em-dash/en-dash/ellipsis/curly-quote/Greek-alpha check ran on the artifact and returned zero of each); but (b) **the ledger entry I drafted contained 10 non-ASCII bytes (5 Greek letters: alpha/beta/gamma used as decision-label suffixes from my own session vocabulary)** that were not caught until a post-write ASCII check. The drift was repaired in-session via str_replace to disambiguated ASCII labels (T-07-A/B/C + T-07-D + T-07-scope-1/2/3); the final ledger entry that landed is ASCII-clean. The finding refines the prior framing: the ASCII pre-write check is operative inside apply-scripts at file-write time, but Claude-drafting-time check requires an explicit step (the explicit byte-sweep that caught this drift). For the methodology candidate: Lesson 7's corrective is two-stage, not one-stage - apply-scripts check at write, but Claude-side drafting requires an explicit byte-sweep on the drafted text before apply-script construction begins.
+
+**Finding 5 - First derivation-over-absorption methodology-layer outcome at the artifact-composition layer.** VL-024 was the first derivation-over-absorption methodology-layer entry (refining VL-023 follow-up's unqualified "strengthened" framing to layer-bounded form, recorded as VL-024 Implication 5 + Process findings). T-07 is the first instance of derivation-over-absorption at the *artifact-composition* layer: VL-024 Implication 1 instructed the future artifact to "carry the inference flag on evaluator-versioning's fail-closed component"; T-07's Q4 verification + the post-VL-029 implementation evidence allows the artifact to *not* carry the flag (dissolution rather than preservation). This is structurally analogous to VL-024's refinement of VL-023 follow-up's framing: an artifact composition's instructions from a prior ledger entry are refined by interim implementation work + cross-model verification before the artifact is drafted. Two-instance threshold for derivation-over-absorption pattern met. Candidate methodology promotion: explicit naming of the pattern in `session_mechanics_lessons.md` as an artifact-composition discipline (verify prior-entry instructions against current state before treating them as binding).
+
+#### Carry-forward gap candidates
+
+1-4. **Unchanged from VL-030.** STATE.md trajectory-summary prose drift (VL-029 gap candidate 1); STATE.md "Known items open but not scheduled" subsection prune (VL-029 gap candidate 2); methodology-promotion candidates from VL-025 through VL-030 (VL-029 gap candidate 3); receipt.py `ensure_ascii=False` inconsistency (carried since VL-012); these remain queue-drain.
+
+5. **Unchanged from VL-030.** STATE.md never received a VL-029 follow-up bullet (VL-030 gap candidate 5). The VL-031 bullet does not retroactively add one; same alpha-scope-bound rationale as VL-030.
+
+6. **New at VL-031.** SESSION_PROTOCOL.md citation drift from VL-023 (Finding 3 above). Resolution candidate: a focused audit-and-correction commit comparing structural-doc citations in ledger entries against current line numbers; same family as items 1, 2, and 5.
+
+#### Files affected
+
+- `docs/restructure/07_continuity_recursion.md` (new file, 19349 bytes, md5 `0ea94e694dfe3725776aaef12a9be412`)
+- `docs/restructure/00_README.md` (2 edits: "six" -> "seven" + item 7 insertion)
+- `STATE.md` (3 edits: Last-updated refresh + VL-031 bullet insert + item 25 OPEN -> Done)
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1)
+- `MANIFEST/manifest.json`
+- `IMPLEMENTATION/*` (no code change)
+- `TESTS/*` (no test change)
+- `SPEC/*` (no spec change)
+- `docs/restructure/04_current_vs_claimed.md` (T-07 is not a gap closure)
+- `docs/restructure/05_admissibility_envelope_spec.md`, `06_spec_to_code_traceability.md` (no row transitions affected; the artifact cites them but does not modify them)
+- `docs/methodology/*` (methodology-promotion candidates remain queue-drain)
+- `docs/SESSION_PROTOCOL.md` (citation drift recorded as gap candidate 6 but not corrected here)
+- `docs/MAINTENANCE_PROTOCOL.md`
+- `README.md` (T-07 is internal-discoverability scope; public framing unchanged)
+
+The session-local apply-scripts (`apply_00README_vl031.py`, `apply_statemd_vl031.py`, `apply_ledger_vl031.py`) and the bundle-carving files (`vl023_entry.md`, `vl023_followup_entry.md`, `vl024_entry.md`) are used and discarded per session-script pattern.
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own commit hash. Prior entries cited:
+
+- VL-030 at commit `699da0d`
+- VL-029 follow-up at commit `5f833fb`
+- VL-029 at commit `79012d7`
+- VL-028 at commit `7efcefc`
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-023 follow-up at commit `49b797a`
+- VL-023 at commit `83fa5a7`
+- VL-022 at commit `dbd65aa`
+- VL-018 at commit `cc08844` (with follow-up `f24c837`)
+- VL-016 at commit unspecified; premise-verification-before-corrections precedent
+- VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
+
+Cross-model verification recipients: Grok and OpenAI. Recipient outputs are referenced by their substantive content in the Verification procedure section above; the raw responses are not committed as standalone artifacts per VL-015/VL-016/VL-023-follow-up/VL-025-follow-up precedent.
+
+#### Next trajectory action
+
+T-07 closes completely. Per STATE.md, three open trajectories remain with no priority blocker among them:
+
+- **T-methodology** - bookkeeping commit absorbing the methodology backlog from VL-025 through VL-031 (synthetic-fixture promotion to `apply_script_template.py` docstring; Lessons 5/6/7/8 + the new pre-draft-verification pattern in `session_mechanics_lessons.md`; cross-model evaluate template Match-criterion clarification; etc.). Now strengthened by Findings 1, 4, and 5 of this entry as additional candidates.
+
+- **T-G7-eval** - canon-derived tests for the evaluator domain (AC^3 / T^26 / manifest-integrity). G7 envelope domain closed at VL-028; evaluator domain still code-derived. Closes G7 completely.
+
+- **T-bookkeeping** - the G1/G8/G9/G11/G14 batch. Longest-standing queue; comfort-food trajectory.
+
+Plus the citation-drift audit (new at VL-031, same family as VL-029/VL-030 gap candidates 1, 2, 5) is now eligible to bundle with T-methodology if the trajectory expands to absorb structural-doc citation-currency.
