@@ -8572,3 +8572,504 @@ or a future T-methodology continuation.
 
 The reading-aid trajectory (`07_continuity_recursion.md`) closed at
 VL-031 and is not currently active.
+
+### VL-033 - 2026-05-27 - Citation-currency audit: SESSION_PROTOCOL.md citation drift annotated; STATE.md known-items subsection pruned
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** the citation-currency audit (Categories A-D per VL-033 opener)
+completes the queue-drain trajectory accumulated across VL-029 gap candidates
+1 and 2, VL-031 Finding 3, and VL-032 gap candidates 4 and 5. Category A
+annotates 6 stale SESSION_PROTOCOL.md line citations in VL-023 and VL-024
+with bracket annotations citing current line positions at HEAD 7f41615
+(Option B preserves history while making drift visible inline). Category D
+prunes 9 closed items from STATE.md's "Known items open but not scheduled"
+subsection under Decision T-cite-C's conservative discipline (citable
+closure event required per removal). Categories B and C close empty:
+STATE.md citation discipline already uses stable item-N references for
+ongoing citations; ledger append-only discipline preserves line-number
+stability for ledger-to-ledger references. The session validates the
+existing citation discipline as structurally drift-resistant for two of
+the four audit categories.
+
+#### Background
+
+The audit trajectory was load-bearing per VL-032's Next-trajectory-action
+section, which named VL-033 citation-currency as "newly load-bearing per
+Finding 3 + VL-031 Finding 3 + carry-forward gap candidates 4-5". The
+opener was pre-drafted at 2026-05-26 post-VL-032 close and uploaded to
+this session; the session opener identified four citation categories
+(A: SESSION_PROTOCOL.md line citations; B: STATE.md line citations; C:
+ledger self-references; D: STATE.md known-items prune) plus a Step 0
+classification of VL-029 gap candidate 1 (T-cite-E).
+
+#### Pre-session locked decisions (from VL-033 opener)
+
+- **Decision T-cite-A** (audit scope): pause-and-split if enumeration
+  surfaces more than ~30 drift instances total. Threshold not triggered
+  (final count: 6 annotations + 9 deletions = 15 corrections).
+- **Decision T-cite-B** (line-number vs. content-phrase preference):
+  prefer content-phrase + section-header citations going forward.
+  Applied in Category A annotation form (which cites BOTH line numbers
+  and the specific phrase "for continuity purposes" where the phrase
+  is the load-bearing anchor).
+- **Decision T-cite-C** (Category D conservative bias): only remove items
+  with citable closure events; default to keep otherwise. Applied per-item
+  in Category D enumeration.
+- **Decision T-cite-D** (ledger entry batch size): cite affected files
+  and provide summary of correction counts; do not duplicate corrections.
+  Applied throughout this entry.
+- **Decision T-cite-E** (VL-029 gap candidate 1 classification): made
+  at Step 0; classified as **Type 2 (content drift)** based on source-first
+  reading of VL-029 ledger entry's gap candidate 1 text. The candidate
+  describes prose content at STATE.md lines 1116-1152 that "references
+  trajectory states that are 7+ sessions in the past." This is interpretive
+  prose-rewrite work, not mechanical citation-currency work. Out of
+  VL-033 scope. New gap candidate created (gap candidate 4 of this entry)
+  for future T-prose-drift consideration.
+
+#### In-session sub-decisions
+
+- **Decision: Option B** (Category A annotation form): bracket annotation
+  preserving original text verbatim; appends `[VL-033 cite-currency: now
+  lines N-M at HEAD 7f41615]` inline. Selected over Option A (correct-in-
+  place; loses history) and Option C (record-only correction; weakens
+  continuity layer).
+- **Decision: Strategy B** (Category D apply-script structure): merge
+  adjacent removals; 5 str_replace edits for 9 removed items rather
+  than 9 separate edits. Atomic deletion of contiguous bullet clusters.
+- **Decision: commit cadence Option b** (single trajectory commit at
+  session-close): hold all category edits in working tree until all
+  four categories complete; single commit with VL-033 ledger entry.
+  Matches VL-019 / VL-025 / VL-029 / VL-032 precedent.
+- **Decision: D-empty reversal** (mid-session): D-empty was initially
+  proposed by Claude based on inferred extension of Step 0's Type 2
+  classification from VL-029 gap candidate 1 to VL-029 gap candidate 2.
+  Source-first re-reading of VL-033 opener lines 199-272 (prompted by
+  user's "is D-empty in violation of scope definitions?") revealed
+  Category D was opener-authorized interpretive work under Decision
+  T-cite-C. D-empty reversed; Category D enumeration proceeded under
+  T-cite-C conservative discipline. Process finding 3 of this entry.
+- **Decision: out-of-order category execution**: Categories executed
+  in order A -> B -> D -> C rather than opener-listed A -> B -> C -> D.
+  D was executed after the D-empty reversal; C was deferred to last.
+  Not opener-prohibited; recorded for honest record.
+
+#### Procedure confirmation (a)-(n)
+
+(a) **Scope-bound** to `EVIDENCE/verification_ledger.md` + `STATE.md` +
+this session's working scripts and fixtures. No canon, manifest,
+implementation, test, spec, or `docs/restructure/*` change.
+
+(b) **Scope-adherence checkable** per-edit. Each Category A annotation
+cites the audit name and HEAD hash; each Category D removal cites the
+closure event in this entry's table below.
+
+(c) **VL-025 smoke test pattern is precedent, not source.**
+
+(d) **Pre-commit baseline 84 passed + 0 xfailed** at HEAD `7f41615`.
+Verified at session start (4.62s) and after Category D landing (0.69s).
+Re-verified pre-commit.
+
+(e) **No new canon-derived test files.** This is citation audit work.
+
+(f) **Source-first applied** throughout. Every citation drift identified
+via `cat -A` inspection of actual disk regions (per VL-031's load-bearing
+refinement to the synthetic-fixture step). Step 0 read VL-029 gap
+candidate 1 text from ledger before classification. Decision D-empty
+was reversed when source-first reading of opener lines 199-272
+revealed the unauthorized exemption.
+
+(g) **Set-exhaustiveness applied.** Four categories enumerated explicitly:
+6 sites in Category A (Sites 1-6 with byte-exact anchors); 0 in-scope
+sites in Category B (after classification of self-describing references,
+item-N citations, and historical edit records as out-of-scope); 9
+removals in Category D (after T-cite-C closure-event verification of
+each); 0 in-scope sites in Category C (after disk verification of
+citation stability under append-only discipline).
+
+(h) **Mode discipline.** No "[INFERENCE]" flags in correction text.
+The annotations cite verified disk state; the removals cite verified
+ledger entries.
+
+(i) **No hash-value pinning** in tests (no tests touched).
+
+(j) **VL-009 ASCII-safe at write time.** Two apply-scripts each performed
+pre-write ASCII checks. Lesson 7 stage 2 (Claude-drafting-time byte-sweep)
+applied to all draft files; one in-prose Greek-letter leak (alpha/beta/gamma
+in Option-labels) was user-caught rather than Claude-caught, recorded as
+Process finding 2.
+
+(k) **xfail discipline** not applicable.
+
+(l) **Bug-fix discipline** not applicable.
+
+(m) **Sandbox conditions match production.** Apply-scripts on MINGW64;
+CRLF-on-read normalization + always-write-LF preserved. One MINGW64 path
+translation surface event (Process finding 1): initial Category A
+apply-script used `/tmp/fixture_ledger.md` which MINGW64 translated to
+`\tmp\fixture_ledger.md` for native Windows Python; corrected to repo-
+relative `fixture_ledger.md`.
+
+(n) **Multi-file build commit ordering:** Category A apply-script ->
+Category D apply-script -> STATE.md update (Last-updated refresh +
+new VL-033 current-verified-state bullet) -> ledger append (this entry)
+-> commit + push. Per-file synthetic-fixture pre-verification at each
+apply-script step with fixtures built from `cat -A` of actual disk
+regions.
+
+#### What this commit does
+
+Two substantive file modifications:
+
+**1. `EVIDENCE/verification_ledger.md`** (525663 -> 526175 bytes, +512b).
+Category A: 6 bracket annotations applied across 5 str_replace edits
+(Site 3 atomically annotated three adjacent citations in one edit;
+Sites 1, 2, 4, 5, 6 each one annotation). Annotation form:
+`[VL-033 cite-currency: now lines N-M at HEAD 7f41615]` (or for the
+phrase-anchor citations: `["for continuity purposes" phrase now at
+line 64 at HEAD 7f41615]`). Original citation text preserved verbatim;
+annotation appended inline. Affected entries: VL-023 (5 sites) and
+VL-024 Layer B passage (1 site). Per-site byte deltas: +56, +56, +168,
++88, +88, +56.
+
+**2. `STATE.md`** (101940 -> 98108 bytes, -3832b). Category D: 9 closed
+items removed from "Known items open but not scheduled" subsection
+across 5 str_replace edits (Strategy B: adjacent removals merged).
+69 lines removed. Subsection compacts from 19 items to 10 items
+remaining (1, 2, 3, 4, 5, 9, 11, 15, 18, 19). All retained items
+either lack closure events or are explicitly no-action records or
+remain genuinely open per T-cite-C conservative bias. Per-edit byte
+deltas: -1306, -682, -909, -506, -429.
+
+Plus this VL-033 ledger entry append + STATE.md Last-updated refresh +
+STATE.md current-verified-state bullet insertion + STATE.md Next-open-
+action item 27 addition.
+
+#### Category A: removal table
+
+The 6 SESSION_PROTOCOL.md citation sites annotated:
+
+| Site | Ledger entry | Original citation | Current resolution |
+|------|--------------|-------------------|--------------------|
+| 1 | VL-023 (line 4674) | lines 84-86 (fail-closed) | lines 63-64 |
+| 2 | VL-023 (line 4683) | lines 119-122 (at-rest invariants) | lines 81-83 |
+| 3a | VL-023 (line 4691) | lines 64-100 (close protocol) | lines 45-74 |
+| 3b | VL-023 (line 4691) | lines 20-58 (resume protocol) | lines 10-41 |
+| 3c | VL-023 (line 4693) | lines 124-126 (resume fail-closed) | lines 85-87 |
+| 4 | VL-023 (line 4746) | line 86 ("for continuity purposes") | line 64 |
+| 5 | VL-023 (line 4771) | line 86 (explicit "continuity purposes") | line 64 |
+| 6 | VL-024 (line 5704) | lines 84-86 (continuity rule) | lines 63-64 |
+
+VL-031 gap candidate 6 (SESSION_PROTOCOL.md citation drift) closes
+via Category A.
+
+#### Category D: removal table
+
+The 9 items removed under T-cite-C closure-event citation:
+
+| Item | Description | Closure event |
+|------|-------------|---------------|
+| 6 | VL-015/VL-016 verification-request artifacts (commit template candidate) | VL-017a (committed `verification_request_template.md`) |
+| 7 | VL-016 premise-testing as distinct verification shape | VL-032 (promoted as Lesson 8 in `session_mechanics_lessons.md`) |
+| 8 | VL-016 follow-up: promote session-mechanics-lessons file to `docs/` | VL-018 follow-up (file committed at `docs/methodology/session_mechanics_lessons.md`) |
+| 10 | VL-017 stale forward-reference in SPEC/request_schema.md closing paragraph | VL-020 (closing-paragraph correction landed) |
+| 12 | VL-017b candidate finding 1 (seventh refusal code status) | VL-018 (item itself marked SUPERSEDED) |
+| 13 | VL-017b candidate finding 2 (generic-unknown-key handling) | VL-018 (upgraded to G14; tracked under G-numbering) |
+| 14 | VL-017b candidate finding 3 (parse-order API-vs-procedure) | VL-018 (item itself marked SUPERSEDED) |
+| 16 | VL-017b build-resumption template revision (None enumeration) | VL-017b (revision incorporated in own session) |
+| 17 | VL-020 second stale forward-reference at line 457 | VL-021 (line-457 correction landed) |
+
+VL-029 gap candidate 2 (STATE.md known-items prune) closes via Category D.
+
+#### Category B: empty result
+
+Category B enumerated all ledger references to STATE.md by line number.
+Classification produced zero in-scope citation-drift sites. Reasons:
+
+- Item-number citations dominate STATE.md references (per opener
+  prediction).
+- Line-number citations of STATE.md content appear almost exclusively
+  in source-first sub-bullets that document a session's own edits
+  (true historical record; out of scope).
+- The genuine STATE.md drift (Type 2 prose drift at lines 1116-1152;
+  Type 2 known-items drift at lines 1154+) was classified out of scope
+  at Step 0 and addressed via Category D (the known-items drift only,
+  under T-cite-C discipline).
+
+Finding: STATE.md citation discipline is already strong. The item-N
+citation pattern is structurally drift-resistant; the line-N pattern
+is reserved for self-describing edit records. This is the framework's
+discipline working as designed.
+
+#### Category C: empty result
+
+Category C enumerated all ledger-to-ledger line-number citations.
+Disk verification at lines 5237, 5159-5176, 5212-5224, 5331-5339,
+5079-5086, 4501, 5002 confirmed each citation resolves correctly to
+substantive content at the cited position. Conclusion: ledger
+append-only discipline preserves line-number stability for prior-entry
+citations. The cited content has remained at the cited line positions
+through all subsequent entries.
+
+The line-number citations to historical opener documents (lines 7034,
+7333, 7335, 7227, 7329) and historical test-file states (lines 7608,
+7622) are out-of-scope self-describing references. The methodology-file
+citation at line 7161 (`session_mechanics_lessons.md` line 47) is
+Category F territory (methodology citations), outside VL-033's
+A-D scope.
+
+#### Verification
+
+Per-file synthetic-fixture pre-verification applied to both apply-scripts:
+
+- **Category A fixture run:** 525663 -> 526175 bytes, md5 `51983012...`
+  -> `63c20b5e...`, 6 edits applied, ASCII-clean, all anchors unique.
+- **Category A real run:** identical to fixture run (deterministic
+  apply-script).
+- **Category D fixture run:** 101940 -> 98108 bytes, md5 `63f68f48...`
+  -> `1d42f060...`, 5 edits applied, 69 lines removed, ASCII-clean,
+  all anchors unique.
+- **Category D real run:** identical to fixture run.
+
+Pytest: 84 passed + 0 xfailed at session start (4.62s); 84 passed + 0
+xfailed after Category D landing (0.69s); will re-verify pre-commit.
+No test, code, canon, or spec change throughout the session.
+
+#### Gap candidates
+
+1. **VL-029 gap candidate 1 Type 2 reclassification: T-prose-drift
+   trajectory candidate.** STATE.md trajectory-summary prose drift
+   at lines 1116-1152 is content drift requiring interpretive prose-
+   rewrite judgment, not mechanical citation-currency work. Out of
+   VL-033 scope per Decision T-cite-E. Resolution candidate: a
+   focused str_replace commit refreshing the three stale passages
+   with post-VL-029 trajectory state, or a broader prose-currency
+   trajectory absorbing this plus VL-029 gap candidate 1 plus any
+   similar drift in other structural docs. Not blocking; not
+   actioned.
+
+2. **VL-030 gap candidate 5 carry-forward**: STATE.md never received
+   a VL-029 follow-up bullet for the README rewrite at `5f833fb`.
+   T-cite-C conservative bias kept this out of VL-033 scope. Carry-
+   forward to T-prose-drift bundle.
+
+3. **Methodology-file citation drift** (Category F territory): the
+   ledger contains methodology-file line citations (e.g., line 7161
+   cites `session_mechanics_lessons.md` line 47). These are out of
+   VL-033 A-D scope. With both VL-032 (which expanded the lessons
+   file by 12064 bytes) and this entry's pruning landed, methodology-
+   file line citations may have drifted. Queue-drain candidate for
+   a future Category-F audit, or for absorption into T-prose-drift
+   if scope expands.
+
+4. **MINGW64 path discipline candidate for apply-script template**
+   (single instance, no threshold met). Process finding 1 of this
+   entry documents the first instance. If a second instance surfaces,
+   `apply_script_template.py` could gain a "MINGW64 path discipline"
+   note: avoid `/tmp/` paths in apply-scripts; use repo-relative
+   or home-relative paths to avoid the Windows-vs-POSIX translation
+   layer.
+
+5. **Pre-existing markdown formatting drift in STATE.md** (now-removed):
+   the deleted item 8's continuation line `session-mechanics-lessons
+   file to docs/` had lost its standard two-space indent (visible in
+   the Category D `cat -A` source-first read). This was pre-existing
+   drift, not VL-033's introduction; it went away as part of item 8's
+   removal. Not actioned; not VL-033's responsibility. Recorded as
+   trace observation for future T-prose-drift work scope.
+
+#### Process findings
+
+**Finding 1 - MINGW64 path translation surface event (single instance).**
+The initial Category A apply-script used `Path("/tmp/fixture_ledger.md")`
+which works under pure POSIX but fails under MINGW64 with native
+Windows Python: MINGW64 translates shell-level `/tmp/` to Windows
+`\tmp\` for `cp`, while Windows-native Python reads `/tmp/` as `\tmp\`
+for its own `os.path` operations. The `cp` succeeded but Python looked
+at a different location. Symptom: `ABORT: fixture file not found at
+\tmp\fixture_ledger.md`. Corrective: switched to repo-relative
+`fixture_ledger.md`. Single instance; two-instance threshold not yet
+met. Candidate methodology refinement to `apply_script_template.py`
+deferred (gap candidate 4 of this entry).
+
+**Finding 2 - Greek-letter leak in Claude-side prose (fourth instance
+of Lesson 7 stage 2 failure mode).** During in-session discussion of
+annotation form options, Claude's prose used `alpha` / `beta` / `gamma`
+(U+03B1, U+03B2, U+03B3) instead of ASCII labels (A/B/C). Caught by
+user, not by Claude-side byte-sweep. Same failure mode as VL-027
+Finding 4 (typographic punctuation drift), VL-029 Finding 4 (Greek
+alpha leak caught by apply-script pre-write check), VL-031 Finding 4
+(Greek letters in ledger draft caught by post-draft byte-sweep). Lesson
+7 stage 1 (apply-script ASCII pre-write check) was operative throughout
+the session and would have caught any Greek bytes destined for committed
+files. Lesson 7 stage 2 (Claude-drafting-time byte-sweep) did not fire
+preemptively for in-session chat prose; user-as-final-arbiter pattern
+caught it. The Greek bytes were never destined for any committed file
+(they appeared only in chat options-discussion prose); but they
+demonstrate the continuing failure mode in Claude-side prose drafting.
+Fourth surface event recorded; pattern continues to recur.
+
+**Finding 3 - Scope-classification drift caught by user mid-session
+(D-empty reversal).** After Step 0 correctly classified VL-029 gap
+candidate 1 as Type 2 (out of scope), Claude inferentially extended
+the same classification to VL-029 gap candidate 2 without source-first
+reading of the opener's Category D definition. Decision D-empty was
+proposed and user-confirmed before source-first verification of the
+opener. User's question "is D-empty in violation of scope definitions?"
+prompted source-first re-reading of opener lines 199-272, which
+revealed Category D was explicitly opener-authorized interpretive work
+under Decision T-cite-C. D-empty was reversed; Category D enumeration
+proceeded under T-cite-C discipline with 9 items removed. Same failure-
+mode family as VL-032 Finding 1 (sub-edit 4 opener-prescribed-Option-A
+vs source-derived-Option-B): opener prescriptions OR opener exemptions
+require source-first verification before execution. The user's catch
+of the scope-classification drift is the framework's discipline working
+at the user-as-final-arbiter layer; the methodology pattern is for
+Claude-side discipline to catch this preemptively. Candidate methodology
+refinement: when classifying related items under a Step 0 framework,
+treat each item as requiring independent source-first classification
+even if a related item was just classified; do not extend classification
+inferentially.
+
+**Finding 4 - Byte-delta prediction errors (Lesson 5 third-session
+recurrence).** Both Category A and Category D apply-script byte-delta
+predictions were off:
+- Category A predicted ~+488 bytes total; actual +512 (5% off).
+- Category D predicted ~-3700 bytes total; actual -3832 (3.4% off).
+- Largest per-edit error: Category D Edit_B2 predicted ~-585; actual
+  -682 (97-byte miss).
+Same Lesson 5 family as VL-032 Finding 4(a) (lessons-file delta
+predicted +8000, actual +12064). Prediction errors, not content errors;
+the substantive content was correct in all cases (verified via diff
+inspection and md5 reconciliation). Recorded as continuing surface-event
+pattern. Lesson 5's corrective rule applied successfully session-
+internally: predictions were enumerated against the opener's claims at
+session-start, then disk-verified at apply-script execution; the
+discrepancy was caught at fixture-run time (before any real-file
+modification), not after commit. The discipline holds; the prediction
+errors themselves are tolerable when caught session-internally.
+
+**Finding 5 - Inferred-baseline assertion without source verification.**
+Claude asserted "pre-Category-A ledger line count = 8568" in mid-session
+analysis without ever having read the actual baseline from disk. When
+the post-Category-A line count appeared as 8574, this was framed as a
+"+6 anomaly worth investigating." The investigation reduced to: there
+was no anomaly; the inferred baseline (8568) was wrong because it was
+never verified. Same Lesson 3 / Lesson 5 family as Finding 3 of this
+entry. Session-internal catch; no committed divergence. Recorded as
+trace observation; corrective for next session is to explicitly read
+baselines from disk before asserting them.
+
+**Finding 6 - Out-of-order category execution.** Categories executed
+A -> B -> D -> C rather than opener-listed A -> B -> C -> D. The
+reordering occurred because D-empty reversal (Finding 3) was caught
+mid-session after the D-empty proposal, and continuity-of-correction
+discipline pulled D forward rather than continuing to C and then
+revisiting D. Not opener-prohibited; recorded for honest record. No
+substantive impact on outcomes (each category's enumeration was
+independent of the others).
+
+**Finding 7 - Lesson 7 stage 2 catches em-dash in this entry's own
+draft (operative discipline validating its own promotion path).**
+During drafting of this VL-033 ledger entry, an em-dash character
+(U+2014, UTF-8 `e2 80 94`) appeared in a quoted user phrase. Lesson 7
+stage 2 byte-sweep at draft-completion time (operated by
+`LC_ALL=C grep -cP '[^\x00-\x7F]'`) caught the 1 non-ASCII byte before
+any apply-script construction. Located via `grep -nP '[^\x00-\x7F]'`;
+corrected via `str_replace` to ASCII double-hyphen. Fifth instance of
+Lesson 7 stage 2 catching drift in committed-track content (prior
+instances: VL-027 typographic punctuation drift; VL-029 Finding 4
+Greek alpha leak; VL-031 Finding 4 Greek letters in ledger draft;
+VL-032 Finding 2 em-dashes in edit-spec draft files). The discipline
+is durable across sessions and across content types (apply-script
+source, ledger entries, edit specs). Honest self-application: this
+entry, which records the discipline as durable, was itself caught
+by the discipline in the act of being drafted.
+
+#### Files affected
+
+- `EVIDENCE/verification_ledger.md` (+512 bytes Category A annotations
+  + this entry appended)
+- `STATE.md` (-3832 bytes Category D removal + Last-updated refresh +
+  VL-033 current-verified-state bullet + Next-open-action item 27)
+
+Total substantive delta: -3320 bytes (Category A +512; Category D -3832).
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json`
+- `IMPLEMENTATION/*` (no code change)
+- `TESTS/*` (no test change)
+- `SPEC/*` (no spec change)
+- `docs/restructure/*` (no structural-doc change)
+- `docs/SESSION_PROTOCOL.md` (target of Category A annotations but not
+  itself modified)
+- `docs/MAINTENANCE_PROTOCOL.md`
+- `docs/methodology/*` (no methodology-file change; Category F territory
+  out of scope)
+- `README.md` (audit is internal-discoverability scope)
+
+The session-local apply-scripts (`apply_ledger_vl033_categoryA.py`,
+`apply_statemd_vl033_categoryD.py`) and fixture files
+(`fixture_ledger.md`, `fixture_statemd.md`) are used and discarded
+per session-script pattern.
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite
+its own commit hash. Prior entries cited:
+
+- VL-032 at commit `7f41615`
+- VL-031 at commit `6369eac`
+- VL-030 at commit `699da0d`
+- VL-029 follow-up at commit `5f833fb`
+- VL-029 at commit `79012d7`
+- VL-028 at commit `7efcefc`
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-023 follow-up at commit `49b797a`
+- VL-023 at commit `83fa5a7`
+
+No cross-model verification of VL-033 was scheduled. The audit is
+bookkeeping (efficiency move per VL-017a's distinction); the
+mechanical corrections are individually verifiable via the
+synthetic-fixture pre-verification + md5 reconciliation.
+
+#### Next trajectory action
+
+Per STATE.md item 27 (newly added in this commit): **T-G7-eval**
+(canon-derived tests for the evaluator domain: AC^3 / T^26 /
+manifest-integrity) is the next operational trajectory. Pre-session
+decisions already locked in this session's transcript:
+- Suggest one-file structure (`TESTS/adversarial/test_evaluator_canonical.py`)
+- No pre-draft cross-model verification
+- Manifest-integrity tests carry artifact-05-layer acknowledgment
+  per VL-028 Decision B precedent
+- Augment, do not replace, the existing 23 code-derived tests in
+  `TESTS/test_adversarial_evaluator.py`
+- Target ~18-20 canon-derived tests
+- B-park treatment for G11 (manifest-source asymmetry stays in
+  bookkeeping batch; not surfaced as xfail in the new test suite)
+- Spec-gap-discovery checkpoint planned: if canon-derived test
+  drafting surfaces an evaluator behavior the canon doesn't
+  authorize, pause for spec-revision pre-step (parallel to
+  VL-025-follow-up -> VL-026 -> VL-027/VL-028 sequencing)
+
+Other open trajectories remain in the priority order:
+- **T-prose-drift**: VL-029 gap candidate 1 Type 2 reclassification +
+  VL-030 gap candidate 5 + any methodology-file citation drift +
+  pre-existing markdown formatting drift. Bundled candidate.
+- **T-bookkeeping**: the G1/G8/G9/G11/G14 batch. Longest-standing queue.
+- **G4** (non-bypassable enforcement) and **G5** (durable verification)
+  remain build-outward scope.
+
+The session's audit demonstrated two of the four citation categories
+were already structurally drift-resistant under existing framework
+discipline (Category B via item-N citations; Category C via append-only).
+The other two categories absorbed real drift accumulation. The framework
+holds; the discipline is durable.
