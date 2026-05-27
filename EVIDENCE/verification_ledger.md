@@ -8110,3 +8110,465 @@ T-07 closes completely. Per STATE.md, three open trajectories remain with no pri
 - **T-bookkeeping** - the G1/G8/G9/G11/G14 batch. Longest-standing queue; comfort-food trajectory.
 
 Plus the citation-drift audit (new at VL-031, same family as VL-029/VL-030 gap candidates 1, 2, 5) is now eligible to bundle with T-methodology if the trajectory expands to absorb structural-doc citation-currency.
+
+### VL-032 - 2026-05-26 - T-methodology trajectory close: methodology backlog from VL-025 through VL-031 absorbed into durable artifacts
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** the methodology backlog accumulated across seven prior
+sessions (VL-025 through VL-031) is now resident in three methodology
+files (`docs/methodology/apply_script_template.py`,
+`docs/methodology/session_mechanics_lessons.md`,
+`docs/methodology/cross_model_evaluate_template.md`) as durable lessons,
+template revisions, and discipline notes, rather than scattered across
+ledger findings. The next reader of these methodology files sees
+Lesson 5's opener-packaged-prediction refinement, Lesson 7's two-stage
+typographic-drift discipline, Lesson 8's pre-draft vs. post-draft cross-
+model verification distinction, the synthetic-fixture verification step's
+load-bearing `cat -A` refinement, the cross_model_evaluate_template's
+Match-criterion clarification, and the co-upload format note - all
+available as discoverable methodology rather than as ledger excavation.
+
+#### Background
+
+T-methodology was open since VL-025 (VL-025 ledger entry gap candidate 3).
+The backlog accumulated through VL-029 ledger entry gap candidate 3,
+VL-030 ledger entry gap candidate 4, and VL-031 ledger entry's
+"Carry-forward gap candidates" subsection. The VL-031 session opener
+for VL-032 named T-methodology as one of three open trajectories with
+no priority blocker; the year-1 roadmap (offline reference) sequenced
+it #1 per discipline-before-deployment.
+
+The trajectory was substantively the same as VL-022's
+throwaway-session-methodology-promotion pattern - absorb session-local
+findings into durable methodology artifacts - but at larger scale
+(seven sessions of accumulated findings rather than one bridge document).
+
+#### Pre-session locked decisions
+
+Per the VL-031 session opener for VL-032, five sub-edits were pre-locked
+at scope-fixing time. The opener's "Pre-locked scope (do not expand
+without explicit user approval)" framing held throughout the session.
+
+- **Sub-edit 1:** `docs/methodology/apply_script_template.py` docstring
+  extension with the synthetic-fixture verification step (three-plus
+  instance threshold met across VL-026/27/28/29/30) plus VL-031's load-
+  bearing `cat -A`-vs-inferred-structure refinement.
+- **Sub-edit 2:** new Lesson 7 in `session_mechanics_lessons.md` -
+  typographic-drift discipline, two-stage corrective. Threshold met
+  across VL-027 + VL-029 Finding 4 + VL-031 Finding 4.
+- **Sub-edit 3:** new Lesson 8 in `session_mechanics_lessons.md` -
+  pre-draft cross-model verification as premise-testing pattern,
+  distinct from post-draft artifact-reproduction-testing. Threshold met
+  across VL-016 + VL-031 T-07.
+- **Sub-edit 4:** opener-prediction-vs-file-content failure mode.
+  Decision: Option B (Lesson 5 refinement) rather than Option A (new
+  Lesson 9). Rationale: file's own "How this file evolves" clause
+  authorizes refinement when third+ instance reveals sharper
+  characterization; five new surface events demonstrate sharper
+  characterization (opener-packaged-prediction timing variant) of the
+  same root-cause failure mode (set claim without enumeration) rather
+  than a structurally different pattern. The Option A draft also stated
+  "structurally identical to Lesson 5" in its own failure-mode section,
+  which is itself the argument for refinement over duplication.
+- **Sub-edit 5:** three revisions to
+  `docs/methodology/cross_model_evaluate_template.md`:
+  - 5a: single-instance-language removed (two-instance threshold met
+    at VL-023 follow-up + VL-031 T-07).
+  - 5b: new Outcome-classification criteria section codifying VL-025
+    follow-up's authorization-by-design-space vs. authorization-by-
+    direct-naming Match-criterion clarification.
+  - 5c: new Co-upload format note section codifying VL-031 Finding 2's
+    recipient-recognition surface event.
+
+#### Procedure confirmation (a)-(n)
+
+(a) **Scope-bound** to the three methodology files plus STATE.md plus
+the ledger. No canon, manifest, implementation, test, spec, or
+structural-doc change.
+
+(b) **Scope-adherence checkable** per-edit. Each str_replace anchored
+to a disk-verified pre-edit string (per the very Lesson 9 / Lesson 5
+refinement discipline being promoted in this commit; honest self-
+application). Each new content block cites its originating ledger
+entry's Finding-N or gap-candidate-N for traceability.
+
+(c) **VL-025 smoke test pattern is precedent, not source.**
+
+(d) **Pre-commit baseline 84 passed + 0 xfailed** at HEAD `6369eac`.
+Verified at session start. Re-verified post-each-apply (no test changes;
+baseline unchanged throughout).
+
+(e) **No new canon-derived test files** - methodology absorption, not
+test development.
+
+(f) **Source-first applied.** Phase 1 of the session: read each
+methodology file from disk in full before drafting any edits.
+
+(g) **Set-exhaustiveness applied.** The five sub-edits above are
+exhaustive for this session; additional methodology candidates
+surfacing during drafting were recorded as new findings rather than
+absorbed (preventing scope creep within the session).
+
+(h) **Mode discipline.** No "[INFERENCE]" flags appear in lesson text
+itself (lessons describe established patterns).
+
+(i) **No hash-value pinning** in tests (no tests touched).
+
+(j) **VL-009 ASCII-safe at write time.** Apply-scripts perform pre-write
+ASCII check. Also: explicit byte-sweep at Claude-drafting time, before
+apply-script construction, per the very Lesson 7 being promoted in this
+commit (honest self-application). The drafting-time sweep caught 2
+em-dash drifts in the edit-specification draft files before any apply-
+script was constructed; recorded as Finding 2 of this entry.
+
+(k) **xfail discipline** not applicable (no test changes).
+
+(l) **Bug-fix discipline** not applicable.
+
+(m) **Sandbox conditions match production.** Apply-scripts on MINGW64;
+CRLF-on-read normalization + always-write-LF preserved.
+
+(n) **Multi-file build commit ordering:** `apply_script_template.py`
+(sub-edit 1) -> `session_mechanics_lessons.md` (sub-edits 2, 3, 4 in
+one apply-script with 5 edits) -> `cross_model_evaluate_template.md`
+(sub-edit 5) -> STATE.md update -> ledger append (this entry). Per-file
+synthetic-fixture verification at each apply-script step with fixtures
+built from the real file on disk per the new Lesson 7 + apply_script_template.py
+refinement being promoted in this same commit (honest self-application).
+
+#### What this commit does
+
+Three methodology files modified, STATE.md modified, ledger appended.
+
+**1. `docs/methodology/apply_script_template.py`** (+2717 bytes; 9587 -> 12304).
+New top-level docstring section "SYNTHETIC-FIXTURE PRE-VERIFICATION
+(required for >2 edit sites)" inserted after the existing "HOW TO USE"
+section. Codifies the synthetic-fixture pattern operative since VL-026
+(three-plus-instance threshold met across VL-026, VL-027, VL-028, VL-029,
+VL-030). Load-bearing refinement: fixtures must be built from `cat -A`
+(or equivalent disk-byte inspection: `od -c`, `xxd`) of actual disk
+regions, NOT from inferred structure. Refinement traces to VL-031's
+anchor-failure recovery; without the disk-byte inspection step,
+synthetic-fixture verification reduces to circular-clean verification
+(the script works against the fixture's wrong assumption about disk
+shape; both pass; both then fail against real disk). Recommended
+fixture-building workflow documented inline.
+
+**2. `docs/methodology/session_mechanics_lessons.md`** (+12064 bytes;
+26580 -> 38644). Five edits:
+
+- **Lesson 5 surface events extended** with five new bullets (VL-028
+  rename-count divergence, VL-029 Finding 1 nine-caller divergence,
+  VL-029 Finding 8 response-shape divergence, VL-031 anchor failures
+  as instances seven and eight). The set-exhaustiveness failure mode
+  now has eight cumulative surface events.
+
+- **Lesson 5 Failure mode subsection refined** with a paragraph
+  distinguishing two timing patterns: in-session set claims (instances
+  1-3) and opener-packaged predictions (instances 4-8). Both share the
+  same root cause (set claim without source-of-truth enumeration); they
+  materialize at different points in session flow.
+
+- **Lesson 5 Corrective rule extended** with a new bullet on opener-
+  packaged predictions: enumerate the relevant set against disk BEFORE
+  the opener is committed to writing. The opener is itself a prediction
+  artifact; predictions in it are claims about sets and must be
+  enumerated to the same standard as in-session claims.
+
+- **Lesson 5 Self-check extended** to cover opener-packaging explicitly:
+  the session opener is not exempt; predictions in openers are claims
+  about sets.
+
+Plus two new lessons:
+
+- **Lesson 7: Typographic-drift discipline (two-stage).** Three surface
+  events: VL-027 (typographic punctuation drift), VL-029 Finding 4 (Greek-
+  alpha leak caught by apply-script pre-write check), VL-031 Finding 4
+  (Greek letters in ledger draft, caught only by explicit post-draft
+  byte-sweep). Two-stage corrective: ASCII pre-write check at apply-
+  script-write time (already operative in `apply_script_template.py`)
+  PLUS explicit byte-sweep at Claude-drafting time, before apply-script
+  construction or other write path.
+
+- **Lesson 8: Pre-draft cross-model verification (premise-testing
+  pattern).** Two surface events: VL-016 (premise verification before
+  schema corrections) and VL-031 T-07 (premise verification before
+  drafting `07_continuity_recursion.md`). Distinguishes pre-draft
+  pattern (verifies the artifact's foundation before it is built) from
+  post-draft pattern (verifies the drafted derivation reproduces against
+  primary sources). Both patterns valid; selection is by what work the
+  verification is doing.
+
+Lesson count: 6 -> 8.
+
+**3. `docs/methodology/cross_model_evaluate_template.md`** (+3703 bytes;
+15975 -> 19678). Three edits:
+
+- **5a:** template-usage section's single-instance-language removed and
+  replaced with explicit two-instance-threshold-met language citing
+  VL-023 follow-up and VL-031 T-07. Original single-instance promotion
+  rationale preserved for historical context.
+
+- **5b:** new "Outcome-classification criteria (recipient discipline)"
+  section inserted after the "What outcome means what" section.
+  Codifies VL-025 follow-up's authorization-by-design-space vs.
+  authorization-by-direct-naming Match-criterion clarification.
+  Instructs recipients to state the criterion explicitly in step 4
+  of Submission format when classification depends on which criterion
+  is applied.
+
+- **5c:** new "Co-upload format note (VL-031 Finding 2)" section
+  inserted after the "Attached files" section. Codifies VL-031
+  Finding 2's recipient-recognition surface event with two correctives:
+  filename convention (REQUEST_<task>.md prefix) OR explicit inline turn
+  after upload.
+
+**4. `STATE.md`** (+4935 bytes; 97005 -> 101940). Three edits:
+Last-updated parenthetical refresh (VL-031 summary replaced with VL-032
+summary); new VL-032 current-verified-state bullet inserted before
+`## What is locked vs. open`; Next-open-action item 26 added.
+
+**5. `EVIDENCE/verification_ledger.md`** (this entry).
+
+Total byte delta across files (excluding ledger): +21419 bytes.
+
+#### Verification
+
+Pre-commit baseline pytest: 84 passed + 0 xfailed at HEAD `6369eac`.
+No test changes in this commit; post-commit baseline identical 84/0.
+
+Per-file synthetic-fixture verification applied to each of the three
+methodology files plus STATE.md. Fixtures built from copies of the
+real file on disk; fixture invariants checked at each apply: anchor
+uniqueness, post-edit content, byte-delta, ASCII-clean.
+
+Methodology files apply outcome: all anchors matched on first run for
+sub-edits 1 and 5; sub-edits 2-3-4 fixture caught one drafted-anchor
+issue during initial grep (Edit 3's gap-table corrective-rule anchor
+appeared to return 0 matches; root cause was a multi-line wrap that
+Python's substring `count()` matches correctly even though grep does
+not; resolved by Python-based occurrence-count verification before
+apply-script construction).
+
+STATE.md apply outcome: two anchor adjustments required after fixture
+failure - Edit 2's anchor used "  Classification:" (2-space indent) but
+disk has "Classification:" mid-sentence at end of single-line VL-031
+bullet; corrected to use the VL-031-unique closing phrase. Edit 3's
+anchor assumed "Classification:" was the first word on its own 4-space-
+indented line, but disk wraps such that "Classification: trajectory"
+ends one line (after "reading-aid track only.") and "move per..." starts
+the next line; corrected to anchor on the full disk-wrap. Both
+recoveries demonstrated Lesson 9 / Lesson 5-refinement in action:
+anchors-from-inference fail, fixture catches them, disk-byte-inspection
+recovers without commit risk.
+
+Post-apply ASCII check on all four edited files: clean.
+
+Post-apply lesson count: 8 (Lessons 1-8 in
+`session_mechanics_lessons.md`).
+
+#### Gap candidates
+
+1. **The methodology files themselves may have stale citations.**
+   The opener flagged this as expected gap candidate 1. Source-first
+   reading confirmed: `session_mechanics_lessons.md` cites prior ledger
+   entries and STATE.md at specific line numbers throughout; those
+   citations may have drifted (same family as VL-031 Finding 3
+   SESSION_PROTOCOL.md drift). Not corrected in VL-032 per scope
+   discipline. Resolution candidate: VL-033 citation-currency audit.
+
+2. **Methodology recursion: this entry's own existence is a
+   methodology-bookkeeping pattern worth naming.** This commit absorbs
+   methodology backlog into methodology artifacts; the act of doing
+   so is itself a recurring trajectory shape (VL-022 was the first
+   instance, VL-032 is the second). Two-instance threshold for a
+   T-methodology recurrence cadence candidate met. Queue-drain candidate.
+
+3. **Apply-script template still uses the older test-then-write
+   pattern rather than a single fixture-script tool.** The synthetic-
+   fixture step as documented requires the user to construct a wrapper
+   script or temporarily redirect REPO_ROOT. A tool that abstracts this
+   (e.g., `apply_script_with_fixture.py` that takes the edit list and
+   runs against `/tmp/fixture` automatically before running against
+   REPO_ROOT) would reduce the discipline cost. Surfaced during sub-edit
+   1 drafting and validated by the four opener-prediction surface events
+   in this session. Queue-drain candidate.
+
+4-6. **Carry-forward gap candidates from prior entries** (no change
+this commit): STATE.md trajectory-summary prose drift (VL-029 gap
+candidate 1); STATE.md "Known items open but not scheduled" subsection
+prune (VL-029 gap candidate 2); receipt.py `ensure_ascii=False`
+inconsistency (carried since VL-012). VL-030 gap candidate 5 (STATE.md
+never received a VL-029 follow-up bullet) and VL-031 gap candidate 6
+(SESSION_PROTOCOL.md citation drift) likewise carry forward to VL-033.
+
+#### Process findings
+
+**Finding 1 - Sub-edit 4 decision (Option B over Option A) surfaced
+during scope review, not during drafting.** The opener prescribed
+Option A (new Lesson 9). Source-first reading of
+`session_mechanics_lessons.md` surfaced two structural facts that
+shifted the decision: (a) the file's own "How this file evolves"
+section explicitly authorizes refinement when "a third or later
+instance reveals a sharper characterization"; (b) the Lesson 9
+draft's own failure-mode section stated "structurally identical to
+Lesson 5," which is itself the argument for refinement over
+duplication. The decision was surfaced to the user pre-drafting via
+`ask_user_input_v0`; user selected Option B. The session-internal
+catch is the corrective the framework's source-first discipline
+provides: opener prescriptions are not exempt from source-first
+re-derivation. Candidate methodology refinement: when an opener
+prescribes a methodology-promotion shape that conflicts with the
+target file's own evolution rules, surface the conflict pre-drafting
+rather than executing the opener's shape uncritically. Single instance
+in T-methodology context; two-instance threshold not yet met.
+
+**Finding 2 - Lesson 7 stage-2 byte-sweep caught two em-dash drifts
+in draft files before apply-script construction.** During VL-032
+drafting (before any apply-script existed), an explicit
+`LC_ALL=C grep -n '[^[:print:][:space:]]'` byte-sweep on the
+edit-specification draft files caught two em-dash characters in
+section headers of the draft files. Repaired in-session by
+`sed -i 's/em-dash-char/-/g'`. This is the exact failure mode Lesson 7
+stage 2 addresses, caught by stage 2 operative-discipline within the
+very commit that promotes Lesson 7. The honest self-application is
+one strength of the methodology-promotion-via-application pattern: the
+promotion is tested by applying its own discipline to itself. **First
+operative validation of Lesson 7 stage 2.**
+
+**Finding 3 - Source-first reading of methodology files surfaced two
+gap candidates the opener did not enumerate.** Gap candidate 1
+(methodology citation drift) and gap candidate 3 (apply-script-with-
+fixture tool candidate) both surfaced during source-first reading.
+Pattern demonstrated: source-first reading at session-start surfaces
+related gap candidates that the opener did not enumerate. Reinforces
+the existing Lesson 3.
+
+**Finding 4 - Four opener-prediction surface events caught session-
+internally, none committed.** The opener-prediction-vs-file-content
+failure mode that VL-032 just refined into Lesson 5 fired four times
+during VL-032 itself, all caught session-internally:
+
+(a) **Byte-delta prediction error.** Sub-edits 2-3-4 delta predicted
+approximately +8000, actual +12064 (50% underestimate). Substantive
+content correct; the underestimate was a Lesson 8 size-estimate gap
+(Lesson 7 + Lesson 8 are substantial sections). Caught at fixture-
+apply time. Not a content error.
+
+(b) **STATE.md Edit 2 anchor inference error.** Anchor used "  Classification:"
+(2-space indent) but disk has "Classification:" mid-sentence at end of
+single-line VL-031 bullet. Caught by fixture pre-verification (apply
+script aborted on edit 2 with old_str match count 0). Recovered by
+`grep -n` + `cat -A` inspection of the actual VL-031 bullet structure,
+identification of a VL-031-unique closing phrase ("3 apply-scripts:
+00_README, statemd, ledger). Classification:..."), and Python-based
+patch of the apply-script with the corrected anchor.
+
+(c) **STATE.md Edit 3 anchor inference error.** Anchor assumed
+"Classification:" was the first word on its own 4-space-indented line.
+Disk reality: "Classification: trajectory" ends one line (after
+"reading-aid track only.") and "move per..." starts the next line.
+Caught by fixture pre-verification (apply script aborted on edit 3
+with old_str match count 0). Recovered by `cat -A` inspection of lines
+1220-1228 and reconstruction of the correct multi-line wrap.
+
+(d) **Fixture-invariant grep prediction error.** A verification grep
+predicted unique occurrence of "VL-032 T-methodology trajectory close:
+methodology backlog from" but actual count was 2 (intentional: the
+phrase appears at line 9 in Last-updated and at line 872 in the
+VL-032 current-verified-state bullet, both legitimate content).
+Caught by `(expect 1)` annotation in the verification block.
+
+All four surface events validate Lesson 5's new opener-packaged-
+prediction refinement and the synthetic-fixture step's load-bearing
+`cat -A` refinement: the very pattern being promoted in this commit
+fired four times during the session and was caught every time. The
+discipline being promoted is operational discipline; the operative
+discipline caught the prediction errors before they materialized as
+committed divergence. **This is the strongest possible validation of
+the methodology being promoted: it caught its own failure mode four
+times during its own promotion commit.**
+
+#### Files affected
+
+- `docs/methodology/apply_script_template.py` (+2717b)
+- `docs/methodology/session_mechanics_lessons.md` (+12064b)
+- `docs/methodology/cross_model_evaluate_template.md` (+3703b)
+- `STATE.md` (+4935b)
+- `EVIDENCE/verification_ledger.md` (this entry appended)
+
+Total: +21419 bytes across 4 files (excluding ledger append).
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1)
+- `MANIFEST/manifest.json`
+- `IMPLEMENTATION/*` (no code change)
+- `TESTS/*` (no test change)
+- `SPEC/*` (no spec change)
+- `docs/restructure/*` (no structural-doc change)
+- `docs/SESSION_PROTOCOL.md` (citation drift from VL-031 Finding 3
+  carried forward to VL-033; not corrected in VL-032)
+- `docs/MAINTENANCE_PROTOCOL.md`
+- `README.md` (T-methodology is internal-discoverability scope; public
+  framing unchanged)
+- `docs/methodology/verification_request_template.md` (no change)
+- `docs/methodology/build_resumption_request_template.md` (no change)
+
+The session-local apply-scripts and fixture files are used and
+discarded per session-script pattern.
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite
+its own commit hash. Prior entries cited:
+
+- VL-031 at commit `6369eac`
+- VL-030 at commit `699da0d`
+- VL-029 follow-up at commit `5f833fb`
+- VL-029 at commit `79012d7`
+- VL-028 at commit `7efcefc`
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+- VL-024 at commit `c944a76`
+- VL-023 follow-up at commit `49b797a`
+- VL-023 at commit `83fa5a7`
+- VL-022 at commit `dbd65aa`
+- VL-018 at commit `cc08844` (with follow-up `f24c837`)
+- VL-016 at commit unspecified; premise-verification-before-corrections
+  precedent (cited by Lesson 8)
+- VL-012 at commit `8ba88cf` (with hash correction `f0df14c`)
+
+No cross-model verification of VL-032's methodology promotions was
+scheduled in-session. The five sub-edits all promote patterns already
+verified across multiple prior sessions; the methodology absorption
+itself is a bookkeeping move (efficiency move per VL-017a's distinction).
+
+#### Next trajectory action
+
+T-methodology closes. Three open trajectories remain with no priority
+blocker among them:
+
+- **VL-033 citation-currency audit** (newly load-bearing per
+  Finding 3 + VL-031 Finding 3 + carry-forward gap candidates 4-5):
+  focused source-first audit comparing every structural-doc citation
+  in every ledger entry against current line numbers, with corrections
+  committed in a single bookkeeping pass.
+
+- **T-G7-eval:** canon-derived tests for the evaluator domain (AC^3 /
+  T^26 / manifest-integrity). G7 envelope domain closed at VL-028;
+  evaluator domain still code-derived. Closes G7 completely.
+
+- **T-bookkeeping:** the G1/G8/G9/G11/G14 batch. Longest-standing
+  queue.
+
+Plus the queue-drain candidates surfaced in VL-032 (apply-script-with-
+fixture tool, T-methodology cadence rule, opener-vs-file-evolution-
+rules conflict pattern) are eligible for bundle inclusion with VL-033
+or a future T-methodology continuation.
+
+The reading-aid trajectory (`07_continuity_recursion.md`) closed at
+VL-031 and is not currently active.

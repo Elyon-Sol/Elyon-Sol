@@ -375,6 +375,30 @@ pattern observed twice that doesn't fit any existing threshold.
   output. The basic-regex form (`grep -n '[^[:print:][:space:]]'`)
   is the form that works on MINGW64 + Git Bash and is the form
   the VL-019 session settled on.
+- **VL-028 rename-count divergence (fourth instance).** The session
+  opener predicted approximately 4 substring-rename operations across
+  two test files during the rebase. The actual count was 20 substring-
+  rename operations (7 + 11 + 9). The "set of rename operations" was
+  not enumerated against the files via `grep -c` before the prediction
+  was packaged into the opener.
+- **VL-029 Finding 1 (fifth instance, session-internally caught).**
+  The session opener predicted approximately 4 callers of `reassert()`'s
+  return shape would need updating. The actual count was 9 callers
+  across two test files. "Callers of `reassert()`" was not enumerated
+  against the TESTS/ tree before the prediction. Caught by source-first
+  reading; no commit divergence.
+- **VL-029 Finding 8 (sixth instance, pytest-caught).** The session's
+  caller enumeration covered `reassert()`'s return-value callers but
+  did NOT enumerate callers of pep.py's ELIGIBLE response shape across
+  the entire TESTS/ tree. test_request_schema.py asserted on the old
+  `terminal_state == "ELIGIBLE"` shape; the assertion survived because
+  the response-shape caller set was not enumerated. Surfaced only by
+  the user's real-environment pytest run.
+- **VL-031 anchor failures (seventh and eighth instances).** Apply-
+  script anchors for 00_README.md and STATE.md were written against
+  inferred file structure rather than enumerated against `cat -A`
+  output. Both anchors failed at apply time; recovery required
+  building fixtures from disk-byte inspection (see Lesson 7).
 
 ### Failure mode
 
@@ -404,6 +428,29 @@ without enumeration:
 - `grep -P`: "the platforms this command works on" was not
   enumerated against the platforms the project actually runs on.
 
+The failure mode generalizes across two distinct timing patterns:
+
+- **In-session set claims** (instances 1-3): the set is claimed
+  exhaustive during substantive work, without enumeration against
+  source-of-truth at that point. The claim materializes in
+  immediate output (the architecture, the test count, the recommended
+  command).
+
+- **Opener-packaged predictions** (instances 4-8): the set is
+  predicted at session-open time and packaged into the session's
+  operating instructions, without enumeration before opener
+  construction. The prediction becomes operative throughout the
+  session until disk reality contradicts it - which may happen
+  session-internally (instance 5) or only at pytest / apply-script
+  time (instance 6, instances 7-8).
+
+The two timing patterns share the same root cause (a set claim
+made without source-of-truth enumeration) but materialize at
+different points in session flow. Opener-packaged predictions are
+particularly costly because they shape multiple downstream decisions
+before disk contradiction; in-session claims typically materialize
+in one decision and surface quickly.
+
 ### Corrective rule
 
 Before asserting that a set is exhaustive, characterized,
@@ -422,6 +469,15 @@ set:
   behavior, before the command is recommended.
 - For gaps in `docs/restructure/04_current_vs_claimed.md`: the
   artifact's gap table, read in full, not from memory.
+- For opener-packaged predictions about caller counts, rename
+  counts, or anchor structure: enumerate the relevant set against
+  disk BEFORE the opener is committed to writing. `grep -c
+  '<pattern>' <files>` for occurrence counts; `cat -A <file> |
+  sed -n '<start>,<end>p'` for anchor structure; the N3 cross-file
+  re-read pass (per VL-029 Finding 5) for response-shape coverage
+  across a directory tree. The opener is a prediction artifact;
+  predictions in it are claims about sets and must be enumerated
+  to the same standard as in-session claims.
 
 The cost of enumeration is bounded (one primitive call, one
 view); the cost of a wrong claim about a set is the rework when
@@ -431,10 +487,13 @@ ones.
 ### Self-check
 
 > I'm about to claim that a set is complete / characterized /
-> exhaustive / covered. Have I enumerated the set's members
-> against a source-of-truth primitive, or am I asserting the
-> characterization from memory or inference? If the latter,
-> run the enumeration first.
+> exhaustive / covered - OR I'm about to package a count, anchor
+> structure, or coverage scope into a session opener as operative.
+> Have I enumerated the set's members against a source-of-truth
+> primitive, or am I asserting the characterization from memory or
+> inference? If the latter, run the enumeration first. The session
+> opener is not exempt; predictions in openers are claims about sets
+> and must be enumerated to the same standard.
 
 ### First successful application
 
@@ -559,6 +618,191 @@ shapes.
 > unflagged register-shift or an uncited declarative, the
 > response is mode-shifted and the unsupported claims are
 > out-of-scope, regardless of how the response opens.
+
+---
+
+## Lesson 7: Typographic-drift discipline (two-stage)
+
+### Surface events
+
+- **VL-027 process finding (first instance).** Typographic punctuation
+  (em-dashes, curly quotes, ellipsis characters) drifted into ledger entry
+  drafting from Claude's natural prose habits. Caught at pre-write ASCII
+  check; corrected before commit.
+- **VL-029 Finding 4 (second instance).** The STATE.md apply-script's
+  pre-write ASCII check caught 3 instances of U+03B1 GREEK SMALL LETTER
+  ALPHA introduced during Claude-side prose drafting (the in-session
+  vocabulary "Option alpha" leaked into the new_str text). Caught at
+  apply-script-write time; the apply-script template's pre-write check
+  is the operative discipline.
+- **VL-031 Finding 4 (third instance, refines the corrective).** The
+  T-07 artifact itself held ASCII-clean at the create_file step. But
+  the ledger entry Claude drafted contained 10 non-ASCII bytes (5
+  Greek letters used as decision-label suffixes from in-session
+  vocabulary). The drift was not caught by an apply-script (the ledger
+  append uses cat-redirect, not str_replace through an apply-script).
+  Caught only by an explicit post-draft byte-sweep before commit;
+  repaired in-session by relabeling to disambiguated ASCII suffixes.
+
+### Failure mode
+
+Two failure-mode shapes share the same root cause:
+
+1. **Punctuation drift at drafting time.** Claude's natural prose
+   habits include typographic punctuation (em-dashes, curly quotes,
+   ellipsis). When the operative discipline is "ASCII only" (VL-009),
+   the drafting register and the discipline-target register diverge.
+   The divergence is small per-character but cumulative across an
+   artifact.
+
+2. **In-session vocabulary leakage.** When a session uses Greek letters
+   or other non-ASCII symbols as in-session shorthand (option-A vs.
+   option-B suffixed with Greek letters; sub-decision labels), the
+   symbols can leak from the session's working vocabulary into the
+   drafted artifact's text. The leakage is invisible in rendered output
+   but visible to byte-level checks.
+
+The apply-script pre-write ASCII check (operative since VL-026 in
+`apply_script_template.py`) catches both shapes when the artifact is
+written through an apply-script. But artifacts written through other
+paths - direct create_file, cat-redirect ledger appends, manual editor
+saves - bypass the check entirely.
+
+### Corrective rule
+
+Typographic-drift discipline is two-stage:
+
+1. **ASCII pre-write check at apply-script-write time.** Already
+   operative; encoded in `apply_script_template.py`'s edit loop. No
+   change needed.
+
+2. **Explicit byte-sweep at Claude-drafting time, before apply-script
+   construction or other write path.** Before any drafted text is
+   committed to apply-script `new_str` literals, ledger entry append,
+   or other write path: run an explicit non-ASCII byte scan over the
+   draft. The scan should run inside Claude's working context, not
+   only in the eventual post-commit verification step.
+
+The scan is one tool call (an `LC_ALL=C grep -n '[^[:print:][:space:]]'`
+on the draft text, or the equivalent Python byte check) and catches
+both punctuation drift and vocabulary leakage. The cost is bounded;
+the cost of skipping is rework when the drift commits.
+
+The two-stage structure matters because the two stages catch
+different failure modes:
+
+- Stage 1 catches drift that survives into apply-script literals.
+- Stage 2 catches drift in drafted text that does not pass through
+  an apply-script (ledger appends via cat-redirect; create_file
+  for new artifacts; etc.).
+
+A session that uses both stages is robust against typographic drift
+regardless of which write path the artifact takes.
+
+### Self-check
+
+> I am about to construct an apply-script with multi-line `new_str`
+> literals / append text to the ledger / create a new file with
+> drafted content. Before the write step: have I run an explicit
+> byte-sweep on the drafted text for non-ASCII bytes? If no, run
+> the sweep first. The pre-write check inside the apply-script is
+> Stage 1; the drafting-time sweep is Stage 2; both are needed.
+
+---
+
+## Lesson 8: Pre-draft cross-model verification (premise-testing pattern)
+
+### Surface events
+
+- **VL-016 (first instance).** The cross-model verification ran *before*
+  applying schema corrections to `SPEC/request_schema.md`: the three
+  *premises* beneath the proposed corrections were put to Grok and
+  OpenAI under the verification template, both procedurally clean,
+  unanimous classifications, corrections applied to the spec after the
+  verification cleared. Recorded in VL-016's entry as premise-
+  verification-before-corrections.
+- **VL-031 T-07 (second instance).** The cross-model verification ran
+  *before* drafting `docs/restructure/07_continuity_recursion.md`: the
+  four load-bearing structural claims of the planned artifact (the
+  four-part shape from canon 12, the per-layer recursion-fit including
+  request non-fit, the layer A/B/C bounding, the evaluator-versioning
+  fail-closed dissolution) were put to Grok and OpenAI under the
+  evaluate template, both procedurally clean, substantive convergence
+  on all four questions, artifact drafted after the verification
+  cleared. Recorded in VL-031's entry.
+
+### Failure mode
+
+The standard cross-model verification pattern (VL-015, VL-023 follow-up,
+VL-025 follow-up) is *post-draft*: the artifact is drafted, then put to
+verifiers, then accepted or corrected based on verification outcome.
+Post-draft verification tests whether the drafted artifact reproduces a
+defensible derivation; verifiers see the artifact's prose and check it
+against primary sources.
+
+Post-draft verification has a limitation: by the time the verifiers run,
+the artifact's framing is already committed to a particular shape, and
+the verifiers' work is bounded by that shape. Verifiers can find
+divergence within the chosen frame, but cannot easily surface "this is
+the wrong shape entirely" - that surface event would be a verdict-shaped
+response, which the procedure forbids.
+
+Pre-draft verification tests the *premises* before the frame is chosen.
+Verifiers see the load-bearing structural claims (extracted from primary
+sources) and re-derive them independently. The verification's
+substantive convergence (or divergence) on the premises is what licenses
+(or refines) the artifact's frame before drafting begins.
+
+The two patterns serve distinct epistemic purposes:
+
+- **Post-draft (artifact-reproduction-testing):** does the drafted
+  artifact reproduce a derivation that survives independent
+  re-derivation? Verifies the artifact.
+- **Pre-draft (premise-testing):** do the load-bearing premises of the
+  planned artifact survive independent re-derivation? Verifies the
+  artifact's foundation before it is built.
+
+Both patterns are valid; both are useful in different contexts. The
+pattern is selected by what work the verification is doing.
+
+### Corrective rule
+
+Pre-draft cross-model verification is appropriate when:
+
+- The artifact's load-bearing claims are framework-methodology-level
+  rather than canon-derivation-level (i.e. the artifact is a reading
+  aid, a methodology promotion, or a structural summary, not a
+  derivation of a property from primary sources).
+- The claim-space is small enough that the load-bearing claims can be
+  enumerated for the verifiers' attention before the artifact's prose
+  is drafted.
+- The artifact will commit the claims to a discoverable structural
+  position; downstream readers will rely on the claims as established
+  rather than as hypothesis.
+
+Post-draft cross-model verification is appropriate when:
+
+- The artifact is a derivation; verifiers test whether the derivation
+  is correct given the primary sources.
+- The claim-space is large enough that pre-enumeration would itself
+  be most of the artifact.
+- The artifact's value is in its derivation prose; verifiers see the
+  prose and check it.
+
+For pre-draft verification, the procedure is otherwise standard
+VL-008-plus-Lesson-6 binding: scope-bound to primary sources, citations
+required, register-shift forbidden, verifiers procedurally clean within
+the response body.
+
+### Self-check
+
+> I am about to schedule a cross-model verification for an artifact I
+> plan to draft. Is the artifact a derivation (post-draft pattern,
+> verify the drafted derivation) or a methodology/structural summary
+> (pre-draft pattern, verify the premises)? If the latter, schedule
+> the verification before drafting begins, and use the verifiers'
+> convergence (or divergence) on the premises as the input to the
+> drafting frame, not as a post-hoc check.
 
 ---
 

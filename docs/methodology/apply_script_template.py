@@ -94,6 +94,67 @@ HOW TO USE
        git add -A
        git commit -F ~/tmp/<commit_message>.txt
        git push
+
+================================================================
+SYNTHETIC-FIXTURE PRE-VERIFICATION (required for >2 edit sites)
+================================================================
+
+Apply-scripts with more than two edit sites must run a synthetic-
+fixture pre-verification step before touching the real file.
+Pattern established across VL-026, VL-027, VL-028, VL-029, VL-030
+(three-plus-instance threshold met).
+
+The synthetic-fixture step:
+
+1. Builds a fixture file mirroring the relevant anchor regions of
+   the real file - the lines containing each old_str plus enough
+   surrounding context that anchor uniqueness is testable. Fixture
+   lives at /tmp/<script>_fixture.txt or similar; do NOT use a
+   path under REPO_ROOT.
+
+2. Runs the same edit sequence against the fixture. Verifies:
+   - Anchor uniqueness invariant (every old_str matches exactly
+     once in the fixture as in the real file).
+   - Expected post-edit content invariant (the fixture after
+     edits contains the expected new_str sequences).
+   - Byte-delta invariant (the fixture's byte-delta matches the
+     predicted byte-delta computed from sum(len(new)-len(old))
+     across all edits).
+   - ASCII-clean invariant (no non-ASCII bytes introduced).
+
+3. Only after all fixture invariants pass: runs against the real
+   file under REPO_ROOT.
+
+LOAD-BEARING REFINEMENT: fixtures must be built from `cat -A` (or
+equivalent disk-byte inspection: `od -c`, `xxd`) of the actual
+disk regions, NOT from inferred structure. Demonstrated by
+VL-031's anchor-failure recovery: synthetic-fixture verification
+is only as strong as the fixture's fidelity to disk. A fixture
+built from inferred structure produces circular-clean
+verification - the script works against the fixture's wrong
+assumption about disk shape, both pass, both then fail against
+real disk. The disk-byte inspection step is what breaks the
+circularity.
+
+Recommended fixture-building workflow:
+
+    # Inspect the actual disk bytes in the anchor region:
+    cat -A path/to/file | sed -n '<start>,<end>p' > /tmp/anchor_region.txt
+
+    # Copy the relevant region to fixture; verify byte-equality:
+    cp path/to/file /tmp/script_fixture.txt
+    diff <(cat -A /tmp/script_fixture.txt | sed -n '<start>,<end>p') \
+         /tmp/anchor_region.txt
+    # (must produce zero diff before fixture is trusted)
+
+    # Run the apply script against /tmp/script_fixture.txt by
+    # temporarily setting REPO_ROOT=/tmp and the file path to
+    # script_fixture.txt, or by constructing a parallel fixture
+    # script.
+
+The fixture-vs-disk byte-equality check is the verification step.
+Without it, fixture invariants verify only that the script is
+self-consistent with its own assumptions.
 """
 
 import os

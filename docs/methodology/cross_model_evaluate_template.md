@@ -20,11 +20,15 @@ content, then delete this "Template usage" section.
 The template was promoted at VL-022 from a single-instance surface
 event (the throwaway cross-model run of 2026-05-19, documented in
 the bridge document of the same date and cited by the VL-022
-ledger entry). Single-instance promotion is admissible here
-because the surface event included its own structural stress test:
-a constrained pass + a subsequent register-shift contamination
-pass, where the contamination revealed the procedural gap the
-template's constraint-bounding caveat now closes. See Lesson 6 in
+ledger entry). The two-instance threshold for methodology
+templates was met at VL-023 follow-up (cross-model evaluation of
+the recursive-continuity hypothesis with two recipient models) and
+again at VL-031 T-07 (pre-draft cross-model verification of
+`07_continuity_recursion.md` with two recipient models). The
+template is durable operative methodology; the original single-
+instance promotion rationale (the surface event's structural
+stress test - a constrained pass plus register-shift contamination
+pass) is preserved for historical context. See Lesson 6 in
 `session_mechanics_lessons.md`.
 
 Tokens to fill in:
@@ -267,6 +271,42 @@ evaluation; only a procedure violation under VL-008 (a) or
 
 ---
 
+## Outcome-classification criteria (recipient discipline)
+
+When the question shape is consistency or property, recipients may
+classify against the same target with different criteria. This was
+observed at VL-025 follow-up: Grok classified two Bundle B verifier
+runs as Match (criterion: authorization-by-design-space - the
+implementation is authorized by being in the design's permissible
+behavior space); OpenAI classified the same runs as Different-set
+(criterion: authorization-by-direct-naming - the implementation is
+authorized only when the design names the specific behavior).
+
+The classification divergence was structural across two bundles;
+neither criterion is wrong, but they answer different questions:
+
+- **Authorization-by-design-space.** Asks: is the implementation's
+  behavior within the design's permissible space? Loose criterion;
+  Matches when the design does not forbid the behavior.
+
+- **Authorization-by-direct-naming.** Asks: does the design name
+  this specific behavior? Strict criterion; Matches only when the
+  design explicitly licenses the behavior.
+
+To prevent the Match-criterion ambiguity in future evaluations:
+when the recipient's classification depends on which criterion is
+applied, the recipient should state the criterion explicitly in
+the Outcome classification section (step 4 of Submission format).
+The requester is then in a position to compare classifications
+across recipients and treat criterion-divergence as a finding in
+its own right rather than as a substantive disagreement.
+
+This addition applies to evaluate-shape and verify-shape requests
+alike; the underlying epistemic question (what does "Match" mean)
+is the same across both.
+
+---
+
 ## The question
 
 [QUESTION]
@@ -329,6 +369,46 @@ Attached to this request:
 
 If any file is missing or appears truncated, stop and say so.
 Do not work from a partial source.
+
+---
+
+## Co-upload format note (VL-031 Finding 2)
+
+When the verification request and the primary-source bundle are
+co-uploaded as files in the same chat turn (rather than the
+request as the chat-turn prompt + bundle as attached files), some
+recipients may not recognize the request file as the operative
+instruction. The recipient may respond with a capability menu
+("a bounded technical assessment, a derivation-only analysis,
+..."), or with a synopsis of the request file rather than an
+execution of it.
+
+Two correctives are admissible; the requester chooses based on
+the chat client's affordances:
+
+- **Filename convention.** Name the request file with a load-
+  bearing prefix: `REQUEST_<task>.md` or `EXECUTE_<task>.md`. The
+  prefix communicates operative-instruction status; primary-source
+  files use no such prefix.
+
+- **Explicit inline turn after upload.** Send a one-line follow-up
+  turn after the upload: "Execute the procedure in the request
+  file." The follow-up signals operative status explicitly even
+  when filename convention is ambiguous.
+
+Both correctives address the same failure mode (recipient does
+not distinguish operative-instruction file from primary-source
+file). Filename convention is preferable when the chat client
+displays filenames prominently; explicit inline turn is more
+reliable across clients.
+
+This failure mode was observed at VL-031 T-07: OpenAI's initial
+response was a capability menu; second response was a synopsis;
+only after an explicit "Execute the four-question procedure in
+that file" follow-up did OpenAI shift to derivational mode.
+Grok recognized the request file immediately. The recognition
+variance is recipient-specific and not predictable in advance,
+so the corrective is preventive across all recipients.
 
 ---
 
