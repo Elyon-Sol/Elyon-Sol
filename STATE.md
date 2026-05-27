@@ -1308,30 +1308,6 @@ Known items open but not scheduled (do not block the G0 build track):
   blocks have now failed twice. Operational lesson recorded in
   the VL-014 entry; the VL-016 commit uses `git commit -F <file>`
   per the handoff's lesson #1.
-- VL-015 and VL-016 process finding: verification-request
-  artifacts (`verification_request_vl014.md`,
-  `verification_request_vl016_premises.md`) prepared in chat,
-  used, not committed. Candidate action to commit a generalized
-  template to `docs/` is reinforced by the second instance.
-  Not actioned.
-- VL-016 process finding: premise-testing as a distinct
-  verification shape (vs. artifact verification). Worth a
-  methodology-artifact addition. Not actioned.
-- VL-016 follow-up process finding: third instance of
-  chat-paste-eats-content failure (after VL-012's `git commit
-  -m` newline loss and VL-014's twice-failed `-m` block).
-  This instance: comment-only lines in a pasted execution
-  block were silently skipped, leaving the schema and
-  artifact-04 edits unapplied. `git status` between operations
-  correctly fired the stop signal (lesson 5) but the workflow
-  had no pause point for the human to act on it. Two
-  generalized lessons recorded in the VL-016 follow-up entry:
-  (a) never paste a multi-step block containing comment-form
-  action items; paste the actual commands or one tool call
-  per step; (b) stop signals require interactive pauses, not
-  just printed warnings. Worth promoting the
-session-mechanics-lessons file to `docs/` so these
-  accumulate durably. Not actioned.
 - VL-017 process findings (eight session friction points; false
   stop signal on line count; ledger-entry blank-line stripping
   in VL-017a's committed text). The session-mechanics-lessons
@@ -1343,18 +1319,6 @@ session-mechanics-lessons file to `docs/` so these
   deliverable. The threshold is the first attempt in this
   project at making a process-finding candidate self-actuating
   rather than perpetually-deferred.
-- VL-017 stale forward-reference in SPEC/request_schema.md.
-  The schema's "Build order (schema-internal)" closing
-  paragraph lists `VL-014 (this artifact), VL-015 (failing
-  tests), VL-016 (validator), VL-017 (PEP wiring + G2 close),
-  VL-018 (artifact 05 freshness pass)` but the actual
-  numbering, post VL-015's cross-model verification and
-  VL-016's corrections, is `VL-014 schema, VL-015 verify,
-  VL-016 corrections, VL-017 tests, VL-018 validator,
-  VL-019 PEP wiring, VL-020 artifact 05`. The schema's
-  closing paragraph is a stale forward reference. Worth one
-  focused commit to update; not blocking; not actioned in
-  VL-017 (which would muddy the test-file commit).
 - VL-017 process finding: inherited-`.gitignore` pattern,
   second instance (after VL-010). The Python-template
   `.gitignore` hid `EVIDENCE/proofs/g2_schema_failing_tests_001.log`
@@ -1368,22 +1332,6 @@ session-mechanics-lessons file to `docs/` so these
   explicit un-ignore rules or comments for every name that
   could collide with a template assumption. Efficiency move
   per VL-017a's classification; not blocking. Not actioned.
-- VL-017b candidate finding 1: seventh refusal code's status.
-  RESOLVED in VL-018 via Candidate-3 coupling: validator names
-  all seven codes at module level; emits six; the seventh
-  (`REF_SCHEMA_PARSE_ERROR`) is named here for VL-019's
-  pep.py import. SUPERSEDED status; no artifact-04 row.
-- VL-017b candidate finding 2: generic-unknown-key handling
-  inside `interaction`. UPGRADED in VL-018 to real spec gap
-  G14 (two surface events: VL-017 test author + VL-017b
-  OpenAI). Validator handles provisionally with
-  `REF_SCHEMA_TYPE_MISMATCH`. Spec edit pending; separate
-  forthcoming commit per spec-defines-the-rename pattern.
-- VL-017b candidate finding 3: parse-order API-vs-procedure
-  separation. RESOLVED in VL-018 by spec+test direct read:
-  validator accepts already-parsed dict; parse-error handling
-  is VL-019's domain at the FastAPI/Pydantic layer.
-  SUPERSEDED status; no artifact-04 row.
 - VL-017b process finding: verbosity-as-deflection in
   methodology questions. The decision to record this test ran
   longer in methodology argument than the test produced
@@ -1391,23 +1339,6 @@ session-mechanics-lessons file to `docs/` so these
   candidate addition to a future session-mechanics-lessons
   artifact, distinct from VL-017's environment-side
   friction-point findings.
-- VL-017b process finding: build-resumption template revision
-  from first use. Item 5 of Submission format now requires
-  explicit 'None' enumeration when no gap candidates exist,
-  rather than allowing the section to be skipped. The first
-  use surfaced this because one model reported 'None' and the
-  other reported two gap candidates; the asymmetry is
-  procedurally informative only when both cases are explicit.
-  Revision incorporated into the committed template; recorded
-  here for traceability.
-- VL-020 process finding: a second stale forward-reference
-  exists in `SPEC/request_schema.md` at line 457 of the
-  post-VL-020 file ("proposed VL-018, after the VL-014..VL-017
-  schema-work entries below"; actual: "proposed VL-020, after
-  VL-014..VL-019"). VL-020 corrected the closing-paragraph
-  stale reference per strict-scope discipline; this second
-  reference is deferred to a small queue-drain commit. Not
-  blocking.
 - VL-020 process finding: Lesson 3 fire pre-commit. The first
   draft of `apply_vl020.py` was written from inference about
   the apply-script template pattern, without viewing the

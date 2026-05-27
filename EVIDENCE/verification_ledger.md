@@ -4671,7 +4671,7 @@ each candidate layer below.
     line 10: "A row closes only when code, tests, or
     structure change such that the delta no longer exists -
     never by editing prose."
-  - Fail-closed: `docs/SESSION_PROTOCOL.md` lines 84-86:
+  - Fail-closed: `docs/SESSION_PROTOCOL.md` lines 84-86 [VL-033 cite-currency: now lines 63-64 at HEAD 7f41615]:
     "Verification work that is not ledgered did not, for
     continuity purposes, happen." The phrase "for continuity
     purposes" is the artifact's own naming of the analogy.
@@ -4680,7 +4680,7 @@ each candidate layer below.
     functional, but the four-part shape is present.
 
 **Session layer.**
-  - State: `docs/SESSION_PROTOCOL.md` lines 119-122 names
+  - State: `docs/SESSION_PROTOCOL.md` lines 119-122 [VL-033 cite-currency: now lines 81-83 at HEAD 7f41615] names
     three at-rest invariants: working tree clean +
     HEAD == origin/main; STATE.md's "Next open action" first
     item is literally the next task; the verification ledger
@@ -4688,9 +4688,9 @@ each candidate layer below.
   - Transitions: session close -> session start. The interval
     between sessions is the transition.
   - Mechanism: close protocol
-    (`docs/SESSION_PROTOCOL.md` lines 64-100) establishes the
-    at-rest state; resume protocol (lines 20-58) checks it.
-  - Fail-closed: lines 124-126: "If a resume protocol finds
+    (`docs/SESSION_PROTOCOL.md` lines 64-100 [VL-033 cite-currency: now lines 45-74 at HEAD 7f41615]) establishes the
+    at-rest state; resume protocol (lines 20-58 [VL-033 cite-currency: now lines 10-41 at HEAD 7f41615]) checks it.
+  - Fail-closed: lines 124-126 [VL-033 cite-currency: now lines 85-87 at HEAD 7f41615]: "If a resume protocol finds
     these untrue, the previous session's close protocol
     failed. Fixing that is the first task of the new
     session, before anything else."
@@ -4743,7 +4743,7 @@ they apply continuity discipline at layers where the relevant
 transition rate is slow enough for human-driven checks to be
 sufficient. The artifacts use the same vocabulary
 ("continuity") at both kinds of layer
-(`docs/SESSION_PROTOCOL.md` line 86; STATE.md session-close
+(`docs/SESSION_PROTOCOL.md` line 86 [VL-033 cite-currency: "for continuity purposes" phrase now at line 64 at HEAD 7f41615]; STATE.md session-close
 note; canon section 12 et seq.).
 
 **(2) The session layer is substrate for cross-time recursion.**
@@ -4768,7 +4768,7 @@ once the pattern is named:
   - `docs/restructure/05_admissibility_envelope_spec.md`
     reassertion protocol explicitly maps reassert outcomes to
     canon section 13.
-  - `docs/SESSION_PROTOCOL.md` line 86 explicit "continuity
+  - `docs/SESSION_PROTOCOL.md` line 86 [VL-033 cite-currency: "for continuity purposes" phrase now at line 64 at HEAD 7f41615] explicit "continuity
     purposes."
   - `docs/restructure/04_current_vs_claimed.md` line 10's
     no-prose-promotion rule is fail-closed at the
@@ -5701,7 +5701,7 @@ three layers:
     What the framework *is*.
   - **Layer B - epistemic discipline.** VL-008 procedure; the
     no-prose-promotion rule at `04_current_vs_claimed.md` line
-    10; the SESSION_PROTOCOL.md continuity rule at lines 84-86.
+    10; the SESSION_PROTOCOL.md continuity rule at lines 84-86 [VL-033 cite-currency: now lines 63-64 at HEAD 7f41615].
     How the framework knows what it knows.
   - **Layer C - reading-aid track.** The `07_continuity_recursion.md`
     artifact candidate; the restructure package; STATE.md's role
