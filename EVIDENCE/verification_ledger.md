@@ -9265,3 +9265,122 @@ trajectories with no priority blocker are:
 - **G4** (non-bypassable enforcement): the load-bearing build-outward
   trajectory for a fully operational state; likely next.
 - **G5** (durable verification): build-outward.
+### VL-035 - 2026-05-28 - Methodology refinement: Lessons 2 and 3 sharpened from the VL-033/VL-034 source-first findings
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** methodology-artifact update, efficiency move per VL-017a's
+distinction and the `session_mechanics_lessons.md` "How this file evolves"
+clause ("Refined: a third or later instance reveals a sharper characterization
+of the failure mode or corrective rule").
+
+**Verifies:** `docs/methodology/session_mechanics_lessons.md` is refined - not
+expanded with a new lesson - to absorb the source-first and terminal-rendering
+findings accumulated across VL-033 and VL-034. Two existing lessons are
+sharpened; lesson count unchanged at 8.
+
+- **Lesson 2 (terminal-output rendering is not file content)** gains the
+  VL-034 fragile-anchor as its third surface event and a corrective addition:
+  edit and append anchors must be taken from `cat -A` or disk bytes, never
+  from pasted or rendered output, because rendering can wrap a single logical
+  line across visual lines (the line-wrap variant, alongside the existing
+  blank-line-collapse variant). Prefer a short unwrappable anchor (a unique
+  section header such as `### VL-N -`) over a long sentence that may wrap.
+- **Lesson 3 (source-first applies to Claude's own derivations)** gains three
+  surface events (VL-033 Finding 3, VL-033 Finding 5, VL-034 Finding 3), a
+  failure-mode sharpening (the rule covers a file's identity and session-start
+  contents, not only convention-format), a corrective list bullet (the
+  identity and contents of uploaded or governing documents), the
+  precondition-not-disposition corrective paragraph (binary precondition; the
+  `[unread]` flag; treat the opener's pre-session checklist as a hard gate),
+  and a matching self-check extension.
+
+Cross-references between the two lessons are embedded inline per the
+evolves-clause (each shared event cited in both lessons).
+
+#### Background
+
+The friction-ratio retrospective at VL-034 close named a recurring failure
+family: Claude asserting a fact about a file's contents (identity, an internal
+constraint, byte/line layout, an exact citation) from memory, a prior turn's
+in-context view, or pasted/rendered display, without a current-session disk
+read. Three-plus instances across VL-033 + VL-034 met the file's "Refined"
+threshold. The user elected to land the discipline as a durable methodology
+refinement before the next trajectory opener, rather than only as opener
+carry-forward.
+
+#### Placement decision (source-first against the file's own rule)
+
+A from-memory draft initially proposed a single Lesson-3 refinement or a new
+Lesson 9. Reading `session_mechanics_lessons.md` from disk corrected this:
+
+- The fragile-anchor finding is a third instance of the existing Lesson 2
+  (terminal-rendering), not generic Lesson-3 content; a from-memory draft
+  would have under-served Lesson 2 entirely.
+- The evolves-clause mandates Refined (not Added) here: these are additional
+  instances of patterns 2 and 3 with a sharper corrective, not a second
+  instance of a new pattern. A new Lesson 9 would violate the file's own rule.
+
+The placement correction is itself an instance of the discipline being landed:
+reading the file changed the answer.
+
+#### What this commit does
+
+1. `docs/methodology/session_mechanics_lessons.md` (+4029 bytes): seven
+   str_replace edits (L2-1, L2-2, L3-1, L3-2, L3-3, L3-4, L3-5) applied via a
+   synthetic-fixture-verified apply-script with fixture cleanup on every exit
+   path - the VL-034 carry-forward-2 corrective (the test-file installer had
+   cleaned its fixture only on the success path, orphaning it on the
+   overwrite-guard abort). Lesson count unchanged at 8.
+2. `STATE.md`: Last-updated parenthetical refreshed; VL-035
+   current-verified-state bullet added; Next-open-action item 29 added.
+3. This VL-035 ledger entry appended, header-anchored on `### VL-034 -` per
+   the very Lesson 2 corrective this commit lands.
+
+#### Files affected
+
+- `docs/methodology/session_mechanics_lessons.md` (Lessons 2 + 3 refined)
+- `STATE.md`
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/*`, `MANIFEST/*`, `IMPLEMENTATION/*`, `TESTS/*`, `SPEC/*`,
+  `docs/restructure/*` (no code/canon/test/spec/structural-doc change)
+- pytest unchanged at 106 passed + 0 xfailed (no test impact)
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own
+commit hash. Prior entries cited:
+
+- VL-034 at commit `1e6fb01`
+- VL-033 at commit `5e2fab0`
+- VL-032 at commit `7f41615`
+- VL-031 at commit `6369eac`
+- VL-030 at commit `699da0d`
+- VL-029 at commit `79012d7`
+- VL-028 at commit `7efcefc`
+
+#### Process findings
+
+1. **Placement-by-source vindication.** The from-memory draft mis-located the
+   content (one lesson, or a possible new Lesson 9); the disk read revealed it
+   splits across Lessons 2 and 3 as refinements. This is the precondition
+   lesson catching its own drafting - the same shape as VL-034 Finding 4
+   (verify-on-disk, positive).
+2. **L3-5 anchor-prefix miss (caught by the guard).** The first apply-script
+   build anchored the self-check extension on a two-space line prefix; the
+   blockquote uses `> `. The phase-1 anchor-uniqueness check aborted (found 0
+   times) before any write; corrected against the viewed bytes. The guard
+   refusing rather than mis-writing is the discipline working - and itself a
+   small Lesson-2/Lesson-3 instance (an anchor assumed from memory of the
+   format rather than confirmed against the exact bytes).
+
+#### Next trajectory action
+
+T-G4-design (non-bypassable enforcement), renumbered VL-036 because this
+methodology promotion took VL-035. See `vl036_session_opener.md` (the former
+`vl035_session_opener.md`, renumbered and grounded against a now-read
+`IMPLEMENTATION/pep.py`). Other open trajectories unchanged: T-bookkeeping
+(G1/G8/G9/G11/G14), T-prose-drift, G5 (durable verification).

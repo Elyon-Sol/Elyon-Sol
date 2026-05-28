@@ -146,6 +146,19 @@ real.
   `diff` and `cat -A` checks. Recorded inline in the session
   log; not yet in a ledger entry.
 
+- **VL-034 process finding (third instance).** A ledger
+  append-anchor was built from a pasted `tail -n 80` view in which
+  the prior entry's final sentence appeared as one line but was
+  hard-wrapped in the file: the word "framework" ended one visual
+  line and "holds; the discipline is durable." began the next. The
+  apply-script's end-of-file string anchor therefore never matched,
+  and the guard correctly refused to append rather than appending
+  wrong. The mismatch was display wrapping, not file content;
+  re-anchored on the unique prior-entry header (`### VL-N -`), which
+  does not wrap. Also a Lesson 3 instance (source-first): the anchor
+  was built from pasted display rather than from `cat -A` of disk
+  bytes.
+
 ### Failure mode
 
 Terminal output renders newlines visually, and chat tools may
@@ -179,6 +192,16 @@ on two views of the same content will show zero differences if the
 files are byte-identical, regardless of how the views render in the
 terminal. Zero-difference output is direct evidence of file
 correctness; non-zero output is direct evidence of actual divergence.
+
+This applies to edit and append anchors as well. Rendering can wrap a
+single logical line across several visual lines (and a pasted
+`tail` / `head` excerpt preserves the wrap), so a phrase that looks
+like "the last line" or "one line" in rendered output may span
+multiple lines on disk; an anchor built from that view will not match
+the file's bytes. Take anchors from `cat -A` or the disk bytes, never
+from pasted or rendered output, and prefer a short, unwrappable anchor
+(a unique section header such as `### VL-N -`) over a long sentence
+that may wrap.
 
 ### Self-check
 
@@ -214,6 +237,22 @@ correctness; non-zero output is direct evidence of actual divergence.
   check. The committed entry used `## VL-018 - 2026-05-18 - ...`
   while all 17 prior entries use `### VL-N - <summary>`. Repaired
   by VL-018 follow-up commit.
+- **VL-033 Finding 3 (D-empty scope-classification).** A scope
+  classification was extended from one item to a second without a
+  source-first read of the opener's category definition; user-caught.
+- **VL-033 Finding 5 (inferred baseline).** A baseline line count was
+  asserted without reading it from disk; the apparent anomaly
+  dissolved on recognizing the baseline had never been verified.
+- **VL-034 Finding 3 (governing-document identity).** The session
+  opener `vl034_session_opener.md` was characterized as a resume-dump
+  from a stale prior-turn in-context view, and the trajectory was
+  nearly run against an inferred document identity. Surfaced only by
+  the user's "verify uploaded files on disk" instruction. This
+  extends the failure mode from convention-*format* to file-*identity*:
+  not "what shape should my output match" but "what even is this
+  file," answered from memory rather than from disk. Also a Lesson 2
+  instance (a prior turn's in-context view is a kind of stale
+  rendering).
 
 ### Failure mode
 
@@ -236,6 +275,13 @@ instance 3 (header format skip) was not caught and produced
 committed divergence. Both started from the same failure mode; only
 the second materialized as repair cost.
 
+The failure mode is not limited to convention-*format* (what shape
+derived work must match). It also covers a file's *identity* (what the
+file is) and any claim about its contents read at session start:
+characterizing an uploaded or governing document from a prior turn's
+in-context view, rather than from a disk read in the current session,
+is the same failure applied to identity instead of format.
+
 ### Corrective rule
 
 The source-first instruction applies uniformly:
@@ -250,11 +296,28 @@ The source-first instruction applies uniformly:
   generating a new instance (the 18th ledger entry should be
   derived from the 17 prior entries' visible convention, not from
   inference about what the convention probably is).
+- The *identity* and contents of any uploaded or governing document
+  (the session opener, a supplied source file), read from disk in the
+  current session - not characterized from a prior turn's context.
 
 The cost of viewing source first is one tool call. The cost of
 drafting from inference and discovering divergence later is rework
 plus erosion of procedural integrity. There is no case where the
 former produces a worse outcome than the latter.
+
+**Source-first is a precondition, not a disposition.** Held as "I
+should be source-first," the rule fails under apparent familiarity -
+exactly when it matters. State it as a binary precondition: before any
+claim or decision that depends on a file's contents - its identity, an
+internal constraint it states, its byte or line layout, or an exact
+citation into it - that file must have been read from disk in the
+current session. If it has not, the only permitted moves are (a) read
+it, or (b) flag `[unread] - cannot assert` and proceed without the
+claim. A prior turn's in-context view, a pasted fragment, or memory
+does not satisfy the precondition. Treat the session opener's
+pre-session checklist as a hard gate: state "checklist complete; N
+files read" before substantive work; engaging before the checklist
+completes is itself an instance of this failure (VL-034 Finding 3).
 
 ### Self-check
 
@@ -263,6 +326,11 @@ former produces a worse outcome than the latter.
 > convention in this session, or am I inferring the form from
 > memory / description / partial context? If the latter, the
 > one-tool-call source-read takes precedence.
+>
+> And before asserting what a file *is*, what it *requires*, or
+> *where* something is in it: did I read these bytes from disk this
+> session, or am I going from memory, display, or a prior turn? If the
+> latter: read, or flag `[unread]`.
 
 ---
 
