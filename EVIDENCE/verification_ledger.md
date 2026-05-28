@@ -9073,3 +9073,195 @@ were already structurally drift-resistant under existing framework
 discipline (Category B via item-N citations; Category C via append-only).
 The other two categories absorbed real drift accumulation. The framework
 holds; the discipline is durable.
+### VL-034 - 2026-05-28 - Canon-derived tests for the evaluator domain: G7 closes completely
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Verifies:** the evaluator domain (AC^3, T^26, manifest-integrity) now has
+canon-derived test coverage, completing G7. `TESTS/adversarial/test_evaluator_canonical.py`
+adds 22 tests whose lineage runs from canon section 11 to assertion: 8 for
+AC^3 (canon 11.7), 8 for T^26 (canon 11.8), and 6 for manifest-integrity
+(canon 11.9 via artifact-05-layer per Decision C). With the envelope domain
+already covered by `test_ccs_canonical.py` (VL-028), both halves of G7 are
+closed. Repo test set grows from 84 to 106 passed + 0 xfailed.
+
+#### Background
+
+T-G7-eval was named the next operational trajectory by VL-033's
+Next-trajectory-action section and by artifact 04's priority order (G7
+PARTIALLY ADDRESSED at VL-028 + VL-029, evaluator domain open). The session
+opener (`vl034_session_opener.md`, drafted post-VL-033 at `5e2fab0`) locked
+Decisions A-F and a four-checkpoint structure.
+
+#### Pre-session locked decisions (from VL-034 opener)
+
+- **Decision A** (one file): `TESTS/adversarial/test_evaluator_canonical.py`
+  covering all three predicates, grouped by section comments + name prefixes
+  (`test_ac3_*`, `test_t26_*`, `test_manifest_*`). Applied.
+- **Decision B** (no pre-draft cross-model verification): canon section 11
+  derivation risk is lower than artifact-composition risk. Applied.
+- **Decision C** (manifest-integrity artifact-05-layer acknowledgment, per
+  VL-028 Decision B): applied to the manifest group and, on source-first
+  reading, to four additional tests (duplicate-handling and type-violation
+  for both AC^3 and T^26) where the canonical basis is set-semantics
+  (canon 11.5/11.6) or fail-closed (canon section 9) but the realizing
+  mechanism is `safe_set()`.
+- **Decision D** (augment, do not replace): the 23 code-derived tests in
+  `TESTS/test_adversarial_evaluator.py` are unchanged. The canon-derived
+  tests are a different shape: they call the predicate functions directly
+  (`ac3_valid`, `t26_valid`, `manifest_integrity_valid`) to mirror canon
+  section 11's per-clause structure, where the code-derived suite drives
+  `evaluate()` end-to-end.
+- **Decision E** (target ~18-20 tests): final count fixed at draft time per
+  constraint (g). Source-first enumeration produced 22 (8 + 8 + 6), above the
+  planning anchor; the opener's honest-scope-shape statement explicitly
+  declined to predict the exact count.
+- **Decision F** (B-park G11): `manifest_sha256()` ignores its argument and
+  hashes the on-disk `MANIFEST_PATH`; documented in the manifest section's
+  intro comment, not made a test obligation.
+
+#### Checkpoint results
+
+- **Checkpoint A (post-source-first enumeration):** the 22-test list with
+  per-test canon citations was enumerated and user-reviewed before any
+  apply-script. Count confirmed at 22 (the ~18-20 anchor was not treated as
+  a cap, per constraint (g)).
+- **Checkpoint B (spec-gap discovery, mandatory):** no halt-class spec gap.
+  Source-first reading confirmed canon 11.7/11.8 are pure set relations and
+  canon section 9 directly authorizes fail-closed, so every test resolves as
+  either direct canon or Decision-C artifact-05-layer acknowledgment. The
+  opener's anticipated gap-candidate 2 (canon-vs-code: `safe_set()` dedup and
+  coercion) materialized as acknowledgment-class, not halt-class. No VL-034a
+  spec-revision detour required.
+- **Checkpoint C (post-pytest):** 106 passed + 0 xfailed in the author's real
+  MINGW64 environment (4.72s). No implementation bug surfaced (no (l) halt);
+  no canon-derivation surprise (no (k) halt). The sandbox smoke run (precedent
+  only, per (c)/(m)) had shown 22/22 for the new file alone and 45/45 for the
+  evaluator-domain pair.
+- **Checkpoint D (pre-commit review):** structural-doc and ledger updates
+  bundled into this single commit per F1 default.
+
+#### What this commit does
+
+1. **`TESTS/adversarial/test_evaluator_canonical.py`** (new, 21263 bytes,
+   md5 `97c42e9fd50f2cc5cadded4d28b13f9c`, ASCII-clean, 22 tests). Installed
+   via synthetic-fixture-verified apply-script: ASCII pre-write gate,
+   `py_compile` gate, fixture md5 == source md5 before the real write, LF,
+   overwrite guard, repo-relative paths per (m).
+2. **`docs/restructure/04_current_vs_claimed.md`**: G7 row Status PARTIALLY
+   ADDRESSED (VL-028 + VL-029) -> RESOLVED (VL-028 + VL-029 + VL-034); G7
+   Canon bullet and Action item 2 updated; priority-order G7 line ->
+   RESOLVED; two nested G7-status references in the G0 section (the
+   section-12 canon-derived-tests action and the post-VL-029-claim caveat)
+   refreshed for within-file consistency.
+3. **`docs/restructure/06_spec_to_code_traceability.md`**: rows 11.7, 11.8,
+   11.9 (all already FULL) gain a canon-derived-test cross-reference per
+   maintenance rule 3 (row cites test, test cites row), closing the
+   spec-map-test-code loop for the evaluator domain as the CCS rows did at
+   VL-028/VL-029. No status change.
+4. **`STATE.md`**: Last-updated parenthetical refreshed; VL-034
+   current-verified-state bullet added; Known-open-gaps G7 summary PARTIALLY
+   ADDRESSED -> RESOLVED; Next-open-action item 28 added.
+5. **This VL-034 ledger entry** appended.
+
+#### Process findings
+
+**Finding 1 - Lesson 7 stage 2: section-sign leak in Claude chat prose (new
+character class; user-caught).** During Checkpoint A discussion, Claude's
+chat prose used the section sign (U+00A7) as shorthand for "section N"
+instead of the ASCII word the canon and artifacts use. User-caught. Same
+failure-mode family as the Greek-letter leaks (VL-029/VL-031) and em-dashes
+(VL-032/VL-033), with a new character class. The bytes were confined to chat
+prose and never reached a committed file; Lesson 7 stage 1 (apply-script
+ASCII pre-write check) would have aborted anything committed-bound and did
+gate every file in this commit. Stage 2 (Claude-drafting-time byte-sweep) did
+not fire preemptively for chat prose; user-as-final-arbiter caught it. The
+family continues to recur.
+
+**Finding 2 - Count-anchor-over-source drift (Lesson 5 family; user-caught).**
+At Checkpoint A, Claude offered to trim genuine canon-derived tests to land
+inside the opener's ~18-20 anchor. This inverted constraint (g): the
+source-first enumeration is the source of truth and the range is a planning
+estimate, not a cap. User-caught ("why would you trim"). Corrected: 22 kept;
+no content cut for a number. Same family as VL-032's opener-packaged-prediction
+refinement (treating a planning estimate as a constraint).
+
+**Finding 3 - Source-first near-miss on the governing document (Lesson 3
+family; user-caught).** At session start Claude characterized
+`vl034_session_opener.md` as "the resume dump, not a real opener" from a stale
+prior-turn in-context view, and was prepared to run the trajectory off the
+ledger-recorded decisions rather than the opener's actual locked Decisions
+A-F. The user's "verify uploaded files on disk" instruction surfaced the real
+403-line opener. A near-miss on executing an entire session against an
+inferred document identity. Same family as VL-033 Findings 3 and 5
+(scope-classification and baseline assertion without source read). Corrective:
+read governing documents from disk at session start; never infer a file's
+contents from a prior turn's context when the file is on disk.
+
+**Finding 4 - Verify-on-disk caught a prior-turn error (positive).** In an
+earlier turn Claude suggested the manifest-integrity tests could reuse the
+hardcoded SHA constant from `test_adversarial_evaluator.py`. Reading
+constraint (i) from the opener on disk showed hash-value pinning is forbidden
+(it couples tests to GR-1 canon/manifest-version events). The tests now derive
+the expected hash live via `manifest_sha256()`. The verify-on-disk gate paid
+for itself; recorded as the discipline working as designed.
+
+#### Files affected
+
+- `TESTS/adversarial/test_evaluator_canonical.py` (new; +21263 bytes; 22 tests)
+- `docs/restructure/04_current_vs_claimed.md` (G7 row + priority + 2 nested G0-section refs -> RESOLVED)
+- `docs/restructure/06_spec_to_code_traceability.md` (11.7/11.8/11.9 test cross-refs; no status change)
+- `STATE.md` (Last-updated + VL-034 bullet + item 28 + G7 summary)
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json`
+- `IMPLEMENTATION/*` (no code change; no implementation bug surfaced)
+- `TESTS/test_adversarial_evaluator.py` (augmented, not modified; Decision D)
+- `SPEC/*`
+- `docs/methodology/*` (queue-drain territory; out of scope)
+- `docs/SESSION_PROTOCOL.md`, `docs/MAINTENANCE_PROTOCOL.md`
+- `README.md`
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own
+commit hash. Prior entries cited:
+
+- VL-033 at commit `5e2fab0`
+- VL-032 at commit `7f41615`
+- VL-031 at commit `6369eac`
+- VL-030 at commit `699da0d`
+- VL-029 follow-up at commit `5f833fb`
+- VL-029 at commit `79012d7`
+- VL-028 at commit `7efcefc`
+- VL-027 at commit `05e27a0`
+- VL-026 at commit `3c4c9b5`
+- VL-025 follow-up at commit `f0c76cd`
+- VL-025 at commit `096c933`
+
+No cross-model verification of VL-034 was scheduled (Decision B). The 22 tests
+are individually verifiable against canon section 11 via their docstrings; the
+suite is verified green (106/106) in the author's real environment.
+
+#### Gap candidates
+
+1. **Decision E count overage vs. opener anchor (trace, not a gap).** Final
+   count 22 vs. the opener's ~18-20 anchor. The opener's honest-scope-shape
+   statement declined to predict the exact count, and constraint (g) makes the
+   source-first enumeration authoritative. Recorded as a Lesson-5
+   honest-overage (range exceeded, content correct).
+
+#### Next trajectory action
+
+G7 is closed. Per STATE.md and the opener's "After VL-034" section, the open
+trajectories with no priority blocker are:
+- **T-prose-drift**: VL-029 gap candidate 1 (Type 2) + VL-030 gap candidate 5
+  + any methodology-file citation drift + pre-existing markdown formatting
+  drift. Bundled candidate.
+- **T-bookkeeping**: the G1/G8/G9/G11/G14 batch. Longest-standing queue.
+- **G4** (non-bypassable enforcement): the load-bearing build-outward
+  trajectory for a fully operational state; likely next.
+- **G5** (durable verification): build-outward.
