@@ -9805,3 +9805,79 @@ section-14 tension (artifact 08 section 5); weigh against caller-carry.
 **G5 (durable verification)** is the named cross-host precondition and may merge
 with or precede VL-038. T-bookkeeping (G1/G8/G9/G11/G14) and T-prose-drift
 remain open with no priority blocker.
+
+### VL-037 follow-up - 2026-05-29 - Remove working scratch files committed in a959680; STATE/ledger bookkeeping
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** bookkeeping / process-hygiene follow-up; recovery via
+follow-up commit per the VL-020 / VL-021 follow-up precedent (no history
+rewrite; published history is preserved). No code/canon/manifest/test/spec
+change. The removal landed at commit `251b44b`; this entry and the STATE.md
+refresh land in a subsequent bookkeeping commit (deferred-ledger workflow, the
+pattern VL-030 Finding 5 named).
+
+**Verifies:** commit `251b44b` removed three working scratch files that the
+VL-037 commit `a959680` had swept into the repo root via `git add -A`:
+
+- `apply_vl037_docs.py` - the apply-script. Per
+  `docs/methodology/apply_script_template.py`, apply-scripts are copied to a
+  working location outside the repo (the template says `~/tmp`), not committed.
+- `vl037_commit_msg.txt` - the `git commit -F` message file.
+- `vl037_ledger_entry.md` - the standalone VL-037 ledger entry, whose content
+  was already correctly appended to `EVIDENCE/verification_ledger.md` at
+  `a959680`; the root copy was therefore a duplicate.
+
+No repo content was lost. The seven intended files of `a959680` are unaffected:
+`IMPLEMENTATION/verifier.py`, `TESTS/adversarial/test_verifier.py`,
+`TESTS/adversarial/test_bypass.py`, `docs/restructure/04_current_vs_claimed.md`,
+`docs/restructure/06_spec_to_code_traceability.md`, `STATE.md`, and the VL-037
+entry in `EVIDENCE/verification_ledger.md`. pytest is 119 passed + 0 xfailed at
+`251b44b`, unchanged from `a959680`; `import IMPLEMENTATION.verifier` clean;
+lesson count unchanged at 8.
+
+#### Process finding
+
+**Scratch-in-repo via `git add -A` from the repo root (new session-mechanics
+family; first named instance).** The VL-037 close placed the apply-script, the
+commit-message file, and the standalone ledger entry in the repo root and
+staged with `git add -A`, which committed all three alongside the seven
+intended files. The correctives are: (a) the one
+`apply_script_template.py` already states - work outside the repo, copying the
+apply-script and its scratch to `~/tmp`; and (b) stage only intended paths
+(`git add <paths>`) rather than `git add -A` whenever scratch is present in the
+tree (this bookkeeping commit itself stages only `STATE.md` and
+`EVIDENCE/verification_ledger.md`). Candidate hardening, deferred pending a
+source-first read of the current `.gitignore`: a repo-root `.gitignore` guard
+for `apply_vl*.py`, `vl*_commit_msg.txt`, and `vl*_ledger_entry.md` so the slip
+cannot recur regardless of staging discipline. This is distinct from the
+chat-paste-eats-content family; a second instance would meet the threshold for
+a `session_mechanics_lessons.md` addition.
+
+#### Files affected
+
+- `EVIDENCE/verification_ledger.md` (this entry)
+- `STATE.md` (Last-updated refreshed to `251b44b`; VL-037 follow-up
+  current-verified-state bullet; Next-open-action item 32)
+
+#### Files NOT affected
+
+- All `a959680` deliverables (verifier, both test files, artifacts 04/06, the
+  VL-037 ledger entry body)
+- `CANON/*`, `MANIFEST/*`, `IMPLEMENTATION/*` code, `SPEC/*`,
+  `docs/methodology/*`, `README.md`
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding, this entry does not cite its own
+(bookkeeping) commit hash. The removal commit is `251b44b`; its parent is the
+VL-037 commit `a959680`; `a959680`'s parent is `e138cbf` (VL-036).
+
+#### Next trajectory action
+
+Unchanged: **VL-038 G4-delivery** (decide push vs caller-carry vs target-pull
+per artifact 08 sections 4.3/9; wire `pep.py`; migrate `TESTS/test_pep.py`;
+connect `verify_envelope()`). Optional first: a `.gitignore` guard commit (per
+the process finding above). G5 is the named cross-host precondition for VL-038;
+T-bookkeeping (G1/G8/G9/G11/G14) and T-prose-drift remain open with no priority
+blocker.
