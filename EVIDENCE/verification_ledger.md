@@ -9384,3 +9384,212 @@ methodology promotion took VL-035. See `vl036_session_opener.md` (the former
 `vl035_session_opener.md`, renumbered and grounded against a now-read
 `IMPLEMENTATION/pep.py`). Other open trajectories unchanged: T-bookkeeping
 (G1/G8/G9/G11/G14), T-prose-drift, G5 (durable verification).
+
+### VL-036 - 2026-05-29 - T-G4-design: non-bypassable enforcement designed; build deferred to VL-037
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** trajectory move per VL-017a's distinction (a new restructure
+artifact under `docs/restructure/`; structural-doc updates only in STATE.md,
+this ledger, and `docs/restructure/04_current_vs_claimed.md` G4 row). No
+code/canon/manifest/test/spec change. Design + spec session per Decision A.
+
+**Verifies:** `docs/restructure/08_enforcement_design.md` lands per
+`05_admissibility_envelope_spec.md` build-order step 6 ("Only then: explore
+open question 3 (envelope-on-forwarded-call)"; the "only then" precondition,
+the CCS build, closed at VL-029). The artifact is a canon-derived design
+analysis of gap G4 (bypassability). It introduces no new canonical invariant
+and no new vocabulary. G4 moves from open-undesigned to open-designed; build
+pending VL-037. G4 does NOT transition to RESOLVED: a design artifact does not
+close a build-outward gap (per the opener's honest-scope-shape statement).
+
+#### Background
+
+T-G4-design was named the next build-outward trajectory by STATE.md item 29
+(VL-035) and by `vl036_session_opener.md`. The opener locked Decisions A-F and
+a four-checkpoint structure (A threat model; B pre-draft cross-model
+verification; C artifact draft review for section-14 / no-new-invariant; D
+pre-commit review). The pre-session checklist was completed source-first: the
+opener and the eight load-bearing repo files (canon, pep.py, envelope.py,
+artifact 04, artifact 05, artifact 06, STATE.md, the lessons file) were read
+from disk. The opener's cited pep.py facts were confirmed, not inherited: the
+forward is `requests.post(body["target_url"], json=normalized_interaction,
+timeout=10)` (no envelope attached) and the ELIGIBLE return is
+`{"decision": "ELIGIBLE", "envelope": envelope}` (envelope to caller, not
+target).
+
+#### What this commit does
+
+1. **`docs/restructure/08_enforcement_design.md`** (new): threat model
+   (section 2), G4 sub-questions Q1-Q8 (section 3), mechanism evaluation
+   (section 4: the artifact-05 open-question-3 candidate; the Q5
+   authenticity-vs-binding split; push / caller-carry / target-pull delivery
+   architectures; the A1 floor), section-14 compatibility (section 5),
+   the G4/G5 boundary at E1 (section 6), the reassert() replay/binding gap
+   (section 7), the recommended VL-037 increment (section 8), open questions
+   (section 9), and derivation provenance (section 10). Reading-aid / design
+   track; no new invariant or vocabulary. ASCII-clean.
+2. **`docs/restructure/04_current_vs_claimed.md`**: the G4 row gains a Status
+   bullet ("design landed at VL-036; build pending VL-037; G4 NOT resolved;
+   E1 names G5 as the verification precondition; recommended VL-037 increment
+   is a delivery-agnostic target-side verifier reusing reassert() plus a
+   request_context binding check; A1 closeable only by target-side policy").
+   G4 stays at priority item 7 (build-outward); no RESOLVED transition.
+3. **`STATE.md`**: Last-updated parenthetical refreshed to VL-036; VL-036
+   current-verified-state bullet added; Next-open-action item 30 added.
+4. **This VL-036 ledger entry** appended (header-anchored after the unique
+   `### VL-035 -` header per Lesson 2 as refined at VL-035).
+
+#### Checkpoint results
+
+- **Checkpoint A (threat model + sub-questions, mandatory):** the bypass
+  definition (non-coverage A1 + non-attestation A2/A3), the adversary set
+  A1-A5, and Q1-Q8 were enumerated and user-reviewed. Decision E adopted at
+  E1 (design G4, name G5 as precondition). The adversary set is exhaustive by
+  construction over the participant set (caller / target / transport; gate and
+  published-hash-source assumed honest), not by assertion.
+- **Checkpoint B (pre-draft cross-model verification, Decision B):** the
+  threat model (T0) and the mechanism-adequacy premise (P1) were verified with
+  Grok and OpenAI via the framework-level evaluate procedure (VL-008 +
+  Lesson 8). Both procedurally clean within-body per Lesson 6. P1 convergent:
+  both classified Property-holds under the strict authorization-by-direct-
+  naming criterion (mechanism closes attestation A2 and routed-call binding
+  Q5, not coverage A1; necessary-but-not-sufficient). T0 divergent: Grok
+  Property-holds (direct-naming); OpenAI Under-determined (direct-naming) /
+  holds under design-space, flagging that the adversary-set exhaustiveness
+  sub-claim was asserted, not derived. Logged as a Match-criterion / derivation
+  finding (per the VL-025 follow-up clarification), not a substantive
+  disagreement. Resolved in-artifact by deriving exhaustiveness by construction
+  (section 2.3), upgrading the sub-claim from asserted to derived.
+  P2 (section-14 compatibility) and P3 (G4/G5 boundary + the reassert() replay
+  gap) were NOT cross-model-tested: source-first reading of
+  `cross_model_evaluate_template.md` showed it is framework-level-only and
+  explicitly excludes canon/code/implementation questions (lines 99-100),
+  routing those to verification_request_template.md. The opener's Decision B
+  named section-14 and the G4/G5 boundary as cross-model targets, so this is an
+  opener-internal tension surfaced only by reading the template source-first;
+  per user decision, P2 and P3 were derived source-first at Checkpoint C scope
+  (the opener's Checkpoint C already owns "no section-14 breach, no new
+  invariant"). Recorded as Process finding 1.
+- **Checkpoint C (artifact draft review):** passes. No proposed mechanism makes
+  the gate execute or enforce; the verifier is target-side and delivery-
+  agnostic; push is the only variant that deepens the pre-existing section-14
+  tension and is flagged as such, with caller-carry/proxy-removal named as the
+  section-14-faithful direction. No new invariant: verification reuses
+  reassert() (canon section 13); the binding check operationalizes canon
+  section 13 + section 11.1 interaction identity (an application of existing
+  constructs). The artifact opens by admitting the section-14 tension already
+  exists in pep.py's forward (artifact 06 section 14 row PARTIAL).
+- **Checkpoint D (pre-commit review):** ASCII sweep clean (no U+00A7 / Greek /
+  em-dash / superset symbol; "superset-or-equal" form used); structural-doc
+  consistency confirmed; ledger header-anchored; STATE.md item 30 + bullet
+  present. Pytest expected unchanged at 106 passed + 0 xfailed (no test change;
+  constraint (d)); to be confirmed in the author's real environment at session
+  close.
+
+#### Process findings
+
+1. **Template-scope vs Decision-B-targets, opener-internal tension (source-
+   first catch).** The opener (Decision B / Checkpoint B) named section-14
+   compatibility and the G4/G5 boundary as cross-model targets and named
+   `cross_model_evaluate_template.md` as the instrument. Reading that template
+   from disk showed it is framework-level-only and excludes canon/code/
+   implementation questions, routing them to verification_request_template.md.
+   The premises therefore split: T0/P1 are framework/design-property (fit the
+   evaluate template), P2/P3 are canon/code derivation (excluded by it).
+   Resolution: T0/P1 cross-model-tested under the evaluate template; P2/P3
+   source-first at Checkpoint C. Same family as VL-032 Finding 1 / VL-033
+   Finding 3 (opener prescription vs source-derived correction); user-as-final-
+   arbiter ruled the partition. Candidate methodology note: an opener that
+   names cross-model targets should name the template whose scope admits them,
+   or pre-authorize the split.
+2. **Cross-model run validated the looser reading; source-first added the
+   tighter caveat (Q5).** Both recipients ratified P1's "closes Q5 (binding)"
+   as phrased. Source-first reading of envelope.py showed decision_sha256
+   covers request_context (so the envelope's recorded interaction is tamper-
+   evident) but reassert() never compares request_context to a live
+   interaction. So "Q5" splits: envelope authenticity is closed by the
+   mechanism; interaction binding is a separate verifier obligation, and
+   same-state replay (A3) is closed only by the binding check, not by
+   reassert(). No contradiction; the artifact is precise where the premise was
+   loose. Recorded so a future reader does not over-read P1's convergence as
+   closing binding.
+3. **Lesson 2 anchor discipline held for the ledger append.** This entry was
+   appended header-anchored on the unique `### VL-035 -` line (refined VL-035
+   corrective), not on a wrappable final sentence. The apply-script verified
+   `### VL-035 -` was the last `### VL-` header before appending.
+4. **Section-sign leak in chat prose (Lesson 7 stage 2; user-caught).** During
+   the checklist-confirmation turn, Claude's chat prose used the section sign
+   (U+00A7) as shorthand for "section N". User-caught; corrected to the ASCII
+   word for the rest of the session. Confined to chat prose; never reached a
+   committed file (Lesson 7 stage 1 would have gated any committed-bound bytes,
+   and the Checkpoint D ASCII sweep confirmed the artifact and this entry
+   clean). New surface event in the recurring family (VL-029/VL-031 Greek;
+   VL-032/VL-033 em-dash; VL-034 section sign).
+5. **MINGW64 `grep -P` rejection in the close-driver ASCII sweep (Lesson 5
+   environment-friction recurrence; dry-run catch).** On the author's MINGW64
+   shell the driver's `grep -nP '[^\x00-\x7F]'` ASCII checks failed with
+   "grep: -P supports only unibyte and UTF-8 locales", a recurrence of the
+   VL-020 `grep -P` MINGW64 flag-set rejection. Worse, the driver wrote the
+   check as `grep ... && fail || echo clean`, which routes a grep *execution
+   error* (exit 2) to the same branch as a grep *no-match* (exit 1), producing
+   a false "ASCII-clean" pass when the checker could not run - the silent-pass
+   failure mode named in the VL-020 follow-up calibration finding. The
+   load-bearing ASCII gate was never at risk: `vl036_apply.py` performs its own
+   Python `ascii_guard` (not grep) and passed for all three edited files, and
+   artifact 08 was independently byte-verified clean. The driver's auxiliary
+   sweep was corrected to a Python byte check that fails loud and cannot
+   false-pass on a checker error. Corrective for the methodology layer: prefer
+   a Python byte check over `grep -P` for ASCII sweeps in MINGW64 driver
+   scripts; candidate addition to `apply_script_template.py` / Lesson 7 stage 1.
+
+#### Files affected
+
+- `docs/restructure/08_enforcement_design.md` (new)
+- `docs/restructure/04_current_vs_claimed.md` (G4 row Status bullet)
+- `STATE.md` (Last-updated + VL-036 bullet + item 30)
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/canon.md` (locked per GR-1; VL-007)
+- `MANIFEST/manifest.json`
+- `IMPLEMENTATION/*` (no code change; the forwarding behavior is by-design per
+  constraint (l), not a bug)
+- `TESTS/*` (no test change; the tests VL-037 will need are named in artifact
+  08 section 8, not written)
+- `SPEC/*`
+- `docs/restructure/05_admissibility_envelope_spec.md`,
+  `06_spec_to_code_traceability.md` (read as sources; not modified)
+- `docs/methodology/*`
+- `docs/restructure/00_README.md` (artifact-list update deferred; see STATE.md)
+- `README.md`
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding: this entry does not cite its own
+commit hash. Parent commit `cdeeb25` (VL-035). Prior entries cited:
+
+- VL-035 at commit `cdeeb25`
+- VL-034 at commit `1e6fb01`
+- VL-033 at commit `5e2fab0`
+- VL-032 at commit `7f41615`
+- VL-031 at commit `6369eac`
+- VL-030 at commit `699da0d`
+- VL-029 at commit `79012d7`
+
+The T0/P1 cross-model verifier responses are recorded by reference per
+VL-015/VL-016/VL-023-follow-up/VL-025-follow-up precedent (not committed as
+standalone artifacts). The P2/P3 source-first derivations are individually
+verifiable against canon section 14 / section 2 / section 10, pep.py, and
+envelope.py.
+
+#### Next trajectory action
+
+**VL-037 G4-build:** implement the recommended increment from artifact 08
+section 8 (delivery-agnostic target-side verifier reusing reassert() plus a
+request_context-vs-live-interaction binding check; minimal push delivery
+flagged for its section-14 cost; A1 named as the gate-unreachable floor;
+canon-derived tests named in section 8). **G5 (durable verification)** is the
+named G4 dependency and may merge with or precede the G4 build. T-bookkeeping
+(G1/G8/G9/G11/G14) and T-prose-drift remain open with no priority blocker.

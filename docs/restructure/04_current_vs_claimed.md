@@ -94,6 +94,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Action:** State the property plainly in README now. Add `TESTS/adversarial/test_bypass.py`
   demonstrating the bypass honestly. Schedule non-bypassable enforcement in build-outward
   scope; note the envelope-on-forwarded-call thread (Deliverable 05, open question 3).
+- **Status:** design landed at VL-036 (`docs/restructure/08_enforcement_design.md`); build pending VL-037. G4 NOT resolved (a design artifact does not close a build-outward gap); moves from open-undesigned to open-designed. E1: G5 (durable published hash source) named as the verification precondition. Recommended VL-037 increment: delivery-agnostic target-side verifier reusing `reassert()` plus a `request_context`-vs-live-interaction binding check; A1 (declining caller) named as closeable only by target-side policy, not by the gate.
 
 ### G5  -  "External" verification is not durable
 - **Code/evidence:** Interception proofs rely on a local process (`127.0.0.1:9000`) or an
