@@ -223,3 +223,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Elyon-Sol session scratch (VL-037 follow-up finding)
+#   Apply-scripts, commit-message files, and standalone ledger-entry files are
+#   session working artifacts that belong OUTSIDE the repo (see
+#   docs/methodology/apply_script_template.py: copy to ~/tmp). A `git add -A`
+#   from the repo root committed three of them at VL-037 (a959680), removed at
+#   251b44b. Root-anchored so nothing in subdirectories is affected; the
+#   ledger-entry pattern does NOT match EVIDENCE/verification_ledger.md.
+/apply_vl*.py
+/vl*_commit_msg.txt
+/vl*_ledger_entry.md
