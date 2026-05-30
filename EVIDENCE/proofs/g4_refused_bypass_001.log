@@ -1,0 +1,18 @@
+======================================================================
+Elyon-Sol G4 refused-bypass evidence run (VL-038)
+======================================================================
+Published record anchor (EVIDENCE/published_hashes.json):
+  canon_sha256     = d1c9d187953eed8145c2d67a98e052415ca2a4c8b722a8011280e21502b4d7bd
+  evaluator_sha256 = cf311cb7fc99f170c4814eebeee63262946ac6b71099635986257887746e512b
+  manifest_sha256  = a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8
+Verification is against this committed record, not target-local disk.
+----------------------------------------------------------------------
+ACCEPT routed valid (end-to-end)       status=200  acted=True   reason=REASSERTED_AND_BOUND
+REFUSE A1 direct (no envelope)         status=403  acted=False  reason=REF_VERIFY_ENVELOPE_ABSENT
+REFUSE A2 forged (tamper)              status=403  acted=False  reason=REF_VERIFY_REASSERT_INVALIDATED
+REFUSE A3 replay (binding mismatch)    status=403  acted=False  reason=REF_VERIFY_BINDING_MISMATCH
+REFUSE target_url mismatch             status=403  acted=False  reason=REF_VERIFY_BINDING_MISMATCH
+REFUSE published-record mismatch       status=403  acted=False  reason=REF_TARGET_PUBLISHED_RECORD_MISMATCH
+----------------------------------------------------------------------
+Summary: 1 honored (200, acted), 5 refused (non-200, not acted), 1 total target actions.
+Invariants hold: 1 honored+acted; 5 refused (403) with 0 target actions.

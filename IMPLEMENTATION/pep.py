@@ -60,7 +60,7 @@ from IMPLEMENTATION.evaluator import (
     t26_valid,
     manifest_integrity_valid,
 )
-from IMPLEMENTATION.envelope import build_envelope
+from IMPLEMENTATION.envelope import build_envelope, canonical_json
 from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
@@ -212,10 +212,22 @@ async def governed_call(request: Request):
         )
 
     # ----- Upstream forwarding (ELIGIBLE) -----
+    # VL-038 push delivery (artifact 08 section 4.3 push variant). The
+    # envelope rides as an out-of-band attestation header so the
+    # forwarded body stays byte-identical to a direct (un-routed) call;
+    # an enforcing target keys on the header's presence and validity
+    # (verify_envelope + published-record check), not on the body. Body
+    # is unchanged (normalized_interaction). canonical_json gives an
+    # ASCII (ensure_ascii=True) string, so the header value is
+    # transport-safe. Push deepens the pre-existing canon section 14
+    # tension (the gate does more on the execution hop); caller-carry is
+    # the section-14-faithful later architecture (artifact 08 sections
+    # 4.3 / 5; recorded in artifact 04 G4 + artifact 06 section 14).
     try:
         upstream = requests.post(
             body["target_url"],
             json=normalized_interaction,
+            headers={"X-Elyon-Sol-Envelope": canonical_json(envelope)},
             timeout=10,
         )
     except Exception as e:
