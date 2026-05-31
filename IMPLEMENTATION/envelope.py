@@ -306,7 +306,7 @@ def build_envelope(
 # ---------------------------------------------------------------------------
 
 
-def reassert(envelope: Dict[str, Any]) -> str:
+def reassert(envelope: Dict[str, Any], record_source: Optional[Dict[str, Any]] = None) -> str:
     """
     Re-check an envelope against live repository state.
 
@@ -363,7 +363,10 @@ def reassert(envelope: Dict[str, Any]) -> str:
     # Canon basis: canon is locked (GR-1); a hash mismatch means the
     # envelope predates a canon change, so the envelope's rules of
     # the game no longer apply.
-    live_canon_sha256 = _read_canon_lock()
+    live_canon_sha256 = (
+        _read_canon_lock() if record_source is None
+        else record_source["canon_sha256"]
+    )
     if envelope["canon"]["canon_sha256"] != live_canon_sha256:
         return {"outcome": INVALIDATED, "ccs": False}
 
@@ -387,7 +390,10 @@ def reassert(envelope: Dict[str, Any]) -> str:
     # ----- Row 3: evaluator_sha256 mismatch -> RE-EVALUATE-REQUIRED -----
     # Canon basis: whitepaper section 12.4 - "decision logic transition."
     # See VL-024 Implication 2 attention point above.
-    live_evaluator_sha256 = _evaluator_sha256()
+    live_evaluator_sha256 = (
+        _evaluator_sha256() if record_source is None
+        else record_source["evaluator_sha256"]
+    )
     if envelope["evaluator"]["evaluator_sha256"] != live_evaluator_sha256:
         return {"outcome": RE_EVALUATE_REQUIRED, "ccs": False}
 
@@ -397,7 +403,10 @@ def reassert(envelope: Dict[str, Any]) -> str:
     # the same hardcoded-path pattern flagged as G11 (manifest-source
     # asymmetry surfaced at VL-012); envelope.py uses it as-is, matching
     # the existing-pattern boundary.
-    live_manifest_sha256 = manifest_sha256()
+    live_manifest_sha256 = (
+        manifest_sha256() if record_source is None
+        else record_source["manifest_sha256"]
+    )
     if envelope["evaluated_against"]["manifest_sha256"] != live_manifest_sha256:
         return {"outcome": RE_EVALUATE_REQUIRED, "ccs": False}
 

@@ -170,6 +170,7 @@ def verify_envelope(
     envelope: Any,
     interaction: Dict[str, Any],
     target_url: str,
+    record_source: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Decide whether a target should honor an admissibility envelope for
@@ -221,7 +222,7 @@ def verify_envelope(
     # Fail closed on any structural surprise reassert() trips over that
     # the guard above did not catch (e.g. canon present but not a dict).
     try:
-        outcome = reassert(envelope)["outcome"]
+        outcome = reassert(envelope, record_source=record_source)["outcome"]
     except Exception:
         return _reject(REF_VERIFY_ENVELOPE_ABSENT)
 

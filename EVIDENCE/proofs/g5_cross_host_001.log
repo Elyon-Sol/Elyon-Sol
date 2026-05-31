@@ -1,0 +1,23 @@
+==========================================================================
+G5 cross-host transport demonstration (VL-039)
+==========================================================================
+Pinned anchor (sha256 of EVIDENCE/published_hashes.json): 6abf9a1181121f963eb91e18df560499990396d540c00115ffcfd7bc8907daeb
+Gate evaluator sha256   : cf311cb7fc99f170c4814eebeee63262946ac6b71099635986257887746e512b
+TARGET local evaluator  : 592d6aec10334c86b4f3868ed5641851c4796381bc6c400e771c235dc02b0a25  <- genuinely divergent
+Publisher (authentic)   : http://127.0.0.1:34247/published_hashes.json
+Publisher (tampered)    : http://127.0.0.1:41225/published_hashes.json
+--------------------------------------------------------------------------
+[PASS] valid envelope, authentic record (DIVERGENT target disk)
+       honored=True reason=REASSERTED_AND_BOUND
+       (VL-038 local-disk verify on this divergent tree would have returned: REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED)
+[PASS] forged envelope, authentic record
+       honored=False reason=REF_VERIFY_REASSERT_INVALIDATED
+       (VL-038 local-disk verify on this divergent tree would have returned: REF_VERIFY_REASSERT_INVALIDATED)
+[PASS] valid envelope, tampered record (fails pinned anchor)
+       honored=False reason=REF_TARGET_ANCHOR_MISMATCH
+[PASS] no envelope (A1), authentic record
+       honored=False reason=REF_VERIFY_ENVELOPE_ABSENT
+--------------------------------------------------------------------------
+KILLER PROPERTY (honor-valid-despite-divergent-disk + local-disk-would-refuse): HOLDS
+==========================================================================
+RESULT: ALL INVARIANTS HOLD

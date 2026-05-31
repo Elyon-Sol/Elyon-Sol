@@ -9908,3 +9908,209 @@ Process findings:
 Decisions exercised: A (scope held: delivery + enforcing target + published record + test_pep migration + evidence; no verifier/envelope/evaluator/CANON/MANIFEST change; no SPEC change after Checkpoint B), B (push; section 14 cost recorded), C (verify against the published record, proven load-bearing), D (verify_envelope reused as-is; no new REF_VERIFY_ code), E (evidence run committed), F (A1 target-policy and cross-host transport named not built), G (cross-model not elected; the design forks are code/architecture questions, outside the framework-level evaluate template per VL-036 Finding 1, and follow source-first from the locked decisions).
 
 Classification: trajectory move per VL-017a's distinction (a delivery edit to pep.py plus a new published record, a new test file, and a new evidence run). G4 defensibly non-bypassable for routed-and-attested traffic; does NOT transition to blanket RESOLVED. Pytest 119 -> 126 passed + 0 xfailed (real environment; the sandbox subset of the eight available test files went 112 -> 119, +7 from test_enforcement). HEAD at this commit; prior substantive entry VL-037 at a959680, VL-037 follow-up at 251b44b.
+
+### VL-039 - 2026-05-31 - T-G5-transport: cross-host transport of the published record; trust bootstrapped at one pinned anchor
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** trajectory move per VL-017a's distinction (a new
+`IMPLEMENTATION/` module + parameterizing edits to two existing
+`IMPLEMENTATION/` modules + a new `TESTS/adversarial/` file + a new evidence
+run; structural-doc updates only in `docs/restructure/04`, `06`, `08`,
+STATE.md, and this ledger). No canon/manifest/SPEC change.
+
+**Verifies:** G5 cross-host transport landed. A target on a separate process,
+whose local working tree differs from the gate's, fetches Elyon-Sol's
+published hash record from a publisher over loopback, verifies it against a
+single pinned root anchor, and checks a delivered envelope's currency against
+the FETCHED record rather than its own local disk - reaching the correct
+verdict despite a divergent local tree.
+
+- `IMPLEMENTATION/published_source.py` (new): `anchor_sha256()` (the
+  pinned-anchor primitive), `load_record_from_bytes(record_bytes,
+  pinned_root)` (anchor-verify then parse; the network-free trust check;
+  returns None on anchor mismatch / parse failure / missing pin key), and
+  `fetch_published_record(publisher_url, pinned_root, timeout=10)` (the
+  loopback transport, fail-closed on any transport error). Decision B-prime-1:
+  the anchor is the sha256 of `EVIDENCE/published_hashes.json`, derived live
+  (constraint i), held by the target out-of-band; the hash chain extends
+  `CANON/canon.lock` -> `EVIDENCE/published_hashes.json` -> the pinned root.
+- `IMPLEMENTATION/envelope.py` `reassert(envelope, record_source=None)` and
+  `IMPLEMENTATION/verifier.py` `verify_envelope(..., record_source=None)`
+  (Decision D-b): an optional record source. Default None preserves the
+  co-located local-disk behavior exactly (the 131 baseline is byte-unchanged).
+  When supplied, reassert() Rows 1/3/4 (the canon/evaluator/manifest currency
+  comparisons) source from the record's hashes instead of local disk; Row 2
+  (`decision_sha256` integrity) and the whole binding check are pure over the
+  envelope/interaction and reuse as-is. Decision C is satisfied: cross-host
+  currency comes from the fetched-and-anchor-verified record, not disk.
+- `TESTS/adversarial/test_cross_host.py` (new, 8 tests): the Decision-C proof
+  (with the local evaluator read monkeypatched divergent, `record_source`
+  overrides it; the no-source path returns RE-EVALUATE-REQUIRED on the same
+  divergent disk), the honor-valid-despite-divergent-disk and
+  refuse-forged-despite-divergent-disk pair, the pinned-anchor accept/refuse
+  cases (B-prime-1), and two end-to-end cross-host cases over a served
+  publisher (TestClient).
+- `EVIDENCE/proofs/g5_cross_host_001_runner.py` + `.log` + `.md` (new): the
+  real two-context demonstration over loopback (constraint k). A publisher
+  serves the authentic record; a TARGET SUBPROCESS in a genuinely byte-mutated
+  tree (local evaluator `592d6aec...` vs gate `cf311cb7...`) fetches it,
+  anchor-verifies, and HONORS a valid envelope via the fetched record despite
+  its divergent disk - while the reported local-disk contrast shows a
+  VL-038-style verify would have returned
+  `REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED`. Still REFUSES a forged envelope
+  (`REF_VERIFY_REASSERT_INVALIDATED`), a record failing the pinned anchor
+  (`REF_TARGET_ANCHOR_MISMATCH`, the single new harness reason, parallel to
+  VL-038's `REF_TARGET_PUBLISHED_RECORD_MISMATCH`), and an un-attested call
+  (`REF_VERIFY_ENVELOPE_ABSENT`). Runner asserts all rows plus the killer
+  invariant and exits 0.
+
+**No new invariant (canon section 14).** Fetching a record is verification
+I/O; the target still only verifies and acts/refuses, it does not execute. G5
+operationalizes canon section 11.9 (integrity-verifiable, extended to canon
+and evaluator hashes), section 13 (revalidation), and section 8.2 ("the choice
+of anchoring system is implementation-dependent and does not affect
+admissibility logic" - the pinned-root anchor is exactly such a choice). No
+canon/SPEC change (Checkpoint B).
+
+**The trust bootstrap, stated plainly (the hard question).** G5 does not make
+verification trustless. It reduces and makes explicit the trust surface: from
+"the target trusts its entire local working tree" to "the target trusts one
+pinned published-record anchor, distributed out-of-band, plus transport
+integrity." This is the analog of how A1 (artifact 08 section 4.4) and the
+section-14 tension were handled - named, not eliminated. G5 moves from
+open-with-committed-record to transport-built; it does NOT become blanket
+RESOLVED.
+
+#### Checkpoint results
+
+- **Checkpoint A (design; paused for review):** transport (Decision B,
+  loopback), the trust anchor (Decision B-prime-1, pinned root hash; chosen by
+  the author over B-prime-2 signed / B-prime-3 transparency-log, both of which
+  fall under Decision F named-not-built), Decision D-b (parameterize, local-
+  disk default) with the source-first reasoning that integrity and binding are
+  already disk-free so only currency must change, the timestamp/F1 resolution
+  (accept the exclusion; folding it in would break F1 and is out of scope), and
+  anchor placement (target config, not `CANON/`; GR-1 scope). Decision G
+  elected (see below). Reviewed and confirmed before any code.
+- **Checkpoint B (spec-gap; mandatory):** no `SPEC/` edit (transport is a
+  wire/deployment concern, the VL-038 forward precedent; `request_schema.md`
+  scopes the inbound shape only). No canon edit (no new invariant). Artifact 08
+  is the design home, extended here. GR-2 not triggered (it is a candidate, not
+  an active rule, and `record_source` is an optional-parameter extension, not a
+  rename; design and code land together per the VL-036 -> VL-037 precedent).
+- **Checkpoint C (implementation review):** the cross-host path reads NO local
+  disk for currency when a record_source is supplied (the divergent-disk honor
+  case is the proof); the co-located VL-038 path is byte-behavior-unchanged
+  (default None; 131 baseline green); the new module is import-clean and
+  uses the `IMPLEMENTATION.` prefix; section 14 holds (fetching is verification
+  I/O, the target does not execute). All new/changed files ASCII-clean.
+- **Checkpoint D (pre-commit):** artifact 04 G5 row + artifact 06 sections
+  13/14 rows + artifact 08 section 6, STATE.md, this entry; staged paths
+  explicit (never `git add -A`; the VL-037/VL-038 scratch-in-repo family).
+
+#### Audit verdict-of-record (cross_model_adversarial_audit.md ADOPTION clause)
+
+Per the ADOPTION clause and the VL-038 follow-up board-clear decision 1b, this
+entry records the off-framework parallel cross-model adversarial audit of
+VL-038. The board-clear (commit `15c53cb`) recorded only that the audit
+existed; the substantive cold verdict-of-record is logged here.
+
+- **That it ran:** a parallel cross-model adversarial audit of the VL-038
+  increment was conducted off-framework, blind and falsification-first, with
+  the author treated as an interested party (the single-author-loop safeguard).
+- **Disposition:** five confirmed findings became green characterization
+  tripwires in `TESTS/adversarial/test_findings_001.py`, each pinning current
+  behavior so that closing the gap is a deliberate change that must break the
+  named test - F1 (`timestamp_utc` outside `decision_sha256`: a timestamp-only
+  mutation is not detected; an audit-chronology weakness, not an authorization
+  one), F2 (binding closes substitution but not verbatim replay: an identical
+  (envelope, interaction) pair is honored again), F3 (no `target_url`
+  allowlist: SSRF surface; the gate forwards to and attests an arbitrary
+  caller-chosen URL), F4 (the ELIGIBLE attestation is independent of the
+  upstream outcome: an upstream 500 still yields ELIGIBLE; canon-faithful per
+  section 14), F5 (duplicate `X-Elyon-Sol-Envelope` headers: order-dependent
+  first-occurrence read; deterministic, never crashes).
+- **Cold verdict:** the audit did NOT overturn G4's scoped claim
+  (defensibly non-bypassable for routed-and-attested traffic); it confirmed
+  five residual weaknesses, none of which is authorization-overturning (F1 and
+  F4 are explicitly chronology/outcome-semantics, not authorization; F2/F3/F5
+  are hardening gaps with characterized current behavior). The verdict holds
+  the scoped claim while bounding it precisely.
+- **Caveat (recorded honestly per the audit's own ENFORCEMENT section):** the
+  first run's independence was partly compromised - the two model outputs
+  overlapped verbatim across stretches, so the two-model convergence was closer
+  to one source wearing two hats. The cold verdict's strength is bounded
+  accordingly; the tripwire tests, not the model agreement, are the durable
+  record. The audit transcript and any anchoring round stay off the framework
+  record per the ADOPTION clause; this entry's provenance is
+  `test_findings_001.py` (on disk) plus `cross_model_adversarial_audit.md`, not
+  the (off-record) transcript.
+
+This audit's findings interact with G5 only at F1: the cross-host integrity
+check inherits the `timestamp_utc` exclusion unchanged (the timestamp question
+was resolved at Checkpoint A by formally accepting the exclusion, not folding
+it in, so F1 stays green). F3 (SSRF) is adjacent to the publisher/target
+wiring but is a gate-side allowlist concern, untouched here.
+
+#### Process findings
+
+1. **FastAPI route-annotation bug in the test harness (caught by the
+   in-container smoke; positive).** The first draft of the cross-host target
+   harness declared `async def act(request)` without the `request: Request`
+   annotation, so FastAPI read `request` as a query parameter and returned 422;
+   two end-to-end tests failed. The six load-bearing unit tests (the Decision-C
+   and anchor proofs) passed regardless. An implementation/harness bug, not a
+   spec gap; fixed by annotating `request: Request` and hoisting the FastAPI
+   imports. Same family as VL-025's smoke and VL-037 Finding 1: the encouraged
+   pre-commit run paid for itself.
+2. **Stale return annotation on `reassert()` (left as-is; scope discipline).**
+   `reassert()` is annotated `-> str` though it has returned a dict since
+   VL-029. The D-b edit added the `record_source` parameter without correcting
+   the annotation, to keep the edit minimal (constraint l: an annotation is not
+   behavior). Recorded as a cosmetic gap candidate for a future bookkeeping
+   commit; not in VL-039 scope.
+3. **STATE.md anchors were NOT reconstructed from the resume dump.** Per Lesson
+   2/3 (the VL-021 failure family), the STATE.md edits for this entry were
+   applied with anchors read from the on-disk STATE.md at apply time, not from
+   session scrollback.
+
+#### Files affected
+
+- `IMPLEMENTATION/published_source.py` (new)
+- `IMPLEMENTATION/envelope.py` (`reassert` gains `record_source`; 4 edits)
+- `IMPLEMENTATION/verifier.py` (`verify_envelope` gains `record_source`; 2 edits)
+- `TESTS/adversarial/test_cross_host.py` (new; 8 tests)
+- `EVIDENCE/proofs/g5_cross_host_001_runner.py`, `.log`, `.md` (new)
+- `docs/restructure/04_current_vs_claimed.md` (G5 row: VL-039 bullet)
+- `docs/restructure/06_spec_to_code_traceability.md` (section 13 + section 14 notes)
+- `docs/restructure/08_enforcement_design.md` (section 6: VL-039 update)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/*`, `MANIFEST/*`, `SPEC/*` (no canon/manifest/spec change)
+- `IMPLEMENTATION/pep.py`, `evaluator.py`, `request_validator.py`,
+  `replay/receipt.py` (unchanged)
+- `docs/restructure/05_admissibility_envelope_spec.md`, `00_README.md`
+- `docs/methodology/*`, `README.md`
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding, this entry does not cite its own
+commit hash. Parent commit `b48f9ac` (VL-038 follow-up board-clear). Prior
+substantive entry VL-038 at `33d0f5c`; audit disposition at `15c53cb`. No
+cross-model verification of the G5 CODE was run in-session; Decision G (the
+framework-level trust-reduction evaluate) is drafted for the author to run with Grok and OpenAI off-framework; per the VL-008 cross-model pattern only the verdict-of-record will be recorded in a later ledger entry, and the prompt is kept off the repo record. Per VL-036
+Finding 1 (the evaluate template is framework-level only; the D-a/D-b build
+fork is a code question outside it). The 8 cross-host tests are individually
+verifiable against canon section 13 / 11.9 / 8.2 and artifact 08 section 6 via
+their docstrings; the suite is green (139/139) and the evidence runner exits 0.
+
+#### Next trajectory action
+
+Record freshness / revocation (the next hardening after transport: a
+stale-but-anchor-matching record); signing / PKI (B-prime-2/3, removing
+per-target pinning); A1 target-side admission policy; caller-carry /
+proxy-removal (the section-14-faithful architecture); the T-bookkeeping backlog
+(G1 / G8 / G9 / G11 / G14) and T-prose-drift. None blocking.

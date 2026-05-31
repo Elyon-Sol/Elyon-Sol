@@ -302,6 +302,8 @@ published-hash source (for example, a committed hashes file under
 `EVIDENCE/`) as a stub pending the real G5 build, or pair with G5 directly;
 that ordering is a VL-037 decision, not a blocker for this artifact.
 
+**VL-039 update (G5 boundary partially closed).** The durable-source precondition is now met for cross-host over loopback: `IMPLEMENTATION/published_source.py` fetches the published record and anchor-verifies it against a single pinned root (Decision B-prime-1), and `reassert()`/`verify_envelope()` accept an optional `record_source` (Decision D-b) so currency is checked against the fetched record, not local disk (Decision C). Evidence: `EVIDENCE/proofs/g5_cross_host_001.{log,md}`. The G5 floor remains, named not built (Decision F): secure distribution of the pinned anchor, record freshness/revocation, signing/PKI, and true multi-machine/TLS. G5 is transport-built, not blanket RESOLVED.
+
 ---
 
 ## 7. The reassert() replay / binding gap
