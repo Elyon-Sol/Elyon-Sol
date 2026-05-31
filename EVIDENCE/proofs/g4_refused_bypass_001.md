@@ -1,8 +1,7 @@
 # G4 refused-bypass evidence (VL-038)
 
 **Status:** Current proof.
-**Commit anchor:** `<VL-038 commit>` (HEAD at the VL-038 commit; fill at commit
-time per the VL-012 self-referencing-hash discipline).
+**Commit anchor:** `33d0f5c` (the VL-038 commit; filled per the VL-012 self-referencing-hash discipline).
 **Date of observation:** 2026-05-29.
 
 ## Claim

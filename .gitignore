@@ -234,3 +234,7 @@ __marimo__/
 /apply_vl*.py
 /vl*_commit_msg.txt
 /vl*_ledger_entry.md
+# Root-level published-record duplicates (VL-038 root-duplicate finding).
+#   The canonical record is EVIDENCE/published_hashes.json; this guard is
+#   root-anchored so it cannot match it (same mechanism as the vl* guards).
+/published_hashes*.json
