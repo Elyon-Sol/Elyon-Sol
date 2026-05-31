@@ -1,7 +1,10 @@
 # VL-039 session opener - T-G5-transport: cross-host transport of the published record
 
-Tag: T-G5-transport. Predecessor: VL-038 (T-G4-enforce) at commit `33d0f5c`.
-Baseline suite: 126 passed + 0 xfailed.
+Tag: T-G5-transport. Predecessor: VL-038 (T-G4-enforce) at commit `33d0f5c`,
+then the audit-disposition commit `15c53cb` and the VL-038 follow-up
+board-clear `b48f9ac` (HEAD; STATE.md and the ledger are current at it).
+Baseline suite: 131 passed + 0 xfailed (the 126 from VL-038 plus the 5
+audit-finding characterization tests in `test_findings_001.py`).
 
 This opener is written by the session that closed VL-038. Every file fact
 below was read from disk during VL-038, but per Lesson 3 it is a precondition,
@@ -226,7 +229,7 @@ end of VL-038. It is the natural Decision G election (see below).
 - **Checkpoint C (implementation review).** Confirm: the cross-host path reads
   NO local disk for currency (grep/inspect); the co-located VL-038 path is
   unchanged or correctly subsumed; if `verifier.py`/`envelope.py` were edited,
-  the diff is exactly the intended change and the 126 baseline plus new tests are
+  the diff is exactly the intended change and the 131 baseline plus new tests are
   green; section 14 re-read (does fetching make the gate or target execute or do
   more? - it should not: the target still only verifies and acts/refuses, now
   against a fetched authority). All new/changed files ASCII-clean.
@@ -263,7 +266,7 @@ end of VL-038. It is the natural Decision G election (see below).
 - **(n)** Work order: read checklist -> Checkpoint A design (pause) -> Checkpoint
   B spec-gap -> build the publisher/transport -> build the pinned-anchor verify
   and the cross-host verifier (D-a or D-b) -> the divergent-disk demonstration
-  and tests -> evidence run -> real-environment pytest (expect 126 + new) ->
+  and tests -> evidence run -> real-environment pytest (expect 131 + new) ->
   artifact 04/06/08 -> STATE.md -> ledger (anchor `### VL-038 -`) -> commit.
 
 ---
@@ -294,13 +297,19 @@ end of VL-038. It is the natural Decision G election (see below).
 12. `docs/MAINTENANCE_PROTOCOL.md` - GR-1 scope (decides where the anchor lives)
     and the GR-2 candidate status.
 
-**Tier 2 (tests / regression, for the 126 baseline and the migration surface):**
+**Tier 2 (tests / regression, for the 131 baseline and the migration surface):**
 13. `TESTS/test_pep.py`, `TESTS/adversarial/test_verifier.py`,
     `TESTS/adversarial/test_bypass.py`, `TESTS/adversarial/test_request_schema.py`,
     `TESTS/adversarial/test_envelope.py`, `TESTS/adversarial/test_ccs_canonical.py`,
     `TESTS/adversarial/test_evaluator_canonical.py`,
     `TESTS/test_adversarial_evaluator.py`, `TESTS/test_concurrency.py`,
     `TESTS/test_replay_receipts.py`.
+14a. `TESTS/adversarial/test_findings_001.py` - the 5 audit-finding
+    characterization tests (commit `15c53cb`). Read before designing the
+    cross-host verifier: F1 (timestamp_utc outside decision_sha256) feeds the
+    integrity-check decision in Decision D, and F3 (no target_url allowlist /
+    SSRF) is adjacent to the publisher/target wiring. These tests pin current
+    behavior; do not break one inadvertently while building G5.
 
 **Tier 3 (methodology / state):**
 14. `STATE.md` (the VL-038 current-verified-state bullet and Next-open-action 33).
@@ -348,25 +357,26 @@ named not built." G5 does NOT become blanket RESOLVED.
 
 ---
 
-## Carried VL-038 follow-up debts (optional first; a small follow-up commit)
+## Carried VL-038 follow-up debts - CLOSED at `b48f9ac`
 
-- Post-commit hash fill: `STATE.md`'s last-updated `HEAD <this commit>` and the
-  `EVIDENCE/proofs/g4_refused_bypass_001.md` commit anchor take the real `33d0f5c`
-  (the VL-012 self-referencing-hash pattern).
-- Ledger correction: the VL-038 entry's process finding 1 says "two chat-prose
-  section-sign instances ... user-caught both times" as established fact; the
-  second instance is user-reported but not self-verifiable (the file sweep does
-  not cover prose; the two flags were identical messages). It should read "one
-  self-verified plus one user-reported." Recording user-reported-but-unverified
-  as confirmed is the soft overclaim the ledger exists to prevent.
-- `.gitignore` guard for `apply_vl*.py` / `vl*_commit_msg.txt` /
-  `vl*_ledger_entry.md` / root-level `published_hashes*.json` duplicates - the
-  root-scratch family now has two data points (VL-037 sweep; VL-038 root
-  duplicates caught pre-stage). Deferred pending a source-first read of the
-  current `.gitignore`.
+All three carried debts were closed by the VL-038 follow-up board-clear
+(commit `b48f9ac`, pushed), before this session:
 
-These are not blocking; handle as a VL-038 follow-up commit before or alongside
-VL-039 at the session's discretion.
+- DONE: hash fill - `STATE.md`'s last-updated resolved to `15c53cb` (with the
+  audit disposition recorded inline) and `EVIDENCE/proofs/g4_refused_bypass_001.md`
+  commit anchor resolved to `33d0f5c`.
+- DONE: ledger correction - the VL-038 finding-1 "user-caught both times" soft
+  overclaim was annotated in place ("one self-verified, one user-reported"),
+  original preserved verbatim per the VL-033 annotate-not-overwrite discipline.
+- DONE: `.gitignore` gained a root-anchored `/published_hashes*.json` guard
+  (cannot match `EVIDENCE/published_hashes.json`; same mechanism as the vl* guards).
+
+STILL OWED BY THIS SESSION (the one thing the board-clear deferred, per
+decision 1b and the audit methodology's ADOPTION clause): the VL-039 ledger
+entry must record the off-framework audit's cold verdict-of-record - that the
+audit ran, the disposition (F1-F5 became `test_findings_001.py`), and the
+cold verdict. The board-clear recorded only the audit's existence as
+bookkeeping; the substantive verdict is this session's to log.
 
 ---
 
