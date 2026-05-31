@@ -10199,3 +10199,80 @@ strengthens the case for the record-layer scope and the B-prime-2 anchor
 upgrade (signed records defend against stale/compromised records and enable
 revocation) over merely layering freshness on the static pin.
 
+
+### VL-039 follow-up 2 - Forgery probe: the envelope is tamper-evident, not forgery-resistant (decision_sha256 is unkeyed)
+
+**Status:** RECORDED (finding-of-record; correction only, no fix yet)
+**Date:** 2026-05-31
+**Procedure:** narrow adversarial cross-model probe per the VL-008 pattern,
+clean context, blind. Single binary construction question. Recipients: Grok
+(xAI), OpenAI, Gemini (Google) - THREE independent labs, chosen specifically so
+the finding does not trace to one model's lineage. Bundle: `envelope.py`,
+`verifier.py`, `published_source.py`, `EVIDENCE/published_hashes.json` only (no
+ledger, no methodology, no claim text).
+
+**Question:** can a party who knows the published record and has observed one
+genuine envelope, but holds NO key or credential and never routed through the
+gate, construct an envelope `verify_envelope` accepts for an interaction of
+their choosing?
+
+**Verdict: YES - convergent across all three, with the same construction.**
+Each walked the checks in order and produced a working field-by-field forge;
+all three independently identified `decision_sha256` as the check that should
+stop it and showed it does not. Root cause: `decision_sha256` is a plain,
+unkeyed SHA-256 over the envelope's own public fields (`canonical_json` +
+`_sha256_text`, both in `envelope.py`), and the pinned currency values are read
+straight from the public `published_hashes.json`. No signature, MAC, or secret
+appears anywhere in the construct-or-verify path. The minimal forge: copy the
+public canon/evaluator/manifest hashes into a fresh envelope, set
+decision=ELIGIBLE and request_context/target_url to match the chosen live
+interaction, recompute `decision_sha256` over the canonical envelope, submit.
+`reassert()` returns REASSERTED; the binding check passes because the adversary
+chose the interaction. `verify_envelope` returns accepted.
+
+**What this means precisely:** the envelope is TAMPER-EVIDENT (a
+modified-without-rehash envelope is caught - the case the VL-039 runner's
+"forged" row actually exercises) but NOT FORGERY-RESISTANT (a from-scratch
+envelope is accepted). `decision_sha256` proves self-consistency, not gate
+issuance. This is a property of the envelope integrity primitive
+(`envelope.py`, since VL-025/029), not of the G5 transport; it surfaced now
+because the G5 proof's Claim asserted "REFUSES a forged envelope."
+
+**Corrections applied (this same follow-up commit):**
+- `EVIDENCE/proofs/g5_cross_host_001.md` (apply-script
+  `apply_vl039f2_forgery_correction.py`): the "REFUSES a forged envelope" Claim
+  bullet corrected to "TAMPERED," with the tamper-vs-forgery distinction stated,
+  and a "Forgery finding" subsection added recording this probe.
+- The project's bounded scope claim: "forgery/tamper/replay-resistant" ->
+  "tamper-evident ... not forgery-resistant." The word "forgery-resistant" is
+  retracted as unearned.
+
+**Provenance / honesty note:** the word "forgery-resistant" originated in the
+author/design-surface-drafted bounded claim, not in the original code comments
+(which consistently said tamper / integrity). This is an author-introduced
+overclaim caught by three independent outside surfaces - the intended function
+of the no-single-model-trusted structure. The first scope-validation round was
+split (OpenAI flagged it, Grok did not); the dedicated probe converted the split
+into a 3-0 finding. Had the bounded claim been deposited (Zenodo) before this
+probe, a citable artifact would have asserted forgery-resistance that three
+models trivially break. One accuracy caveat: Gemini's construction snippet
+excluded only `timestamp_utc` from the hashable set; `decision_sha256` is
+excluded as well (Grok and OpenAI stated both) - Gemini achieved it by
+construction order, the attack is unaffected. Grok and OpenAI's formulation of
+the hashable set is the canonical one.
+
+**Provenance of record:** the probe prompt and the three raw responses are kept
+off the repo record (`~/elyon-sol-offrecord/`), per the
+VL-008/VL-015/VL-023/VL-025 cross-model pattern. This entry is the record.
+
+**Consequence for trajectory (resets the next-increment scope):** issuer
+authentication (signing, Decision B-prime-2) moves from an optional
+anchor-upgrade for freshness to THE primitive standing between the system and
+its own attestation claim - an attestation that does not authenticate its
+issuer does not do the job of an attestation. This outranks both A1
+(enforcement-of-routing) and freshness in the VL-040 Decision 0 scope pick:
+forcing callers through the gate and keeping the record current both presuppose
+that the gate's output cannot be minted by anyone. VL-040's Decision 0 is reset
+toward signing accordingly (opener updated). Recommended (not pre-locked):
+build issuer signing next; it owes its own framework-level cross-model evaluate
+on signing-key governance.
