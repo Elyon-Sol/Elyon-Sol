@@ -10114,3 +10114,87 @@ stale-but-anchor-matching record); signing / PKI (B-prime-2/3, removing
 per-target pinning); A1 target-side admission policy; caller-carry /
 proxy-removal (the section-14-faithful architecture); the T-bookkeeping backlog
 (G1 / G8 / G9 / G11 / G14) and T-prose-drift. None blocking.
+
+### VL-039 follow-up - Decision G cross-model evaluate: G5 trust-reduction is PARTIAL; freshness is load-bearing
+
+**Status:** RECORDED (verdict-of-record; no code change)
+**Date:** 2026-05-31
+**Procedure:** framework-level cross-model evaluate per VL-008 (scope the task
+to the attached primary sources; discard any response ranging outside them;
+ratings/verdicts carry no verification weight). Recipients: Grok and OpenAI,
+independent. Bundle: `canon.md` (8.2/9/13/14), `08_enforcement_design.md`,
+`IMPLEMENTATION/envelope.py`, `verifier.py`, `published_source.py`,
+`EVIDENCE/proofs/g5_cross_host_001.md`, `EVIDENCE/published_hashes.json`.
+
+**Procedural cleanliness:** both responses passed the within-scope gate -
+every substantive claim traced to an attached file, no out-of-bundle project
+history, no characterize-instead-of-check. Rating/approval language stripped
+before recording (per VL-008). Both admissible.
+
+**Convergent verdict: PARTIAL.** The G5 design gains a real but narrow
+property: the target's currency check no longer depends on its own
+canon/evaluator/manifest files (the divergent-evaluator killer case in
+`g5_cross_host_001.md` proves exactly this). It does NOT gain independence
+from the trust root.
+
+**Decisive failure (both models, two angles, same locus):** an
+anchor-valid-but-wrong record.
+- Grok: a compromised or incorrect pinned anchor distributed out-of-band - the
+  target fetches a malicious record that matches the bad pin,
+  `reassert(record_source=malicious)` uses the attacker's hashes, and a crafted
+  envelope with a valid `decision_sha256` and matching binding is honored.
+- OpenAI: a STALE-but-anchor-matching record - the pin still matches an older
+  published record whose canon/evaluator/manifest tuple is satisfied by a
+  genuine old envelope, so `reassert(record_source=old)` returns REASSERTED
+  though the governing state has moved. Exact step: the three
+  `record_source["..._sha256"]` lookups; freshness is outside that check.
+
+Both locate the failure at the `reassert(record_source=...)` currency
+comparison, NOT at local disk. The relocation of trust is real; the trust is
+relocated to the anchor + record correctness/freshness, not eliminated.
+
+**Convergent canon finding:** no section 8.2 / 9 / 14 violation. Fetching the
+record is verification I/O (operationalizes section 13 revalidation; section 14
+non-execution holds; section 8.2 permits the implementation-dependent
+pinned-anchor choice; fail-closed posture holds). One architectural caution
+(OpenAI): push-style forwarding deepens the section-14 tension; caller-carry or
+target-pull relieves it - consistent with the standing caller-carry trajectory
+item.
+
+**Load-bearing floor correction (OpenAI, decisive):** freshness/revocation is
+NOT deferrable polish. It is the condition standing between an anchor-valid
+record and a correct CURRENT verdict. The other floor items (anchor
+distribution, signing/PKI, TLS/multi-machine) are correctly filed as later;
+freshness is the one that bounds the present claim.
+
+**Action taken:** `EVIDENCE/proofs/g5_cross_host_001.md` bounded in this same
+follow-up commit (apply-script `apply_vl039g_proof_bound.py`): the strong-form
+"reach the correct admissibility verdict" / "verdict does not depend on
+trusting its own files" phrasing is replaced with "local-disk and transport
+independence for the currency check, not a guarantee of the correct current
+verdict," the freshness bullet is marked load-bearing, and a "Decision G bound"
+subsection records this verdict. No `IMPLEMENTATION/` change; the code was
+correct, the proof's prose overreached.
+
+**Non-convergence noted (honest record):** the author's pre-run self-adversarial
+dry analysis raised verifier-code integrity as a second bound (the target still
+executes its own `verifier.py`/`envelope.py`/`published_source.py`). Neither
+external model corroborated it - Grok went the other way, OpenAI listed
+"correct verifier/binding execution" only as a passing surviving assumption,
+not a falsification. Per VL-008 the author is an interested party; an
+uncorroborated author-raised concern is not recorded as a finding. Noted here
+only as a non-convergence, not a verdict component.
+
+**Provenance:** the verdict is derived from the two models' source-bound
+derivations. The prompt and the raw responses are kept off the repo record
+(`~/elyon-sol-offrecord/`), per the VL-008 / VL-015 / VL-023-follow-up /
+VL-025-follow-up cross-model pattern (raw responses are not committed as
+standalone artifacts). This entry is the record.
+
+**Next trajectory action (sharpened by this verdict):** record
+freshness/revocation is now evidenced as load-bearing, not merely next-in-line.
+VL-040 (T-G5-freshness) should target closing the anchor-valid-but-stale
+acceptance, with this verdict as the cited Checkpoint A input; the verdict
+strengthens the case for the record-layer scope and the B-prime-2 anchor
+upgrade (signed records defend against stale/compromised records and enable
+revocation) over merely layering freshness on the static pin.

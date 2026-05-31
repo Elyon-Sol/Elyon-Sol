@@ -8,8 +8,7 @@
 
 A target on a separate process, whose local working files differ from the
 gate's, can fetch Elyon-Sol's published hash record from a publisher, verify
-that record against a single pinned trust anchor, and reach the correct
-admissibility verdict by trusting the FETCHED record over its own local disk:
+that record against a single pinned trust anchor, and perform its currency check against the FETCHED record rather than its own local disk - gaining local-disk independence for that check. This is NOT a guarantee of the correct CURRENT verdict; an anchor-valid but stale or compromised record defeats it (see Scope and the Decision G bound below):
 
 * It HONORS a valid envelope built by the gate against the authentic
 evaluator, EVEN THOUGH its own local `IMPLEMENTATION/evaluator.py` is
@@ -22,8 +21,7 @@ or tampered record never becomes a trusted currency source).
 * It REFUSES an un-attested call (A1; absent envelope).
 
 This is the property co-located verification (VL-038) could not demonstrate
-on the real path: the target's verdict does not depend on trusting its own
-files. G5 reduces the target's trust surface from "its entire local working
+on the real path: the target's currency inputs no longer depend on its own canon/evaluator/manifest files. The target still executes its own verifier code and trusts the pinned anchor, so this is local-disk independence for the currency check, not full independence. G5 reduces the target's trust surface from "its entire local working
 tree" to "one pinned published-record anchor, distributed out-of-band, plus
 transport integrity." Trust is not eliminated; it is bootstrapped at a single
 value a third party can independently verify.
@@ -84,8 +82,7 @@ securing that distribution is the G5 bootstrap floor, parallel to the A1
 floor (artifact 08 section 4.4). G5 reduces and makes the trust surface
 explicit; it does not eliminate trust.
 * **Freshness / revocation.** A stale-but-anchor-matching record is a
-distinct threat (an A3b-class freshness gap, kin to F2's verbatim-replay
-pin). Not addressed here; the next hardening after transport.
+distinct threat (an A3b-class freshness gap, kin to F2's verbatim-replay pin). Not addressed here; the next hardening after transport. Per the Decision G cross-model evaluate this is LOAD-BEARING, not deferrable polish: it is the condition standing between an anchor-valid record and a correct CURRENT verdict, which is why the Claim above is bounded to local-disk/transport independence for the currency check.
 * **Signing / PKI.** A signed record (B-prime-2) or a transparency log
 (B-prime-3) would remove per-target pinning and add auditability; named,
 not built.
@@ -95,6 +92,10 @@ not built.
 G5 therefore moves from "open with a committed local record" to "transport
 built; trust bootstrapped at one pinned anchor." It does NOT become a blanket
 RESOLVED.
+
+## Decision G bound (cross-model evaluate)
+
+A framework-level cross-model evaluate (VL-008 procedure; recipients Grok and OpenAI, independent, both procedurally clean under the scope/within-scope gates) returned a convergent verdict of PARTIAL. The gain is real but narrow: the target's currency check no longer depends on its own canon/evaluator/manifest files (the divergent-evaluator killer case). Both models located the decisive failure NOT at local disk but at the trust root - an anchor-valid-but-wrong record: a compromised or incorrect pinned anchor (Grok), or a STALE-but-anchor-matching record whose old canon/evaluator/manifest tuple still satisfies the pin while the governing state has moved (OpenAI), at the reassert(record_source=...) currency lookups. The strong-form 'correct verdict' phrasing therefore overreaches; the defensible claim is local-disk and transport independence for the currency check, not a guarantee of the correct current verdict. Convergent canon finding: no section 8.2 / 9 / 14 violation; fetching is verification I/O (one architectural caution that push-forwarding deepens the section-14 tension, relieved by caller-carry/target-pull). Freshness/revocation is load-bearing, not deferrable (see Scope). Non-convergence noted: the author's pre-run dry analysis raised verifier-code integrity as a second bound; neither external model corroborated it, so it is not recorded as a finding. Verdict-of-record in the ledger (VL-039 follow-up); prompt and transcripts kept off-record per the VL-008/VL-015/VL-023/VL-025 cross-model pattern.
 
 ## Reproducibility
 
