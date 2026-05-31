@@ -10198,3 +10198,4 @@ acceptance, with this verdict as the cited Checkpoint A input; the verdict
 strengthens the case for the record-layer scope and the B-prime-2 anchor
 upgrade (signed records defend against stale/compromised records and enable
 revocation) over merely layering freshness on the static pin.
+
