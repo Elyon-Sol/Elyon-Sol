@@ -67,7 +67,9 @@ reassertion protocol is precisely the missing transition logic. So:
     "manifest_integrity": true,   // point-in-time check (manifest_integrity_valid in code; renamed from ccs_valid in VL-012)
     "ccs": true             // d-consistency across transition  -  section 12.3; only meaningful on reassertion
   },
-  "decision_sha256": "<hash over canonicalized envelope minus this field>",
+  "decision_sha256": "<hash over canonicalized envelope minus this field, timestamp_utc, and (signed path) issuer_key_id + issuer_signature>",
+  "issuer_key_id": "<gate public-key id; present and REQUIRED on the signed path; inside the signed region>",
+  "issuer_signature": "<Ed25519 sig over canonical(envelope minus issuer_signature and timestamp_utc); signed path only; excluded from its own region; absent on the unsigned path>",
   "timestamp_utc": "2026-05-14T00:00:00Z"
 }
 ```
@@ -105,9 +107,24 @@ reassertion protocol is precisely the missing transition logic. So:
   `ensure_ascii=True` per VL-009 ASCII-safe standard), reusing the serialization
   discipline from the existing replay-receipt work (note: `IMPLEMENTATION/replay/receipt.py`
   currently uses `ensure_ascii=False`; the divergence is recorded as a methodology-debt
-  finding at VL-012 and reinforced at VL-025).
+  finding at VL-012 and reinforced at VL-025). On the signed path, `decision_sha256` is
+  computed over the canonical envelope minus `decision_sha256`, `timestamp_utc`,
+  `issuer_key_id`, and `issuer_signature`, so it is identical signed-vs-unsigned and
+  `reassert()` Row 2 verifies a signed envelope unchanged; the issuer fields' integrity
+  is the signature's responsibility, not `decision_sha256`'s.
 - **`timestamp_utc`**  -  audit only; **excluded** from `decision_sha256` so the same decision
   is bit-identical regardless of issue time (preserves section 9 reproducibility).
+- **`issuer_key_id`** (signed path)  -  identifies the gate public key the target uses to
+  verify `issuer_signature`; enables key rotation. Inside the signed region (it is part of
+  what `issuer_signature` covers), so it cannot be swapped to point at a different pinned
+  key without breaking the signature. Required whenever an envelope is signed.
+- **`issuer_signature`** (signed path)  -  an Ed25519 signature (via the `cryptography`
+  library) over `canonical_json(envelope minus issuer_signature and timestamp_utc)`  -  the
+  same exclusion discipline as `decision_sha256`, applied to the signature itself. It
+  authenticates the *issuer* (the gate) of the decision artifact: it proves the envelope
+  was minted by the holder of the gate's private key, which a recomputed `decision_sha256`
+  cannot (that hash is unkeyed and reproducible by anyone  -  the VL-039 follow-up 2 forgery
+  finding). Absent on the unsigned path. See "Issuer signature (opt-in)" below.
 
 ---
 
@@ -147,6 +164,51 @@ re-evaluation. This is exactly section 13's requirement, made operational.
 - If canon is ever revised, that is a canon-version event: every envelope under the old
   `canon_sha256` is `INVALIDATED` automatically. Lock and envelope are mutually reinforcing  -
   the lock makes the envelope meaningful; the envelope makes the lock observable.
+
+---
+
+## Issuer signature (opt-in)  -  VL-040
+
+Closes the VL-039 follow-up 2 forgery finding: `decision_sha256` is an unkeyed hash
+over the envelope's own public fields, so a party who knows the published record can
+mint a from-scratch envelope that `verify_envelope` accepts. The envelope is
+tamper-evident, not forgery-resistant. A signature authenticates the issuer.
+
+- **Mechanism.** The gate signs each envelope with an Ed25519 private key (the
+  `cryptography` library). The target verifies `issuer_signature` against a pinned
+  public key selected by `issuer_key_id`. The signed region is
+  `canonical_json(envelope minus issuer_signature and timestamp_utc)`, so the signature
+  covers `decision_sha256` and `issuer_key_id`.
+- **Opt-in.** Unsigned envelopes remain valid; signing is a capability
+  (`sign_envelope(envelope, signing_key, key_id)` plus
+  `verify_envelope(..., pinned_public_keys=...)`). The default path is byte-unchanged
+  and the existing suite is preserved. Forgery is closed only on the signed path  -
+  stated, not blanket; the mandatory cutover is a named follow-on.
+- **Key model.** The private key is never in the repository. The target holds the
+  pinned public key, distributed out-of-band exactly as `IMPLEMENTATION/published_source.py`
+  distributes the record anchor (Decision B-prime-1). Trust does not vanish; it moves to
+  public-key distribution plus the `issuer_key_id` -> key map. Said plainly, the same
+  honesty as the pinned anchor.
+- **Layering (no new reassertion row).** Signature verification is a verifier-layer
+  concern (`IMPLEMENTATION/verifier.py`; artifact 08), NOT a `reassert()` / CCS concern.
+  CCS currency (does live state still match the envelope's pins?) and issuer provenance
+  (did the gate mint this?) are orthogonal axes. The reassertion-protocol table is
+  unchanged; `decision_sha256`'s region excludes the issuer fields so a signed envelope
+  passes Row 2 unchanged.
+- **Fail-closed (canon section 9).** A missing, malformed, or invalid signature, or an
+  unknown / unpinned `issuer_key_id`, is a REFUSE on the signature-required path  -  never
+  a pass-through and never a silent downgrade to the unsigned path. Reason codes:
+  `REF_VERIFY_SIGNATURE_INVALID` (missing / malformed / verification-failed) and
+  `REF_VERIFY_SIGNATURE_UNKNOWN_KEY` (key id not in the pinned set).
+- **Canon basis (no new invariant).** Signing operationalizes section 8.2 (PoE: an
+  optional, implementation-dependent integrity anchor that "does not affect admissibility
+  logic") and extends the section 11.9 integrity-verifiability that already justifies
+  `decision_sha256`. Admissibility (AC^3 AND T^26 AND CCS) is untouched. Section 14
+  (identity-agnostic) holds: the key proves who ISSUED the attestation, not who the
+  actors are  -  actor authority is still evaluated only via the manifest.
+- **Claim-track gate.** The word "forgery-resistant" does not enter any citable claim,
+  and no Zenodo deposit is made, until the key-governance cross-model evaluate has run
+  (key distribution, rotation, compromise, revocation). Build fast, claim slow.
 
 ---
 
