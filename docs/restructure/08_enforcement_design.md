@@ -181,8 +181,19 @@ artifact 05 reassertion protocol). What it establishes, and its limit:
   "timestamp_utc"}`), the envelope's `target_url` and `request_context` (AP,
   OP, context, expected_manifest fields) are *inside* the signed region. An
   authentic envelope's recorded interaction is therefore tamper-evident. This
-  closes **A2** (forgery) for routed traffic: a fabricated envelope fails
-  `decision_sha256`, and `reassert()` Row 2 returns INVALIDATED.
+  closes the TAMPER sub-case of **A2** for routed traffic: an envelope mutated
+  without re-hashing fails `decision_sha256`, and `reassert()` Row 2 returns
+  INVALIDATED. **It does NOT close the FORGERY sub-case** (VL-039 follow-up 2):
+  `decision_sha256` is an unkeyed hash over the envelope's own public fields, so a
+  party who knows the published record can build a from-scratch envelope with a
+  correctly recomputed `decision_sha256` and no issuer signature, which Row 2
+  accepts. The envelope is tamper-evident, not forgery-resistant. Forgery is closed
+  by issuer signing (VL-040): on the signed path the gate signs the envelope
+  (Ed25519) and the target verifies `issuer_signature` against a pinned public key
+  before `reassert()` (REF_VERIFY_SIGNATURE_INVALID / REF_VERIFY_SIGNATURE_UNKNOWN_KEY,
+  fail-closed). Opt-in: forgery is closed only on the signed path; the unsigned path
+  is unchanged and the mandatory cutover is the named follow-on. See artifact 05
+  "Issuer signature (opt-in)".
 - **Interaction binding: NOT closed by the mechanism alone.** Verifying
   `decision_sha256` proves the envelope is an authentic decision about the
   `target_url` *it records*. It does not prove that the envelope's

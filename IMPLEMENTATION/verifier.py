@@ -120,6 +120,8 @@ REF_VERIFY_ENVELOPE_ABSENT = "REF_VERIFY_ENVELOPE_ABSENT"
 REF_VERIFY_REASSERT_INVALIDATED = "REF_VERIFY_REASSERT_INVALIDATED"
 REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED = "REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED"
 REF_VERIFY_BINDING_MISMATCH = "REF_VERIFY_BINDING_MISMATCH"
+REF_VERIFY_SIGNATURE_INVALID = "REF_VERIFY_SIGNATURE_INVALID"
+REF_VERIFY_SIGNATURE_UNKNOWN_KEY = "REF_VERIFY_SIGNATURE_UNKNOWN_KEY"
 
 # Accept reason (not a refusal code).
 ACCEPT_REASSERTED_AND_BOUND = "REASSERTED_AND_BOUND"
@@ -171,6 +173,7 @@ def verify_envelope(
     interaction: Dict[str, Any],
     target_url: str,
     record_source: Dict[str, Any] = None,
+    pinned_public_keys: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Decide whether a target should honor an admissibility envelope for
@@ -187,6 +190,13 @@ def verify_envelope(
             expected_manifest_sha256). AP / OP need not be pre-sorted;
             the verifier normalizes them before comparison.
         target_url: The live target_url the interaction is addressed to.
+        record_source: Optional fetched published record (VL-039
+            cross-host); None uses local-disk currency (unchanged default).
+        pinned_public_keys: Optional {key_id: public_key} map (VL-040).
+            When supplied, the issuer signature is REQUIRED and verified
+            fail-closed (REF_VERIFY_SIGNATURE_INVALID /
+            REF_VERIFY_SIGNATURE_UNKNOWN_KEY) before reassert(). None
+            (default) is the unsigned path, byte-behavior-unchanged.
 
     Returns:
         {"accepted": bool, "reason": str}. On accept, reason is
@@ -217,6 +227,37 @@ def verify_envelope(
     for key in _REQUEST_CONTEXT_KEYS:
         if key not in rc:
             return _reject(REF_VERIFY_ENVELOPE_ABSENT)
+
+    # ----- Step 1.5: issuer signature (VL-040; signed-path only) -----
+    # Runs only when the target supplies pinned_public_keys (the
+    # signature-required policy). With pinned_public_keys=None the unsigned
+    # path is byte-behavior-unchanged. Fail-closed (canon section 9): a
+    # missing / malformed / unverifiable signature, or an unknown key_id, is
+    # a REFUSE, never a downgrade to the unsigned path. Checked BEFORE
+    # reassert() so a forgery is rejected on provenance before any currency
+    # work. Duck-typed: verifier.py does not import cryptography; the pinned
+    # public key object supplies .verify(signature, message) (e.g. an
+    # Ed25519PublicKey). Closes the VL-039 follow-up 2 forgery finding on the
+    # signed path: an unkeyed decision_sha256 recompute is no longer
+    # sufficient; the envelope must carry a signature from a pinned issuer.
+    if pinned_public_keys is not None:
+        key_id = envelope.get("issuer_key_id")
+        signature_hex = envelope.get("issuer_signature")
+        if not isinstance(key_id, str) or not isinstance(signature_hex, str):
+            return _reject(REF_VERIFY_SIGNATURE_INVALID)
+        public_key = pinned_public_keys.get(key_id)
+        if public_key is None:
+            return _reject(REF_VERIFY_SIGNATURE_UNKNOWN_KEY)
+        signed_region = {
+            k: v
+            for k, v in envelope.items()
+            if k not in ("issuer_signature", "timestamp_utc")
+        }
+        message = canonical_json(signed_region).encode("utf-8")
+        try:
+            public_key.verify(bytes.fromhex(signature_hex), message)
+        except Exception:
+            return _reject(REF_VERIFY_SIGNATURE_INVALID)
 
     # ----- Step 2: currency + integrity via reassert() -----
     # Fail closed on any structural surprise reassert() trips over that

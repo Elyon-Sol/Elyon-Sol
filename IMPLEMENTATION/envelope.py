@@ -121,6 +121,15 @@ REASSERTED = "REASSERTED"
 INVALIDATED = "INVALIDATED"
 RE_EVALUATE_REQUIRED = "RE-EVALUATE-REQUIRED"
 
+# Keys excluded from the decision_sha256 hash region (artifact 05; VL-040
+# adds the issuer fields so a signed envelope's decision_sha256 is identical
+# to the unsigned one and reassert() Row 2 verifies it unchanged).
+_HASH_EXCLUDED_KEYS = ("decision_sha256", "timestamp_utc", "issuer_key_id", "issuer_signature")
+
+# Keys excluded from the issuer-signature region (VL-040). The signature
+# covers everything else, including decision_sha256 and issuer_key_id.
+_SIGNATURE_EXCLUDED_KEYS = ("issuer_signature", "timestamp_utc")
+
 
 # ---------------------------------------------------------------------------
 # Envelope version (artifact 05 structure block; literal "1.0")
@@ -295,7 +304,7 @@ def build_envelope(
 
     # Compute decision_sha256 last, over the envelope minus
     # decision_sha256 itself and minus timestamp_utc (per artifact 05).
-    hashable = {k: v for k, v in envelope.items() if k != "timestamp_utc"}
+    hashable = {k: v for k, v in envelope.items() if k not in _HASH_EXCLUDED_KEYS}
     envelope["decision_sha256"] = _sha256_text(canonical_json(hashable))
 
     return envelope
@@ -381,7 +390,7 @@ def reassert(envelope: Dict[str, Any], record_source: Optional[Dict[str, Any]] =
     hashable = {
         k: v
         for k, v in envelope.items()
-        if k not in ("decision_sha256", "timestamp_utc")
+        if k not in _HASH_EXCLUDED_KEYS
     }
     computed_decision_sha256 = _sha256_text(canonical_json(hashable))
     if stored_decision_sha256 != computed_decision_sha256:
@@ -416,3 +425,39 @@ def reassert(envelope: Dict[str, Any], record_source: Optional[Dict[str, Any]] =
     # to-the-envelope's decision. Per artifact 05: "the only state in
     # which a past ELIGIBLE may be honored without re-evaluation."
     return {"outcome": REASSERTED, "ccs": True}
+
+
+# ---------------------------------------------------------------------------
+# sign_envelope() - VL-040 issuer signing (opt-in)
+# ---------------------------------------------------------------------------
+
+
+def sign_envelope(envelope: Dict[str, Any], signing_key: Any, key_id: str) -> Dict[str, Any]:
+    """
+    Sign an envelope with the gate's issuer key (VL-040; opt-in).
+
+    Returns a NEW envelope dict with issuer_key_id and issuer_signature
+    added; the input envelope is not modified (purity, matching reassert()).
+
+    signing_key is any object exposing .sign(message: bytes) -> bytes (e.g.
+    a cryptography Ed25519PrivateKey). envelope.py does NOT import
+    cryptography: the signed path is opt-in and the unsigned path (and the
+    existing suite) never requires the dependency; the caller supplies the
+    key object.
+
+    The signature covers canonical_json(envelope minus issuer_signature and
+    timestamp_utc) - which includes decision_sha256 and issuer_key_id,
+    binding both. issuer_key_id is excluded from decision_sha256's region
+    (_HASH_EXCLUDED_KEYS) so decision_sha256 is identical signed-vs-unsigned;
+    the issuer fields' integrity is the signature's job (artifact 05 'Issuer
+    signature (opt-in)'). Authenticates the ISSUER of the decision artifact
+    (canon section 8.2 PoE; section 11.9 integrity); introduces no new
+    invariant and is not a reassert()/CCS concern (verification is
+    verifier-layer).
+    """
+    signed = dict(envelope)
+    signed["issuer_key_id"] = key_id
+    region = {k: v for k, v in signed.items() if k not in _SIGNATURE_EXCLUDED_KEYS}
+    signature = signing_key.sign(canonical_json(region).encode("utf-8"))
+    signed["issuer_signature"] = signature.hex()
+    return signed

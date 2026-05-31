@@ -10276,3 +10276,187 @@ that the gate's output cannot be minted by anyone. VL-040's Decision 0 is reset
 toward signing accordingly (opener updated). Recommended (not pre-locked):
 build issuer signing next; it owes its own framework-level cross-model evaluate
 on signing-key governance.
+
+### VL-040 - 2026-05-31 - T-signing: issuer signing (opt-in); the forgery finding closed on the signed path
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** trajectory move per VL-017a's distinction (two edited
+`IMPLEMENTATION/` modules + one new `TESTS/adversarial/` file + one new
+`EVIDENCE/proofs/` runner+log+proof; structural-doc updates to artifacts
+04/06/08, STATE.md, and this ledger). The artifact-05 schema half landed first
+as the spec commit `b9ca90a` (spec-defines-the-change practice; GR-2 candidate,
+not formalized). No canon/manifest/SPEC change in the build commit.
+
+**Verifies:** issuer signing closes the VL-039 follow-up 2 forgery finding on
+the SIGNED path. `decision_sha256` is an unkeyed hash over the envelope's own
+public fields, so the three-model from-scratch forge (Grok/OpenAI/Gemini, 3-0)
+was accepted by the unsigned `verify_envelope`. The gate now signs the envelope
+with an Ed25519 private key; a target verifies the signature against a pinned
+public key before `reassert()`. The forge is refused on the signed path and
+still accepted on the unsigned path (the honest opt-in boundary).
+
+- `IMPLEMENTATION/envelope.py`: `sign_envelope(envelope, signing_key, key_id)`
+  returns a NEW envelope (purity, matching `reassert()`) with `issuer_key_id` +
+  `issuer_signature`. The signature covers `canonical_json(envelope minus
+  issuer_signature and timestamp_utc)`, which includes `decision_sha256` and
+  `issuer_key_id` (binding both). Duck-typed: `envelope.py` does NOT import
+  `cryptography`; the caller supplies the key object, so the unsigned path and
+  the existing suite never require the dependency. `_HASH_EXCLUDED_KEYS` adds
+  `issuer_key_id` + `issuer_signature` to the `decision_sha256` region (used by
+  `build_envelope()` and `reassert()` Row 2); a confirmed no-op on the unsigned
+  path (the keys are absent), so a signed envelope's `decision_sha256` is
+  identical to the unsigned one and reasserts unchanged.
+- `IMPLEMENTATION/verifier.py`: `verify_envelope(..., pinned_public_keys=None)`.
+  When supplied, the issuer signature is REQUIRED and verified (duck-typed
+  `public_key.verify`) at a new Step 1.5 BEFORE `reassert()`, fail-closed (canon
+  section 9) to `REF_VERIFY_SIGNATURE_INVALID` (missing / malformed /
+  verification-failed) or `REF_VERIFY_SIGNATURE_UNKNOWN_KEY` (key_id not in the
+  pinned set). With `pinned_public_keys=None` the path is byte-behavior-unchanged.
+- `TESTS/adversarial/test_signing.py` (10, canon/spec-derived): sign purity +
+  decision_sha256-identity + signed-reasserts; signed-honored; the verbatim
+  three-model forge refused (SIGNATURE_INVALID); unknown-key refused; wrong-key
+  refused; tamper refused; and the two opt-in-boundary pins (forge ACCEPTED on
+  the unsigned path; a genuine signed envelope still honored on the unsigned
+  path).
+- `EVIDENCE/proofs/signing_forgery_defeated_001.{runner.py,log,md}`: a live
+  Ed25519 keypair (private key never written to disk) reproduces the forge and
+  shows it defeated on the signed path while the unsigned-path contrast accepts
+  it. Runner exits 0; KILLER PROPERTY HOLDS.
+
+**No new invariant (canon section 14).** Signing operationalizes section 8.2
+(PoE: an optional, implementation-dependent integrity anchor that "does not
+affect admissibility logic") and extends the section 11.9 integrity-
+verifiability that already justifies `decision_sha256`. Admissibility
+(AC^3 AND T^26 AND CCS) is untouched (`evaluate()` unchanged). No new
+reassertion row: signature verification is a verifier-layer concern, orthogonal
+to CCS currency (`reassert()`). Section 14 identity-agnostic holds: the key
+proves who ISSUED the attestation, not who the actors are.
+
+**The trust bootstrap, stated plainly.** Signing does not make verification
+trustless. It moves trust from "anyone can recompute `decision_sha256`" to "the
+target trusts the pinned issuer public key, distributed out-of-band" - the
+analog of B-prime-1's pinned record anchor. Key distribution / rotation /
+compromise / revocation are the named floor, NOT built, pending the
+key-governance cross-model evaluate.
+
+#### Checkpoint results
+
+- **Checkpoint A (crypto design; paused for review):** signing target (envelope
+  only; record signing named-not-built); primitive Ed25519 via `cryptography`
+  (pinned 44.0.0; round-trip confirmed); schema (`issuer_key_id` +
+  `issuer_signature`, `key_id` required and inside the signed region, signature
+  excluded from its own region like `decision_sha256`); key model (private key
+  never in repo; pinned public key out-of-band); opt-in (decision 5a). The
+  server.py/target.py 2C question resolved: `pep.py` is the real issuance path
+  (signing added at `build_envelope`/`sign_envelope`), `server.py` is a parallel
+  un-enveloped legacy gate (named, not retired - a T-bookkeeping carry-forward),
+  `target.py` a non-verifying demo. Reviewed and confirmed before code.
+- **Checkpoint B (spec-gap; real):** the signed envelope is a schema change, so
+  artifact 05 gained the two fields + the `decision_sha256` exclusion note + a
+  new "Issuer signature (opt-in)" subsection, committed first as `b9ca90a`. No
+  canon edit (no new invariant). GR-2 (spec-edit-first) confirmed a candidate,
+  not an active rule; the spec-defines-the-change practice was followed anyway.
+- **Checkpoint C (implementation review):** fail-closed on every signature path
+  (missing / malformed / wrong-key / unknown-key); the private key is never
+  written to disk (live keypair in the runner/tests); `envelope.py` and
+  `verifier.py` are import-clean WITHOUT `cryptography` (duck-typed); the
+  unsigned 139 are byte-unchanged (the exclusion-set change is a verified no-op);
+  all new/changed files ASCII-clean. Full suite 139 -> 149 passed + 0 xfailed
+  (real env and in-container); runner exits 0.
+- **Checkpoint D (pre-commit):** artifact 04 G4 bullet + artifact 06 section 8.2
+  (UNIMPLEMENTED -> PARTIAL, summary counts conserved at 15/5/2/3) + artifact 08
+  section 4.2 A2 correction; STATE.md (Last-updated, current-state bullet, item
+  34); this ledger entry; explicit staged paths (never `git add -A`, the VL-037
+  scratch-in-repo family).
+
+#### The artifact-08 section 4.2 correction (the honesty fix)
+
+Section 4.2 previously claimed reusing `reassert()` / `decision_sha256` "closes
+A2 (forgery) for routed traffic." The forgery finding showed that is
+tamper-evidence, not forgery-resistance: a fabricated envelope with a correctly
+recomputed unkeyed `decision_sha256` passes Row 2. Section 4.2 now splits A2
+into the TAMPER sub-case (closed by `decision_sha256`) and the FORGERY sub-case
+(closed only by issuer signing, VL-040, on the signed path). artifact 04 G4 and
+the project's bounded claim are corrected to match.
+
+#### Process findings
+
+1. **Opt-in boundary pinned explicitly, not assumed.** `test_signing.py`
+   includes `test_unsigned_path_unchanged_forge_still_accepted`, which asserts
+   the forge is STILL accepted on the unsigned path. This pins the opt-in
+   boundary in the project's own currency (the `test_findings_001.py`
+   discipline): forgery is closed only where signing is required, and the
+   mandatory cutover is a deliberate future change that must update this test.
+2. **Duck-typing keeps the dependency off the unsigned path.** `envelope.py`
+   and `verifier.py` do not import `cryptography`; only `test_signing.py` and
+   the runner do. Confirmed by importing both modules in an environment and by
+   the 139 running without the dependency. This is what makes "opt-in" true at
+   the import level, not just the behavior level.
+3. **Self-referencing-hash discipline (VL-012).** This entry does not cite its
+   own (build) commit hash. The spec commit is `b9ca90a`; the prior substantive
+   entry is VL-039 at `c964612`. The build commit's hash is filled by amend if a
+   placeholder is used.
+
+#### Carry-forwards (not actioned here; scope)
+
+- STATE.md never received numbered Next-open items or current-verified-state
+  bullets for the post-VL-038 audit or for VL-039 (their narrative lives in the
+  Last-updated line and the ledger). The trailing "Next open action" prose and
+  the "What is locked vs. open" head are stale since ~VL-020. A STATE
+  prose-refresh is a T-prose-drift candidate; not done in this commit (strict
+  scope).
+- `server.py` (a parallel un-enveloped gate) remains in the tree, named not
+  retired; a T-bookkeeping candidate.
+- The CLAIM-TRACK GATE is open: the key-governance cross-model evaluate (key
+  distribution / rotation / compromise / revocation) is owed; the prompt is
+  drafted this session and run after the commit. "Forgery-resistant" enters no
+  citable claim and no Zenodo deposit until that verdict is recorded and folded.
+
+#### Files affected
+
+- `IMPLEMENTATION/envelope.py` (constants + `_HASH_EXCLUDED_KEYS`/
+  `_SIGNATURE_EXCLUDED_KEYS` exclusion changes + `sign_envelope`)
+- `IMPLEMENTATION/verifier.py` (two reason codes + `pinned_public_keys` param +
+  Step 1.5 signature check)
+- `TESTS/adversarial/test_signing.py` (new; 10)
+- `EVIDENCE/proofs/signing_forgery_defeated_001.py` runner + `.log` + `.md` (new)
+- `docs/restructure/04_current_vs_claimed.md` (G4: VL-040 bullet)
+- `docs/restructure/06_spec_to_code_traceability.md` (section 8.2 PoE
+  UNIMPLEMENTED -> PARTIAL; summary counts)
+- `docs/restructure/08_enforcement_design.md` (section 4.2 A2 correction)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/*`, `MANIFEST/*`, `SPEC/*` (no canon/manifest/spec change in the build
+  commit; artifact 05 schema landed at `b9ca90a`)
+- `IMPLEMENTATION/pep.py`, `evaluator.py`, `request_validator.py`,
+  `published_source.py`, `replay/receipt.py` (unchanged; opt-in keeps the gate's
+  default forward unsigned)
+- `docs/restructure/05_admissibility_envelope_spec.md` (already edited at
+  `b9ca90a`), `00_README.md`, `docs/methodology/*`, `README.md`
+
+#### Citation discipline
+
+Per VL-012's self-referencing-hash finding, this entry does not cite its own
+commit hash. Spec commit `b9ca90a`; prior substantive entry VL-039 at `c964612`.
+No cross-model verification of the signing CODE was run in-session; the
+key-governance evaluate (framework-level, VL-008 + the cross-model evaluate
+template, recipients Grok + OpenAI + a third independent lab as in the forgery
+probe) is drafted for the author to run off-framework after the commit, and only
+its verdict-of-record will be recorded in a later ledger entry; the prompt and
+raw responses are kept off the repo record per the VL-008 pattern. The 10
+signing tests are individually verifiable against canon sections 8.2 / 9 / 11.9
+/ 14 and artifact 05 via their docstrings; the suite is green (149/149) and the
+runner exits 0.
+
+#### Next trajectory action
+
+The key-governance cross-model evaluate (the claim-track gate). Then the
+mandatory signing cutover (signature required on `pep.py`'s default path; migrate
+the suite) and/or record signing (a publisher-signed published record = the
+freshness / revocation anchor upgrade, B-prime-2 for the record). A1 target-side
+admission policy; caller-carry / proxy-removal (the section-14-faithful
+architecture); T-bookkeeping (G1 / G8 / G9 / G11 / G14, plus `server.py`
+retirement) and T-prose-drift remain open. None blocking.

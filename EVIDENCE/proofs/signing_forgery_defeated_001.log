@@ -1,0 +1,25 @@
+==========================================================================
+VL-040 issuer-signing: the three-model forge, now defeated
+==========================================================================
+Gate public key id : gate-ed25519-001
+Pinned public key  : c5863721557f7819e5da93d4d52e2a9ebea46965688aae479843e6829639dc64 (raw, hex)
+decision_sha256 identical signed-vs-unsigned: True
+signed envelope reasserts: REASSERTED
+--------------------------------------------------------------------------
+[PASS] genuine gate-signed envelope (signed path)
+       accepted=True reason=REASSERTED_AND_BOUND
+[PASS] three-model forge, no signature (signed path)
+       accepted=False reason=REF_VERIFY_SIGNATURE_INVALID
+[PASS] forge with unknown key_id (signed path)
+       accepted=False reason=REF_VERIFY_SIGNATURE_UNKNOWN_KEY
+[PASS] tampered signed envelope (signed path)
+       accepted=False reason=REF_VERIFY_SIGNATURE_INVALID
+[PASS] three-model forge, UNSIGNED path (no pinned key) - honest contrast
+       accepted=True reason=REASSERTED_AND_BOUND
+--------------------------------------------------------------------------
+KILLER PROPERTY (signed path refuses the forge the unsigned path accepts): HOLDS
+==========================================================================
+RESULT: ALL INVARIANTS HOLD
+Scope: forgery closed on the SIGNED path only (opt-in). Trust moves to
+the pinned issuer public key; 'forgery-resistant' as a settled claim
+awaits the key-governance cross-model evaluate. pep.py default unsigned.
