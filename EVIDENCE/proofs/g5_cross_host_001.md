@@ -14,8 +14,7 @@ that record against a single pinned trust anchor, and perform its currency check
 evaluator, EVEN THOUGH its own local `IMPLEMENTATION/evaluator.py` is
 byte-divergent from the gate's. A VL-038-style target verifying against
 local disk would have FALSE-REFUSED the same envelope.
-* It REFUSES a forged envelope (tamper fails `decision\_sha256` integrity,
-which is independent of both local disk and the fetched record).
+* It REFUSES a TAMPERED envelope: a field mutated without recomputing `decision\_sha256` fails the integrity check (the case the runner's 'forged' row actually exercises). This is tamper-evidence, NOT forgery-resistance - a from-scratch envelope carrying a correctly recomputed `decision\_sha256` is NOT refused, because `decision\_sha256` is an unkeyed hash over the envelope's own public fields and the envelope carries no issuer signature (see the Forgery finding below).
 * It REFUSES when the fetched record fails the pinned anchor (a substituted
 or tampered record never becomes a trusted currency source).
 * It REFUSES an un-attested call (A1; absent envelope).
@@ -96,6 +95,10 @@ RESOLVED.
 ## Decision G bound (cross-model evaluate)
 
 A framework-level cross-model evaluate (VL-008 procedure; recipients Grok and OpenAI, independent, both procedurally clean under the scope/within-scope gates) returned a convergent verdict of PARTIAL. The gain is real but narrow: the target's currency check no longer depends on its own canon/evaluator/manifest files (the divergent-evaluator killer case). Both models located the decisive failure NOT at local disk but at the trust root - an anchor-valid-but-wrong record: a compromised or incorrect pinned anchor (Grok), or a STALE-but-anchor-matching record whose old canon/evaluator/manifest tuple still satisfies the pin while the governing state has moved (OpenAI), at the reassert(record_source=...) currency lookups. The strong-form 'correct verdict' phrasing therefore overreaches; the defensible claim is local-disk and transport independence for the currency check, not a guarantee of the correct current verdict. Convergent canon finding: no section 8.2 / 9 / 14 violation; fetching is verification I/O (one architectural caution that push-forwarding deepens the section-14 tension, relieved by caller-carry/target-pull). Freshness/revocation is load-bearing, not deferrable (see Scope). Non-convergence noted: the author's pre-run dry analysis raised verifier-code integrity as a second bound; neither external model corroborated it, so it is not recorded as a finding. Verdict-of-record in the ledger (VL-039 follow-up); prompt and transcripts kept off-record per the VL-008/VL-015/VL-023/VL-025 cross-model pattern.
+
+## Forgery finding (three-model probe; tamper-evident, not forgery-resistant)
+
+A narrow adversarial cross-model probe - three independent models (Grok, OpenAI, Gemini), distinct labs, clean context, blind - asked whether a party who knows the published record and has observed one valid envelope, but holds NO key, can construct an envelope verify_envelope accepts for an interaction of their choosing. All three returned YES with the same construction: copy the public canon/evaluator/manifest hashes from the published record into a fresh envelope, set decision/target_url/request_context to match the live interaction, recompute decision_sha256 over the canonical envelope (an unkeyed SHA-256 over the envelope's own public fields; no secret). reassert() returns REASSERTED and the binding check passes because the adversary chose the interaction. Conclusion: the envelope is TAMPER-EVIDENT but NOT FORGERY-RESISTANT; decision_sha256 proves self-consistency, not gate issuance. Forgery-resistance requires issuer authentication (signing, Decision B-prime-2), unbuilt. Verdict-of-record: ledger VL-039 follow-up 2; transcripts off-record per the VL-008 pattern.
 
 ## Reproducibility
 
