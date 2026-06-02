@@ -10460,3 +10460,77 @@ freshness / revocation anchor upgrade, B-prime-2 for the record). A1 target-side
 admission policy; caller-carry / proxy-removal (the section-14-faithful
 architecture); T-bookkeeping (G1 / G8 / G9 / G11 / G14, plus `server.py`
 retirement) and T-prose-drift remain open. None blocking.
+
+### VL-040 follow-up 1 - 2026-05-31 - Signed-path forgery re-probe: convergent NO (construction)
+
+**Status:** RECORDED (off-record evaluate; verdict-of-record only)
+**Author:** Claude (working session with the project author)
+**Classification:** verdict-of-record for an off-record cross-model evaluate
+(VL-008 pattern). No code/canon/spec/manifest change. Records the construction-
+level confirmation of VL-040 issuer signing on the signed path.
+
+**Verifies:** that VL-040 issuer signing has no residual construction-level hole
+on the signed path. The VL-039 follow-up 2 forgery probe ran against the
+pre-signing code and found YES (the from-scratch forge was accepted). This
+re-probe re-ran the same binary construction question against the POST-signing
+code (`b15e4b2`).
+
+**Procedure:** falsification-first construction probe, three independent labs
+(Grok + OpenAI + a third), blind, clean context, off-record
+(`~/elyon-sol-offrecord/`); prompt = `signed_path_forgery_reprobe_prompt.md`. A
+fourth recipient (Gemini) returned nothing usable, so this is a 3-lab panel.
+Adversary model: knows the published record (`published_hashes.json`), the
+envelope shape, and `canonical_json`; knows the gate's PUBLIC key and
+`issuer_key_id`; holds NO private key; has never routed a call through the gate;
+faces a target whose policy supplies `pinned_public_keys` (signature required).
+
+**Verdict (convergent across all three labs): NO.** No envelope-and-interaction
+construction makes `verify_envelope(envelope, interaction, target_url,
+pinned_public_keys={gate_key_id: gate_public_key})` return accepted.
+
+- Load-bearing check (unanimous): Ed25519 signature verification over
+  `canonical_json(envelope minus issuer_signature and timestamp_utc)` against the
+  PINNED public key, at Step 1.5, BEFORE `reassert()`.
+- All eight attack vectors map to a fail-closed rejection: vector 1 (recomputed
+  `decision_sha256`, no signature) and 2/3 (fabricated signature; forge signed
+  with the adversary's own key under the gate's `issuer_key_id`) ->
+  `REF_VERIFY_SIGNATURE_INVALID`; vector 4 (adversary-controlled `issuer_key_id`)
+  -> `REF_VERIFY_SIGNATURE_UNKNOWN_KEY` (pinned-map miss); vector 5 (replay /
+  mutation) -> no genuine envelope exists under the model, and any signed-region
+  mutation breaks the signature; vector 6 (signed-region exclusions) -> only
+  `timestamp_utc` is mutable without breaking the signature and nothing
+  authorization-relevant lives outside the signed region; vector 7 (downgrade)
+  -> Step 1.5 is forced whenever `pinned_public_keys is not None`, no envelope
+  field nullifies the target's supplied argument; vector 8 (type/shape confusion)
+  -> non-string `issuer_key_id`/`issuer_signature` and malformed hex are caught
+  by the isinstance guards and the broad `except Exception`, fail-closed.
+
+**The corroborating detail (why this is stronger than a bare "refused").** Two
+labs independently observed that the forge WOULD satisfy `reassert()` and binding
+- it carries the correct live hashes, a valid `decision_sha256`, and the
+adversary can choose a matching interaction/`target_url` - and is stopped ONLY by
+the signature check, which runs first. This re-demonstrates the original finding
+(currency + integrity + binding alone accept the forge) and confirms that issuer
+signing, not `reassert()`/binding, is what closes the finding on the signed path.
+
+**Not a DISPUTED finding.** No lab constructed an accepted envelope.
+
+**Scope / what this does NOT establish.** This is CONSTRUCTION-level only: the
+implementation has no residual hole under the model. It says nothing about the
+trust model that signing introduces (pinned-key distribution / rotation /
+compromise / revocation). Therefore this verdict does NOT move "forgery-resistant"
+from bounded toward settled. That bound is set by the key-governance cross-model
+evaluate, which is STILL OWED (`key_governance_evaluate_prompt.md`); it is the
+load-bearing claim-track gate, and "forgery-resistant" enters no citable claim
+and no Zenodo deposit until that evaluate has run and is folded.
+
+**Citation discipline (VL-012).** This entry cites the build commit it confirms
+(`b15e4b2`) and the spec commit (`b9ca90a`); it does not cite its own commit
+hash. The prompt and the raw lab responses are kept off the repo record; only
+this verdict-of-record is recorded.
+
+**Next trajectory action.** Run the key-governance evaluate (the gate), then fold
+its verdict (VL-040 follow-up 2). Increments remain as in VL-040: mandatory
+signing cutover (the test that flips:
+`test_unsigned_path_unchanged_forge_still_accepted`) and/or record signing; A1
+target-side policy; T-bookkeeping (incl. `server.py` retirement); T-prose-drift.
