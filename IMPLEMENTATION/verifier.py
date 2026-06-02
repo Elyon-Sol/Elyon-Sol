@@ -125,6 +125,18 @@ REF_VERIFY_SIGNATURE_INVALID = "REF_VERIFY_SIGNATURE_INVALID"
 REF_VERIFY_SIGNATURE_UNKNOWN_KEY = "REF_VERIFY_SIGNATURE_UNKNOWN_KEY"
 REF_VERIFY_SIGNATURE_EXPIRED = "REF_VERIFY_SIGNATURE_EXPIRED"
 
+# B-prime-2 key-record codes (VL-042). verifier.py is the canonical REF_VERIFY_*
+# home (mirroring request_validator.py owning REF_SCHEMA_* even for codes other
+# modules emit). RECORD_INVALID / RECORD_STALE are EMITTED by
+# key_record_source.py (the reader) and imported there from here;
+# UNKNOWN / REVOKED / OUT_OF_WINDOW are emitted by verify_envelope's trust-view
+# lookup below.
+REF_VERIFY_KEY_RECORD_INVALID = "REF_VERIFY_KEY_RECORD_INVALID"
+REF_VERIFY_KEY_RECORD_STALE = "REF_VERIFY_KEY_RECORD_STALE"
+REF_VERIFY_KEY_UNKNOWN = "REF_VERIFY_KEY_UNKNOWN"
+REF_VERIFY_KEY_REVOKED = "REF_VERIFY_KEY_REVOKED"
+REF_VERIFY_KEY_OUT_OF_WINDOW = "REF_VERIFY_KEY_OUT_OF_WINDOW"
+
 # Accept reason (not a refusal code).
 ACCEPT_REASSERTED_AND_BOUND = "REASSERTED_AND_BOUND"
 
@@ -177,6 +189,7 @@ def verify_envelope(
     record_source: Dict[str, Any] = None,
     pinned_public_keys: Dict[str, Any] = None,
     now: datetime = None,
+    key_record_view: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Decide whether a target should honor an admissibility envelope for
@@ -200,6 +213,15 @@ def verify_envelope(
             fail-closed (REF_VERIFY_SIGNATURE_INVALID /
             REF_VERIFY_SIGNATURE_UNKNOWN_KEY) before reassert(). None
             (default) is the unsigned path, byte-behavior-unchanged.
+        key_record_view: Optional validated B-prime-2 trust view (VL-042)
+            from key_record_source.load_key_record_from_bytes, shape
+            {key_id: {"public_key", "revoked", "not_before", "not_after"}}.
+            When supplied it is the SOLE issuer-key trust source (record-
+            exclusive, decision 3); pinned_public_keys is ignored. The issuer
+            key_id must be present, not revoked, and in-window
+            (REF_VERIFY_KEY_UNKNOWN / _REVOKED / _OUT_OF_WINDOW) before the
+            signature is verified against the record-sourced key. Appended last
+            to preserve positional-call compatibility.
 
     Returns:
         {"accepted": bool, "reason": str}. On accept, reason is
@@ -243,14 +265,34 @@ def verify_envelope(
     # Ed25519PublicKey). Closes the VL-039 follow-up 2 forgery finding on the
     # signed path: an unkeyed decision_sha256 recompute is no longer
     # sufficient; the envelope must carry a signature from a pinned issuer.
-    if pinned_public_keys is not None:
+    if pinned_public_keys is not None or key_record_view is not None:
         key_id = envelope.get("issuer_key_id")
         signature_hex = envelope.get("issuer_signature")
         if not isinstance(key_id, str) or not isinstance(signature_hex, str):
             return _reject(REF_VERIFY_SIGNATURE_INVALID)
-        public_key = pinned_public_keys.get(key_id)
-        if public_key is None:
-            return _reject(REF_VERIFY_SIGNATURE_UNKNOWN_KEY)
+        # VL-042: key_record_view is RECORD-EXCLUSIVE when present (decision 3);
+        # the static map is not consulted. The record vouches for the KEY's
+        # provenance (present / not revoked / in-window); the envelope must
+        # STILL be signed by it (the signature check below).
+        if key_record_view is not None:
+            entry = key_record_view.get(key_id)
+            if entry is None:
+                return _reject(REF_VERIFY_KEY_UNKNOWN)
+            if entry.get("revoked"):
+                return _reject(REF_VERIFY_KEY_REVOKED)
+            current = now if now is not None else datetime.now(timezone.utc)
+            key_not_before = entry.get("not_before")
+            key_not_after = entry.get("not_after")
+            if (key_not_before is None or key_not_after is None
+                    or not (key_not_before <= current < key_not_after)):
+                return _reject(REF_VERIFY_KEY_OUT_OF_WINDOW)
+            public_key = entry.get("public_key")
+            if public_key is None:
+                return _reject(REF_VERIFY_KEY_UNKNOWN)
+        else:
+            public_key = pinned_public_keys.get(key_id)
+            if public_key is None:
+                return _reject(REF_VERIFY_SIGNATURE_UNKNOWN_KEY)
         signed_region = {
             k: v
             for k, v in envelope.items()
