@@ -11745,3 +11745,109 @@ cross-host transport as "the day END_TO_END_NO_SHORTCUT goes green." Carry-forwa
 unchanged: artifact 09 section 5 verifier-clock note; the `verifier.py` Step 1.5
 stale comment; artifact 04/06/00_README freshness (00_README should now list
 artifacts 08, 09, 10); the runner `-m` convention. None blocking.
+### VL-043 follow-up 2 - 2026-06-02 - Doc-currency correction: STATE.md over-claimed `EVIDENCE/published_keys.json` as a committed artifact; the absence is correct per artifact 09
+
+**Status:** RECORDED (doc-currency correction; no code/test/canon/manifest/spec change)
+**Author:** Claude (working session with the project author)
+**Classification:** efficiency move per VL-017a's distinction (STATE.md prose
+correction only). Same FAMILY as the STATE-over-claim findings (VL-020/021/033,
+VL-042 follow-up 2 process finding 1) but a distinct SPECIES, named below.
+
+**The finding.** STATE.md described `EVIDENCE/published_keys.json` as a committed
+"new published artifact" (the VL-042 current-state bullet's file enumeration,
+line ~1323: "`EVIDENCE/published_keys_gen.py` (live signer) +
+`EVIDENCE/published_keys.json` (new published artifact) +
+`IMPLEMENTATION/key_record_source.py` (new reader; ...)"). At HEAD `723f7e7`
+the file is NOT committed and never was:
+
+- `git log --oneline -- EVIDENCE/published_keys.json` -> empty (never in history).
+- `git check-ignore -v EVIDENCE/published_keys.json` -> empty (NOT ignored; the
+  `.gitignore` line 244 rule `/published_keys*.json` is root-anchored by its
+  leading slash and matches only a top-level scratch file the generator's
+  `_demo()` would drop via its relative `write_key_record("published_keys.json")`,
+  not the `EVIDENCE/` path).
+- The VL-042 build entry's "Files affected" list names the generator, the reader,
+  `test_key_record.py`, and the runner - and correctly does NOT list the json.
+  The build was right; the current-state prose drifted past the build's own list.
+
+**The absence is CORRECT, not a delivery gap (the load-bearing half of this entry).**
+A source-first read of `09_key_record_spec.md` (full, including the previously
+truncated sections 5-9) confirms the record is a deployment/runtime artifact, never
+a repo fixture:
+
+- Section 6 (root custody): "The root PRIVATE key is NEVER on disk and never in the
+  repo. Live root keypairs exist only in the runner and the tests." A committed
+  record must be signed by some root; the only roots in this project are ephemeral
+  ones inside the runner/tests. A committed record is therefore structurally
+  impossible under the spec's own custody rule (committing one would put a
+  throwaway private key's trust into the repo, verifiable by nothing).
+- Section 8 (verifier consultation precedence): the record path is reached only
+  when `key_record_view` is supplied; "neither supplied -> the unsigned path
+  (VL-040 byte-behavior)." The default path has no record; the record is a
+  deployment-supplied input.
+- Section 11 + section 7 step 1: the reader is HANDED a record "from a path now;
+  durable cross-host fetch is G5." The "path now" is the loopback/local stand-in
+  for G5 transport, not a committed fixture.
+- Section 13 (build order): five steps - gen, reader, verifier, tests, runner. No
+  "commit a sample record" step. The build delivered exactly those five.
+
+This is the precise CONTRAST with B-prime-1 that EXPLAINS the difference rather
+than indicting it. VL-038 could commit `EVIDENCE/published_hashes.json` because
+B-prime-1 pins the sha256 of record BYTES - no signing key, so a committed fixture
+is verifiable by anyone. B-prime-2 pins a root PUBLIC key and verifies a
+SIGNATURE, and the matching private key is deliberately never persisted, so there
+is nothing that could sign a committed fixture. The MIRROR-not-extend decision
+(spec sections 7, 15) is exactly about this divergence in trust primitive; the
+absence of a committed json is a CONSEQUENCE of the mirror being a sibling, not a
+gap in it.
+
+**The species (named, single-instance, not promoted).**
+**spec-aspirational-path-stated-as-committed**: prose lifts a path out of a spec's
+deployment-time framing and reports it as a landed repo artifact. The drift seeded
+at artifact 09 section 4's header - `## 4. The signed key record
+(EVIDENCE/published_keys.json)` - which names a path as if it were a file; the
+STATE current-state bullet copied that framing as fact and placed the json in the
+new-files enumeration alongside the genuinely-committed gen/reader. Distinct from
+the prior STATE-over-claim instances, which were "the commit OMITTED a file the
+prose claims" (delivery omission); this is "the prose CLAIMED a file the spec
+never meant to commit." Named here for traceability; methodology promotion waits
+for a second instance per `session_mechanics_lessons.md`'s threshold rule.
+
+**The correction (two edits, doc-only).**
+- Edit 1 (the over-claim, line ~1323): struck `+ EVIDENCE/published_keys.json (new
+  published artifact)` from the file enumeration, leaving the genuinely-committed
+  new files (gen, reader; `test_key_record.py` and the runner follow in the same
+  bullet). Delta -58 bytes.
+- Edit 2 (the seeding sentence, line ~888): the generator-behavior sentence
+  ("generates a live publisher-signed `EVIDENCE/published_keys.json` listing ...")
+  was honest-but-liftable; added the parenthetical "(generated at runtime, not a
+  committed repo artifact)" to disarm the misread at the point a fresh reader
+  starts (the current-verified-state section). Delta +54 bytes.
+- Net STATE.md delta -4 bytes. Applied via `apply_vl043_followup2.py`
+  (exact-match-or-abort against `cat -A`-verified disk bytes; atomic write;
+  per-edit + total delta asserted against a synthetic-fixture pre-verification
+  that reproduced the -58/+54/-4 math before the real file was touched, per the
+  VL-026..VL-031 synthetic-fixture discipline).
+
+**Scope discipline.** The VL-042 ledger entry is NOT edited (append-only; it
+records what was believed at commit time, and its "Files affected" list was
+already correct). No code/test/canon/manifest/spec/structural-doc change. This
+correction is orthogonal to VL-044 (root recovery) and lands as its own focused
+commit per the VL-021 / VL-033 currency-correction precedent, keeping VL-044's
+diff clean.
+
+**Citation discipline (VL-012).** This entry does not cite its own commit hash.
+The entry it corrects is VL-042 (build `5e9fbf6`; ledger `dd91962`; STATE refresh
+`9aa9546`). Authority that the absence is correct: `09_key_record_spec.md`
+sections 6, 8, 11, 13. Prior substantive entry: VL-043 (build `753e978`; STATE +
+ledger follow-up `723f7e7`).
+
+**Next trajectory action (unchanged).** VL-044 root recovery, under the
+T-readiness gate's watch (the ROOT_RECOVERY predicate's path to green): planned
+root rotation (a successor root signed by the current root) + per-root status
+(active/retired/revoked) honored by the verifier, the rotation record carrying its
+own freshness; non-goal is compromise recovery's irreducible out-of-band re-pin.
+Carry-forwards from VL-042 follow-up / VL-043 unchanged: artifact 09 section 5
+verifier-clock note; the `verifier.py` Step 1.5 stale "signed-path only" comment;
+artifact 04/06/00_README freshness (00_README owes artifacts 08/09/10); the runner
+`-m` convention. None blocking.
