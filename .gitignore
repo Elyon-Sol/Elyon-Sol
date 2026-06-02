@@ -238,3 +238,7 @@ __marimo__/
 #   The canonical record is EVIDENCE/published_hashes.json; this guard is
 #   root-anchored so it cannot match it (same mechanism as the vl* guards).
 /published_hashes*.json
+
+# VL-042: shortform scratch + key-record root-duplicate guards (earned VL-037/VL-041)
+/vl*_msg.txt
+/published_keys*.json
