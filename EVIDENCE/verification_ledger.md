@@ -11629,3 +11629,119 @@ T-bookkeeping (G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift (inc
 the verifier.py Step 1.5 stale comment). Spec-clarification gap candidate: artifact
 09 section 5 should state the verifier-clock assumption explicitly (finding 2).
 None blocking.
+### VL-043 - 2026-06-02 - T-readiness: the WIRING-track drift gate (the third axis); machine-checked deployment-readiness, fail-closed on dishonesty; 0 of 3 predicates green by design
+
+**Status:** RECORDED (build). NO follow-up evaluate (see below).
+**Author:** Claude (working session with the project author)
+**Classification:** a GR-track / WIRING-track INSTRUMENT, not a capability move and
+not a claim. It adds nothing to the admission path: no `verifier.py` logic, no
+`evaluate()` change, no canon clause operationalized, no new invariant. By the
+VL-017a distinction it is neither a substantive nor a trajectory CAPABILITY move -
+it does not change what the gate can do. It is process hardening that happens to be
+executable: a deterministic, fail-closed detector for prototype-drift. Closer in
+kind to the `.gitignore` guards (VL-037/041), the apply-script discipline, and the
+ASCII rule (VL-009) than to revocation or root recovery. GR-rule candidate for
+`MAINTENANCE_PROTOCOL.md` (governs how the repository is allowed to CLAIM
+readiness).
+
+**Why no follow-up evaluate.** The cross-model evaluate (CLAIM track) gates claims
+ABOUT THE WORLD (e.g. "forgery-resistant"). T-readiness makes no such claim; it is
+an internal honesty instrument. There is nothing to derive-and-grade, so the CLAIM
+track does not apply and there is no verdict-of-record to fold. This is the first
+build-adjacent entry with no evaluate, by design - and that absence is itself the
+correct classification, not an omission.
+
+**What it adds.** The project already runs two disciplined tracks: CAPABILITY (is
+the primitive built? - proven by the adversarial tests) and CLAIM (is a stated
+property defensible? - gated by the evaluates). Both healthy. The un-tracked third
+axis - where prototype-drift silently lives - is WIRING: is a built capability on
+the DEFAULT path, exercised END TO END with no test-only shortcut, and
+TRANSPORTED? T-readiness adds exactly this axis and makes it fail closed:
+- `EVIDENCE/readiness.json` - the single source of readiness truth. Per-capability
+  flags `built / wired_to_default / exercised_e2e / transported`, each
+  `{value, proof, blocked_by}`; a TRUE flag MUST name a proof test, a FALSE flag
+  MUST name a reason. STATE/ledger REFERENCE it; they never restate readiness in
+  prose (prose drifts - the STATE-delivery-omission family).
+- `IMPLEMENTATION/readiness.py` - the engine (pure stdlib, offline, deterministic):
+  load, validate (every true flag test-backed; every false flag reasoned;
+  predicate-vs-capability consistency), and the one-line summary.
+- `TESTS/readiness/test_readiness.py` - the gate: fails the build on a DISHONEST
+  manifest (a true flag with no proof, a false flag with no reason, a green
+  predicate whose dependencies are unwired, a named proof file that does not
+  exist). It does NOT fail merely because predicates are red - red is the correct
+  current state.
+- `TESTS/readiness/test_deployment_predicates.py` - the three predicates'
+  instruments. DEFAULT_SECURE (default forward signed+verified) and
+  END_TO_END_NO_SHORTCUT (full chain, no test-only shortcut) ship as DECLARED
+  xfail with reasons; ROOT_RECOVERY tracked in the manifest. Green-with-declared-
+  xfail: the reds are visible and named, never hidden by a skip.
+
+**The one principle.** No readiness fact is human-attested; every flag is DERIVED
+from a named proof test, or it is false. A value a person can type without a test
+behind it is the bookkeeping this gate exists to detect. The negative tests are
+the point: the gate was demonstrated to REJECT a flag flipped true with no proof,
+a predicate marked green while unwired, an unexplained false flag, and a named-but-
+missing proof file. A gate that cannot catch a lie is a mirror.
+
+**The honest initial state is RED, and that is success.** The seed manifest reports
+`readiness: 0 of 3 deployment predicates green | RED: DEFAULT_SECURE,
+END_TO_END_NO_SHORTCUT, ROOT_RECOVERY`. A guardrail green on day one would be the
+theater it exists to prevent. The CAPABILITY track is genuinely green (signing,
+expiry, revocation, the key record - built and tested); the WIRING track is red
+(none on the default path or transported). The gate stops the green capability
+track from masking the red wiring track - which is precisely what a prototype is:
+a project with that masking uncounted.
+
+**The three reds are the finite, ordered road from prototype to working system:**
+DEFAULT_SECURE goes green the day of the mandatory signing cutover (the canary
+`test_unsigned_path_unchanged_forge_still_accepted` flips); END_TO_END_NO_SHORTCUT
+the day real cross-host transport (G5) replaces the loopback stub and the no-
+shortcut e2e test passes; ROOT_RECOVERY the day VL-044's planned-rotation + per-
+root-status build lands and is wired.
+
+**Canon basis.** No new invariant; admissibility (AC^3 AND T^26 AND CCS,
+`evaluate()`) untouched; not in the admission path; spec-defines-the-change
+(artifact 10 precedes the build). Section 14 unaffected (no identity in the
+admission path). GR-rule candidate, not yet formalized in
+`MAINTENANCE_PROTOCOL.md`.
+
+**Verification (real env, win32/Python 3.13).** Full suite 175 -> 178 passed + 2
+xfailed (the 3 gate tests pass; the 2 predicates are declared xfail). The gate was
+shown to FAIL the build on each dishonest manifest state (flag-true-without-proof;
+green-predicate-while-unwired; false-flag-without-reason; missing proof file). The
+build commit was gated on a green suite by the commit script's pytest pre-check.
+
+**The honest ceiling (stated so the gate is never oversold).** This gate catches
+claim-vs-wiring divergence and makes the build go RED the moment the documentation
+and the system diverge. It does NOT make the wiring happen - the signing cutover,
+real transport, and root recovery are real engineering it cannot perform. Its only
+guarantee: the system can never be MISCOUNTED, and a readiness claim can never be
+committed ahead of its proof test. Building an instrument is not progress toward
+deployment; it is progress toward not fooling ourselves about deployment.
+
+**Carry-forward (named, not hidden).** The two predicate ANCHORs in
+`test_deployment_predicates.py` are honest scaffold-reds (they `raise
+AssertionError` and fail closed); they do NOT yet exercise the real chain. Wiring
+ANCHOR 1 to `pep.py`'s default forward and ANCHOR 2 to real transport - so each
+predicate flips by a TEST exercising the real path rather than by editing a flag -
+needs a source-first read of `pep.py` and the `TESTS/` layout. Until then the
+predicates are correctly red and the gate is fully functional as a manifest-honesty
+gate. Recommended sequencing: build VL-044 (root recovery) under this gate's watch,
+and wire the two ANCHORs when the cutover/transport work is touched.
+
+**Citation discipline (VL-012).** This entry does not cite its own commit hash.
+Spec commit `efeb8ba` (artifact 10) precedes build commit `753e978` (the four
+files: `readiness.py`, `readiness.json`, `test_readiness.py`,
+`test_deployment_predicates.py`). Prior substantive entry: the VL-042 follow-up
+verdict-of-record at `f81f20d`; VL-042 build at `5e9fbf6`.
+
+**Next trajectory action.** Root recovery is now VL-044 (the gate watches it): the
+buildable sub-case is planned root rotation (a successor designation signed by the
+current root) + per-root status (active/retired/revoked) honored by the verifier,
+with the rotation record carrying its own freshness; the non-goal is compromise
+recovery's irreducible out-of-band re-pin. Separately, the mandatory signing
+cutover is now framed concretely as "the day DEFAULT_SECURE goes green," and
+cross-host transport as "the day END_TO_END_NO_SHORTCUT goes green." Carry-forwards
+unchanged: artifact 09 section 5 verifier-clock note; the `verifier.py` Step 1.5
+stale comment; artifact 04/06/00_README freshness (00_README should now list
+artifacts 08, 09, 10); the runner `-m` convention. None blocking.
