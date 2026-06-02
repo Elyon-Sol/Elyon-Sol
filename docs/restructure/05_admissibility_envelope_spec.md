@@ -67,9 +67,10 @@ reassertion protocol is precisely the missing transition logic. So:
     "manifest_integrity": true,   // point-in-time check (manifest_integrity_valid in code; renamed from ccs_valid in VL-012)
     "ccs": true             // d-consistency across transition  -  section 12.3; only meaningful on reassertion
   },
-  "decision_sha256": "<hash over canonicalized envelope minus this field, timestamp_utc, and (signed path) issuer_key_id + issuer_signature>",
+  "decision_sha256": "<hash over canonicalized envelope minus this field, timestamp_utc, and (signed path) issuer_key_id + issuer_signature + not_after>",
   "issuer_key_id": "<gate public-key id; present and REQUIRED on the signed path; inside the signed region>",
   "issuer_signature": "<Ed25519 sig over canonical(envelope minus issuer_signature and timestamp_utc); signed path only; excluded from its own region; absent on the unsigned path>",
+  "not_after": "<optional ISO-8601 UTC validity bound; signed path; inside the signed region (tamper-proof) and excluded from decision_sha256; absent = no expiry; VL-041>",
   "timestamp_utc": "2026-05-14T00:00:00Z"
 }
 ```
@@ -179,6 +180,22 @@ tamper-evident, not forgery-resistant. A signature authenticates the issuer.
   public key selected by `issuer_key_id`. The signed region is
   `canonical_json(envelope minus issuer_signature and timestamp_utc)`, so the signature
   covers `decision_sha256` and `issuer_key_id`.
+- **Validity window (opt-in; VL-041).** `sign_envelope(..., not_after=<tz-aware
+  datetime>)` stamps a `not_after` ISO-8601 field INSIDE the signed region
+  (covered by `issuer_signature`, so a captured envelope's lifetime cannot be
+  extended) and OUTSIDE `decision_sha256`'s region (`_HASH_EXCLUDED_KEYS`, like
+  `issuer_key_id`, so a signed-with-expiry envelope's `decision_sha256` is
+  byte-identical to the unsigned one and `reassert()` Row 2 is unchanged). The
+  target verifies `now < not_after` after the signature check, fail-closed to
+  `REF_VERIFY_SIGNATURE_EXPIRED` (canon section 9); a malformed or tz-naive
+  `not_after` also fails closed. Absent `not_after` means no expiry (VL-040
+  byte-behavior); requiring its presence is a target-side posture knob.
+  `not_after` differs from `timestamp_utc` (excluded from BOTH regions) by being
+  signed: the validity window is security-bearing. Expiry is the time-bounded
+  answer to the VL-040 follow-up 2 decisive failure (a compromised key): it
+  bounds a leaked key's usefulness WITHOUT depending on detecting the leak.
+  Distribution / rotation / revocation remain the named floor (the published
+  key record, B-prime-2).
 - **Opt-in.** Unsigned envelopes remain valid; signing is a capability
   (`sign_envelope(envelope, signing_key, key_id)` plus
   `verify_envelope(..., pinned_public_keys=...)`). The default path is byte-unchanged
