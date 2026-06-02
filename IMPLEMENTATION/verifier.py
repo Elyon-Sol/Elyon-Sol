@@ -98,6 +98,7 @@ canonicalization. A later spec edit may pin this explicitly.
 """
 
 from typing import Any, Dict
+from datetime import datetime, timezone
 
 from IMPLEMENTATION.envelope import (
     INVALIDATED,
@@ -122,6 +123,7 @@ REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED = "REF_VERIFY_REASSERT_RE_EVALUATE_REQU
 REF_VERIFY_BINDING_MISMATCH = "REF_VERIFY_BINDING_MISMATCH"
 REF_VERIFY_SIGNATURE_INVALID = "REF_VERIFY_SIGNATURE_INVALID"
 REF_VERIFY_SIGNATURE_UNKNOWN_KEY = "REF_VERIFY_SIGNATURE_UNKNOWN_KEY"
+REF_VERIFY_SIGNATURE_EXPIRED = "REF_VERIFY_SIGNATURE_EXPIRED"
 
 # Accept reason (not a refusal code).
 ACCEPT_REASSERTED_AND_BOUND = "REASSERTED_AND_BOUND"
@@ -174,6 +176,7 @@ def verify_envelope(
     target_url: str,
     record_source: Dict[str, Any] = None,
     pinned_public_keys: Dict[str, Any] = None,
+    now: datetime = None,
 ) -> Dict[str, Any]:
     """
     Decide whether a target should honor an admissibility envelope for
@@ -258,6 +261,31 @@ def verify_envelope(
             public_key.verify(bytes.fromhex(signature_hex), message)
         except Exception:
             return _reject(REF_VERIFY_SIGNATURE_INVALID)
+
+        # ----- Step 1.5b: issuer-key validity window (VL-041; signed-path) -----
+        # not_after, when present, is inside the signed region (verified just
+        # above), so it is tamper-proof: an adversary cannot extend a captured
+        # envelope's lifetime without breaking the signature. Absence means no
+        # expiry (VL-040 byte-behavior; bounding validity is the issuer's
+        # choice, a target may additionally require presence by policy - a
+        # later knob). Fail-closed (canon section 9): a malformed or naive
+        # not_after, or a current time at/after not_after, is a REFUSE. The
+        # comparison is strict (valid iff now < not_after). `now` is injectable
+        # for deterministic tests; it defaults to datetime.now(timezone.utc).
+        # This is the time-bounded answer to the VL-040 follow-up 2 decisive
+        # failure (compromised key): it bounds a leaked key's usefulness
+        # without depending on detecting the leak.
+        not_after_raw = envelope.get("not_after")
+        if not_after_raw is not None:
+            try:
+                not_after = datetime.fromisoformat(not_after_raw)
+            except (ValueError, TypeError):
+                return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
+            if not_after.tzinfo is None:
+                return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
+            current = now if now is not None else datetime.now(timezone.utc)
+            if current >= not_after:
+                return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
 
     # ----- Step 2: currency + integrity via reassert() -----
     # Fail closed on any structural surprise reassert() trips over that

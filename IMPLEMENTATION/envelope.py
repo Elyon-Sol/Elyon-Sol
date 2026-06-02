@@ -123,11 +123,24 @@ RE_EVALUATE_REQUIRED = "RE-EVALUATE-REQUIRED"
 
 # Keys excluded from the decision_sha256 hash region (artifact 05; VL-040
 # adds the issuer fields so a signed envelope's decision_sha256 is identical
-# to the unsigned one and reassert() Row 2 verifies it unchanged).
-_HASH_EXCLUDED_KEYS = ("decision_sha256", "timestamp_utc", "issuer_key_id", "issuer_signature")
+# to the unsigned one and reassert() Row 2 verifies it unchanged). VL-041
+# adds not_after for the same reason: not_after is issue-time-dependent (like
+# timestamp_utc), so excluding it keeps decision_sha256 bit-identical
+# regardless of issue time / validity window (canon section 9 reproducibility).
+_HASH_EXCLUDED_KEYS = (
+    "decision_sha256",
+    "timestamp_utc",
+    "issuer_key_id",
+    "issuer_signature",
+    "not_after",
+)
 
 # Keys excluded from the issuer-signature region (VL-040). The signature
-# covers everything else, including decision_sha256 and issuer_key_id.
+# covers everything else, including decision_sha256 and issuer_key_id. VL-041:
+# not_after is NOT excluded here - the signature MUST cover the validity window
+# or an adversary could extend a captured signed envelope's lifetime. This is
+# the deliberate asymmetry with timestamp_utc (excluded from BOTH regions
+# because it carries no security weight; not_after is security-bearing).
 _SIGNATURE_EXCLUDED_KEYS = ("issuer_signature", "timestamp_utc")
 
 
@@ -432,7 +445,12 @@ def reassert(envelope: Dict[str, Any], record_source: Optional[Dict[str, Any]] =
 # ---------------------------------------------------------------------------
 
 
-def sign_envelope(envelope: Dict[str, Any], signing_key: Any, key_id: str) -> Dict[str, Any]:
+def sign_envelope(
+    envelope: Dict[str, Any],
+    signing_key: Any,
+    key_id: str,
+    not_after: Optional[datetime] = None,
+) -> Dict[str, Any]:
     """
     Sign an envelope with the gate's issuer key (VL-040; opt-in).
 
@@ -454,9 +472,27 @@ def sign_envelope(envelope: Dict[str, Any], signing_key: Any, key_id: str) -> Di
     (canon section 8.2 PoE; section 11.9 integrity); introduces no new
     invariant and is not a reassert()/CCS concern (verification is
     verifier-layer).
+
+    not_after (VL-041; opt-in within opt-in): an optional tz-aware datetime.
+    When supplied, the envelope gains a not_after ISO-8601 field that bounds
+    the validity window. not_after is INSIDE the signed region (covered by
+    issuer_signature, so it is tamper-proof: an adversary cannot extend a
+    captured envelope's lifetime) and OUTSIDE decision_sha256's region (in
+    _HASH_EXCLUDED_KEYS, so a signed-with-expiry envelope's decision_sha256
+    is byte-identical to the unsigned one and reassert() Row 2 is unchanged).
+    When None, no not_after field is added and behavior is byte-identical to
+    VL-040 (a signed envelope with no expiry is valid until canon/evaluator/
+    manifest transition; bounding it is the issuer's choice, enforced
+    target-side by verify_envelope). Expiry is the time-bounded answer to the
+    VL-040 follow-up 2 decisive failure: it bounds a compromised key's
+    usefulness WITHOUT depending on detecting the compromise.
     """
     signed = dict(envelope)
     signed["issuer_key_id"] = key_id
+    if not_after is not None:
+        if not_after.tzinfo is None:
+            raise ValueError("not_after must be timezone-aware (UTC)")
+        signed["not_after"] = not_after.isoformat()
     region = {k: v for k, v in signed.items() if k not in _SIGNATURE_EXCLUDED_KEYS}
     signature = signing_key.sign(canonical_json(region).encode("utf-8"))
     signed["issuer_signature"] = signature.hex()

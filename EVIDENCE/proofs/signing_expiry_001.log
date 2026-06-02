@@ -1,0 +1,9 @@
+PASS - signed, no expiry -> honored
+PASS - signed, future not_after -> honored
+PASS - signed, past not_after -> REFUSED EXPIRED
+PASS - signed, now == not_after -> REFUSED EXPIRED
+PASS - extend not_after on signed envelope -> REFUSED INVALID (tamper-proof)
+PASS - decision_sha256 unchanged by not_after (VL-040 no-op preserved)
+PASS - KILLER: expired refused while live honored (compromise is time-bounded)
+
+ALL PASS
