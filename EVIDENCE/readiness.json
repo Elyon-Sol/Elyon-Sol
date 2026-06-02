@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "note": "Single source of truth for WIRING-track readiness (see docs/restructure/10_readiness_spec.md). Every TRUE flag MUST name a proof test; a true flag with no passing named proof is a build failure. built-but-unwired is ALLOWED (build-then-wire); claimed-but-unwired is FORBIDDEN. STATE.md and the ledger reference this file; they do not restate readiness in prose.",
+  "capabilities": {
+    "issuer_signing": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_signing.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "mandatory signing cutover not done; pep.py default forward is unsigned; canary test_unsigned_path_unchanged_forge_still_accepted still passes"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet (END_TO_END_NO_SHORTCUT)"},
+      "transported": {"value": false, "proof": null, "blocked_by": "G5 cross-host transport not built; loopback wrapper only"}
+    },
+    "issuer_key_expiry": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_signing_expiry.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "emitting expiring envelopes is an integrator-posture cutover; default forward does not stamp not_after"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet"},
+      "transported": {"value": false, "proof": null, "blocked_by": "G5 not built"}
+    },
+    "issuer_key_revocation": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_key_record.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "consulting the key record is target-side posture; not on pep.py default path"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet"},
+      "transported": {"value": false, "proof": null, "blocked_by": "key record fetch is a loopback wrapper; G5 not built"}
+    },
+    "enforcement_push": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_enforcement.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "enforcing target verifies opt-in; default forward not required-signed"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet"},
+      "transported": {"value": false, "proof": null, "blocked_by": "same-process push in tests; cross-host transport (G5) not built"}
+    }
+  },
+  "deployment_predicates": {
+    "DEFAULT_SECURE": {
+      "green": false,
+      "proof": "TESTS/readiness/test_deployment_predicates.py::test_default_forward_is_signed_and_verified",
+      "blocked_by": "mandatory signing cutover not done; pep.py default forward is unsigned. Goes green the day the cutover lands and the canary flips."
+    },
+    "END_TO_END_NO_SHORTCUT": {
+      "green": false,
+      "proof": "TESTS/readiness/test_deployment_predicates.py::test_end_to_end_no_shortcut",
+      "blocked_by": "transport is a loopback wrapper (G5 open); no full chain runs without a test-only shortcut."
+    },
+    "ROOT_RECOVERY": {
+      "green": false,
+      "proof": null,
+      "blocked_by": "VL-043 not built; no root rotation / per-root status mechanism yet."
+    }
+  }
+}
