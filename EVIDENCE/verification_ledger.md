@@ -10534,3 +10534,211 @@ its verdict (VL-040 follow-up 2). Increments remain as in VL-040: mandatory
 signing cutover (the test that flips:
 `test_unsigned_path_unchanged_forge_still_accepted`) and/or record signing; A1
 target-side policy; T-bookkeeping (incl. `server.py` retirement); T-prose-drift.
+### VL-040 follow-up 2 - 2026-06-02 - Key-governance cross-model evaluate: forgery-resistance is BOUNDED (signed path, uncompromised + authentically-distributed key); key lifecycle is the load-bearing floor
+
+**Status:** RECORDED (off-record evaluate; verdict-of-record only)
+**Author:** Claude (working session with the project author)
+**Classification:** verdict-of-record for an off-record FRAMEWORK-LEVEL cross-model
+evaluate (VL-008 + cross_model_evaluate_template pattern). No
+code/canon/spec/manifest change. Records the trust-model BOUND on VL-040 issuer
+signing - the claim-track gate before "forgery-resistant" enters any citable
+claim or any Zenodo deposit.
+
+**Verifies:** the BOUND that VL-040 issuer signing places on the word
+"forgery-resistant." VL-040 follow-up 1 settled CONSTRUCTION (no signed-path
+forge; 3-0 convergent NO). This evaluate is the TRUST-MODEL question the opener
+named load-bearing: what pinning a public key buys, what it newly requires, the
+strongest claim the sources earn, the canon basis, and the decisive failure.
+
+**Procedure:** framework-level cross-model evaluate per VL-008 (scope to the
+attached primary sources; discard out-of-scope ranging; ratings/verdicts carry
+no verification weight) plus the cross_model_evaluate_template, run with the
+VL-040 follow-up 2 prompt's DERIVE-BEFORE-GRADE instruction: the bundle
+pre-states the project's own answers to the canon basis, the bound, and the
+trust floor, so each recipient was required to derive from canon + code FIRST,
+then cite and grade the project's stated answer. Recipients: Grok, OpenAI, and a
+third lab (Gemini); independent, blind, clean context. Bundle: canon.md
+(8.2/9/11.2/11.9/13/14), 05_admissibility_envelope_spec.md ("Issuer signature
+(opt-in)"), IMPLEMENTATION/envelope.py (sign_envelope; _HASH_EXCLUDED_KEYS /
+_SIGNATURE_EXCLUDED_KEYS), IMPLEMENTATION/verifier.py (the Step 1.5 signature
+check; REF_VERIFY_SIGNATURE_INVALID / REF_VERIFY_SIGNATURE_UNKNOWN_KEY),
+EVIDENCE/proofs/signing_forgery_defeated_001.md.
+
+**Procedural cleanliness:** all three passed the derive-before-grade gate - each
+derived Q1 (provenance), Q4 (no-new-invariant), and Q5 (decisive failure) from
+canon + code before citing and grading the project's stated answers; in scope
+through the body, not only at the opening; no out-of-bundle project history. The
+third lab (Gemini) returned TWO variant responses (A and B); they are internally
+near-convergent on all five questions (the only intra-lab variation is the Q4
+section-14 counter's sharpness), so Gemini is recorded as ONE lab with a stable
+derivation, not as two voices. This is NOT the follow-up 1 misfire (which
+returned nothing usable); a two-variant return is usable and is recorded as a
+process finding. Rating/approval language stripped per VL-008. All admissible.
+No verbatim overlap across the three labs (the post-VL-038 "one source wearing
+two hats" concern does not recur here).
+
+**Convergent verdict: forgery-resistance is REAL but BOUNDED to the signed path,
+and the bound is LOAD-BEARING, not cosmetic.** Per question:
+
+- **Q1 (what pinning buys) - convergent (3-0).** Issuer PROVENANCE. The signed
+  path establishes that the envelope was minted by the holder of the pinned gate
+  private key; the unkeyed decision_sha256 path establishes only
+  self-consistency / tamper-evidence over public fields, which any party who
+  knows the published record can reproduce (the three-model forge). All three
+  derived the keyed-vs-unkeyed contrast from envelope.py / verifier.py before
+  grading; all three judged the bounded claim in signing_forgery_defeated_001.md
+  ACCURATE and not over-stated.
+
+- **Q2 (what it newly requires) - convergent (3-0), one wording split.** Four
+  obligations, all STRICTLY NEW versus the unkeyed model (which required only
+  hash reproducibility + manifest pinning):
+  - secure public-key distribution: NAMED-NOT-BUILT (pinned_public_keys is a
+    supplied parameter; origin out-of-band, the B-prime-1 analog).
+  - key rotation: SCHEMA-REPRESENTABLE, PROCESS-UNBUILT. issuer_key_id + the
+    {key_id: public_key} map let multiple keys coexist, and key_id is inside the
+    signed region (cannot be swapped without breaking the signature), but no
+    rotation lifecycle/policy exists. Wording split, same substance: Grok
+    "structurally representable, no protocol"; OpenAI "partially enabled, no
+    lifecycle"; Gemini "partially built / supported."
+  - private-key compromise: NAMED-NOT-BUILT (no detection / recovery).
+  - revocation: NAMED-NOT-BUILT (static map; no CRL / OCSP / expiry).
+
+- **Q3 (the bound) - convergent (3-0).** Strongest earned claim: on the
+  signature-required path (target supplies pinned_public_keys), verify_envelope
+  rejects the public-knowledge forge and REQUIRES a valid Ed25519 signature from
+  a pinned issuer key, providing issuer provenance the decision_sha256-only path
+  lacks. Weakest mandatory caveat (THE BOUND): "forgery-resistant" is defensible
+  ONLY (i) on the signed path, (ii) against an adversary lacking the issuer
+  private key, (iii) while that private key remains uncompromised, and (iv) given
+  an authentically-distributed pinned public key - with key lifecycle
+  (distribution / rotation / compromise / revocation) named-not-built. The BARE
+  word is not earned.
+
+- **Q4 (canon) - convergent on RESULT (3-0); DIVERGENT in DEPTH on section 14
+  (recorded as a finding, not a conflict).** No new invariant; operationalizes
+  section 8.2 PoE (optional, implementation-dependent integrity anchor that "does
+  not affect admissibility logic"), extends section 11.9 integrity-verifiability,
+  fail-closed per section 9. Admissibility (AC^3 AND T^26 AND CCS; evaluate())
+  untouched; signing is post-evaluation and verifier-layer, orthogonal to
+  reassert() / CCS currency. All three concur, and all three classify the issuer
+  key as a PROVENANCE ANCHOR (8.2), NOT an admissibility input. The DIVERGENCE is
+  how much work "identity-agnostic" must do:
+  - Grok: holds on the narrow reading; counter (a compromised key could
+    indirectly affect downstream trust but is not an evaluate() input) resolved
+    quickly.
+  - OpenAI (decisive depth): holds, but ONLY under a NARROWED MEANING - a pinned
+    issuer identity IS a trusted identity in the verify path, so
+    "identity-agnostic" cannot mean "no identity trust anywhere"; it must mean
+    "identity is not an admissibility substitute." The reconciliation holds only
+    under that reading.
+  - Gemini-B INDEPENDENTLY reached the same sharper counter (the issuer key
+    becomes a de facto identity input for the verifier, in tension with
+    "identity-agnostic" if a verifier refuses all but a specific issuer);
+    Gemini-A's counter was looser (a "super-actor" framing resolved by appeal to
+    section 14's "governs legitimacy").
+  FINDING: the section-14 reconciliation in artifact 05 ("the key proves who
+  ISSUED ... not who the actors are") is CORRECT but NARROWER than its bare
+  phrasing implies. Two independent labs (OpenAI, Gemini-B) surface that a
+  trusted issuer identity now sits in the verify path, and the reconciliation
+  holds only by reading "identity-agnostic" as "identity is not an admissibility
+  substitute," not "no identity trust anywhere." Spec-clarification gap candidate
+  (not blocking): artifact 05's section-14 bullet should state the narrowed
+  reading explicitly.
+
+- **Q5 (decisive failure) - convergent (3-0, both Gemini variants).** A
+  TRUST-MODEL defeat, NOT a construction defeat. The cryptographic construct
+  (sign_envelope + the pre-reassert Step 1.5 signature check) is sound (follow-up
+  1, 3-0); the decisive failure is private-key COMPROMISE (or malicious
+  public-key substitution during distribution), located at the NAMED-BUT-ABSENT
+  key lifecycle: a leaked private key lets an adversary mint genuine signatures
+  the sound verifier is OBLIGED to accept, for adversary-chosen interactions,
+  with NO revocation / recovery path. All three explicitly typed this as
+  trust-model and distinguished it from construction.
+
+**The bound on "forgery-resistant" (claim-track gate output).** The evaluate
+CONFIRMS the bound the proof and spec already state and finds it LOAD-BEARING,
+not cosmetic. It does NOT lift the claim-track gate to "settled." Practically:
+- the word may appear in INTERNAL records (STATE.md, ledger, the proof) only in
+  its fully-qualified signed-path form (the Q3 four-part bound); never bare.
+- the convergent decisive failure (compromise + no revocation, named-not-built)
+  is the specific reason the bare word remains unearned.
+- (entry's editorial connection to prior ledger, NOT a panel finding - the labs
+  were blind to VL-039): this parallels VL-039 follow-up's finding that
+  freshness / revocation is load-bearing for the RECORD anchor (B-prime-1). The
+  same shape now holds for the KEY anchor (B-prime-2): revocation /
+  compromise-recovery is the floor item that bounds the present claim; the
+  others (distribution, rotation) are correctly later.
+- recommendation on Zenodo / citable deposit (the author's decision, not the
+  verdict's): NO deposit of "forgery-resistant" in any form until revocation /
+  compromise-recovery exists. The project's own reasoning compels conservatism -
+  VL-039 follow-up 2 records that a pre-probe Zenodo deposit "would have asserted
+  forgery-resistance that three models trivially break." A citable claim outlives
+  its caveat, and the decisive failure here is exactly a breakable caveat.
+
+**Non-convergence / findings (honest record):**
+1. Q4 section-14 DEPTH divergence (above): result convergent, depth split
+   Grok < Gemini-A < {OpenAI, Gemini-B}. Recorded as a finding and a
+   spec-clarification gap candidate, not a conflict.
+2. Q2 rotation WORDING (above): convergent substance
+   (schema-representable / process-unbuilt), minor wording divergence.
+3. Process: the third lab (Gemini) returned two variant answers; treated as one
+   lab; internally near-convergent; recorded as a methodology surface event (a
+   two-variant return is usable, distinct from follow-up 1's empty misfire).
+
+**Process findings (session mechanics, the fold):**
+1. Typographic-drift (Lesson 7 stage 2) miss on the CHAT surface: the
+   section-sign character leaked into Claude's chat prose twice this session
+   though the committed/file artifacts stayed ASCII-clean. The stage-2
+   byte-sweep is specified to fire at Claude-drafting time on every surface,
+   including chat, and did not; user-caught. Same family as the VL-033
+   Greek-letter leak and the VL-034 section-sign leak (now a third-plus
+   instance on the chat surface specifically).
+2. Two render-reconstruction misses on the STATE.md edits, both caught BEFORE
+   commit, both Lesson 2/3 (anchors reconstructed from the session opener's
+   rendered STATE.md instead of disk bytes): (a) the first STATE apply-script's
+   edit-1 anchor carried a hallucinated terminal period where the live
+   Last-updated parenthetical closes with ")"; caught by the synthetic-fixture
+   pre-verification before the real file was touched. (b) after the two
+   CLAIM-TRACK GATE edits landed, the dry-run region output revealed the
+   Last-updated parenthetical continues past the gate clause (a stale date and a
+   stale "the key-governance evaluate is next / this session owes the prompt"
+   fragment on the same line, plus the sibling item-34 fragment); caught before
+   commit and retired by a consistency follow-on whose anchors were sourced from
+   grep/sed of disk, not scrollback.
+3. Positive: the fixture-pre-verification + dry-run-fails-loud pair caught both
+   structural misses before any commit, and the consistency follow-on's
+   disk-sourced anchors applied byte-exact (+0/+7/+102). Candidate methodology
+   refinement: the first gate edit was applied before the line-structure miss
+   surfaced because the dry-run's match-context window was too narrow to show
+   the parenthetical's continuation; reading the full target line (sed) before
+   drafting anchors, or widening the dry-run context window, would surface a
+   wrong line-end assumption pre-apply rather than post-apply-pre-commit.
+
+**Provenance:** the verdict is derived from the three labs' source-bound
+derivations. The prompt and the raw responses are kept off the repo record
+(~/elyon-sol-offrecord/), per the VL-008 / VL-015 / VL-023-follow-up /
+VL-025-follow-up / VL-040-follow-up-1 pattern (raw responses are not committed as
+standalone artifacts). This entry is the record.
+
+**Citation discipline (VL-012).** This entry does not cite its own commit hash.
+Build commit confirmed at VL-040: b15e4b2. Spec commit: b9ca90a. Prior
+substantive entry VL-039 at c964612; prior VL-040 follow-up 1 (signed-path
+construction re-probe) at f1d340d. No cross-model verification of code was run
+here; this is a framework-level trust-model evaluate, and only the
+verdict-of-record is recorded.
+
+**Next trajectory action (sharpened by this verdict):** revocation /
+compromise-recovery is now EVIDENCED as the load-bearing floor item for issuer
+signing, parallel to freshness for the record anchor - not merely next-in-line.
+- record signing (publisher-signed published_hashes.json; B-prime-2 for the
+  record) and/or an envelope issuer-key revocation / expiry mechanism: the floor
+  item the bound rests on.
+- mandatory signing cutover (signature required on pep.py's default forward; the
+  test that must FLIP is test_unsigned_path_unchanged_forge_still_accepted):
+  turns "closed on the signed path" into "closed," but does NOT by itself address
+  compromise / revocation.
+Until revocation / compromise-recovery exists, "forgery-resistant" stays bounded
+(signed-path, uncompromised-key form) and out of any citable deposit. A1
+target-side admission policy; caller-carry / proxy-removal; T-bookkeeping
+(G1/G8/G9/G11/G14 + server.py retirement); T-prose-drift remain open.
+Spec-clarification gap candidate: artifact 05 section-14 narrowed-reading note.
