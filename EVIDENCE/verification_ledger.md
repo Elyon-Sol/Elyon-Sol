@@ -11185,3 +11185,257 @@ verdict (VL-042 follow-up). Only after that verdict-of-record is folded may
 mandatory signing cutover (posture); root rotation process; cross-host transport
 (G5); A1 target-side policy; caller-carry / proxy-removal; T-bookkeeping
 (G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift. None blocking.
+### VL-042 - 2026-06-02 - T-key-record (B-prime-2): published signed key record; revocation built (opt-in); the new publisher/root trust floor
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** trajectory move per VL-017a's distinction (one new
+`IMPLEMENTATION/` module + one edited `IMPLEMENTATION/` module + one new
+`EVIDENCE/` generator + one new `TESTS/adversarial/` file + one new
+`EVIDENCE/proofs/` runner; the artifact-09 spec half landed first as the spec
+commit `c323b65`, spec-defines-the-change; structural-doc updates to
+STATE.md and this ledger). No canon/manifest change in the build commit;
+artifact 04 / 06 / 00_README freshness edits are named-deferred candidates (see
+Carry-forwards). This is the second capability increment of the key-lifecycle
+track the VL-040 follow-up 2 verdict named load-bearing (VL-041 = expiry; this =
+revocation + rotation-representation + the published key record), and it
+introduces a NEW trust floor (the publisher/root key) that owes its own
+framework-level cross-model evaluate before "forgery-resistant" moves further.
+
+**Verifies:** B-prime-2 adds a published, publisher-signed key record that a
+target consults to learn which issuer keys are currently valid or REVOKED, with
+the record carrying its OWN freshness bound so a stale record fails closed. It
+closes the DETECTED-compromise instant-kill case (revocation) that VL-041 expiry
+could not reach, and relocates trust from N per-issuer pins (VL-040/041) to ONE
+pinned publisher/root key. It is a CAPABILITY increment; the CLAIM
+("forgery-resistant") does NOT move here - it stays in its VL-040 follow-up 2
+bounded form until the new-trust-root cross-model evaluate is folded (VL-042
+follow-up).
+
+- `EVIDENCE/published_keys.json` (the new published artifact) is generated live
+  by `EVIDENCE/published_keys_gen.py` (`build_key_record()`; never hand-copied,
+  constraint i). The publisher signature covers
+  `canonical_json(record minus publisher_signature)` (`ensure_ascii=True`,
+  VL-009); everything else - `serial`, the record `not_after`, every key entry
+  including its `revoked` flag and per-key window - is inside the signed region,
+  so an adversary cannot extend the record's window, un-revoke a key, roll the
+  serial back, or swap key bytes without breaking the signature.
+- `IMPLEMENTATION/key_record_source.py` (new; the reader) MIRRORS
+  `IMPLEMENTATION/published_source.py` (the B-prime-1 record anchor) as a SIBLING
+  module, not an extension: a pure network-free
+  `load_key_record_from_bytes(record_bytes, pinned_root_keys, now=None,
+  last_seen_serial=None)` (pinned-root signature verify -> freshness -> per-key
+  trust view) plus a thin `fetch_key_record()` transport (loopback; fail-closed
+  on any connection / non-200 / timeout). It returns
+  `{"trust_view": <dict>|None, "reason": <code>|None}`, discriminating
+  `REF_VERIFY_KEY_RECORD_INVALID` (bad publisher signature, unknown root,
+  malformed) from `REF_VERIFY_KEY_RECORD_STALE` (`now >= record.not_after`,
+  tz-naive `not_after`, or serial rollback). It imports `cryptography` (the
+  reconstruction `Ed25519PublicKey.from_public_bytes` + signature verify), so the
+  verifier and envelope stay import-clean.
+- `IMPLEMENTATION/verifier.py` (4 edits): five new `REF_VERIFY_KEY_*` codes (the
+  canonical home; the reader imports the two RECORD_* codes from here);
+  `verify_envelope(...)` gains `key_record_view=None` (appended last for
+  positional-call compatibility); when supplied it is the SOLE issuer-key trust
+  source (RECORD-EXCLUSIVE, decision 3 - the static `pinned_public_keys` map is
+  NOT consulted, because a union would let the map silently defeat a revocation).
+  The four-way trust-view lookup runs before the existing Step 1.5 signature
+  check: absent -> `REF_VERIFY_KEY_UNKNOWN`; `revoked` -> `REF_VERIFY_KEY_REVOKED`
+  (precedence over window, the stronger operator signal); `now` outside
+  `[not_before, not_after)` -> `REF_VERIFY_KEY_OUT_OF_WINDOW`; else the
+  record-sourced public key feeds the unchanged signature verify (the record
+  vouches for the KEY's provenance; the envelope must STILL be signed by it) and
+  the VL-041 Step 1.5b envelope-expiry check. The static-map path
+  (`key_record_view=None`, `pinned_public_keys` supplied) and the unsigned path
+  (neither supplied) are byte-behavior-unchanged from VL-040/041.
+
+**Checkpoint A decisions (trust + record design, locked before code):** (1)
+freshness uses BOTH `not_after` (always-on, no-state ceiling) and `serial`
+(opt-in rollback gate for state-persisting verifiers; equal serial implies an
+identical record because serial is signed); (2) the RICHER trust view
+(per-key status), preserving revoked vs unknown vs out-of-window; (3)
+record-EXCLUSIVE-when-present (not augment/union); (4) names
+`EVIDENCE/published_keys.json` / `published_keys_gen.py` /
+`IMPLEMENTATION/key_record_source.py`; (5) out-of-window is its own code,
+distinct from REVOKED and UNKNOWN.
+
+**Checkpoint B (spec-defines-the-change; REAL gap as expected):** the key record
+is a new artifact and a change to how `verify_envelope` sources trust, so a
+spec artifact preceded the code -
+`docs/restructure/09_key_record_spec.md` (spec commit `c323b65`), standalone
+parallel to artifact 08 (own threat surface: root custody, the freshness
+recursion, revocation semantics). The mirror-vs-extend question (artifact 09
+open question 4) was RESOLVED to MIRROR at Checkpoint B from a source-first read
+of `published_source.py`: B-prime-1 pins the sha256 of the record BYTES, which
+would force re-pinning on every revocation (fatal for a changing record), while
+B-prime-2 pins a root PUBLIC KEY and verifies a SIGNATURE so the record may
+change under a stable pin; distinct import profile and return contract reinforce
+the split.
+
+**Canon basis (no new invariant).** Operationalizes section 8.2 (PoE, optional
+implementation-dependent anchor that "does not affect admissibility logic"),
+section 9 (fail-closed on every record-state and key-status path), section 11.9
+(integrity-verifiability extended to the issuer-key validity statement), section
+13 (revalidation). Admissibility (AC^3 AND T^26 AND CCS, `evaluate()`) is
+untouched; record consultation is post-evaluation, verifier-layer, orthogonal to
+`reassert()` / CCS currency (no new reassertion row). Section 14 holds only under
+the NARROWED reading carried up one layer from VL-040 follow-up 2: pinning a
+publisher/root key puts a trusted identity (the root) in the verify path, so
+"identity-agnostic" must mean "identity is not an admissibility SUBSTITUTE," not
+"no identity trust anywhere." The root pin is a provenance anchor, not an
+admissibility input. (Artifact 09 section 10 states this derivably; it is the
+load-bearing thing the new-trust-root evaluate will probe.)
+
+**Tests / proof.** `TESTS/adversarial/test_key_record.py` (15, canon/spec-derived):
+valid-current-key accept; reader-layer RECORD_INVALID (bad publisher signature,
+unknown root, malformed) and RECORD_STALE (past `not_after`, serial rollback) plus
+equal-serial accept; verifier-layer REVOKED, UNKNOWN, OUT_OF_WINDOW, the
+now==not_after half-open boundary, tampered-envelope-signature-with-valid-record;
+record-exclusive precedence (revoked-in-record refused even when the static map
+would accept); static-map path unchanged; unsigned path unchanged. Records are
+built inline (structure-identical to `build_key_record`) so the suite does not
+depend on `EVIDENCE/` being an importable package.
+`EVIDENCE/proofs/key_record_001_runner.py` reproduces the killer property with
+live root + issuer keypairs: a current key honored
+(`REASSERTED_AND_BOUND`), a revoked key refused (`REF_VERIFY_KEY_REVOKED`), a
+stale record refused (`REF_VERIFY_KEY_RECORD_STALE`); exit 0. Full suite 160 ->
+175 passed + 0 xfailed (author's real environment, win32 / Python 3.13.13,
+against the live `reassert()` disk path). Runner invoked as
+`python -m EVIDENCE.proofs.key_record_001_runner`.
+
+**Build-then-wire (no `pep.py` change).** Per VL-025..VL-029 / VL-037..VL-041:
+the capability (sign + publish a key record) and the enforcement (verify against
+it) land with NO `pep.py` change. Consulting the record is target-side policy
+(posture). Forcing record-consultation and the mandatory signing cutover are
+integrator knobs, not this track's work.
+
+**The bound on "forgery-resistant" (claim-track gate; unchanged in kind).** The
+word stays BOUNDED, not settled, and out of any Zenodo deposit. This increment
+BUILDS revocation (the detected-compromise instant kill) and the freshness-checked
+key record, completing the compromise floor's complement to VL-041 expiry (the
+undetected case). But it introduces the publisher/ROOT key as a NEW, SINGULAR,
+LOAD-BEARING trust floor - root compromise is total - which OWES its own
+framework-level cross-model evaluate (VL-042 follow-up) before "forgery-resistant"
+moves any further off its bound (the follow-up 2 logic: each new anchor owes its
+own evaluate). So this entry advances the capability; it does not move the claim.
+
+**The honest-recovery test (the increment's definition of done): MET.** Can a
+deployment now INSTANTLY refuse a key it has decided to revoke (the
+detected-compromise case VL-041 could not reach), and refuse a stale key record?
+YES: the publisher marks `revoked`, bumps `serial`, reissues, publishes; any
+target consulting the current record refuses via `REF_VERIFY_KEY_REVOKED`
+immediately (runner check 2), and the serial gate stops replay of the prior
+record for state-persisting verifiers; a stale pre-revocation record is refused
+by the `not_after` ceiling (runner check 3). The residual: a target on a CACHED
+record is bounded by that record's `not_after` - "instant" at fetch-cadence
+granularity, with `not_after` the absolute ceiling. That residual is the
+transport / G5 surface, not a hole in the primitive.
+
+#### Process findings
+
+1. **Chat-paste-eats-content, inline-edit-block variant (new discriminator).**
+   The four `verify_envelope` edits, delivered as inline message blocks, were
+   skipped at integration while the four WHOLE new files applied cleanly; pytest
+   failed loud at collection (`cannot import name REF_VERIFY_KEY_RECORD_INVALID`)
+   because the reader imports a code the unpatched verifier lacked. The
+   discriminator is sharp: whole-file deliverables apply; inline-edit blocks get
+   missed. Corrective (already in the opener, and what worked): existing-file
+   edits go through an apply-script that fails loud on a skipped edit, never a
+   pasted block. Same family as VL-020/021/033 STATE delivery omissions.
+2. **Lesson 2 anchor miss (line-wrap variant), caught fail-closed.** The
+   apply-script's optional fifth edit (a cosmetic Step 1.5 header-comment
+   refresh) aborted: its anchor was reconstructed from the rendered file view and
+   truncated "byte-behavior-unchanged." as a line end, where the real line
+   continues "...byte-behavior-unchanged. Fail-closed (canon section 9): a". The
+   apply-script's exact-match-or-abort raised BEFORE any write, so the four
+   functional edits did not land half-applied; edit 5 was dropped (cosmetic) and
+   the four functional edits re-applied clean. Positive: abort-on-mismatch is the
+   discipline working; the wrong anchor stopped the whole apply rather than
+   corrupting one region. Carry-forward: the verifier.py Step 1.5 header comment
+   still reads "signed-path only" (now stale; the block also runs for
+   `key_record_view`) - a T-prose-drift micro-edit.
+3. **Source-read overturned a pre-read design assumption.** Before reading
+   `published_source.py`, the spec recorded "either extend or mirror satisfies
+   this spec"; the read showed mirror is REQUIRED (byte-hash pin vs
+   signature-pin; a byte-hash pin would have silently recreated the
+   per-revocation redistribution problem B-prime-2 exists to escape). Same family
+   as this session's `.gitignore`-already-present opener-prediction divergence:
+   the source-first precondition doing real work, not ceremony.
+4. **First `IMPLEMENTATION/` module to import `cryptography`.** `envelope.py` and
+   `verifier.py` stay duck-typed/clean; the reader must reconstruct keys and
+   verify the publisher signature, so it imports `cryptography` directly. NOT a
+   new dependency (`cryptography==44.0.0` since VL-040), but the import surface
+   changed: a `TESTS/test_module_imports.py`-style import-cleanliness test
+   (VL-027/VL-028 candidate) would now require `cryptography` present, which it
+   is. Spec-sanctioned (artifact 09 section 7) but an architectural first.
+5. **Runner invocation (VL-027 path-family, runner variant).**
+   `python EVIDENCE/proofs/key_record_001_runner.py` fails
+   `ModuleNotFoundError: No module named 'IMPLEMENTATION'` (script invocation
+   only puts `EVIDENCE/proofs/` on `sys.path`); `python -m
+   EVIDENCE.proofs.key_record_001_runner` from the repo root works (repo root on
+   path, cwd preserved for `build_envelope`'s relative reads). Candidate:
+   document the `-m` convention or add a `sys.path` bootstrap to the proof
+   runners for direct-invocation parity. Deferred.
+
+#### Carry-forwards (not actioned here; scope)
+
+- **The new-trust-root cross-model evaluate** (the claim-track gate). Prompt
+  drafted this session at `~/elyon-sol-offrecord/new_trust_root_evaluate_prompt.md`
+  (off-repo, VL-008); run off-framework AFTER this build commit; only its
+  verdict-of-record reaches the ledger as the VL-042 follow-up. THE named next
+  trajectory action.
+- **Root rotation PROCESS** (schema-representable via `root_key_id` +
+  multi-root pinning; process named-not-built). A later increment.
+- **Cross-host record TRANSPORT** (G5; named-not-built). The `not_after` ceiling
+  keeps a cached record honest in the interim.
+- **artifact 04 / 06 / 00_README freshness**: 00_README should list artifact 09
+  (8 artifacts); artifact 04 gains a B-prime-2 key-record bullet under the
+  key-lifecycle / G4-G5 area; no G-row transitions to RESOLVED (G4 bypassability
+  and G5 transport unchanged). Deferred, paralleling VL-018/VL-041's
+  artifact-as-separate-commit choice.
+- **Mandatory signing cutover** (posture; the test that would flip is
+  `test_unsigned_path_unchanged_forge_still_accepted`); A1 target-side policy;
+  caller-carry / proxy-removal.
+- **T-bookkeeping** (G1/G8/G9/G11/G14 + `server.py` retirement) and
+  **T-prose-drift** (incl. finding 2's stale Step 1.5 comment).
+
+#### Files affected
+
+- `IMPLEMENTATION/verifier.py` (4 edits: `REF_VERIFY_KEY_*` codes;
+  `key_record_view` param; record-exclusive four-way lookup; docstring)
+- `IMPLEMENTATION/key_record_source.py` (new; the reader)
+- `EVIDENCE/published_keys_gen.py` (new; the live generator/signer)
+- `TESTS/adversarial/test_key_record.py` (new; 15)
+- `EVIDENCE/proofs/key_record_001_runner.py` (new)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/*`, `MANIFEST/*` (no canon/manifest change)
+- `IMPLEMENTATION/envelope.py` (`canonical_json` / `sign_envelope` reused, not
+  modified), `evaluator.py`, `request_validator.py`, `pep.py`,
+  `published_source.py` (the B-prime-1 reader; mirrored, not touched),
+  `replay/receipt.py`
+- `docs/restructure/05_admissibility_envelope_spec.md`, `08_enforcement_design.md`,
+  `docs/methodology/*`, `README.md`
+
+#### Citation discipline (VL-012)
+
+This entry does not cite its own commit hash (the ledger lands in the STATE +
+ledger commit after the build commit). Build commit `5e9fbf6` (verifier
+edit + the four new files). Spec commit `c323b65` (artifact 09). Prior
+substantive entry VL-041 at build `807ccfe`; the VL-040 follow-up 2 verdict this
+track acts on at `00fa503`. No cross-model verification of the key-record CODE
+was run in-session; the construction is exercised by the 15 canon/spec-derived
+tests + the runner. The NEW trust root (the publisher/root key) is what owes a
+framework-level evaluate, at the VL-042 follow-up - not this entry.
+
+#### Next trajectory action
+
+Run the new-trust-root cross-model evaluate (the claim-track gate;
+`new_trust_root_evaluate_prompt.md`, three labs, blind, off-record) and fold its
+verdict (VL-042 follow-up). Only after that verdict-of-record is folded may
+"forgery-resistant" move, and only as far as the bound permits. Then: the
+mandatory signing cutover (posture); root rotation process; cross-host transport
+(G5); A1 target-side policy; caller-carry / proxy-removal; T-bookkeeping
+(G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift. None blocking.
