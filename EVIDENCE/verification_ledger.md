@@ -10742,3 +10742,192 @@ Until revocation / compromise-recovery exists, "forgery-resistant" stays bounded
 target-side admission policy; caller-carry / proxy-removal; T-bookkeeping
 (G1/G8/G9/G11/G14 + server.py retirement); T-prose-drift remain open.
 Spec-clarification gap candidate: artifact 05 section-14 narrowed-reading note.
+
+### VL-041 - 2026-06-02 - T-key-lifecycle (expiry): issuer-key validity window (opt-in); undetected-compromise time-bounded
+
+**Status:** COMMITTED
+**Author:** Claude (working session with the project author)
+**Classification:** trajectory move per VL-017a's distinction (two edited
+`IMPLEMENTATION/` modules + one new `TESTS/adversarial/` file + one new
+`EVIDENCE/proofs/` runner+log; the artifact-05 schema half landed first as the
+spec commit `abdb9e0`, spec-defines-the-change; structural-doc updates to
+STATE.md and this ledger). No canon/manifest change in the build commit;
+artifact 04 / 06 freshness edits are named-deferred candidates (see Carry-
+forwards). This is the first capability increment of the key-lifecycle track
+the VL-040 follow-up 2 verdict named load-bearing.
+
+**Verifies:** issuer-key EXPIRY closes the UNDETECTED-compromise sub-case of the
+VL-040 follow-up 2 decisive failure (a compromised issuer key mints valid
+envelopes, unbounded and unrecoverable), on the signed path, by TIME BOUND. A
+leaked private key is now useful only until the signed `not_after`; this bound
+holds WITHOUT depending on detecting the leak - which is the property that makes
+expiry the highest-value first increment, since detection of a leaked key is
+largely unsolved. It is the time-bounded answer; it is NOT revocation (instant
+kill of a detected compromise) and NOT a fix to the trust root.
+
+- `IMPLEMENTATION/envelope.py`: `sign_envelope(envelope, signing_key, key_id,
+  not_after=None)` gains an optional tz-aware `not_after`. When supplied it
+  stamps a `not_after` ISO-8601 field; a tz-naive value raises ValueError at
+  the issuer side. `_HASH_EXCLUDED_KEYS` gains `not_after` (excluded from
+  `decision_sha256`); `_SIGNATURE_EXCLUDED_KEYS` is UNCHANGED (so `not_after`
+  is covered by `issuer_signature`). envelope.py still does NOT import
+  `cryptography` (the caller supplies the key object; the unsigned path and the
+  existing suite never require the dependency).
+- `IMPLEMENTATION/verifier.py`: new reason code `REF_VERIFY_SIGNATURE_EXPIRED`;
+  `verify_envelope(...)` gains an injectable `now` parameter; a new Step 1.5b
+  (after the signature check, before `reassert()`) enforces `now < not_after`
+  fail-closed (canon section 9). Absent `not_after` = no expiry (VL-040
+  byte-behavior). A malformed or tz-naive `not_after` fails closed to EXPIRED.
+  `now` defaults to `datetime.now(timezone.utc)`.
+
+**Checkpoint B decision (the one load-bearing fork, made before code):**
+`not_after` is INSIDE the signed region (covered by `issuer_signature`, so a
+captured signed envelope's validity window cannot be EXTENDED by an adversary -
+proven by `test_extend_not_after_breaks_signature` / the runner's tamper row,
+which refuses with `REF_VERIFY_SIGNATURE_INVALID`) and OUTSIDE the
+`decision_sha256` region (in `_HASH_EXCLUDED_KEYS`, like `issuer_key_id`, so a
+signed-with-expiry envelope's `decision_sha256` is byte-identical to the
+unsigned one and `reassert()` Row 2 is unchanged - proven by
+`test_decision_sha256_unchanged_by_not_after`). The asymmetry with
+`timestamp_utc` (excluded from BOTH regions) is deliberate and recorded in the
+code: `timestamp_utc` carries no security weight; `not_after` is
+security-bearing and must bind the signature. This resolves the
+determinism-vs-tamper-resistance tension the VL-041 opener flagged: `not_after`
+is excluded from `decision_sha256` precisely because it is issue-time-dependent
+(the section 9 bit-identical-decision rationale), while still being signed.
+
+**Canon basis (no new invariant).** Expiry operationalizes section 8.2 (PoE:
+optional, implementation-dependent integrity anchor that "does not affect
+admissibility logic") and the section 11.9 integrity-verifiability that already
+justifies signing; fail-closed per section 9. Admissibility (AC^3 AND T^26 AND
+CCS, `evaluate()`) is untouched; the validity check is a verifier-layer concern,
+orthogonal to `reassert()` / CCS currency (no new reassertion row). Section 14
+holds: `not_after` bounds the lifetime of the ISSUER's attestation, not actor
+identity.
+
+**Tests / proof.** `TESTS/adversarial/test_signing_expiry.py` (11,
+canon/spec-derived): the Checkpoint-B region assertion; signed-no-expiry honored
+(VL-040 compat); future window honored; past window and the now==not_after
+boundary refused EXPIRED (strict: valid iff now < not_after); extend-not_after
+refused INVALID (tamper-proof); decision_sha256 no-op; malformed and tz-naive
+not_after fail closed; sign rejects naive not_after; expiry not consulted on the
+unsigned path (signed-path-only concern). `EVIDENCE/proofs/
+signing_expiry_001_runner.py` reproduces the killer property with a live
+Ed25519 keypair (expired refused while the same live-window decision is
+honored); runner exits 0; `.log` committed. Full suite 149 -> 160 passed + 0
+xfailed (author's real environment, against the live `reassert()` disk path;
+the in-session sandbox used `record_source` to keep `reassert()` pure, so the
+real-env run is the first exercise of the edited `verifier.py` against live
+disk - the VL-027-style coverage point).
+
+**Build-then-wire (no pep.py change).** Per VL-025..VL-029 / VL-037: the
+capability (`sign_envelope` can stamp expiry) and the enforcement
+(`verify_envelope` rejects expired) land with NO `pep.py` change. The gate's
+default forward stays unsigned and unexpiring; making the gate EMIT expiring
+envelopes by default is the integrator-posture cutover (a deployment knob, not
+this track's work), consistent with the VL-040 follow-up 2 scope split (posture
+is the integrator's; capability is the substrate's).
+
+**The bound on "forgery-resistant" (claim-track gate, unchanged in kind).** The
+word stays BOUNDED, not settled, and stays out of any Zenodo deposit. Expiry
+PARTIALLY addresses the compromise floor the VL-040 follow-up 2 verdict marked
+load-bearing: it time-bounds the UNDETECTED-compromise case. It does NOT close
+revocation (the detected-compromise instant-kill case) and does NOT touch the
+trust root. The published signed key record (B-prime-2) that would distribute
+revocation/rotation state introduces a publisher/root key as a new trust floor,
+which OWES its own framework-level cross-model evaluate before the word moves
+any further off its bound (the follow-up 2 logic: each new anchor owes its own
+evaluate). So this entry advances the capability; it does not move the claim.
+
+**The honest-recovery test (the VL-041 opener's definition of done).** Can a
+deployment now recover from an issuer-key compromise it could not before? YES,
+partially: a leaked key is usable only until `not_after`, the case revocation
+cannot reach (it needs detection; expiry does not). The recovery is
+time-bounded, not instant; instant recovery is revocation, the next increment.
+
+#### Process findings
+
+1. **Apply-script-in-tree, second instance (VL-037 family).** Two copies of
+   `apply_vl041_artifact05.py` were found untracked under `EVIDENCE/` and
+   `docs/restructure/` at pre-stage `git status` (a stray `cp` into tracked
+   dirs, distinct from VL-037's `git add -A` sweep but the same scratch-in-tree
+   family). Caught by the pre-stage status read, removed via `rm` before
+   staging; never committed. Two instances meets the threshold: the `.gitignore`
+   guard for `apply_vl*.py` / `vl*_msg.txt` / `vl*_ledger_entry.md` that VL-037
+   deferred is now EARNED. Carry-forward (pending a source-first read of the
+   current `.gitignore`).
+2. **CRLF in the committed log.** `EVIDENCE/proofs/signing_expiry_001.log` was
+   written by `tee` under MINGW64 with CRLF; git warned it will normalize to LF
+   on next touch. Committed as-is; cosmetic, a minor VL-009/LF inconsistency
+   (same family as the receipt.py ensure_ascii and the VL-013 whitespace
+   findings). No action; recorded.
+3. **Sandbox-vs-real-env coverage.** The in-session verification ran the edited
+   `verifier.py` with `record_source` supplied, so `reassert()` never touched
+   disk; the 160/0 real-env run is the first exercise against live `reassert()`.
+   This is the VL-027 coverage point restated (a runtime path unexercised by the
+   author's sandbox is exactly where a latent bug can hide); the real-env run
+   closed it for this change. No bug surfaced.
+4. **Commit-message-delivery family (carry-forward, not in this entry's code).**
+   `git commit -F <(process-substitution)` fails on MINGW64
+   (`/proc/PID/fd` unavailable); the corrective is `-F <real file outside the
+   tree>` or single-line `-m`. A new instance of the VL-014 family; a
+   `session_mechanics_lessons.md` candidate for the next methodology pass.
+
+#### Carry-forwards (not actioned here; scope)
+
+- **Revocation** (detected-compromise instant kill): needs a distribution
+  channel; the published signed key record below carries it.
+- **Published signed key record (B-prime-2)**: distributes rotation / expiry /
+  revocation state; introduces a publisher/root key as the new trust floor;
+  OWES its own framework-level cross-model evaluate before "forgery-resistant"
+  moves further. The named next trajectory action.
+- **Mandatory signing cutover**: posture knob (signature required on `pep.py`'s
+  default forward; the test that would flip is
+  `test_unsigned_path_unchanged_forge_still_accepted`); the integrator's call,
+  documented-available not built-as-required.
+- **`.gitignore` guard for `apply_vl*.py`** (earned this entry, finding 1).
+- **artifact 04 G4 / artifact 06 section 8.2 freshness edits**: candidate
+  doc-freshness (G4 gains an expiry sub-bullet; section 8.2 PoE stays PARTIAL
+  with an expiry note); deferred, paralleling VL-018's artifact-04-as-separate-
+  commit choice.
+- **T-prose-drift / STATE trailing-prose**: still open.
+
+#### Files affected
+
+- `IMPLEMENTATION/envelope.py` (`_HASH_EXCLUDED_KEYS` + `sign_envelope` not_after)
+- `IMPLEMENTATION/verifier.py` (`REF_VERIFY_SIGNATURE_EXPIRED` + `now` param +
+  Step 1.5b expiry check)
+- `TESTS/adversarial/test_signing_expiry.py` (new; 11)
+- `EVIDENCE/proofs/signing_expiry_001_runner.py` + `.log` (new)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `CANON/*`, `MANIFEST/*` (no canon/manifest change)
+- `IMPLEMENTATION/pep.py`, `evaluator.py`, `request_validator.py`,
+  `published_source.py`, `replay/receipt.py` (unchanged; build-then-wire, the
+  gate's default forward is untouched)
+- `docs/restructure/05_admissibility_envelope_spec.md` (already edited at the
+  spec commit `abdb9e0`), `00_README.md`, `docs/methodology/*`, `README.md`
+
+#### Citation discipline (VL-012)
+
+This entry does not cite its own (follow-up) commit hash. Build commit `807ccfe`
+(the code + tests + runner). Spec commit `abdb9e0` (artifact 05 not_after).
+Prior substantive entry VL-040 at `b15e4b2`; the VL-040 follow-up 2
+verdict-of-record this track acts on is at `00fa503`. No cross-model
+verification of the expiry CODE was run in-session; the construction is small
+and exercised by the 11 canon/spec-derived tests + the runner. The NEW trust
+root (the published key record, B-prime-2) is what owes a framework-level
+evaluate, at its own future increment - not this one.
+
+#### Next trajectory action
+
+The published signed key record (B-prime-2): distribute rotation / expiry /
+revocation state and add revocation (detected-compromise instant kill). It
+introduces a publisher/root key as a new trust floor and therefore owes a
+framework-level cross-model evaluate (the claim-track gate) before
+"forgery-resistant" moves further off its bound. Then the mandatory signing
+cutover (posture). A1 target-side policy; caller-carry / proxy-removal;
+T-bookkeeping (G1/G8/G9/G11/G14 + `server.py` retirement + the now-earned
+`.gitignore` guard) and T-prose-drift remain open. None blocking.
