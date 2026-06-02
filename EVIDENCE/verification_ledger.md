@@ -11439,3 +11439,193 @@ verdict (VL-042 follow-up). Only after that verdict-of-record is folded may
 mandatory signing cutover (posture); root rotation process; cross-host transport
 (G5); A1 target-side policy; caller-carry / proxy-removal; T-bookkeeping
 (G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift. None blocking.
+### VL-042 follow-up - 2026-06-02 - New-trust-root cross-model evaluate: forgery-resistance stays BOUNDED; the publisher/root key is the new load-bearing floor (root compromise total, no built recovery)
+
+**Status:** RECORDED (off-record evaluate; verdict-of-record only)
+**Author:** Claude (working session with the project author)
+**Classification:** verdict-of-record for an off-record FRAMEWORK-LEVEL cross-model
+evaluate (VL-008 + cross_model_evaluate_template pattern), parallel to the VL-040
+follow-up 2 key-governance evaluate. No code/canon/spec/manifest change. Records
+the trust-model BOUND that the VL-042 (B-prime-2) publisher/root key places on
+"forgery-resistant" - the claim-track gate the VL-042 build deferred per
+build-then-claim-gate (build fast, claim slow).
+
+**Verifies:** the BOUND that the B-prime-2 published key record's new trust
+anchor - the pinned publisher/ROOT key - places on "forgery-resistant." VL-042
+BUILT revocation (the detected-compromise instant kill) and the freshness-checked
+key record, completing the compromise floor's complement to VL-041 expiry. This
+evaluate is the question VL-042 named load-bearing: what pinning the root BUYS vs
+per-issuer pinning, what it newly REQUIRES, the strongest earned claim, the canon
+basis, and the decisive failure - per the VL-040 follow-up 2 logic that each new
+trust anchor owes its own framework-level evaluate before the word moves.
+
+**Procedure:** framework-level cross-model evaluate per VL-008 (scope to the
+attached primary sources; out-of-scope ranging discarded; ratings/verdicts carry
+no weight) plus the cross_model_evaluate_template, run with the new-trust-root
+prompt's DERIVE-BEFORE-GRADE instruction (the bundle states the project's own
+answers; each recipient derived from canon + code FIRST, then graded). Recipients:
+Grok, OpenAI, Gemini; independent, blind, clean context, off-record
+(`~/elyon-sol-offrecord/`); prompt `new_trust_root_evaluate_prompt.md`. Bundle:
+canon.md (8.2/9/11.9/13/14), `09_key_record_spec.md` (sections 2/5/6/8/10/12/15),
+`IMPLEMENTATION/key_record_source.py`, `EVIDENCE/published_keys_gen.py`,
+`IMPLEMENTATION/verifier.py` (the `key_record_view` path), and the VL-040
+follow-up 2 verdict-of-record as cited INPUT.
+
+**Procedural cleanliness:** all three passed the derive-before-grade gate - each
+derived Q1 (provenance), Q2 (built-vs-named), and Q5 (decisive failure) from
+canon + code before grading; in scope through the body, not only at the opening;
+no out-of-bundle PKI/X.509 ranging. No verbatim overlap across the three (the
+post-VL-038 "one source wearing two hats" concern does not recur; the three
+reconstructed the same mechanics in different words). Rating/approval language
+stripped per VL-008. Gemini returned a single usable response (NOT the VL-040
+follow-up 1 empty-misfire pattern); one procedural note recorded below. All
+admissible.
+
+**Convergent verdict: forgery-resistance is REAL but BOUNDED, the bound is
+LOAD-BEARING, and the publisher/root key is the new floor - root compromise is
+TOTAL with no built recovery. 3-0 across all five questions; no lab flagged any
+overstatement (all five project answers graded ACCURATE by all three).** Per
+question:
+
+- **Q1 (what root-pinning buys) - convergent (3-0).** Trust relocates from N
+  independent issuer-key pins to ONE pinned publisher/root key plus a signed,
+  freshness-bounded statement of which issuer keys are currently trusted. All
+  three independently reconstructed the provenance chain root -> signed record ->
+  active issuer key -> envelope signature (Grok and OpenAI by that name; Gemini's
+  "turning issuer validation into a revocable dynamic query"). All three graded
+  the project's stated answer ACCURATE.
+
+- **Q2 (what it newly requires) - convergent (3-0).** BUILT: record-signature
+  validation, record `not_after` freshness, opt-in serial rollback, per-key
+  `revoked` flag, per-key windows, the distinct reject codes. NAMED-NOT-BUILT:
+  root custody/distribution (the `pinned_root_keys` map is reader-supplied
+  out-of-band; the `_demo()` keypair is ephemeral and never persisted), root
+  rotation PROCESS (schema-representable via `root_key_id` + multi-root pinning,
+  no lifecycle), cross-host transport (G5). All three graded ACCURATE.
+
+- **Q3 (the bound) - convergent (3-0).** Strongest earned claim: on the
+  signed/record path, with an authentic uncompromised root supplying a
+  non-revoked / in-window issuer key that itself signs the envelope (plus
+  reassert + binding), the verifier refuses revoked keys, stale records, unknown
+  keys, out-of-window keys, tampered records, and tampered envelopes. Weakest
+  mandatory caveat (THE BOUND): everything rests on the root private key
+  remaining uncompromised AND the pinned root public key being authentically
+  distributed; the static-map and unsigned paths remain unchanged (weaker). The
+  bare word is not earned. All three graded the project's "bounded, not settled"
+  framing ACCURATE.
+
+- **Q4 (canon) - convergent (3-0), including section 14.** No new invariant;
+  admissibility (AC^3 AND T^26 AND CCS, `evaluate()`) untouched; record
+  consultation is verifier-layer, post-evaluation, orthogonal to `reassert()` /
+  CCS. Operationalizes section 8.2 (PoE anchor), section 9 (fail-closed on every
+  record-state / key-status path), section 11.9 (integrity-verifiability extended
+  to the issuer-key validity statement), section 13 (revalidation). Section 14
+  holds ONLY under the narrowed reading: identity is not an admissibility
+  SUBSTITUTE; the root pin is a provenance anchor in the verify path, not an
+  admissibility input. NOTE the contrast with VL-040 follow-up 2: there the
+  section-14 narrowed reading was a DEPTH-divergent finding two labs had to
+  surface; here all three treated it as already-correctly-stated and graded it
+  ACCURATE without sharpening. The narrowed reading carried into artifact 09
+  derivably (section 10), so the labs FOUND it rather than having to surface it -
+  the VL-040 follow-up 2 lesson did its job one layer up.
+
+- **Q5 (decisive failure) - convergent (3-0).** Root-key COMPROMISE (or malicious
+  root substitution at out-of-band distribution) is the decisive failure: an
+  adversary with the root private key signs a valid record listing
+  adversary-controlled issuer keys, and the verifier is designed to accept records
+  signed by the pinned root. A TRUST-MODEL failure, not a construction failure
+  (the signature / freshness / lookup logic is sound). The bundle builds NO
+  recovery: root custody is out-of-band/deployment, rotation is schema-representable
+  but process-unbuilt. All three graded ACCURATE. Gemini's one-line synthesis is
+  the sharpest statement of the bound: B-prime-2 "does not eliminate the trust
+  floor, it centralizes it."
+
+**The bound on "forgery-resistant" (claim-track gate output).** The evaluate
+CONFIRMS the bound the spec and the VL-042 build entry already state, and finds
+it LOAD-BEARING. The word stays BOUNDED, not settled. It does NOT move to a bare
+claim. Practically (unchanged in kind from VL-040 follow-up 2, now one layer up):
+- the word may appear in INTERNAL records (STATE.md, ledger, the proof) only in
+  its fully-qualified signed-path-under-authentic-uncompromised-root form; never
+  bare.
+- the convergent decisive failure (root compromise + no recovery, custody/rotation
+  named-not-built) is the specific reason the bare word remains unearned.
+- recommendation on Zenodo / citable deposit (the author's decision, not the
+  verdict's): NO deposit of "forgery-resistant" in any form until a root-recovery
+  mechanism exists (root rotation/revocation lifecycle, the floor parallel to the
+  issuer-key revocation that VL-042 just built one level down). The project's own
+  reasoning compels conservatism: a citable claim outlives its caveat, and the
+  decisive failure here is exactly a breakable caveat.
+
+**The recursion is honest (entry's editorial connection, NOT a panel finding -
+the labs were blind to it).** VL-040 follow-up 2 found the issuer-key compromise
+floor load-bearing; VL-042 BUILT the answer (expiry for undetected, revocation for
+detected). This evaluate finds the publisher/ROOT key is now the same shape one
+layer up: a singular trust anchor whose compromise is total and whose recovery is
+named-not-built. Each anchor's decisive failure is the next anchor up; B-prime-2
+relocated and reduced the trust surface (N issuer pins -> 1 root) but did not
+eliminate it, exactly as a PKI cannot. The next floor is root recovery
+(rotation/custody), and by the same logic it will owe its own evaluate when built.
+
+**Non-convergence / findings (honest record):**
+1. No substantive non-convergence: 3-0 on all five questions, all ACCURATE, no
+   overstatement flagged. This is itself a derivation outcome worth recording
+   (per the VL-025 follow-up note that absence-of-divergence is an outcome): the
+   project's stated answers were neither generous nor under-stated against three
+   independent source-bound derivations.
+2. **Supplementary finding (Gemini, in-scope, not graded by the others):** the
+   record-freshness guarantee depends on the verifier's CLOCK - the strict
+   `now < not_after` check is only as strong as the target's clock synchronization
+   (a skewed-back clock could honor a stale record within its skew). Derivable
+   from the `now`-comparison code; neither Grok nor OpenAI named it. Recorded as a
+   spec-clarification gap candidate (artifact 09 section 5 could state the clock
+   assumption explicitly), the analog of VL-023 follow-up's evaluator-versioning
+   supplementary finding. Not blocking; not a construction defect.
+3. **Procedural note (Gemini):** Gemini's Q3/Q5 derivations cite
+   "VL-042 follow-up 2," which does not exist - this evaluate IS the VL-042
+   follow-up, there is no follow-up 2. A phantom citation (likely pattern-matching
+   the VL-040 follow-up 2 model in the bundle); it did not affect the substance
+   (the cited content maps to the VL-040 follow-up 2 verdict and to this evaluate's
+   own role). Recorded as a methodology surface event, not a scope violation.
+
+**Process findings (session mechanics, the fold):**
+1. STATE-delivery-omission family, sharpest instance yet (VL-042 follow-up 2
+   commit `9aa9546`): the STATE apply-script was never placed on disk, so step 3
+   errored, `git add STATE.md` of an unchanged file was a silent no-op, and the
+   ledger-only commit `dd91962` over-claimed "STATE refresh + ledger entry" while
+   containing only the ledger. The visible tell - `git diff --cached --name-only`
+   showed only the ledger - was present but the commit proceeded. Recovered
+   forward (no history rewrite) at `9aa9546`. Corrective the project keeps
+   re-learning: place-the-file-first applies to apply-scripts as to source files;
+   a commit step depending on a generated file must confirm the file ran.
+2. The inline-edit-block paste-eats-content discriminator (VL-042 build:
+   verifier edits delivered as message blocks were skipped while four whole files
+   landed) and the dropped cosmetic edit-5 anchor (Lesson 2 line-wrap, caught
+   fail-closed by the apply-script's abort) are recorded in the VL-042 build
+   entry; the carry-forward (verifier.py Step 1.5 "signed-path only" comment now
+   stale) remains a T-prose-drift candidate.
+
+**Provenance:** the verdict is derived from the three labs' source-bound
+derivations. The prompt and the raw responses are kept off the repo record
+(`~/elyon-sol-offrecord/`), per the VL-008 / VL-040-follow-up-2 pattern (raw
+responses not committed as standalone artifacts). This entry is the record.
+
+**Citation discipline (VL-012).** This entry does not cite its own commit hash.
+The build it gates is VL-042 build `5e9fbf6`; spec `c323b65`. Prior substantive
+entry VL-042 (build) at `5e9fbf6`; its ledger at `dd91962`; STATE refresh at
+`9aa9546`. The VL-040 follow-up 2 verdict this evaluate parallels is at `00fa503`.
+No cross-model verification of CODE was run here; this is a framework-level
+trust-model evaluate, and only the verdict-of-record is recorded.
+
+**Next trajectory action (sharpened by this verdict).** Root recovery is now
+EVIDENCED as the load-bearing floor for the key record, parallel to revocation
+for the issuer keys one layer down - not merely next-in-line. The root-recovery
+mechanism (root rotation / revocation lifecycle + custody discipline) is the floor
+the present bound rests on; it introduces no NEW anchor above the root (the root
+is the top), but its DESIGN owes the same care, and "forgery-resistant" enters no
+citable deposit until it exists. Then: the mandatory signing cutover (posture;
+the test that flips is `test_unsigned_path_unchanged_forge_still_accepted`);
+cross-host transport (G5); A1 target-side policy; caller-carry / proxy-removal;
+T-bookkeeping (G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift (incl.
+the verifier.py Step 1.5 stale comment). Spec-clarification gap candidate: artifact
+09 section 5 should state the verifier-clock assumption explicitly (finding 2).
+None blocking.
