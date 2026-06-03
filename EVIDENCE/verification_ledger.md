@@ -12079,3 +12079,131 @@ remaining T-prose-drift (the stale trailing "Next open action" prose below STATE
 item 41; the `verifier.py` Step 1.5 comment). The board is unchanged: 0 of 3
 deployment predicates green; `forgery-resistant` stays bounded and out of any
 deposit. None blocking.
+
+### VL-047 - 2026-06-03 - T-default-secure: the mandatory signing cutover; pep.py's default forward signs; DEFAULT_SECURE goes green (1 of 3)
+
+**Status:** RECORDED (build). NO follow-up evaluate (see below).
+**Author:** Claude (working session with the project author)
+**Classification:** a WIRING / trajectory move per VL-017a - it puts an
+already-built capability on the default path; it does NOT add a new capability.
+Signing was built and adversarially tested at VL-040 (issuer signing), time-bounded
+at VL-041 (expiry), and given revocation + a published key record at VL-042
+(B-prime-2); its claim-track gate (the key-governance cross-model evaluate) ran at
+VL-040 follow-up 2 (3-0 convergent). VL-047 changes WIRING, not capability: the
+gate's default forward now signs, so the secure path is the only forward path.
+
+**Why no follow-up evaluate.** The cross-model evaluate (CLAIM track) gates new
+claims ABOUT THE WORLD. VL-047 makes no new claim: it wires the VL-040..042 signing
+capability - whose bound ("forgery-resistant" is signed-path-under-uncompromised-
+root, out of any deposit) was already evaluate-confirmed at VL-040 follow-up 2 -
+onto the default path. There is no new world-claim to derive-and-grade, so the
+CLAIM track does not apply and there is no verdict-of-record to fold. The bound is
+unchanged by this commit.
+
+**The cutover (`IMPLEMENTATION/pep.py`).** Six minimal edits:
+- a module-level `_get_signing_key()` provider hook resolves, in order, a
+  process-injected `(signing_key, key_id)` (`_INJECTED_SIGNING_KEY`, set by a test
+  harness or a deployment shim) then the `ELYON_SIGNING_KEY_HEX` +
+  `ELYON_SIGNING_KEY_ID` environment pair. `cryptography` is imported LAZILY inside
+  the function, so `pep.py` stays import-clean (matching the envelope/verifier
+  duck-typing); the private key is NEVER in the repository (artifact 09 / artifact
+  05 "Key model"). Returns `(signing_key, key_id)` or `None`.
+- the ELIGIBLE branch SIGNS the envelope (`sign_envelope`) INSIDE the existing
+  envelope-construction `try/except`, before the push and the return; the signed
+  object is used for BOTH. `_get_signing_key()` returning `None` raises a
+  `RuntimeError` caught by that `try/except` -> 403 `REF_PEP_FAIL_CLOSED` (decision
+  D1: reuse the established fail-closed code, no new vocabulary). A gate with no key
+  FAILS CLOSED, never a downgrade to an unsigned forward (constraint i). No unsigned
+  default forward remains (decision 3.1: remove, not demote).
+- the module docstring and the `governed_call` step-6 docstring are updated to state
+  the signing step honestly (docstring-drift discipline, VL-028/029).
+
+**The canary flip (named, per the opener / DoD).** In
+`TESTS/adversarial/test_signing.py`, `test_unsigned_path_unchanged_forge_still_accepted`
+is RETIRED and renamed to `test_verifier_unsigned_mode_accepts_forge_non_default`.
+The fact it pins is UNCHANGED - `verify_envelope`'s UNSIGNED mode
+(`pinned_public_keys=None`) still accepts a from-scratch forge - but its framing
+changes: that mode legitimately remains for the target-side enforcement and
+A1-bypass demonstrations (`test_enforcement.py`, `test_bypass.py`), and is no longer
+the gate's default path. The module docstring's reference to the old name is updated
+in the same commit.
+
+**Tests + manifest.**
+- `TESTS/conftest.py` (new): an autouse `gate_signing` fixture installs an ephemeral
+  Ed25519 keypair into `pep._get_signing_key` for each test (private key in-process
+  only, never on disk), modeling a deployed gate that has a key;
+  `@pytest.mark.no_gate_key` opts out (forces the provider to `None`) for the
+  fail-closed test.
+- `TESTS/test_pep.py`: `EXPECTED_ENVELOPE_TOP_KEYS` += `issuer_key_id`,
+  `issuer_signature` (the signed envelope has 12 top-level keys);
+  + `test_default_path_is_signed_and_forge_refused` (the canary's replacement AND
+  the proof named by `issuer_signing.wired_to_default`: the default forward signs,
+  a co-located key-pinning target accepts the signed envelope and refuses the
+  unsigned forge); + `test_default_forward_no_key_fails_closed` (constraint i).
+- `TESTS/readiness/test_deployment_predicates.py`: the DEFAULT_SECURE predicate
+  `test_default_forward_is_signed_and_verified` drops its `xfail` marker and wires
+  ANCHOR 1 (now a real regression gate).
+- `EVIDENCE/readiness.json`: `issuer_signing.wired_to_default` -> `{value: true,
+  proof: TESTS/test_pep.py::test_default_path_is_signed_and_forge_refused}`;
+  `DEFAULT_SECURE.green` -> true, with the scope note in `blocked_by` (GREEN at
+  VL-047; default forward signs + a co-located key-pinning target verifies;
+  cross-host transport is END_TO_END_NO_SHORTCUT / G5 and is NOT asserted by this
+  predicate). `validate_manifest` clean; the summary line is now "1 of 3 deployment
+  predicates green | RED: END_TO_END_NO_SHORTCUT, ROOT_RECOVERY".
+- `EVIDENCE/proofs/default_secure_cutover_001_runner.py` (new): single-process
+  evidence - default forward signs; the co-located key-pinning target honors the
+  signed envelope and refuses the unsigned forge (`REF_VERIFY_SIGNATURE_INVALID`);
+  the no-key gate fails closed (`REF_PEP_FAIL_CLOSED`); exit 0.
+
+**Scope (decision 3.3).** DEFAULT_SECURE asserts only: the default forward signs +
+a co-located key-pinning target verifies. Cross-host TRANSPORT is explicitly NOT
+asserted (that is the separate red END_TO_END_NO_SHORTCUT / G5); the verifying
+target is co-located and uses local-disk `reassert()`.
+
+**Checkpoint B (spec-defines-the-change).** The spec posture landed FIRST as its
+own commit `82648dd` (artifacts 05/08/10: "Opt-in mechanism; mandatory at the gate";
+gate-side runtime key custody + no-key fail-closed; artifact 08 section 4.2 forgery
+posture; artifact 10 section 4.1 DEFAULT_SECURE cutover annotation + cross-host
+boundary), per the VL-040 / VL-042 spec-precedes-build precedent.
+
+#### Files affected (build commit `56fd4f1`)
+
+- `IMPLEMENTATION/pep.py` (provider hook + sign step + docstrings; +2630 bytes)
+- `TESTS/test_pep.py` (EXPECTED set + two new tests; +4431 bytes)
+- `TESTS/adversarial/test_signing.py` (canary retired -> characterization; +448 bytes)
+- `TESTS/readiness/test_deployment_predicates.py` (xfail dropped, ANCHOR 1 wired; +1510 bytes)
+- `EVIDENCE/readiness.json` (wired_to_default + DEFAULT_SECURE green; +6 bytes)
+- `TESTS/conftest.py` (new)
+- `EVIDENCE/proofs/default_secure_cutover_001_runner.py` (new)
+- `STATE.md` + `EVIDENCE/verification_ledger.md` (this STATE + ledger commit)
+
+#### Files NOT affected
+
+- `IMPLEMENTATION/envelope.py`, `IMPLEMENTATION/verifier.py`,
+  `IMPLEMENTATION/evaluator.py`, `IMPLEMENTATION/request_validator.py`,
+  `IMPLEMENTATION/readiness.py` - byte-unchanged (the cutover is wiring at `pep.py`;
+  `verify_envelope`'s unsigned mode is deliberately retained for the enforcement /
+  A1-bypass demos). CANON, MANIFEST, `SPEC/` unchanged. No new invariant; section 14
+  holds.
+
+#### Citation discipline (VL-012)
+
+This STATE + ledger commit does not cite its own commit hash. It cites the spec
+posture commit `82648dd` and the build commit `56fd4f1`. Prior substantive entry:
+VL-046 (ledger de-dup). Repo test set 196 passed + 3 xfailed -> 199 passed + 2
+xfailed (real env, win32 / Python 3.13): the DEFAULT_SECURE predicate xfail becomes
+a real pass, three new tests pass, and the retired canary nets against its renamed
+characterization. The cutover runner exits 0 (all invariants hold).
+
+#### Next trajectory action
+
+The readiness gate's remaining two reds, in order: END_TO_END_NO_SHORTCUT (real
+cross-host transport of the published record; G5) and ROOT_RECOVERY (the VL-044
+planned-rotation primitive wired to `pep.py`'s default path AND run over real
+transport with no shortcut). Then A1 target-side admission policy (the
+gate-unreachable floor, closeable only target-side); caller-carry / proxy-removal
+(the section-14-faithful architecture); T-bookkeeping (G1/G8/G9/G11/G14 +
+`server.py` retirement); and the remaining T-prose-drift (the stale trailing "Next
+open action" prose below STATE item 42; the `verifier.py` Step 1.5 comment). 1 of 3
+deployment predicates green; "forgery-resistant" stays bounded and out of any
+deposit. None blocking.
