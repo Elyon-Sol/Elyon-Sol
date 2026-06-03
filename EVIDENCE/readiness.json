@@ -25,6 +25,12 @@
       "wired_to_default": {"value": false, "proof": null, "blocked_by": "enforcing target verifies opt-in; default forward not required-signed"},
       "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet"},
       "transported": {"value": false, "proof": null, "blocked_by": "same-process push in tests; cross-host transport (G5) not built"}
+    },
+    "root_rotation": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_root_record.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "consulting the root record / status view is target-side posture; not on pep.py default path"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet (END_TO_END_NO_SHORTCUT)"},
+      "transported": {"value": false, "proof": null, "blocked_by": "root record fetch is a loopback wrapper; G5 not built"}
     }
   },
   "deployment_predicates": {
@@ -40,8 +46,8 @@
     },
     "ROOT_RECOVERY": {
       "green": false,
-      "proof": null,
-      "blocked_by": "VL-043 not built; no root rotation / per-root status mechanism yet."
+      "proof": "TESTS/readiness/test_deployment_predicates.py::test_root_recovery_wired",
+      "blocked_by": "planned-rotation + per-root-status mechanism BUILT at VL-044 (capability root_rotation.built, proof TESTS/adversarial/test_root_record.py); RED because not on pep.py default path and not transported (G5). Narrowed: planned in-band rotation + per-root status only; root-key COMPROMISE recovery is out-of-band and out of scope. Goes green when rotation is wired to the default path and runs over real transport with no shortcut."
     }
   }
 }

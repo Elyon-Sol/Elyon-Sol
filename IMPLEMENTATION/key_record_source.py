@@ -57,6 +57,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from IMPLEMENTATION.verifier import (
     REF_VERIFY_KEY_RECORD_INVALID,
     REF_VERIFY_KEY_RECORD_STALE,
+    REF_VERIFY_ROOT_REVOKED,
+    REF_VERIFY_ROOT_RETIRED,
 )
 
 KEY_RECORD_FORMAT = "elyon-sol-key-record"
@@ -120,6 +122,7 @@ def load_key_record_from_bytes(
     pinned_root_keys: Dict[str, Any],
     now: Optional[datetime] = None,
     last_seen_serial: Optional[int] = None,
+    root_status_view: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     The pure, network-free trust check. Returns
@@ -134,6 +137,12 @@ def load_key_record_from_bytes(
          serial monotonic if last_seen given        -> RECORD_STALE
       5. build per-key trust view (reconstruct keys) -> RECORD_INVALID on bad
          key material / naive or unparseable window
+
+    When root_status_view (VL-044) is supplied, step 2 also gates the SIGNING
+    root's status: a revoked root refuses (REF_VERIFY_ROOT_REVOKED), a retired
+    root refuses a NEW record (REF_VERIFY_ROOT_RETIRED; issued_at >= retired_at)
+    while past records age via freshness, and a designated-active successor's key
+    comes from the view. root_status_view=None is VL-042 byte-behavior.
 
     The trust view carries STATUS per key (decision 2: richer view) so
     verify_envelope can later discriminate UNKNOWN / REVOKED / OUT_OF_WINDOW:
@@ -153,10 +162,37 @@ def load_key_record_from_bytes(
     if not _structurally_valid(record):
         return _reject(REF_VERIFY_KEY_RECORD_INVALID)
 
-    # 2. select pinned root (unknown root cannot validate the record)
-    root_key = pinned_root_keys.get(record["root_key_id"])
-    if root_key is None:
-        return _reject(REF_VERIFY_KEY_RECORD_INVALID)
+    # 2. select the signing root. When a validated root_status_view is supplied
+    # (VL-044), it is AUTHORITATIVE and supersedes a bare pin (so a pin cannot
+    # silently defeat a root revocation - the artifact 09 decision-3 precedence,
+    # one layer up). A root present in the view is gated by its status: revoked
+    # refuses, retired refuses a NEW record (issued_at >= retired_at) while
+    # honoring past ones, active proceeds with the view's key. A root absent from
+    # the view but pinned is active-by-pinning (the bootstrap default). Neither ->
+    # unknown signing root, folded to RECORD_INVALID. With root_status_view=None
+    # this is byte-identical to the VL-042 pinned-only selection.
+    if root_status_view is not None and record["root_key_id"] in root_status_view:
+        rinfo = root_status_view[record["root_key_id"]]
+        rstatus = rinfo.get("status")
+        if rstatus == "revoked":
+            return _reject(REF_VERIFY_ROOT_REVOKED)
+        if rstatus == "retired":
+            retired_at = rinfo.get("retired_at")
+            try:
+                issued_at = _parse_aware(record["issued_at"])
+            except (ValueError, TypeError, KeyError):
+                return _reject(REF_VERIFY_ROOT_RETIRED)
+            if retired_at is None or not (issued_at < retired_at):
+                return _reject(REF_VERIFY_ROOT_RETIRED)
+        elif rstatus != "active":
+            return _reject(REF_VERIFY_KEY_RECORD_INVALID)
+        root_key = rinfo.get("public_key")
+        if root_key is None:
+            return _reject(REF_VERIFY_KEY_RECORD_INVALID)
+    else:
+        root_key = pinned_root_keys.get(record["root_key_id"])
+        if root_key is None:
+            return _reject(REF_VERIFY_KEY_RECORD_INVALID)
 
     # 3. publisher signature over canonical_json(record minus signature)
     unsigned = {k: v for k, v in record.items() if k != _SIGNATURE_FIELD}

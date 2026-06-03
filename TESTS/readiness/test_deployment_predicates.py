@@ -55,3 +55,29 @@ def test_end_to_end_no_shortcut():
         "END_TO_END_NO_SHORTCUT not wired: transport is a loopback stub "
         "(see blocked_by in EVIDENCE/readiness.json)"
     )
+
+
+@pytest.mark.xfail(
+    reason="ROOT_RECOVERY: the planned-rotation + per-root-status mechanism is "
+    "BUILT (capability root_rotation.built, proof "
+    "TESTS/adversarial/test_root_record.py) but is NOT on pep.py's default path "
+    "and NOT transported (G5 open). RED by design until rotation is wired and "
+    "transported. Narrowed scope: planned in-band rotation + per-root status only; "
+    "root-key COMPROMISE recovery is out-of-band and out of scope.",
+    strict=False,
+)
+def test_root_recovery_wired():
+    # ANCHOR 3 (needs pep.py default path + real transport): drive a deployment
+    # that consults a validated root_status_view on the DEFAULT path and survives a
+    # planned in-band rotation R1 -> R2 over real cross-host transport, with no
+    # test-only shortcut. Forbidden here (mirrors ANCHOR 2): hand-built records,
+    # in-process key injection, a loopback transport stub, or a target importing
+    # reader internals. The mechanism itself is proven by
+    # TESTS/adversarial/test_root_record.py and EVIDENCE/proofs/root_record_001_runner.py
+    # (the capability proof); this ANCHOR is the WIRING gate, red until the default
+    # path and transport land. When they do, implement the exercise and remove xfail.
+    raise AssertionError(
+        "ROOT_RECOVERY not wired: root-status consultation is target-side posture, "
+        "not on pep.py's default path, and transport is a loopback stub "
+        "(see blocked_by in EVIDENCE/readiness.json)"
+    )

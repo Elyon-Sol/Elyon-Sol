@@ -1,0 +1,10 @@
+target pins ONLY root-1 (out-of-band); never re-pinned in this run
+1. R1 (active) designates R2; target validates and learns R2's key
+2. key record signed by designated successor R2 HONORED (target never pinned R2)
+3. R1 signs its own retirement (retired_at set); R2 stays active
+4. NEW key record signed by retired R1 REFUSED (REF_VERIFY_ROOT_RETIRED)
+5. PAST key record signed by R1 (pre-retirement) still HONORED (ages out via freshness)
+6. key record signed by R2 still HONORED after R1 retires
+
+in-band rotation R1 -> R2 demonstrated; target pinned only R1, never re-pinned.
+compromise recovery stays out-of-band (spec section 2); R2-signed ROOT records require the operator's eventual re-pin of R2 (single-hop boundary).

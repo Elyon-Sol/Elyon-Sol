@@ -137,6 +137,17 @@ REF_VERIFY_KEY_UNKNOWN = "REF_VERIFY_KEY_UNKNOWN"
 REF_VERIFY_KEY_REVOKED = "REF_VERIFY_KEY_REVOKED"
 REF_VERIFY_KEY_OUT_OF_WINDOW = "REF_VERIFY_KEY_OUT_OF_WINDOW"
 
+# B-prime-3 root-record codes (VL-044). Same canonical home. ROOT_RECORD_INVALID /
+# ROOT_RECORD_STALE are EMITTED by root_record_source.py (the root reader) and
+# imported there from here; ROOT_RETIRED / ROOT_REVOKED are emitted by
+# key_record_source.py's cross-record status gate. verify_envelope's logic is
+# unchanged by VL-044 (constants only); the root status check lives at the reader
+# layer (11_root_record_spec.md sections 1, 8).
+REF_VERIFY_ROOT_RECORD_INVALID = "REF_VERIFY_ROOT_RECORD_INVALID"
+REF_VERIFY_ROOT_RECORD_STALE = "REF_VERIFY_ROOT_RECORD_STALE"
+REF_VERIFY_ROOT_RETIRED = "REF_VERIFY_ROOT_RETIRED"
+REF_VERIFY_ROOT_REVOKED = "REF_VERIFY_ROOT_REVOKED"
+
 # Accept reason (not a refusal code).
 ACCEPT_REASSERTED_AND_BOUND = "REASSERTED_AND_BOUND"
 
@@ -253,7 +264,7 @@ def verify_envelope(
         if key not in rc:
             return _reject(REF_VERIFY_ENVELOPE_ABSENT)
 
-    # ----- Step 1.5: issuer signature (VL-040; signed-path only) -----
+    # ----- Step 1.5: issuer signature (VL-040..042; signed or record path) -----
     # Runs only when the target supplies pinned_public_keys (the
     # signature-required policy). With pinned_public_keys=None the unsigned
     # path is byte-behavior-unchanged. Fail-closed (canon section 9): a
