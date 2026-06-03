@@ -874,6 +874,69 @@ the response body.
 
 ---
 
+## Lesson 9: Session scratch belongs outside the repo tree (run-cwd discipline)
+
+### Surface events
+
+- **VL-037 (first instance).** A `git add -A` from the repo root swept three
+  repo-root scratch files into the commit (`a959680`): the apply-script, the
+  commit-message file, and a standalone ledger-entry file (a duplicate of the
+  already-appended entry). Removed at `251b44b` via `git rm`; recovery by
+  follow-up commit, no history rewrite. Named there as a new session-mechanics
+  family, distinct from the chat-paste-eats-content family.
+- **VL-041 (second instance).** Two copies of `apply_vl041_artifact05.py` were
+  found untracked under `EVIDENCE/` and `docs/restructure/` at pre-stage
+  `git status` (a stray `cp` into tracked dirs). Caught by the pre-stage status
+  read, removed before staging, never committed. The two instances met the
+  threshold for the `.gitignore` guard.
+- **VL-044 (third instance).** Scratch apply-scripts were left under `EVIDENCE/`
+  and `docs/restructure/` three times in one session because they were run from
+  a subdirectory and the root-level `rm` missed them. Caught every time by
+  `git status` showing `??` lines and explicit stage-by-name.
+
+### Failure mode
+
+Session work produces scratch: apply-scripts, commit-message files, standalone
+ledger-entry drafts. When that scratch is created INSIDE the repo tree, two
+things can go wrong. (1) A `git add -A` from the repo root stages it into a
+commit (VL-037). (2) A cleanup `rm` run from the wrong working directory misses
+it, so it survives to the next `git status` (VL-044). The `.gitignore` guard
+added at VL-037 follow-up and VL-042 (`/apply_vl*.py`, `/vl*_commit_msg.txt`,
+`/vl*_msg.txt`, `/vl*_ledger_entry.md`) is ROOT-ANCHORED by deliberate choice
+(its inline comment: "Root-anchored so nothing in subdirectories is affected"),
+so it catches repo-ROOT scratch but NOT scratch created in a subdirectory like
+`EVIDENCE/` or `docs/restructure/`. That root-anchoring is correct - a
+non-anchored ignore could mask a legitimately-named file in a subdirectory - so
+the residual subdirectory case is not closeable by broadening the ignore; it is
+closeable only behaviorally.
+
+### Corrective rule
+
+- Create session scratch OUTSIDE the repo tree (the `apply_script_template.py`
+  convention: copy to `~/tmp` or a sibling dir). Scratch that is never inside
+  the tree can be neither swept nor stranded.
+- If scratch must touch the tree, keep it at the repo ROOT, where the
+  `.gitignore` guard applies, never in a subdirectory.
+- State the run-cwd explicitly in every run sequence (`cd ~/Elyon-Sol` first),
+  so an apply-script's relative paths and any cleanup `rm` resolve from a known
+  location.
+- Stage by explicit path, never `git add -A`.
+- Confirm scratch removal BY PATH before committing: `git status --short` must
+  show zero `??` lines and `git diff --cached --name-only` must be exactly the
+  intended set. A control that fires every session (the `??` catch) is
+  compensating for a missing upstream fix; the upstream fix is the first two
+  bullets.
+
+### Self-check
+
+> I am about to run an apply-script or write a commit-message / ledger-entry
+> file. Is it OUTSIDE the repo tree (or at least at the repo root, where the
+> root-anchored `.gitignore` guard applies), not in a subdirectory? Have I set
+> the run-cwd explicitly? Am I staging explicit paths rather than `git add -A`?
+> Does `git status --short` show zero `??` lines before I commit?
+
+---
+
 ## How this file evolves
 
 This file is a methodology artifact, not a canonical specification.

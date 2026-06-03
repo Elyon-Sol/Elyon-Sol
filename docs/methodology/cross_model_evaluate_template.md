@@ -307,6 +307,32 @@ is the same across both.
 
 ---
 
+## Stated-answer pre-narrowing (requester discipline)
+
+The Match-criterion divergence above (recipient discipline) has a requester-side
+mirror, observed twice: VL-042 follow-up and VL-044 follow-up. In both evaluates
+the prompt's STATED answer compressed a boundary the sources draw - a
+within-record-vs-cross-signer split in one, a built-vs-named split in the other -
+and one lab (the precision grader) graded the stated answer OVERSTATED while the
+others graded it ACCURATE by-construction, all three drawing the same underlying
+split in their derivations. The divergence was a stated-answer PHRASING finding,
+not a substantive one; the code and spec already drew the split correctly.
+
+The requester-side lesson: when constructing the prompt's stated answer (the
+property or claim being put to the labs), PRE-NARROW any phrasing that compresses
+a within-vs-across or built-vs-named boundary the attached sources distinguish.
+If the spec draws a distinction (for example: within-record conflict is
+loader-enforced while cross-signer overlap is a named out-of-band hazard), the
+stated answer must draw it too; otherwise a precision-grading lab will
+(correctly) flag the compression, and the finding will be about the prompt's
+phrasing rather than about the framework. The recipient-discipline
+criterion-statement above and this requester-discipline pre-narrowing are the two
+halves of the same Match-criterion guard: one keeps the grader's criterion
+explicit, the other keeps the stated answer from inviting the divergence in the
+first place.
+
+---
+
 ## The question
 
 [QUESTION]
