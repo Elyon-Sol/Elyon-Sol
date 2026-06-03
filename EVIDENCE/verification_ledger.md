@@ -12121,3 +12121,150 @@ order (DEFAULT_SECURE at the signing cutover, END_TO_END_NO_SHORTCUT at G5 trans
 ROOT_RECOVERY when rotation is wired + transported); A1 target-side policy; caller-carry /
 proxy-removal; T-bookkeeping (G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift.
 "forgery-resistant" stays bounded and out of any deposit. None blocking.
+
+### VL-045 - 2026-06-03 - T-prose-drift + T-bookkeeping: doc-freshness, spec-clarification, and methodology catch-up; NO capability or admission-path change
+
+**Status:** RECORDED (doc-freshness + spec-clarification + methodology pass; no
+code/canon/manifest/test change). NO follow-up evaluate (see below).
+**Author:** Claude (working session with the project author)
+**Classification:** process/record hardening per VL-017a's distinction - NEITHER
+a capability nor a trajectory move. It writes no new capability, touches no
+admission path (no `pep.py` / `verifier.py` / `evaluate()` / canon / manifest
+change), and adds no invariant. It is a catch-up-and-record pass: it makes the
+stale narrative artifacts match claims already adjudicated, folds three named
+spec gaps, and promotes two at-threshold methodology candidates. Kin to VL-043's
+instrument framing and the VL-009 hygiene work.
+
+**Why no follow-up evaluate.** The cross-model evaluate (CLAIM track) gates
+claims ABOUT THE WORLD. VL-045 makes no such claim; it makes the docs match
+claims already gated (VL-040 follow-up 2, VL-042 follow-up, VL-044 follow-up).
+There is nothing to derive-and-grade. Second build-adjacent entry with no
+evaluate (after VL-043), and that absence is the correct classification.
+
+**The honest frame (constraint h).** The prototype gained a proven-but-unwired
+capability at VL-044; it did NOT get closer to deployed. VL-045 makes the DOCS
+tell that truth - several described a smaller system - and records findings the
+code earned. The board is UNCHANGED: 0 of 3 deployment predicates green;
+`forgery-resistant` stays BOUNDED and out of any deposit (constraints l, g).
+
+**Three content commits (each prose-only).**
+
+1. Doc-freshness (`3555dc1`). `docs/restructure/04_current_vs_claimed.md` folds
+   four VL-NN bullets into the G4 cluster after VL-040 - VL-041 (issuer-key
+   expiry), VL-042 (key record / revocation, B-prime-2), VL-043 (the readiness
+   instrument, 0 of 3 green by design), VL-044 (planned root rotation, B-prime-3,
+   plus the SOUND-3-0 transitive-designation evaluate) - and one G5
+   transport-surface note after VL-039. NO G-row status transitions: G4 stays NOT
+   resolved, G5 open; the bullets record CAPABILITY, not deployment.
+   `docs/restructure/00_README.md` heading "seven artifacts" -> "eleven
+   artifacts", intro count "Six" -> "Eleven", artifacts 08/09/10/11 added to the
+   numbered list. +6219 / +1127 bytes.
+
+2. Spec-clarification (`919bc40`). `docs/restructure/11_root_record_spec.md`
+   section 6.1 gains a "Clock and window assumptions" note folding two VL-044
+   evaluate gap candidates: (3.1a, load-bearing) the retirement gate
+   `issued_at < retired_at` trusts the verifier CLOCK exactly as the section 5
+   freshness ceiling does - a root compromised AFTER retirement can backdate a
+   forged key record's `issued_at` within the target's clock skew; not closeable
+   without a trusted time source, so STATED not fixed (constraint l); and (3.2,
+   minor) per-root WINDOW enforcement is CONSUMER-layer (the loader parses each
+   window at section 7 step 7 but the section 8 status gate consults `status`,
+   not the window). `docs/restructure/09_key_record_spec.md` section 5 gains the
+   mirrored freshness-clock note, closing the long-carried artifact-09-section-5
+   item (artifact 11 section 5 itself flagged it owed). (3.3) the
+   overlap-conflict phrasing was VERIFIED clean on disk (section 6.3 / section 7
+   step 6 / section 9 already draw the within-record-vs-cross-signer split; no
+   unqualified "overlap-conflict fail-closed" survives) - NO edit. Decision on
+   the opener fork: per-artifact-mirroring, not a consolidated clock statement -
+   section 5 already established the per-artifact pattern in place and the two
+   clock concerns sit at different enforcement points. +1277 / +323 bytes.
+
+3. Methodology (`00f5709`). `docs/methodology/session_mechanics_lessons.md` new
+   Lesson 9 (session scratch belongs outside the repo tree / run-cwd discipline;
+   three instances VL-037 / VL-041 / VL-044). Its corrective is grounded in the
+   source-first read of `.gitignore`: the scratch guards already exist and are
+   ROOT-ANCHORED by deliberate choice, so they catch repo-root scratch but not
+   subdirectory scratch (the VL-044 case); the fix is behavioral, not a broader
+   ignore (which would contradict the anchoring).
+   `docs/methodology/cross_model_evaluate_template.md` new "Stated-answer
+   pre-narrowing (requester discipline)" section, the mirror of the existing
+   recipient-discipline outcome-classification section (two instances VL-042
+   follow-up / VL-044 follow-up). +3459 / +1549 bytes.
+
+**4.3 (.gitignore guard): NO edit - the opener-prediction-vs-disk divergence.**
+The opener named a `.gitignore` guard for `apply_vl*.py` / `vl*_commit_msg.txt` /
+`vl*_msg.txt` / `vl*_ledger_*.md` as owed. The source-first read showed it is
+ALREADY present (lines 234-236 from VL-037 follow-up; line 243 from VL-042),
+root-anchored by design. Recorded as the opener-prediction-vs-disk divergence the
+source-first precondition exists to catch - the SECOND instance (after VL-042
+process finding 3's `.gitignore`-already-present). Not edited.
+
+#### Findings
+
+1. **Duplicate VL-042 ledger entry (pre-existing; de-dup deferred).** The VL-042
+   build entry appears TWICE in this ledger, byte-for-byte identical (254 lines /
+   16502 bytes each), as two blocks under the same `### VL-042 - 2026-06-02 -
+   T-key-record` header (the second immediately follows the first's "Next
+   trajectory action"). The `VL-042 follow-up` is distinct and correct. This is
+   the duplicate-append mirror of the chat-paste-eats-content family (a double
+   paste rather than a skip). OUT OF VL-045 SCOPE: removing a copy touches the
+   append-only ledger and owes its own decision and its own bookkeeping entry.
+   Deferred to a separate de-dup micro-commit; named here so it is on record. The
+   append-only discipline is preserved in this entry (no existing entry edited).
+2. **Section-sign leak in Claude-side chat prose (Lesson 7 stage-2, user-caught).**
+   During the session Claude used the non-ASCII section sign in its CHAT prose.
+   The user caught it. No DELIVERABLE was affected: the apply-scripts and notes
+   spell out "section", and each script's `.encode("ascii")` guard would have
+   aborted the write on any non-ASCII byte (none fired). Same family as the
+   VL-033 / VL-034 Claude-side typographic leaks; the Lesson 7 stage-2 byte-sweep
+   applies to chat prose as well as to files.
+3. **Synthetic-fixture discipline held throughout.** Every existing-file edit was
+   applied via a per-file apply-script (CRLF->LF read, LF write,
+   exact-match-or-abort unique anchor or line-prefix, idempotence guard,
+   `.encode("ascii")` guard, atomic write, delta printed) and pre-verified
+   against a HEAD-fixture copy before the real run; every idempotence guard was
+   demonstrated to abort on re-run. The single-space ` - ` dash convention of
+   artifacts 09/11 and the methodology files was matched (distinct from the
+   double-space convention of 00_README/04), caught by a cat -A dash check before
+   drafting.
+
+#### Files affected
+
+- `docs/restructure/04_current_vs_claimed.md`, `docs/restructure/00_README.md`
+  (commit `3555dc1`)
+- `docs/restructure/11_root_record_spec.md`,
+  `docs/restructure/09_key_record_spec.md` (commit `919bc40`)
+- `docs/methodology/session_mechanics_lessons.md`,
+  `docs/methodology/cross_model_evaluate_template.md` (commit `00f5709`)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (this STATE + ledger commit)
+
+#### Files NOT affected
+
+- `CANON/*`, `MANIFEST/*`, all `IMPLEMENTATION/*`, all `TESTS/*`,
+  `SPEC/request_schema.md`, the other `docs/restructure/*` artifacts, `.gitignore`
+  (already-present guard; finding above), `README.md`. No code, test, canon,
+  manifest, or admission-path change.
+
+#### Citation discipline (VL-012)
+
+This entry does not cite its own (STATE + ledger) commit hash. The three content
+commits it records are doc-freshness `3555dc1`, spec-clarification `919bc40`, and
+methodology `00f5709` (in that order). Prior substantive entry: the VL-044
+follow-up verdict-of-record at `ae99a68` (VL-044 build `aec58ee`; spec `7cfc699`
++ `9e5181b`). Repo test set 196 passed + 3 xfailed, unchanged from `ae99a68`
+(docs-only; constraint f).
+
+#### Next trajectory action
+
+The readiness gate's three reds remain the finite, ordered road from prototype to
+working system: DEFAULT_SECURE (the mandatory signing cutover; the canary
+`test_unsigned_path_unchanged_forge_still_accepted` flips - the next REAL
+deployment progress), END_TO_END_NO_SHORTCUT (G5 cross-host transport),
+ROOT_RECOVERY (the VL-044 rotation primitive WIRED to `pep.py`'s default path +
+transported). Then A1 target-side admission policy; caller-carry / proxy-removal;
+the VL-042 ledger de-dup micro-commit; T-bookkeeping (G1/G8/G9/G11/G14 +
+`server.py` retirement); and the remaining T-prose-drift (the stale trailing
+"Next open action" prose below STATE item 40; the `verifier.py` Step 1.5
+comment). VL-045 moved NO predicate toward green - that is correct, and this
+entry does not pretend otherwise. `forgery-resistant` stays bounded and out of
+any deposit. None blocking.
