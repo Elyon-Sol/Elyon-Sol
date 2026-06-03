@@ -11972,3 +11972,152 @@ far as the bound permits. Then the doc-freshness commit; then the readiness reds
 order (DEFAULT_SECURE at the signing cutover, END_TO_END_NO_SHORTCUT at G5,
 ROOT_RECOVERY when rotation is wired + transported); A1 target-side policy;
 caller-carry / proxy-removal; T-bookkeeping and T-prose-drift. None blocking.
+
+### VL-044 follow-up - 2026-06-02 - transitive-root-designation cross-model evaluate: SOUND, 3-0 convergent; the forgery-resistant bound does NOT move
+
+**Status:** RECORDED (off-record evaluate; verdict-of-record only).
+**Author:** Claude (working session with the project author)
+**Classification:** verdict-of-record for an off-record FRAMEWORK-LEVEL cross-model
+evaluate (VL-008 + cross_model_evaluate_template), parallel to the VL-040 follow-up 2
+and VL-042 follow-up key/trust-root evaluates. No code/canon/spec/manifest change.
+Records the soundness of the ONE new trust relationship VL-044 introduced -
+TRANSITIVE root designation (a pinned root R1 vouches in-band for a successor R2 a
+target never pinned) - and confirms the bound on "forgery-resistant" is unmoved.
+
+**Verifies:** whether transitive single-hop designation (artifact 11, B-prime-3) is
+SOUND, and whether it expands the adversary's reach beyond the VL-042-follow-up bound
+(root compromise is total). Decision H (ii) locked at the VL-044 spec session: a new
+trust ASSERTION owes its own evaluate even though it adds no anchor ABOVE the root.
+
+**Procedure:** framework-level cross-model evaluate per VL-008 + the
+cross_model_evaluate_template, run with the DERIVE-BEFORE-GRADE instruction and the
+explicit authorization-by-construction-vs-by-direct-naming grade criterion (the
+VL-042-follow-up Match-criterion clarification, carried into the prompt). Recipients:
+Grok, OpenAI, Gemini; independent, blind, clean context, off-record
+(`~/elyon-sol-offrecord/`); prompt `vl044_root_designation_evaluate_prompt.md`.
+Bundle: canon (8.2/9/11.9/13/14), artifact 11, artifact 09, `published_roots_gen.py`,
+`root_record_source.py`, `key_record_source.py` (with the `root_status_view` gate),
+`verifier.py`, and the VL-042 follow-up verdict as cited input. Build under evaluate:
+`aec58ee`.
+
+**Procedural cleanliness:** all three derived Q1-Q5 from canon + code before grading;
+all three stated their grade criterion explicitly (the prompt's instruction did its
+job); all three held scope within-body, not just at the opening (Lesson 6) - no
+out-of-bundle PKI ranging. No verbatim overlap across the three; each reconstructed
+the single-record-loader topology and the provenance chain in its own words. All
+admissible.
+
+**Convergent verdict: transitive root designation is SOUND as built, and the bound on
+"forgery-resistant" does NOT move - it stays where VL-042 follow-up left it (signed
+path, under an authentic uncompromised root). 3-0 convergent on the load-bearing
+questions (Q1, Q3, Q4) and on the synthesis.** Per question:
+
+- **Q1 (what designation buys) - convergent (3-0 ACCURATE).** In-band single-hop
+  planned rotation: a target pinning only R1 comes to trust a designated R2 without a
+  flag-day re-pin, because R1 (uncompromised) binds R2's public key + status in its
+  signed record; the key reader uses the view's key when R2 is active. All three traced
+  the path (root_record_source -> status_view -> key_record_source gate). The novelty
+  is transitive root trust, not rotation per se (OpenAI).
+
+- **Q2 (built vs named) - convergent on substance; ONE Match-criterion divergence on
+  phrasing.** All three agree on the build/named split (built: signed record, status
+  gating, retirement via issued_at<retired_at, bootstrap downgrade, within-record
+  consistency, the cross-record gate; named: custody, G5, multi-hop chains, compromise
+  recovery). The divergence: the prompt's STATED answer said "overlap-conflict
+  fail-closed" unqualified. OpenAI graded that OVERSTATED (the loader fail-closes only
+  the WITHIN-record analog; cross-signer is explicitly NOT loader-resolved); Grok and
+  Gemini graded ACCURATE by construction while their derivations DREW THE SAME
+  within-vs-cross-signer split. This is the VL-042-follow-up Match-criterion pattern
+  (authorization-by-construction vs by-direct-naming), second instance - a stated-answer
+  PHRASING finding, not a defect: the code and the spec (post-9e5181b conservative-frame)
+  already draw the split correctly. Resolution: OpenAI's precision is adopted - the
+  project's stated answer should read "within-record conflict fail-closed; cross-signer
+  overlap is the named out-of-band hazard." No artifact change needed (the spec is
+  already correct).
+
+- **Q3 (the bound - does transitivity expand adversary reach?) - convergent (3-0
+  ACCURATE), the load-bearing question.** No. A compromised R1 can designate a malicious
+  R2, but a compromised R1 could already sign arbitrary issuer trust (VL-042: root
+  compromise total) - the blast radius is structurally identical; designation is a new
+  HONEST-root capability, not a new adversary capability (all three). The single-hop
+  loader topology (key selected only from the static out-of-band pinned_root_keys for
+  the ROOT record's signer) blocks lateral cross-branch subversion (Gemini, OpenAI).
+  OpenAI's sharpest framing, carried into the verdict: transitivity adds lifecycle
+  complexity and trust-resolution AMBIGUITY during overlap, not adversarial AUTHORITY -
+  "ambiguity is not equivalent to greater adversarial capability." The bound is unmoved.
+
+- **Q4 (canon) - convergent (3-0 ACCURATE).** No new invariant; section 8.2 provenance
+  anchor; section 9 fail-closed on every reader path; section 11.9 integrity-verifiability
+  extended to the root validity/succession statement; section 13 reassert()/evaluate()
+  untouched; section 14 holds ONLY under the narrowed reading (rotation MOVES the trusted
+  identity, does not ADD identity to the admission path). All three flag the section-14
+  narrowed reading as REQUIRED not optional, now carried through three layers (issuer key
+  -> publisher/root key -> transitive root identity) (OpenAI).
+
+- **Q5 (decisive failure) - convergent on the failure; the same phrasing flag as Q2.**
+  All three name root compromise DURING the rotation overlap as decisive: a compromised
+  root signs a record contradicting the honest successor's, an unresolvable cross-signer
+  in-band conflict the single-record loader cannot adjudicate (serial orders within one
+  signer, not across signers), forcing out-of-band re-pin. OpenAI graded the stated
+  answer SLIGHTLY OVERSTATED on the same within-vs-cross-signer compression as Q2; Grok
+  and Gemini ACCURATE. Same resolution. The compromise case stays out-of-band, as the
+  build never claimed otherwise.
+
+**Two supplementary findings (gap candidates, neither blocking, both DEFERRED to the
+spec pass).**
+1. **Retirement clock-skew (Gemini; load-bearing).** The retirement gate is
+   `issued_at < retired_at`. A root compromised AFTER it is retired can forge a key
+   record backdated with `issued_at` before `retired_at` and bypass the retirement gate,
+   bounded by the target's clock skew. This is the exact analogue, one layer up, of the
+   VL-042-follow-up Gemini finding that `now < not_after` freshness is only as strong as
+   the verifier's clock. Gap candidate: artifact 11 should state the verifier-clock
+   assumption explicitly (the retirement gate, like freshness, trusts the target clock),
+   the sibling of the carried artifact-09-section-5 clock note. A retired root is not
+   fully defanged against a later compromise of its key within clock skew until its
+   issued records' freshness ceilings have also lapsed. NOT a construction defect; a
+   stated assumption to surface. Deferred to the doc/spec pass.
+2. **Consumer-layer window enforcement (Gemini; minor).** The root loader parses each
+   root entry's `not_before`/`not_after` into the status view but does not itself compare
+   them against `now`; window enforcement is delegated to the consumer layer. Correct and
+   by design; a one-line spec note that per-root-window enforcement is consumer-layer
+   would remove the ambiguity. Deferred.
+
+**Non-convergence / findings (honest record).**
+1. The only non-convergence is the Q2/Q5 Match-criterion split above, and it is a
+   stated-answer PHRASING split, not a substantive one: all three agree on what the code
+   does and what the spec says. Recorded as the second instance of the
+   authorization-by-construction-vs-by-direct-naming pattern (after VL-042 follow-up);
+   the two-instance threshold is met for a cross_model_evaluate_template note that the
+   project's STATED answers must themselves draw distinctions the spec draws, or a
+   precision-grading lab will (correctly) flag the compression.
+2. Absence of divergence on Q1/Q3/Q4 is itself an outcome (per the VL-025-follow-up note):
+   the project's stated answers on the load-bearing questions were neither generous nor
+   under-stated against three independent source-bound derivations.
+
+**The bound on "forgery-resistant" (claim-track gate output).** UNMOVED. The evaluate
+confirms transitive designation operates strictly beneath the existing root-trust
+ceiling and creates no new adversary escalation path (3-0 on Q3). The word stays in its
+VL-040-follow-up-2 / VL-042-follow-up form (signed path, under an authentic
+uncompromised root) and out of any Zenodo/citable deposit; rotation is a lifecycle
+operation under the same bound, exactly as constraint l held it. Nothing in this verdict
+licenses the word to move; the decisive failure (root compromise, recovery out-of-band)
+is unchanged.
+
+**Provenance.** The verdict is derived from the three labs' source-bound derivations.
+The prompt and raw responses are kept off the repo record (`~/elyon-sol-offrecord/`,
+VL-008); this entry is the record. The build it evaluates is `aec58ee` (spec `7cfc699`
++ `9e5181b`).
+
+**Citation discipline (VL-012).** This entry does not cite its own commit hash. Build
+`aec58ee`; spec `7cfc699` + `9e5181b`. Prior substantive entry: VL-044 build (`aec58ee`;
+STATE + ledger at `47727f2`). The VL-042 follow-up verdict this evaluate parallels is the
+prior trust-root evaluate. No cross-model verification of CODE was run here; this is a
+framework-level trust-model evaluate, and only the verdict-of-record is recorded.
+
+**Next trajectory action.** The doc-freshness commit (artifact 04 owes VL-041/042/043/044;
+00_README owes artifacts 08/09/10/11), folding the two gap candidates above into the spec
+pass alongside the carried artifact-09-section-5 clock note. Then the readiness reds in
+order (DEFAULT_SECURE at the signing cutover, END_TO_END_NO_SHORTCUT at G5 transport,
+ROOT_RECOVERY when rotation is wired + transported); A1 target-side policy; caller-carry /
+proxy-removal; T-bookkeeping (G1/G8/G9/G11/G14 + `server.py` retirement) and T-prose-drift.
+"forgery-resistant" stays bounded and out of any deposit. None blocking.
