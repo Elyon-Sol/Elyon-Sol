@@ -191,8 +191,10 @@ artifact 05 reassertion protocol). What it establishes, and its limit:
   by issuer signing (VL-040): on the signed path the gate signs the envelope
   (Ed25519) and the target verifies `issuer_signature` against a pinned public key
   before `reassert()` (REF_VERIFY_SIGNATURE_INVALID / REF_VERIFY_SIGNATURE_UNKNOWN_KEY,
-  fail-closed). Opt-in: forgery is closed only on the signed path; the unsigned path
-  is unchanged and the mandatory cutover is the named follow-on. See artifact 05
+  fail-closed). The signed path closes forgery; as of the VL-047 mandatory cutover
+  `pep.py`'s default forward signs, so the gate's default path IS the signed path and
+  forgery is closed there  -  the named follow-on is discharged. The verifier's unsigned
+  mode is preserved for the A1 / enforcement demonstrations that use it. See artifact 05
   "Issuer signature (opt-in)".
 - **Interaction binding: NOT closed by the mechanism alone.** Verifying
   `decision_sha256` proves the envelope is an authentic decision about the

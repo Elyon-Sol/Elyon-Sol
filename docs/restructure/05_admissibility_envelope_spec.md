@@ -196,16 +196,26 @@ tamper-evident, not forgery-resistant. A signature authenticates the issuer.
   bounds a leaked key's usefulness WITHOUT depending on detecting the leak.
   Distribution / rotation / revocation remain the named floor (the published
   key record, B-prime-2).
-- **Opt-in.** Unsigned envelopes remain valid; signing is a capability
+- **Opt-in mechanism; mandatory at the gate (VL-040 opt-in; VL-047 cutover).** The
+  signing and verifying primitives remain capabilities at the library layer
   (`sign_envelope(envelope, signing_key, key_id)` plus
-  `verify_envelope(..., pinned_public_keys=...)`). The default path is byte-unchanged
-  and the existing suite is preserved. Forgery is closed only on the signed path  -
-  stated, not blanket; the mandatory cutover is a named follow-on.
+  `verify_envelope(..., pinned_public_keys=...)`); `verify_envelope`'s unsigned mode
+  (`pinned_public_keys=None`) is preserved for the target-side enforcement and
+  A1-bypass demonstrations that legitimately use it. At the GATE, signing is no longer
+  opt-in: as of the VL-047 mandatory cutover `pep.py`'s default forward signs every
+  emitted envelope, so the gate's only forward path is the signed one and forgery is
+  closed there  -  not merely on an opt-in path. The named follow-on is discharged; the
+  residual bound is unchanged (root compromise, recovery out-of-band), so
+  "forgery-resistant" stays bounded and out of any deposit per the claim-track gate
+  below.
 - **Key model.** The private key is never in the repository. The target holds the
   pinned public key, distributed out-of-band exactly as `IMPLEMENTATION/published_source.py`
   distributes the record anchor (Decision B-prime-1). Trust does not vanish; it moves to
   public-key distribution plus the `issuer_key_id` -> key map. Said plainly, the same
-  honesty as the pinned anchor.
+  honesty as the pinned anchor. The GATE obtains its signing key from a runtime source
+  (an environment variable or an injected key object), never from the repository; a
+  gate configured with no signing key FAILS CLOSED  -  it refuses to forward
+  (`REF_PEP_FAIL_CLOSED`) rather than downgrade to an unsigned forward (VL-047).
 - **Layering (no new reassertion row).** Signature verification is a verifier-layer
   concern (`IMPLEMENTATION/verifier.py`; artifact 08), NOT a `reassert()` / CCS concern.
   CCS currency (does live state still match the envelope's pins?) and issuer provenance

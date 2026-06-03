@@ -47,11 +47,14 @@ itself become false confidence. Readiness lives ONLY in the structured manifest.
 ## 4. The three deployment predicates
 
 1. DEFAULT_SECURE - `pep.py`'s DEFAULT forward (no opt-in flags) emits an envelope
-   that carries a valid `issuer_signature` which `verify_envelope` accepts. RED
-   today by design: the default forward is unsigned. The instrument is the inverse
-   of the canary `test_unsigned_path_unchanged_forge_still_accepted`; while that
-   canary passes, DEFAULT_SECURE is false. It goes green the day of the mandatory
-   signing cutover.
+   that carries a valid `issuer_signature` which `verify_envelope` accepts. The
+   mandatory signing cutover lands at VL-047: `pep.py`'s default forward signs, a gate
+   configured with no signing key fails closed (it does not downgrade to unsigned), and
+   the canary `test_unsigned_path_unchanged_forge_still_accepted` is retired in favor of
+   `test_default_path_is_signed_and_forge_refused`. DEFAULT_SECURE goes green at that
+   cutover and its predicate test becomes a real regression gate (the xfail marker
+   removed). Cross-host transport is explicitly NOT asserted by this predicate - that is
+   END_TO_END_NO_SHORTCUT (G5).
 2. END_TO_END_NO_SHORTCUT - the whole chain runs with NO test-only shortcut:
    caller -> gate -> signed envelope -> TRANSPORT -> target verifies the
    transported artifact against the published record -> admit/refuse. A shortcut
