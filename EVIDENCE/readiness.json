@@ -4,7 +4,7 @@
   "capabilities": {
     "issuer_signing": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_signing.py", "blocked_by": null},
-      "wired_to_default": {"value": false, "proof": null, "blocked_by": "mandatory signing cutover not done; pep.py default forward is unsigned; canary test_unsigned_path_unchanged_forge_still_accepted still passes"},
+      "wired_to_default": {"value": true, "proof": "TESTS/test_pep.py::test_default_path_is_signed_and_forge_refused", "blocked_by": null},
       "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet (END_TO_END_NO_SHORTCUT)"},
       "transported": {"value": false, "proof": null, "blocked_by": "G5 cross-host transport not built; loopback wrapper only"}
     },
@@ -35,9 +35,9 @@
   },
   "deployment_predicates": {
     "DEFAULT_SECURE": {
-      "green": false,
+      "green": true,
       "proof": "TESTS/readiness/test_deployment_predicates.py::test_default_forward_is_signed_and_verified",
-      "blocked_by": "mandatory signing cutover not done; pep.py default forward is unsigned. Goes green the day the cutover lands and the canary flips."
+      "blocked_by": "GREEN at VL-047 (mandatory signing cutover). Scope: pep.py default forward signs + a co-located key-pinning target verifies; cross-host transport is END_TO_END_NO_SHORTCUT (G5) and is NOT asserted by this predicate."
     },
     "END_TO_END_NO_SHORTCUT": {
       "green": false,

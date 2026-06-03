@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from fastapi.testclient import TestClient
 from IMPLEMENTATION.pep import app
 
@@ -234,6 +235,8 @@ EXPECTED_ENVELOPE_TOP_KEYS = {
     "condition_results",
     "decision_sha256",
     "timestamp_utc",
+    "issuer_key_id",
+    "issuer_signature",
 }
 
 
@@ -319,3 +322,117 @@ def test_pep_eligible_response_contains_envelope(monkeypatch):
     from IMPLEMENTATION.envelope import canonical_json
     pushed = json.loads(calls[0]["headers"]["X-Elyon-Sol-Envelope"])
     assert canonical_json(pushed) == canonical_json(env)
+
+
+# ----------------------------------------------------------------------------
+# VL-047 mandatory signing cutover. The gate's DEFAULT forward now SIGNS the
+# envelope (no opt-in flag). The autouse `gate_signing` fixture in
+# TESTS/conftest.py injects an ephemeral keypair into pep._get_signing_key for
+# every test, modeling a deployed gate that has a key; a test marked
+# @pytest.mark.no_gate_key opts out to exercise the no-key fail-closed path.
+# ----------------------------------------------------------------------------
+
+
+def test_default_path_is_signed_and_forge_refused(gate_signing, monkeypatch):
+    """
+    VL-047: pep.py's DEFAULT forward (no opt-in flags) signs the emitted
+    envelope, and a co-located target pinning the gate's public key accepts the
+    signed envelope and refuses an unsigned forge. This is the canary's
+    replacement (the retired test_unsigned_path_unchanged_forge_still_accepted
+    asserted the opposite at the verifier's unsigned mode) and the proof for
+    issuer_signing.wired_to_default in EVIDENCE/readiness.json. Cross-host
+    transport is NOT asserted here (that is END_TO_END_NO_SHORTCUT / G5).
+    """
+    from IMPLEMENTATION.verifier import (
+        verify_envelope,
+        ACCEPT_REASSERTED_AND_BOUND,
+    )
+
+    pub = gate_signing["public_key"]
+    key_id = gate_signing["key_id"]
+    pinned = {key_id: pub}
+
+    calls = []
+
+    class FakeResponse:
+        status_code = 200
+        text = '{"ok": true}'
+
+    def fake_post(url, json, timeout, headers=None):
+        calls.append({"url": url, "headers": headers})
+        return FakeResponse()
+
+    monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
+
+    target = "https://upstream.example/default-secure"
+    interaction = {
+        "AP": ["identity", "role"],
+        "OP": ["session", "request"],
+        "context": {},
+        "expected_manifest_version": "1.0",
+        "expected_manifest_sha256": SHA,
+    }
+    response = client.post(
+        "/governed-call",
+        json={"target_url": target, "interaction": interaction},
+    )
+    assert response.status_code == 200
+    assert len(calls) == 1
+
+    # The DEFAULT forward signed the pushed envelope.
+    signed = json.loads(calls[0]["headers"]["X-Elyon-Sol-Envelope"])
+    assert signed["issuer_key_id"] == key_id
+    assert isinstance(signed["issuer_signature"], str)
+
+    # A key-pinning co-located target ACCEPTS the signed envelope ...
+    accept = verify_envelope(signed, interaction, target, pinned_public_keys=pinned)
+    assert accept["accepted"] is True
+    assert accept["reason"] == ACCEPT_REASSERTED_AND_BOUND
+
+    # ... and REFUSES the same envelope stripped of its signature (the forge
+    # the retired canary used to accept on the unsigned verifier mode).
+    forge = {k: v for k, v in signed.items() if k != "issuer_signature"}
+    refuse = verify_envelope(forge, interaction, target, pinned_public_keys=pinned)
+    assert refuse["accepted"] is False
+
+
+@pytest.mark.no_gate_key
+def test_default_forward_no_key_fails_closed(monkeypatch):
+    """
+    VL-047 constraint (i): the signing key is the new operational secret and the
+    gate must FAIL CLOSED when it is absent, never downgrade to an unsigned
+    forward. With no signing key configured (the @no_gate_key fixture branch
+    sets pep._get_signing_key -> None), a valid ELIGIBLE request is refused with
+    REF_PEP_FAIL_CLOSED and the upstream is never reached.
+    """
+    calls = []
+
+    def fake_post(url, json, timeout, headers=None):
+        calls.append(url)
+
+        class _R:
+            status_code = 200
+            text = "{}"
+
+        return _R()
+
+    monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
+
+    response = client.post(
+        "/governed-call",
+        json={
+            "target_url": "https://upstream.example/no-key",
+            "interaction": {
+                "AP": ["identity", "role"],
+                "OP": ["session", "request"],
+                "context": {},
+                "expected_manifest_version": "1.0",
+                "expected_manifest_sha256": SHA,
+            },
+        },
+    )
+    assert response.status_code == 403
+    body = response.json()
+    assert body["detail"]["terminal_state"] == "REFUSE"
+    assert body["detail"]["refusal_reason_code"] == "REF_PEP_FAIL_CLOSED"
+    assert calls == [], "no-key gate must fail closed before forwarding"

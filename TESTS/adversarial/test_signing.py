@@ -21,8 +21,9 @@ Derivation (each test docstring cites its source):
 Opt-in boundary (honest scope): forgery is closed ONLY on the signed path
 (pinned_public_keys supplied). With pinned_public_keys=None the unsigned path
 is byte-behavior-unchanged and STILL forgeable; that is pinned explicitly
-below (test_unsigned_path_unchanged_forge_still_accepted), the same honesty as
-TESTS/adversarial/test_findings_001.py.
+below (test_verifier_unsigned_mode_accepts_forge_non_default; renamed from the
+retired canary test_unsigned_path_unchanged_forge_still_accepted at the VL-047
+cutover), the same honesty as TESTS/adversarial/test_findings_001.py.
 
 Per VL-040 constraint (i): no hash-value pinning; the manifest sha is computed
 live and envelopes use a pinned timestamp_utc for determinism. The keypair is
@@ -284,14 +285,19 @@ def test_tampered_signed_envelope_refused_on_signature():
 # ---------------------------------------------------------------------------
 
 
-def test_unsigned_path_unchanged_forge_still_accepted():
+def test_verifier_unsigned_mode_accepts_forge_non_default():
     """
-    Honest scope (artifact 05: "forgery is closed only on the signed path").
-    With pinned_public_keys=None (the default, unsigned path), verify_envelope
-    is byte-behavior-unchanged: the VL-039 follow-up 2 forge is STILL accepted.
-    This pins the opt-in boundary explicitly, the same discipline as
-    test_findings_001.py. The mandatory cutover (signature required everywhere)
-    is the named follow-on that would change this test.
+    VL-047 characterization (NOT the gate's default behavior). The verifier's
+    UNSIGNED mode (verify_envelope with pinned_public_keys=None) still accepts a
+    from-scratch forge - that mode legitimately remains for the target-side
+    enforcement and A1-bypass demonstrations
+    (TESTS/adversarial/test_enforcement.py, TESTS/adversarial/test_bypass.py)
+    that use the unsigned verifier. It is no longer the GATE's default path: as
+    of the VL-047 cutover pep.py's default forward signs
+    (TESTS/test_pep.py::test_default_path_is_signed_and_forge_refused). This is
+    the renamed successor to the retired canary
+    test_unsigned_path_unchanged_forge_still_accepted; the fact it pins is
+    unchanged - only its framing (a non-default verifier mode, not the gate).
     """
     interaction = _normalized_interaction()
     forge = _construct_forge(interaction)

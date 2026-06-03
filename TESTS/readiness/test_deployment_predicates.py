@@ -20,22 +20,66 @@ honest reds, not fiction.
 import pytest
 
 
-@pytest.mark.xfail(
-    reason="DEFAULT_SECURE: mandatory signing cutover not done; pep.py default "
-    "forward is unsigned. RED by design until the cutover (canary "
-    "test_unsigned_path_unchanged_forge_still_accepted still passes).",
-    strict=False,
-)
-def test_default_forward_is_signed_and_verified():
-    # ANCHOR 1 (needs pep.py): run pep.py's DEFAULT forward (no opt-in signing
-    # flags) on a benign interaction, capture the emitted envelope, and assert it
-    # carries an issuer_signature that verify_envelope() accepts on the default
-    # path. When the cutover lands, replace the raise below with that exercise and
-    # remove the xfail marker.
-    raise AssertionError(
-        "DEFAULT_SECURE not wired: pep.py default forward is unsigned "
-        "(see blocked_by in EVIDENCE/readiness.json)"
+def test_default_forward_is_signed_and_verified(gate_signing, monkeypatch):
+    # ANCHOR 1 WIRED (VL-047 cutover): pep.py's DEFAULT forward (no opt-in flags)
+    # signs the emitted envelope; a co-located target pinning the gate's public
+    # key ACCEPTS the signed envelope and REFUSES an unsigned forge. No xfail:
+    # this is now a real regression gate. Cross-host transport is NOT asserted
+    # here (that is END_TO_END_NO_SHORTCUT / G5); the verifying target is
+    # co-located and uses verify_envelope's pinned-key + local-disk reassert
+    # path. The gate_signing fixture (TESTS/conftest.py) injects the ephemeral
+    # key into pep._get_signing_key.
+    import json
+    from fastapi.testclient import TestClient
+
+    from IMPLEMENTATION.pep import app as pep_app
+    from IMPLEMENTATION.evaluator import manifest_sha256
+    from IMPLEMENTATION.verifier import (
+        verify_envelope,
+        ACCEPT_REASSERTED_AND_BOUND,
     )
+
+    pub = gate_signing["public_key"]
+    key_id = gate_signing["key_id"]
+    pinned = {key_id: pub}
+    target = "https://upstream.example/default-secure-predicate"
+
+    captured = {}
+
+    class _Resp:
+        status_code = 200
+        text = "{}"
+
+    def fake_post(url, json, timeout, headers=None):
+        captured["headers"] = headers or {}
+        return _Resp()
+
+    monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
+
+    interaction = {
+        "AP": ["identity", "role"],
+        "OP": ["session", "request"],
+        "context": {},
+        "expected_manifest_version": "1.0",
+        "expected_manifest_sha256": manifest_sha256(),
+    }
+    resp = TestClient(pep_app).post(
+        "/governed-call",
+        json={"target_url": target, "interaction": interaction},
+    )
+    assert resp.status_code == 200
+
+    signed = json.loads(captured["headers"]["X-Elyon-Sol-Envelope"])
+    assert signed["issuer_key_id"] == key_id
+    assert isinstance(signed["issuer_signature"], str)
+
+    accepted = verify_envelope(signed, interaction, target, pinned_public_keys=pinned)
+    assert accepted["accepted"] is True
+    assert accepted["reason"] == ACCEPT_REASSERTED_AND_BOUND
+
+    forge = {k: v for k, v in signed.items() if k != "issuer_signature"}
+    refused = verify_envelope(forge, interaction, target, pinned_public_keys=pinned)
+    assert refused["accepted"] is False
 
 
 @pytest.mark.xfail(

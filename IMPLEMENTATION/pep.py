@@ -45,9 +45,19 @@ then attaches the envelope to the response payload per Decision E
 ({"decision": "ELIGIBLE", "envelope": <envelope>}). REFUSE response
 shape is unchanged from VL-019; envelope-on-REFUSE is build-outward
 scope per artifact 05 open question 3 (G4 territory).
+
+VL-047 mandatory signing cutover: the ELIGIBLE branch now SIGNS the
+envelope (sign_envelope) before pushing and returning it, using a signing
+key from a runtime source (_get_signing_key; an env var or an injected key
+object, never the repo). A gate with no configured key FAILS CLOSED
+(REF_PEP_FAIL_CLOSED via the envelope-construction try/except), never a
+downgrade to an unsigned forward. verify_envelope's unsigned mode is
+unaffected (it remains for target-side enforcement and A1-bypass
+demonstrations). DEFAULT_SECURE goes green (EVIDENCE/readiness.json).
 """
 
 import json
+import os
 
 import requests
 from fastapi import FastAPI, HTTPException, Request
@@ -60,7 +70,7 @@ from IMPLEMENTATION.evaluator import (
     t26_valid,
     manifest_integrity_valid,
 )
-from IMPLEMENTATION.envelope import build_envelope, canonical_json
+from IMPLEMENTATION.envelope import build_envelope, canonical_json, sign_envelope
 from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
@@ -68,6 +78,32 @@ from IMPLEMENTATION.request_validator import (
 
 
 app = FastAPI(title="Elyon-Sol PEP")
+
+
+# VL-047 mandatory signing cutover: the gate's default forward signs every
+# emitted envelope, so the gate now needs a signing PRIVATE key at runtime.
+# Custody (artifact 09 / artifact 05 "Key model"): the private key is NEVER in
+# the repository. _get_signing_key() resolves, in order, a process-injected key
+# object (a test harness or a deployment shim) then the ELYON_SIGNING_KEY_HEX +
+# ELYON_SIGNING_KEY_ID environment pair. It returns (signing_key, key_id) or
+# None; None makes the ELIGIBLE branch fail closed (REF_PEP_FAIL_CLOSED), never
+# a downgrade to an unsigned forward. cryptography is imported lazily inside the
+# function so this module stays import-clean (matching envelope/verifier
+# duck-typing); the injected object need only expose .sign(bytes) -> bytes.
+_INJECTED_SIGNING_KEY = None  # set to (signing_key, key_id) by a harness/deploy
+
+
+def _get_signing_key():
+    if _INJECTED_SIGNING_KEY is not None:
+        return _INJECTED_SIGNING_KEY
+    key_hex = os.environ.get("ELYON_SIGNING_KEY_HEX")
+    key_id = os.environ.get("ELYON_SIGNING_KEY_ID")
+    if key_hex and key_id:
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+            Ed25519PrivateKey,
+        )
+        return Ed25519PrivateKey.from_private_bytes(bytes.fromhex(key_hex)), key_id
+    return None
 
 
 def _schema_refusal_exception(code: str) -> HTTPException:
@@ -102,7 +138,8 @@ async def governed_call(request: Request):
          -> HTTPException(403, terminal_state=REFUSE). ELIGIBLE ->
          construct envelope (Decision C1: ac3/t26/manifest_integrity
          derived via the three condition functions on safe_manifest;
-         build_envelope() per artifact 05 build-order step 5), then
+         build_envelope() per artifact 05 build-order step 5), sign it
+         (VL-047 cutover; fail-closed if no key is configured), then
          forward to target_url, then return
          {"decision": "ELIGIBLE", "envelope": <envelope>} per
          Decision E.
@@ -201,6 +238,18 @@ async def governed_call(request: Request):
             t26=t26,
             manifest_integrity=mi,
         )
+        # VL-047 mandatory signing cutover: sign the envelope on the default
+        # forward. The signed object is used for BOTH the push header and the
+        # response. No signing key -> fail closed here (caught below as
+        # REF_PEP_FAIL_CLOSED), never a downgrade to an unsigned forward.
+        signing = _get_signing_key()
+        if signing is None:
+            raise RuntimeError(
+                "no signing key configured; gate fails closed rather than "
+                "forward unsigned (VL-047 mandatory signing cutover)"
+            )
+        signing_key, key_id = signing
+        envelope = sign_envelope(envelope, signing_key, key_id)
     except Exception as e:
         raise HTTPException(
             status_code=403,
