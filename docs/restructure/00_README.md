@@ -1,7 +1,7 @@
 # Elyon-Sol Restructure Package  -  Read Me First (Rev. 2)
 
 This package is the first deliverable of the restructure: the **organized, honest base**
-the project builds outward from. Six reviewable artifacts, not prose to be edited again.
+the project builds outward from. Eleven reviewable artifacts, not prose to be edited again.
 
 Premise carried throughout: **canon is locked.** Everything here is derivation from it.
 The repository  -  not any model  -  is the continuity layer.
@@ -9,7 +9,7 @@ The repository  -  not any model  -  is the continuity layer.
 **Rev. 2** incorporates the v0.9.8.4 canonical whitepaper, `manifest.json`, and the real
 `test_pep.py`. This materially changed the assessment  -  see "What the canon changed" below.
 
-## The seven artifacts
+## The eleven artifacts
 
 1. **`01_repository_structure.md`**  -  proposed directory layout. Canon as locked fixed
    point; everything else derivation.
@@ -33,6 +33,20 @@ The repository  -  not any model  -  is the continuity layer.
    the request-layer non-fit, layer A/B/C bounding per VL-024, and direct
    citation of the post-VL-029 envelope.py + pep.py implementation. No new
    invariant, claim, or vocabulary; reading-aid track only.
+8. **`08_enforcement_design.md` (new)**  -  design analysis (reading-aid / design
+   track, paralleling 07) for gap G4 non-bypassable enforcement: a threat model, the
+   adversary classes derived by construction, the envelope-delivery mechanism, and the
+   G4/G5 boundary. Designed at VL-036; built outward at VL-037/VL-038.
+9. **`09_key_record_spec.md` (new)**  -  spec for the published signed key record
+   (B-prime-2): issuer-key revocation, rotation-representation, and the publisher/root
+   trust floor. Spec-defines-the-change; built at VL-042 (opt-in).
+10. **`10_readiness_spec.md` (new)**  -  spec for the WIRING-track readiness gate
+   (T-readiness): a machine-checked, fail-closed deployment-readiness instrument
+   tracking built / wired / exercised / transported. A governance instrument, not a
+   capability; built at VL-043 (0 of 3 predicates green by design).
+11. **`11_root_record_spec.md` (new)**  -  spec for root succession and per-root status
+   (B-prime-3): planned root rotation, retired/revoked status, and the bootstrap floor.
+   Spec-defines-the-change; built at VL-044 (opt-in, build-then-wire).
 
 ## What the canon changed
 
