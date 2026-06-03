@@ -229,6 +229,24 @@ honest) and an overclaimed compromise-recovery primitive (not buildable in-band)
   by a revoked root is refused to `REF_VERIFY_ROOT_REVOKED` regardless of freshness
   or `issued_at`.
 
+**Clock and window assumptions (stated, not closeable in code).** The `retired`
+gate above (`issued_at < retired_at`) trusts the verifier's CLOCK exactly as the
+section 5 freshness ceiling does: a root compromised AFTER it is retired could
+backdate a forged key record's `issued_at` to before `retired_at` and pass the
+gate, bounded by the target's clock skew (VL-044 follow-up finding 1,
+load-bearing - the sibling, one layer up, of the section 5 and artifact 09
+section 5 freshness-clock note). A retired root is therefore not fully defanged
+against a later compromise of its key, within clock skew, until its
+already-issued records' `not_after` ceilings have also lapsed. Like freshness,
+this is not closeable without a trusted time source (out of scope); it is stated
+as an assumption. Separately, per-root WINDOW enforcement (`not_before` /
+`not_after` of each root entry, parsed at section 7 step 7) is CONSUMER-layer:
+the loader parses each window into the status view but does not compare it
+against `now`, and the cross-record status gate (section 8) consults `status`,
+not the window. Enforcing the per-root window is delegated to the consuming
+layer (the analog of the per-key `REF_VERIFY_KEY_OUT_OF_WINDOW` check); it is a
+stated, by-design delegation, not a gap.
+
 ### 6.2 The bootstrap floor (self-revocation is meaningless in-band)
 
 A root CANNOT revoke ITSELF in-band. A compromised root would sign a fake "I am

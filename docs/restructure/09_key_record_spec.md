@@ -175,6 +175,11 @@ The reader/verifier takes an injectable `now` (default
 key-window check, and the envelope-expiry check (VL-041) so a single clock
 governs all three - mirroring VL-041's `now` parameter for testability.
 
+The freshness guarantee is only as strong as the verifier's CLOCK: a skewed-back
+clock could honor a stale record within its skew (the VL-042 follow-up finding 2
+carry-forward, the sibling of the artifact 11 section 5 note). This is a stated
+assumption, not closeable in code without a trusted time source (out of scope).
+
 ## 6. Root key model and custody
 
 - The root PRIVATE key is NEVER on disk and never in the repo. Live root keypairs
