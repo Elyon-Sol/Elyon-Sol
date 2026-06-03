@@ -245,24 +245,33 @@ ONLY out-of-band. This is the bootstrap floor: the trust graph has to start
 somewhere, and that starting pin is trusted by being pinned, not by any in-band
 statement. Stated derivably so the section 12 evaluate finds it.
 
-### 6.3 The overlap-conflict hazard (fail-closed)
+### 6.3 The overlap-conflict hazard (cross-signer; named, not loader-resolved)
 
 During the rotation overlap, two roots (R1 and R2) are both trusted. If one is
 COMPROMISED in the overlap, it can sign a root record contradicting the honest
 root's: R1 signs "R2 revoked, R1 active" while R2 signs "R1 revoked, R2 active."
-A target holding both records signed by then-trusted roots has an UNRESOLVABLE
-in-band conflict - serial and freshness order honest issuance but cannot
-adjudicate adversarial contradiction (a compromised root issues high serials too).
+A target presented with both records - each validly signed by a then-trusted root -
+faces an UNRESOLVABLE in-band conflict: serial and freshness order honest issuance
+WITHIN one signer but cannot adjudicate a contradiction ACROSS two signers (a
+compromised root issues high serials too).
 
-The reader fails closed on conflict: if the resolved status view contains a
-contradiction for any root (the same root asserted both `active`/`retired` and
-`revoked` by two different trusted signers, with neither superseded by serial under
-a single signer), validation is refused to `REF_VERIFY_ROOT_RECORD_INVALID` and the
-deployment is signaled to out-of-band re-pin. Planned rotation NEVER produces
-conflict, because an honest operator issues a single coherent succession; conflict
-IS the compromise signal. (Within a single signing root, a higher serial supersedes
-a lower one for that signer's assertions - ordinary freshness; conflict is across
-DIFFERENT trusted signers.)
+This conflict is CROSS-SIGNER, and a single root record carries exactly one
+`signing_root_key_id` and one signature. The pure single-record loader (section 7)
+therefore CANNOT detect it - it sees one signer's assertions, not two records'. The
+conservative build (the single-hop lock, section 14 item 3) does not merge records:
+a target consults one validated root record at a time. Cross-signer overlap conflict
+is thus a NAMED DEPLOYMENT-LAYER hazard, resolved by out-of-band re-pin, NOT a
+loader function - and soundly so, because no in-band rule can adjudicate adversarial
+multi-root contradiction. Planned rotation never produces conflict, because an
+honest operator issues a single coherent succession; conflict IS the compromise
+signal, and the response is the same out-of-band re-pin that all root compromise
+requires (section 2).
+
+What the loader DOES enforce is the WITHIN-record analog: the same `root_key_id`
+appearing more than once in a single record's `roots` array, or appearing with
+contradictory status, is malformed and fails closed to
+`REF_VERIFY_ROOT_RECORD_INVALID`. That is deterministic on one record and is the
+buildable piece; the cross-signer case above is the named-not-built piece.
 
 ---
 
@@ -306,8 +315,11 @@ Pure-loader responsibilities, in order (each step fail-closed):
    persisted. Failure -> `REF_VERIFY_ROOT_RECORD_STALE`.
 5. Apply the bootstrap rule (section 6.2): a self-`revoked` assertion on the
    signing root is downgraded to at-most `retired`.
-6. Apply the conflict check (section 6.3): an unresolvable cross-signer
-   contradiction -> `REF_VERIFY_ROOT_RECORD_INVALID`.
+6. Apply the WITHIN-record consistency check (section 6.3): a `root_key_id` that
+   appears more than once in `roots`, or with contradictory status, is malformed ->
+   `REF_VERIFY_ROOT_RECORD_INVALID`. (The CROSS-signer overlap conflict of section
+   6.3 is a named deployment-layer hazard the single-record loader cannot and does
+   not resolve; out-of-band re-pin, not a loader code.)
 7. Build the per-root STATUS VIEW, reconstructing each root public key via
    `Ed25519PublicKey.from_public_bytes`:
    `{root_key_id: {"public_key": <obj>, "status": <str>, "not_before": <dt>,
@@ -372,8 +384,9 @@ the verifier is the unchanged terminal consumer.
 New, defined in verifier.py (the REF_VERIFY_* home), emitted by the readers:
 
 - `REF_VERIFY_ROOT_RECORD_INVALID` - bad publisher signature, unknown signing
-  root, malformed/unparseable root record, or an unresolvable overlap conflict
-  (section 6.3).
+  root, malformed/unparseable root record, or a within-record duplicate or
+  contradictory `root_key_id` (section 6.3; the cross-signer overlap conflict is a
+  named deployment-layer hazard, not this code).
 - `REF_VERIFY_ROOT_RECORD_STALE` - `now >= record.not_after`, tz-naive record
   `not_after`, or serial rollback when state persisted.
 - `REF_VERIFY_ROOT_RETIRED` - a key record signed by a retired root with
@@ -497,7 +510,10 @@ Mirrors the artifact 09 section 13 order, one layer up:
    (`REF_VERIFY_ROOT_REVOKED`); successor designation honored (R2's key record
    trusted after R1 designates R2); unknown signing root refused (RECORD_INVALID);
    stale root record refused (RECORD_STALE); self-revocation downgraded to retired
-   (bootstrap, section 6.2); overlap conflict refused (RECORD_INVALID, section 6.3);
+   (bootstrap, section 6.2); within-record duplicate/contradictory root entry refused
+   (RECORD_INVALID, section 6.3); the cross-signer overlap conflict documented as an
+   out-of-band hazard the loader does not resolve (a boundary the test states, not a
+   loader code it exercises);
    the bootstrap-floor boundary documented (a sole pinned root can be revoked only
    out-of-band - the test asserts the boundary, does not pretend to close it); the
    static-map and unsigned paths byte-unchanged; `root_status_view=None` is VL-042
@@ -569,9 +585,12 @@ off-framework AFTER the build commit; only its verdict-of-record folds.
 - Self-revocation is downgraded to at-most retired; real root revocation requires a
   different trusted root or out-of-band; the first/successor-less root is
   out-of-band-only (section 6.2, the bootstrap floor).
-- Overlap conflict (contradictory assertions from different trusted roots) fails
-  closed to RECORD_INVALID and signals out-of-band re-pin; planned rotation never
-  conflicts (section 6.3; surfaced by the two-record read, not in the opener).
+- Overlap conflict is CROSS-signer and a named deployment-layer hazard (out-of-band
+  re-pin), NOT a single-record loader function - the loader sees one signer
+  (section 6.3, conservative-frame clarification). The loader enforces only the
+  WITHIN-record analog (duplicate or contradictory `root_key_id` in one record ->
+  RECORD_INVALID). Planned rotation never conflicts; conflict is the compromise
+  signal.
 - Multi-generation chains: conservative SINGLE hop from a pinned root (decision on
   section 14 item 3, locked at session start). A target pinning R1 trusts R1's
   directly-designated successor R2, but not a further-designated R3 unless R2 is
