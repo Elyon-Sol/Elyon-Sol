@@ -11851,3 +11851,124 @@ Carry-forwards from VL-042 follow-up / VL-043 unchanged: artifact 09 section 5
 verifier-clock note; the `verifier.py` Step 1.5 stale "signed-path only" comment;
 artifact 04/06/00_README freshness (00_README owes artifacts 08/09/10); the runner
 `-m` convention. None blocking.
+
+### VL-044 - 2026-06-02 - T-root-recovery: planned root rotation + per-root status (B-prime-3); built opt-in, build-then-wire; ROOT_RECOVERY stays RED by design
+
+**Status:** RECORDED (build). Decision-H evaluate DRAFTED, run off-framework after
+this commit; its verdict-of-record folds as the VL-044 follow-up.
+**Author:** Claude (working session with the project author)
+**Classification:** a capability/trajectory move per VL-017a - the rotation
+primitive is a real capability advance (unlike the VL-043 GR-track instrument). It
+does NOT touch the admission path: `verify_envelope` logic is unchanged, no
+`evaluate()` change, no canon clause operationalized, no new invariant. It is
+verifier-layer/reader-layer provenance machinery, post-evaluation.
+
+**What it builds (the buildable half of root recovery).** VL-042 follow-up's
+three-lab evaluate found the pinned root a singular, load-bearing trust floor whose
+compromise is TOTAL, with no built recovery. This increment builds PLANNED rotation
+and PER-ROOT STATUS, per `docs/restructure/11_root_record_spec.md` (spec `7cfc699` +
+conservative-frame clarification `9e5181b`):
+- A current root signs its successor's designation, so a deployment moves from root
+  R1 to root R2 IN-BAND without a flag-day re-pin at every target (transitive root
+  trust, bounded by status + freshness, conservative SINGLE hop; chain-following
+  deferred).
+- Per-root status (active / retired / revoked) gates the signing root at the
+  record-validation layer: a revoked root's key record is refused
+  (`REF_VERIFY_ROOT_REVOKED`); a retired root's NEW key record is refused
+  (`REF_VERIFY_ROOT_RETIRED` via `issued_at < retired_at`) while its PAST records age
+  out via freshness; a designated-active successor's key comes from the validated
+  status view; a pinned root absent from the view is active-by-pinning (the
+  bootstrap default).
+
+**Files.** New: `EVIDENCE/published_roots_gen.py` (live signer, mirrors
+`published_keys_gen.py`; ephemeral root keys, never persisted; the record is a
+runtime artifact, never committed - artifact 11 section 4);
+`IMPLEMENTATION/root_record_source.py` (the B-prime-3 sibling reader: pinned-root
+signature -> freshness -> bootstrap downgrade of self-revocation -> within-record
+consistency -> per-root status view; imports `cryptography`, keeping verifier/envelope
+import-clean); `TESTS/adversarial/test_root_record.py` (18 canon/spec-derived tests);
+`EVIDENCE/proofs/root_record_001_runner.py` (+ `.log`; live R1->R2 in-band rotation,
+exit 0). Edited: `IMPLEMENTATION/verifier.py` (+4 `REF_VERIFY_ROOT_*` constants in the
+REF_VERIFY_* home; NO `verify_envelope` logic change; the stale Step 1.5
+"signed-path only" comment fixed - the VL-042 carry-forward);
+`IMPLEMENTATION/key_record_source.py` (+ `root_status_view` param and the cross-record
+status gate; `root_status_view=None` is exact VL-042 byte-behavior);
+`EVIDENCE/readiness.json` (+ `root_rotation` built-but-unwired capability;
+`ROOT_RECOVERY` predicate edits); `TESTS/readiness/test_deployment_predicates.py`
+(+ `test_root_recovery_wired` declared xfail, ANCHOR 3).
+
+**The two documented boundaries (surfaced by the two-record read, conservative-frame
+clarification at `9e5181b`).** (1) CROSS-signer overlap conflict (two trusted roots
+in two DIFFERENT records asserting contradictory status) is NOT a single-record
+loader function - the loader sees one signer; it is a named deployment-layer hazard
+resolved by out-of-band re-pin. The loader enforces only the WITHIN-record analog (a
+`root_key_id` duplicated in one record -> `REF_VERIFY_ROOT_RECORD_INVALID`). (2) The
+bootstrap floor: a root cannot revoke ITSELF in-band (a self-`revoked` assertion is
+downgraded to at-most retired, with `retired_at = revoked_at`); the first /
+successor-less root can be revoked only out-of-band. Both are tested as boundaries
+that the build documents, not pretends to close.
+
+**Readiness (Decisions F + G).** The `root_rotation` capability is `built: true`
+(proof `TESTS/adversarial/test_root_record.py`) with the three wiring flags false and
+honest `blocked_by` (target-side posture; no no-shortcut e2e; G5 loopback only). The
+`ROOT_RECOVERY` predicate stays `green: false` (build-then-wire: the mechanism is
+built but not on `pep.py`'s default path and not transported), now naming its proof
+anchor (`test_root_recovery_wired`) and a narrowed `blocked_by`. Decision F: green
+would mean the deployment is rotation-ready end-to-end, which it is not; flipping
+green on mechanism-built is precisely the CAPABILITY-masking-WIRING failure the
+VL-043 gate exists to catch - the gate watching its own author. Decision G: the old
+`blocked_by` cited the wrong VL number; corrected. The gate stays 0 of 3 green by
+design (`IMPLEMENTATION/readiness.py validate_manifest` clean; all named proof files
+exist; `summary_line` reports the three reds).
+
+**Decision H (locked, ii).** Transitive root designation is a genuine new trust
+assertion ("R1 says trust R2"), so it owes a framework-level evaluate. The evaluate
+is NOT gating "forgery-resistant" (constraint l holds it fixed - rotation is a
+lifecycle op under the existing root-trust bound); it validates the SOUNDNESS of
+transitive designation itself (the load-bearing Q3: does transitivity expand the
+adversary's reach beyond what root compromise already grants?). Prompt drafted at
+`~/elyon-sol-offrecord/vl044_root_designation_evaluate_prompt.md` (off-repo, VL-008);
+run off-framework AFTER this build commit, three labs, blind; only the
+verdict-of-record folds, as the VL-044 follow-up.
+
+**Canon basis.** Sections 8.2 (provenance anchor) / 9 (fail-closed on every
+record-state and status path) / 11.9 (integrity-verifiability extended to the root's
+validity + succession statement) / 13 (revalidation unchanged; `reassert()`
+untouched) / 14 (identity-agnostic under the narrowed reading carried up one more
+layer: rotation MOVES the trusted identity, it does not ADD identity to the admission
+path). No new invariant; admissibility (AC^3 AND T^26 AND CCS, via `evaluate()`)
+untouched.
+
+**Verification (real env, win32 / Python 3.13).** Full suite 178 -> 196 passed;
+xfailed 2 -> 3 (the new `ROOT_RECOVERY` declared-xfail joins DEFAULT_SECURE and
+END_TO_END_NO_SHORTCUT). `test_root_record.py` 18/18; `test_readiness.py` green
+(the gate accepts the new manifest); every prior suite unmoved. The runner
+(`python -m EVIDENCE.proofs.root_record_001_runner`) exits 0 with the six-step
+rotation. Sandbox pre-verification exercised the generator, both readers, the
+cross-record gate, and the gate logic before the real run; per-file apply-scripts +
+the synthetic-fixture / line-prefix discipline applied to every edited file.
+
+**Carry-forward (named, not hidden).** NO `pep.py` change (build-then-wire; consuming
+the root record is target-side posture). Doc freshness is a SEPARATE commit: artifact
+04 is stale since VL-040 (owes VL-041 / 042 / 043 / 044 entries) and 00_README still
+says "seven artifacts" (owes 08 / 09 / 10 / 11). The Decision-H evaluate is the named
+next action (VL-044 follow-up). G5 cross-host transport, the DEFAULT_SECURE signing
+cutover, A1 target-side policy, caller-carry / proxy-removal, and T-bookkeeping
+(G1/G8/G9/G11/G14 + `server.py` retirement) remain open. Prior carry-forwards
+(artifact 09 section 5 verifier-clock note) unchanged. None blocking.
+
+**Citation discipline (VL-012).** This entry does not cite its own commit hash. Build
+`aec58ee`; spec `7cfc699` (artifact 11) + conservative-frame `9e5181b`. Prior
+substantive entry: VL-043 build `753e978`; VL-043 follow-up 2 `7a0b2b7`. No
+cross-model verification of the VL-044 CODE was run in-session; the construction is
+exercised by the 18 canon/spec-derived tests + the runner. The transitive-designation
+trust relationship is what owes the framework-level evaluate, at the VL-044 follow-up
+- not this entry.
+
+**Next trajectory action.** Run the transitive-designation cross-model evaluate
+(`vl044_root_designation_evaluate_prompt.md`, three labs, blind, off-record) and fold
+its verdict (VL-044 follow-up). Only then may "forgery-resistant" move, and only as
+far as the bound permits. Then the doc-freshness commit; then the readiness reds in
+order (DEFAULT_SECURE at the signing cutover, END_TO_END_NO_SHORTCUT at G5,
+ROOT_RECOVERY when rotation is wired + transported); A1 target-side policy;
+caller-carry / proxy-removal; T-bookkeeping and T-prose-drift. None blocking.
