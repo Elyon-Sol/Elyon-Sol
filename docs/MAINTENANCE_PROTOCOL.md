@@ -46,3 +46,31 @@ ACTIVE | SUPERSEDED | RETIRED
   These are present in the source PDF and are not transcription errors.
   They are properties of the locked version, not defects under repair.
   See VL-007.
+
+### GR-2 - Readiness is test-derived, never human-attested
+- Date established: 2026-06-03
+- Originating ledger entry: VL-048
+- Status: ACTIVE
+- Rule: No readiness fact in `EVIDENCE/readiness.json` is human-attested.
+  Every readiness flag (`built`, `wired_to_default`, `exercised_e2e`,
+  `transported`) and every deployment predicate (`green`) that is true MUST
+  name a proof test that exists and passes; a true flag or green predicate with
+  no named, existing, passing proof is a hard build failure (not a warning).
+  A false flag MUST name a `blocked_by` reason. built-but-unwired is ALLOWED
+  (build-then-wire is the method); claimed-but-unwired is FORBIDDEN. The gate
+  is enforced by `IMPLEMENTATION/readiness.py` and `TESTS/readiness/`.
+- Scope: `EVIDENCE/readiness.json` (the single source of readiness truth),
+  `IMPLEMENTATION/readiness.py` (the validator), and `TESTS/readiness/` (the
+  enforcing suite). STATE.md and the ledger REFERENCE the manifest; they do not
+  restate readiness in prose (prose drifts).
+- Rationale: prototype-drift accumulates silently as built-but-unwired
+  capability and as claims that outrun what is wired. A readiness value a person
+  can type without a test behind it is exactly that drift. Deriving every
+  readiness fact from a named test makes the count un-fakeable and makes a
+  claim-ahead-of-its-test a blocking, fail-closed signal. See
+  `docs/restructure/10_readiness_spec.md` (the spec) and VL-043 (the build) /
+  VL-047 (DEFAULT_SECURE green) / VL-048 (END_TO_END_NO_SHORTCUT green +
+  this rule's formalization).
+- Honest ceiling (recorded under this rule): the gate catches claim-vs-wiring
+  divergence; it does NOT perform the wiring. The remaining red
+  (ROOT_RECOVERY) is real engineering the gate cannot do for the project.

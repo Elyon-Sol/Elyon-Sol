@@ -317,6 +317,24 @@ that ordering is a VL-037 decision, not a blocker for this artifact.
 
 **VL-039 update (G5 boundary partially closed).** The durable-source precondition is now met for cross-host over loopback: `IMPLEMENTATION/published_source.py` fetches the published record and anchor-verifies it against a single pinned root (Decision B-prime-1), and `reassert()`/`verify_envelope()` accept an optional `record_source` (Decision D-b) so currency is checked against the fetched record, not local disk (Decision C). Evidence: `EVIDENCE/proofs/g5_cross_host_001.{log,md}`. The G5 floor remains, named not built (Decision F): secure distribution of the pinned anchor, record freshness/revocation, signing/PKI, and true multi-machine/TLS. G5 is transport-built, not blanket RESOLVED.
 
+**VL-048 update (signed chain on the default path over the section-6 transport).**
+The mandatory signing cutover (VL-047) put issuer signing on `pep.py`'s default
+forward; VL-048 runs the full SIGNED chain over the section-6 cross-host
+transport with no test-only shortcut: the gate signs on the default path via the
+production env-var key path, pushes the envelope, and a target on a separate
+process with a genuinely divergent local disk fetches the published record over a
+real socket (the production `fetch_published_record`) and verifies the issuer
+signature against an out-of-band-pinned key plus currency against the fetched
+record plus binding. The proof of record is
+`EVIDENCE/proofs/g5_signed_cross_host_001_runner.py`; the readiness predicate
+END_TO_END_NO_SHORTCUT goes green at VL-048 (dependency set {issuer_signing,
+enforcement_push}). This does NOT move the G5 floor: secure pinned-anchor and
+pinned-key distribution, record/key freshness and revocation, and true
+multi-machine / TLS remain named, not built (Decision F). The A3b freshness
+sub-class (a stale-but-anchor-matching, validly signed record is still honored)
+is unchanged and still named. No new invariant; `verify_envelope` logic
+unchanged (the fetch is real, the verify is as-is); section 14 holds.
+
 ---
 
 ## 7. The reassert() replay / binding gap

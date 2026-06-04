@@ -61,8 +61,32 @@ itself become false confidence. Readiness lives ONLY in the structured manifest.
    is any step present ONLY in tests and absent in deployment: hand-built
    envelopes, in-process key injection bypassing the real key path, a loopback
    stub standing in for cross-host transport, or a target importing the gate's
-   internals instead of verifying a transported artifact. RED today: transport is
-   a loopback wrapper (G5 open).
+   internals instead of verifying a transported artifact. GREEN at VL-048: the
+   signed cross-host chain runs over real loopback transport via the production
+   fetch path with no shortcut (the gate signs on its DEFAULT path via the
+   production env-var key path; a target on a separate process with a genuinely
+   divergent local disk fetches the published record over a real socket and
+   verifies the issuer signature against an out-of-band-pinned key AND currency
+   against the fetched record AND interaction binding). The proof of record is
+   the runner EVIDENCE/proofs/g5_signed_cross_host_001_runner.py (a real
+   two-process, real-socket, divergent-disk run; named in EVIDENCE/readiness.json
+   as the exercised_e2e / transported proof and run in the author's real
+   environment). The predicate's enumerated dependency set is exactly
+   {issuer_signing, enforcement_push}: those are the capabilities the signed
+   chain exercises end-to-end over transport. issuer_key_expiry,
+   issuer_key_revocation, and root_rotation are deliberately NOT in the set -
+   they are not on the default signed chain (expiry: the default forward stamps
+   no not_after; revocation / rotation: target-side record posture, the
+   ROOT_RECOVERY predicate's territory). Quantifying the green-consistency check
+   over ALL capabilities would make green require ROOT_RECOVERY's work and is
+   incoherent with it being a separate red; the consistency check in
+   IMPLEMENTATION/readiness.py therefore quantifies over this enumerated set
+   (the validate_manifest honesty check still quantifies over every capability -
+   only the predicate-green consistency narrows). Honest bound: green does NOT
+   assert true multi-machine / TLS (the named G5 floor; deployment), and does
+   NOT close the A3b freshness sub-class (a stale-but-anchor-matching, validly
+   signed record is still honored; reassert checks repo-state currency, not
+   request liveness).
 3. ROOT_RECOVERY - a deployment can rotate a root on schedule without redeploying
    every target, and refuse a retired/revoked root (the VL-043 buildable sub-case;
    compromise recovery's out-of-band re-pin is the named non-goal). RED today:
@@ -97,8 +121,10 @@ mostly red.
 ## 8. What goes green, when
 
 - DEFAULT_SECURE: the day the mandatory signing cutover lands (the canary flips).
-- END_TO_END_NO_SHORTCUT: the day real cross-host transport replaces the loopback
-  stub and the no-shortcut e2e test passes.
+- END_TO_END_NO_SHORTCUT: green at VL-048 - the signed cross-host chain runs over
+  real loopback transport via the production fetch path with no shortcut (proof
+  of record EVIDENCE/proofs/g5_signed_cross_host_001_runner.py); dependency set
+  {issuer_signing, enforcement_push} per section 4.
 - ROOT_RECOVERY: the day VL-043's planned-rotation + per-root-status build lands
   and is wired.
 These three reds are the finite, ordered road from prototype to working system.
@@ -106,8 +132,8 @@ These three reds are the finite, ordered road from prototype to working system.
 ## 9. Canon basis
 
 No new invariant; admissibility (AC^3 AND T^26 AND CCS, `evaluate()`) untouched;
-not in the admission path. This is a repo-governance gate. GR-rule candidate
-(governs how the repository is allowed to CLAIM readiness), to be recorded in
-`MAINTENANCE_PROTOCOL.md` when formalized. No follow-up cross-model evaluate is
+not in the admission path. This is a repo-governance gate. Formalized at VL-048
+as governance rule GR-2 (readiness is test-derived, never human-attested) in
+`docs/MAINTENANCE_PROTOCOL.md`. No follow-up cross-model evaluate is
 required - the gate makes no claim about the world, so the CLAIM track does not
 apply.
