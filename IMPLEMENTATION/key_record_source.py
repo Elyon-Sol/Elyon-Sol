@@ -257,6 +257,7 @@ def fetch_key_record(
     pinned_root_keys: Dict[str, Any],
     now: Optional[datetime] = None,
     last_seen_serial: Optional[int] = None,
+    root_status_view: Optional[Dict[str, Any]] = None,
     timeout: int = 10,
 ) -> Dict[str, Any]:
     """
@@ -268,6 +269,14 @@ def fetch_key_record(
     rather than proceeding without a validated record (canon section 9). The
     bytes are not trusted until the publisher signature verifies against the
     pinned root the target holds out-of-band.
+
+    root_status_view (VL-049, additive; default None = VL-042 byte-behavior) is
+    threaded to load_key_record_from_bytes so a target can validate a fetched
+    key record against a root-status view obtained by fetching the root record
+    first (the planned-rotation chain): a key record signed by a designated-
+    active successor is honored, a revoked/retired signing root is refused. The
+    validation logic in load_key_record_from_bytes is unchanged; only this
+    transport wrapper threads the view.
     """
     try:
         response = requests.get(publisher_url, timeout=timeout)
@@ -278,4 +287,5 @@ def fetch_key_record(
     return load_key_record_from_bytes(
         response.content, pinned_root_keys, now=now,
         last_seen_serial=last_seen_serial,
+        root_status_view=root_status_view,
     )

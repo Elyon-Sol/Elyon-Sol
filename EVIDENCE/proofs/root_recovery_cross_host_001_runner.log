@@ -1,0 +1,31 @@
+==========================================================================
+ROOT-RECOVERY cross-host rotation demonstration (VL-049)
+==========================================================================
+Pinned published-record anchor : 6abf9a1181121f963eb91e18df560499990396d540c00115ffcfd7bc8907daeb
+Gate evaluator sha256          : cf311cb7fc99f170c4814eebeee63262946ac6b71099635986257887746e512b
+TARGET local evaluator         : 6eda4282aadce4cc58e2272fd086240ef2d386f2466328177b1974cf63ec25c0  <- genuinely divergent
+Gate issuer key_id             : gate-root-recovery-001  (via ELYON_SIGNING_KEY_* env)
+Target pins ONLY               : root-1 (out-of-band; never re-pinned)
+--------------------------------------------------------------------------
+[PASS] KILLER: signed valid; R1 designates R2; key vouched by R2 (DIVERGENT disk)
+       honored=True reason=REASSERTED_AND_BOUND
+       (local-disk verify on this divergent tree would have returned: REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED)
+[PASS] keyless forge (no signature); R2-vouched key
+       honored=False reason=REF_VERIFY_SIGNATURE_INVALID
+       (local-disk verify on this divergent tree would have returned: REF_VERIFY_SIGNATURE_INVALID)
+[PASS] revoked R2 signs the key record
+       honored=False reason=REF_VERIFY_ROOT_REVOKED
+[PASS] retired R2 signs a NEW key record
+       honored=False reason=REF_VERIFY_ROOT_RETIRED
+[PASS] root-record fetch failure (dead socket)
+       honored=False reason=REF_VERIFY_ROOT_RECORD_INVALID
+[PASS] stale root record (now >= not_after)
+       honored=False reason=REF_VERIFY_ROOT_RECORD_STALE
+--------------------------------------------------------------------------
+KILLER PROPERTY (R2-vouched honor despite divergent disk + local-disk-would-refuse): HOLDS
+==========================================================================
+RESULT: ALL INVARIANTS HOLD
+Scope: planned in-band R1->R2 rotation over real transport, no shortcut.
+Does NOT close root-key COMPROMISE recovery (out-of-band; artifact 11 s2).
+Does NOT assert true multi-machine / TLS (G5 floor).
+'forgery-resistant' stays bounded and out of any deposit.

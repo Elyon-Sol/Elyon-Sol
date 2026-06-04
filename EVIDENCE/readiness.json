@@ -17,8 +17,8 @@
     "issuer_key_revocation": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_key_record.py", "blocked_by": null},
       "wired_to_default": {"value": false, "proof": null, "blocked_by": "consulting the key record is target-side posture; not on pep.py default path"},
-      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet"},
-      "transported": {"value": false, "proof": null, "blocked_by": "key record fetch is a loopback wrapper; G5 not built"}
+      "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py", "blocked_by": null},
+      "transported": {"value": true, "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py", "blocked_by": null}
     },
     "enforcement_push": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_enforcement.py", "blocked_by": null},
@@ -29,8 +29,8 @@
     "root_rotation": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_root_record.py", "blocked_by": null},
       "wired_to_default": {"value": false, "proof": null, "blocked_by": "consulting the root record / status view is target-side posture; not on pep.py default path"},
-      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet (END_TO_END_NO_SHORTCUT)"},
-      "transported": {"value": false, "proof": null, "blocked_by": "root record fetch is a loopback wrapper; G5 not built"}
+      "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py", "blocked_by": null},
+      "transported": {"value": true, "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py", "blocked_by": null}
     }
   },
   "deployment_predicates": {
@@ -45,9 +45,9 @@
       "blocked_by": "GREEN at VL-048 (signed cross-host chain). Scope: the full signed chain runs over real loopback transport via the production fetch path with NO test-only shortcut (gate signs on the default path via the production env-var key path; target on a separate process with genuinely divergent disk fetches the published record over a real socket and verifies signature + currency-from-record + binding). Enumerated dependency set: issuer_signing, enforcement_push (10_readiness_spec.md section 4.2). Proof of record: EVIDENCE/proofs/g5_signed_cross_host_001_runner.py. Does NOT assert true multi-machine / TLS (the named G5 floor; deployment). Does NOT close A3b freshness: a stale-but-anchor-matching, validly SIGNED record is still honored (reassert checks repo-state currency, not request liveness)."
     },
     "ROOT_RECOVERY": {
-      "green": false,
-      "proof": "TESTS/readiness/test_deployment_predicates.py::test_root_recovery_wired",
-      "blocked_by": "planned-rotation + per-root-status mechanism BUILT at VL-044 (capability root_rotation.built, proof TESTS/adversarial/test_root_record.py); RED because not on pep.py default path and not transported (G5). Narrowed: planned in-band rotation + per-root status only; root-key COMPROMISE recovery is out-of-band and out of scope. Goes green when rotation is wired to the default path and runs over real transport with no shortcut."
+      "green": true,
+      "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py",
+      "blocked_by": "GREEN at VL-049 (planned root rotation consulted target-side over the signed cross-host chain). Scope: a planned in-band R1->R2 rotation runs over real loopback transport via the production fetch path with NO test-only shortcut (target pinning only R1 fetches the root record + key record over real sockets, builds the root-status + key-record views, and honors a gate-signed envelope whose issuer key is vouched by a key record signed by the designated-active R2; revoked/retired root and fetch failure / stale record fail closed). Enumerated dependency set: root_rotation, issuer_key_revocation (10_readiness_spec.md section 4 item 3). Proof of record: EVIDENCE/proofs/root_recovery_cross_host_001_runner.py. Does NOT close root-key COMPROMISE recovery (irreducibly out-of-band, artifact 11 section 2, the named non-goal). Does NOT assert true multi-machine / TLS (the G5 floor; deployment)."
     }
   }
 }

@@ -23,6 +23,17 @@ PREDICATE_NAMES = ("DEFAULT_SECURE", "END_TO_END_NO_SHORTCUT", "ROOT_RECOVERY")
 # the other capabilities are not on the default signed chain.
 END_TO_END_CAPABILITIES = ("issuer_signing", "enforcement_push")
 
+# The capabilities the ROOT_RECOVERY predicate depends on (the enumerated
+# dependency set, VL-049; 10_readiness_spec.md section 4 item 3). The signed
+# cross-host rotation chain exercises exactly these end-to-end over transport:
+# root_rotation (the target fetches the root record, builds the status view, and
+# survives a planned in-band R1->R2 rotation) and issuer_key_revocation (the
+# key-record path that lets the designated successor vouch the issuer key
+# without a re-pin). The gate default forward is unchanged (rotation is
+# target-side posture), so green requires exercised_e2e + transported, NOT
+# wired_to_default - the same exercised_e2e/transported test as END_TO_END.
+ROOT_RECOVERY_CAPABILITIES = ("root_rotation", "issuer_key_revocation")
+
 
 def load_manifest(path):
     with open(path, "r", encoding="ascii") as f:
@@ -121,6 +132,25 @@ def _consistency(m):
             if cap.get("transported", {}).get("value") is not True:
                 errs.append(
                     "END_TO_END_NO_SHORTCUT is green but %s.transported is not true" % name
+                )
+
+    rr = preds.get("ROOT_RECOVERY", {})
+    if rr.get("green") is True:
+        # Mirrors the END_TO_END narrowing (VL-049): ROOT_RECOVERY green requires
+        # the rotation chain's enumerated capabilities exercised end-to-end over
+        # transport. The gate default forward is unchanged (rotation is
+        # target-side posture), so this does NOT require wired_to_default - the
+        # same exercised_e2e + transported test as END_TO_END. See
+        # 10_readiness_spec.md section 4 item 3 (the enumerated set).
+        for name in ROOT_RECOVERY_CAPABILITIES:
+            cap = caps.get(name, {})
+            if cap.get("exercised_e2e", {}).get("value") is not True:
+                errs.append(
+                    "ROOT_RECOVERY is green but %s.exercised_e2e is not true" % name
+                )
+            if cap.get("transported", {}).get("value") is not True:
+                errs.append(
+                    "ROOT_RECOVERY is green but %s.transported is not true" % name
                 )
     return errs
 
