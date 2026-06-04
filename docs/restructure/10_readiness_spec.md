@@ -88,9 +88,37 @@ itself become false confidence. Readiness lives ONLY in the structured manifest.
    signed record is still honored; reassert checks repo-state currency, not
    request liveness).
 3. ROOT_RECOVERY - a deployment can rotate a root on schedule without redeploying
-   every target, and refuse a retired/revoked root (the VL-043 buildable sub-case;
-   compromise recovery's out-of-band re-pin is the named non-goal). RED today:
-   VL-043 not built.
+   every target, and refuse a retired/revoked root (the planned-rotation +
+   per-root-status sub-case; compromise recovery's out-of-band re-pin is the
+   named non-goal). The mechanism is BUILT at VL-044 (capability root_rotation,
+   proof TESTS/adversarial/test_root_record.py; transitive-designation soundness
+   evaluated SOUND 3-0 at VL-044 follow-up). GREEN at VL-049: a planned in-band
+   R1->R2 rotation is consulted TARGET-side on the signed cross-host chain over
+   real transport with no test-only shortcut. On the chain the gate's DEFAULT
+   forward already drives (VL-047/048), the target additionally fetches the root
+   record and the key record over real sockets (production fetch_root_record /
+   fetch_key_record), builds the validated root-status + key-record views, and a
+   target pinning ONLY R1 comes to honor a gate-signed envelope whose issuer key
+   is vouched by a key record signed by the designated-active R2, with no re-pin;
+   a revoked or retired signing root is refused (REF_VERIFY_ROOT_REVOKED /
+   REF_VERIFY_ROOT_RETIRED) and any fetch failure or stale record fails closed.
+   The gate's DEFAULT forward is UNCHANGED (it already signs; rotation is a
+   target-trust-source concern, not a gate-signing one); "wired to the default
+   path" here means consulted on the live no-shortcut chain the default forward
+   drives, target-side, exactly as END_TO_END's target fetch+verify is part of
+   that chain. The predicate's enumerated dependency set is exactly
+   {root_rotation, issuer_key_revocation}: the rotation primitive plus the
+   key-record path that lets R2 vouch the issuer key without a re-pin (the
+   consistency check in IMPLEMENTATION/readiness.py quantifies over this set, the
+   same narrowing as END_TO_END; validate_manifest still quantifies over every
+   capability). The proof of record is the runner
+   EVIDENCE/proofs/root_recovery_cross_host_001_runner.py (a real two-process,
+   real-socket, divergent-disk run extending VL-048's transport; named in
+   EVIDENCE/readiness.json as the exercised_e2e / transported proof and run in
+   the author's real environment). Honest bound: green is PLANNED in-band
+   rotation + per-root status ONLY; root-key COMPROMISE recovery is irreducibly
+   out-of-band (artifact 11 section 2, the named non-goal), and green does NOT
+   assert true multi-machine / TLS (the G5 floor; deployment).
 
 ## 5. Allowed vs forbidden states
 
@@ -125,8 +153,12 @@ mostly red.
   real loopback transport via the production fetch path with no shortcut (proof
   of record EVIDENCE/proofs/g5_signed_cross_host_001_runner.py); dependency set
   {issuer_signing, enforcement_push} per section 4.
-- ROOT_RECOVERY: the day VL-043's planned-rotation + per-root-status build lands
-  and is wired.
+- ROOT_RECOVERY: green at VL-049 - a planned in-band R1->R2 rotation is consulted
+  target-side on the signed cross-host chain over real transport with no shortcut
+  (proof of record EVIDENCE/proofs/root_recovery_cross_host_001_runner.py);
+  dependency set {root_rotation, issuer_key_revocation} per section 4. The
+  VL-044-built mechanism wired onto the VL-048 transport; the gate's default
+  forward is unchanged.
 These three reds are the finite, ordered road from prototype to working system.
 
 ## 9. Canon basis

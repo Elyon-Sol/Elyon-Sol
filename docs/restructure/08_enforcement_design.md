@@ -335,6 +335,27 @@ sub-class (a stale-but-anchor-matching, validly signed record is still honored)
 is unchanged and still named. No new invariant; `verify_envelope` logic
 unchanged (the fetch is real, the verify is as-is); section 14 holds.
 
+**VL-049 update (planned root rotation consulted target-side on the signed
+cross-host chain).** VL-044 built the planned-rotation + per-root-status
+mechanism (transitive root designation, evaluated SOUND 3-0 at VL-044 follow-up);
+VL-049 wires it onto the section-6 transport with no test-only shortcut. On the
+chain VL-048 already runs, the target additionally fetches the root record and
+the key record over real sockets (production `fetch_root_record` /
+`fetch_key_record`), validates them into a root-status view plus key-record view,
+and a target pinning ONLY R1 comes to honor a gate-signed envelope whose issuer
+key is vouched by a key record signed by the designated-active R2 - a planned
+in-band R1->R2 rotation with no re-pin; a revoked or retired signing root is
+refused, and any fetch failure or stale record fails closed. The proof of record
+is `EVIDENCE/proofs/root_recovery_cross_host_001_runner.py`; the readiness
+predicate ROOT_RECOVERY goes green at VL-049 (dependency set {root_rotation,
+issuer_key_revocation}). The gate's default forward is UNCHANGED (it already
+signs; rotation is a target-trust-source concern). This does NOT move the floor:
+root-key COMPROMISE recovery is irreducibly out-of-band (artifact 11 section 2),
+and true multi-machine / TLS remains the G5 floor (Decision F). No new invariant;
+`verify_envelope` and the readers' logic unchanged (the fetch becomes real, the
+verify/validate is as-is); section 14 holds under the narrowed reading (rotation
+moves the trusted identity; it does not add identity to the admission path).
+
 ---
 
 ## 7. The reassert() replay / binding gap
