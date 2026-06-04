@@ -5,8 +5,8 @@
     "issuer_signing": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_signing.py", "blocked_by": null},
       "wired_to_default": {"value": true, "proof": "TESTS/test_pep.py::test_default_path_is_signed_and_forge_refused", "blocked_by": null},
-      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet (END_TO_END_NO_SHORTCUT)"},
-      "transported": {"value": false, "proof": null, "blocked_by": "G5 cross-host transport not built; loopback wrapper only"}
+      "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/g5_signed_cross_host_001_runner.py", "blocked_by": null},
+      "transported": {"value": true, "proof": "EVIDENCE/proofs/g5_signed_cross_host_001_runner.py", "blocked_by": null}
     },
     "issuer_key_expiry": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_signing_expiry.py", "blocked_by": null},
@@ -23,8 +23,8 @@
     "enforcement_push": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_enforcement.py", "blocked_by": null},
       "wired_to_default": {"value": false, "proof": null, "blocked_by": "enforcing target verifies opt-in; default forward not required-signed"},
-      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "no no-shortcut end-to-end test yet"},
-      "transported": {"value": false, "proof": null, "blocked_by": "same-process push in tests; cross-host transport (G5) not built"}
+      "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/g5_signed_cross_host_001_runner.py", "blocked_by": null},
+      "transported": {"value": true, "proof": "EVIDENCE/proofs/g5_signed_cross_host_001_runner.py", "blocked_by": null}
     },
     "root_rotation": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_root_record.py", "blocked_by": null},
@@ -40,9 +40,9 @@
       "blocked_by": "GREEN at VL-047 (mandatory signing cutover). Scope: pep.py default forward signs + a co-located key-pinning target verifies; cross-host transport is END_TO_END_NO_SHORTCUT (G5) and is NOT asserted by this predicate."
     },
     "END_TO_END_NO_SHORTCUT": {
-      "green": false,
-      "proof": "TESTS/readiness/test_deployment_predicates.py::test_end_to_end_no_shortcut",
-      "blocked_by": "transport is a loopback wrapper (G5 open); no full chain runs without a test-only shortcut."
+      "green": true,
+      "proof": "EVIDENCE/proofs/g5_signed_cross_host_001_runner.py",
+      "blocked_by": "GREEN at VL-048 (signed cross-host chain). Scope: the full signed chain runs over real loopback transport via the production fetch path with NO test-only shortcut (gate signs on the default path via the production env-var key path; target on a separate process with genuinely divergent disk fetches the published record over a real socket and verifies signature + currency-from-record + binding). Enumerated dependency set: issuer_signing, enforcement_push (10_readiness_spec.md section 4.2). Proof of record: EVIDENCE/proofs/g5_signed_cross_host_001_runner.py. Does NOT assert true multi-machine / TLS (the named G5 floor; deployment). Does NOT close A3b freshness: a stale-but-anchor-matching, validly SIGNED record is still honored (reassert checks repo-state currency, not request liveness)."
     },
     "ROOT_RECOVERY": {
       "green": false,

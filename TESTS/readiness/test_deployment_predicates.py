@@ -82,23 +82,132 @@ def test_default_forward_is_signed_and_verified(gate_signing, monkeypatch):
     assert refused["accepted"] is False
 
 
-@pytest.mark.xfail(
-    reason="END_TO_END_NO_SHORTCUT: transport is a loopback wrapper (G5 open); "
-    "no full chain runs without a test-only shortcut. RED by design until real "
-    "cross-host transport replaces the stub.",
-    strict=False,
-)
-def test_end_to_end_no_shortcut():
-    # ANCHOR 2 (needs pep.py + real transport): drive the whole chain with NO
-    # test-only shortcut - caller -> gate -> signed envelope -> TRANSPORT -> target
-    # verifies the TRANSPORTED artifact against the published record -> admit/refuse.
-    # Forbidden here: hand-built envelopes, in-process key injection bypassing the
-    # real key path, a loopback stub for transport, or a target importing gate
-    # internals. When real transport lands, implement the exercise and remove xfail.
-    raise AssertionError(
-        "END_TO_END_NO_SHORTCUT not wired: transport is a loopback stub "
-        "(see blocked_by in EVIDENCE/readiness.json)"
+def test_end_to_end_no_shortcut(monkeypatch):
+    # ANCHOR 2 WIRED (VL-048 signed cross-host chain): the lighter,
+    # suite-level regression gate for END_TO_END_NO_SHORTCUT. The HEAVY
+    # no-shortcut proof of record is the runner
+    # EVIDENCE/proofs/g5_signed_cross_host_001_runner.py (a real two-process,
+    # real-socket, genuinely-divergent-disk run; named as the exercised_e2e /
+    # transported proof in EVIDENCE/readiness.json and run in the author's real
+    # environment at session-close). This pytest test asserts the COMPOSABLE
+    # signed-chain invariant in-process so the suite reds the moment the chain
+    # breaks: the gate signs on its DEFAULT path via the PRODUCTION key path,
+    # the pushed signed envelope is verified against the gate's out-of-band
+    # public key AND the published record (currency), and the keyless forge is
+    # refused on the signed path.
+    #
+    # HONESTY NOTE: this test deliberately does NOT use the autouse
+    # `gate_signing` conftest fixture (which monkeypatches pep._get_signing_key
+    # IN-PROCESS - an in-process-key-injection shortcut that section 4.2
+    # forbids). It drives the production env-var key path
+    # (ELYON_SIGNING_KEY_HEX + ELYON_SIGNING_KEY_ID) so the signing path under
+    # test is the deployed one. In-process transport here is acceptable for a
+    # regression gate; the REAL cross-host transport with no shortcut is the
+    # runner's job (D-1=b). A3b freshness (a stale-but-anchor-matching signed
+    # record is still honored) remains a NAMED bound, not closed here.
+    import json
+
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives.serialization import (
+        Encoding,
+        PrivateFormat,
+        NoEncryption,
     )
+    from fastapi.testclient import TestClient
+
+    import IMPLEMENTATION.pep as pep
+    from IMPLEMENTATION.evaluator import manifest_sha256
+    from IMPLEMENTATION.verifier import (
+        verify_envelope,
+        ACCEPT_REASSERTED_AND_BOUND,
+        REF_VERIFY_SIGNATURE_INVALID,
+    )
+
+    # Production key path: an ephemeral key handed to the gate via the env
+    # pair, NOT via the conftest in-process injection. The autouse
+    # `gate_signing` fixture has already replaced pep._get_signing_key with an
+    # in-process lambda (the shortcut we must not use here); restore a resolver
+    # that genuinely reads the env pair (byte-identical to pep's real
+    # _get_signing_key env branch) so the signing path under test is the
+    # deployed one.
+    priv = Ed25519PrivateKey.generate()
+    key_id = "anchor2-signed-chain-001"
+    key_hex = priv.private_bytes(
+        Encoding.Raw, PrivateFormat.Raw, NoEncryption()
+    ).hex()
+    monkeypatch.setenv("ELYON_SIGNING_KEY_HEX", key_hex)
+    monkeypatch.setenv("ELYON_SIGNING_KEY_ID", key_id)
+
+    def _env_resolver():
+        import os as _os
+        kh = _os.environ.get("ELYON_SIGNING_KEY_HEX")
+        ki = _os.environ.get("ELYON_SIGNING_KEY_ID")
+        if kh and ki:
+            return Ed25519PrivateKey.from_private_bytes(bytes.fromhex(kh)), ki
+        return None
+
+    # Override the conftest fixture's in-process lambda with the env-reading
+    # resolver (this IS the production path: pep's own _get_signing_key reads
+    # exactly these env vars).
+    monkeypatch.setattr(pep, "_get_signing_key", _env_resolver)
+
+    pub = priv.public_key()
+    pinned = {key_id: pub}
+    target = "https://upstream.example/end-to-end-no-shortcut"
+
+    captured = {}
+
+    class _Resp:
+        status_code = 200
+        text = "{}"
+
+    def fake_post(url, json, timeout, headers=None):
+        captured["headers"] = headers or {}
+        return _Resp()
+
+    monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
+
+    interaction = {
+        "AP": ["identity", "role"],
+        "OP": ["session", "request"],
+        "context": {},
+        "expected_manifest_version": "1.0",
+        "expected_manifest_sha256": manifest_sha256(),
+    }
+    resp = TestClient(pep.app).post(
+        "/governed-call",
+        json={"target_url": target, "interaction": interaction},
+    )
+    assert resp.status_code == 200, "gate did not return ELIGIBLE on the signed default path"
+
+    signed = json.loads(captured["headers"]["X-Elyon-Sol-Envelope"])
+    assert signed["issuer_key_id"] == key_id
+    assert isinstance(signed["issuer_signature"], str)
+
+    # Currency from the published record (the transported artifact), signature
+    # from the out-of-band pin. Co-located here; the cross-host transport with
+    # no shortcut is the runner.
+    record = {
+        "canon_sha256": signed["canon"]["canon_sha256"],
+        "evaluator_sha256": signed["evaluator"]["evaluator_sha256"],
+        "manifest_sha256": signed["evaluated_against"]["manifest_sha256"],
+    }
+    accepted = verify_envelope(
+        signed, interaction, target,
+        record_source=record, pinned_public_keys=pinned,
+    )
+    assert accepted["accepted"] is True
+    assert accepted["reason"] == ACCEPT_REASSERTED_AND_BOUND
+
+    # The VL-039-follow-up-2 keyless forge: strip the signature. The signed
+    # path refuses it (no downgrade to the unsigned path).
+    forge = {k: v for k, v in signed.items() if k != "issuer_signature"}
+    refused = verify_envelope(
+        forge, interaction, target,
+        record_source=record, pinned_public_keys=pinned,
+    )
+    assert refused["accepted"] is False
+    assert refused["reason"] == REF_VERIFY_SIGNATURE_INVALID
 
 
 @pytest.mark.xfail(

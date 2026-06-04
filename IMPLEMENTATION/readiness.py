@@ -17,6 +17,12 @@ import os
 FLAG_KEYS = ("built", "wired_to_default", "exercised_e2e", "transported")
 PREDICATE_NAMES = ("DEFAULT_SECURE", "END_TO_END_NO_SHORTCUT", "ROOT_RECOVERY")
 
+# The capabilities the END_TO_END_NO_SHORTCUT predicate depends on (the
+# enumerated dependency set, VL-048; 10_readiness_spec.md section 4.2). The
+# signed cross-host chain exercises exactly these end-to-end over transport;
+# the other capabilities are not on the default signed chain.
+END_TO_END_CAPABILITIES = ("issuer_signing", "enforcement_push")
+
 
 def load_manifest(path):
     with open(path, "r", encoding="ascii") as f:
@@ -96,7 +102,18 @@ def _consistency(m):
 
     e2e = preds.get("END_TO_END_NO_SHORTCUT", {})
     if e2e.get("green") is True:
-        for name, cap in caps.items():
+        # The predicate depends ONLY on the capabilities exercised by the
+        # signed cross-host chain (VL-048): issuer_signing (gate signs;
+        # target verifies the signature) and enforcement_push (the envelope
+        # is delivered and verified over real transport). issuer_key_expiry,
+        # issuer_key_revocation, and root_rotation are NOT on the default
+        # signed chain (expiry: the default forward stamps no not_after;
+        # revocation/rotation: target-side record posture, ROOT_RECOVERY).
+        # Quantifying over all capabilities would make green require
+        # ROOT_RECOVERY's work and is incoherent with it being a separate
+        # red. See 10_readiness_spec.md section 4.2 (the enumerated set).
+        for name in END_TO_END_CAPABILITIES:
+            cap = caps.get(name, {})
             if cap.get("exercised_e2e", {}).get("value") is not True:
                 errs.append(
                     "END_TO_END_NO_SHORTCUT is green but %s.exercised_e2e is not true" % name
