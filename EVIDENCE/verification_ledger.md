@@ -12207,3 +12207,177 @@ gate-unreachable floor, closeable only target-side); caller-carry / proxy-remova
 open action" prose below STATE item 42; the `verifier.py` Step 1.5 comment). 1 of 3
 deployment predicates green; "forgery-resistant" stays bounded and out of any
 deposit. None blocking.
+
+### VL-048 - 2026-06-03 - T-end-to-end: the signed cross-host chain; END_TO_END_NO_SHORTCUT goes green (2 of 3)
+
+**Status:** RECORDED (build). NO follow-up evaluate (see below).
+**Author:** Claude (working session with the project author)
+**Classification:** a WIRING / trajectory move per VL-017a - it composes two
+already-built, already-evaluated capabilities (VL-047 default-path signing,
+VL-039 cross-host transport) into one chain that runs with no test-only
+shortcut, and turns the second readiness red green. Real transport over the
+production fetch path is the capability advance (the first thing that makes the
+full signed chain runnable without a shortcut); it adds nothing to the admission
+path (no `evaluate()` / `verify_envelope` logic / canon change; no new invariant).
+
+**Why no follow-up evaluate.** The cross-model evaluate (CLAIM track) gates new
+claims ABOUT THE WORLD. VL-048 makes no new claim: it runs the VL-047 signing +
+VL-039 transport chain end-to-end. Signing's claim-track gate ran at VL-040
+follow-up 2 (3-0 convergent; the forgery-resistance bound), and transport's
+Decision G framework-level evaluate ran at VL-039 follow-up (PARTIAL; the
+local-disk/transport-independence bound + the A3b freshness floor). A network
+adversary on the new transport reduces to denial (fail-closed fetch -> refuse),
+stale-serving (the A3b floor, NAMED not closed), tampering (caught by the pinned
+anchor), or forge (now caught by the signature on this chain). There is no new
+world-claim to derive-and-grade, so the CLAIM track does not apply. Third
+build-adjacent entry with no evaluate (after VL-043, VL-047), and that absence
+is the correct classification.
+
+**The chain (the proof of record).** `EVIDENCE/proofs/g5_signed_cross_host_001_runner.py`
+(new) stands up a real two-context demonstration:
+- The GATE signs on its DEFAULT path via the PRODUCTION key path: the runner
+  generates a live ephemeral Ed25519 keypair, sets `ELYON_SIGNING_KEY_HEX` +
+  `ELYON_SIGNING_KEY_ID`, and drives the real `pep.py` `/governed-call` ELIGIBLE
+  path so `pep._get_signing_key()` resolves the key from the env (the deployed
+  path), NOT via the autouse `gate_signing` conftest fixture (an in-process
+  injection that section 4.2 names a forbidden shortcut). The pushed signed
+  envelope is captured from the `X-Elyon-Sol-Envelope` header.
+- The TARGET is a SUBPROCESS over a copied tree with `IMPLEMENTATION/evaluator.py`
+  byte-mutated, so its local evaluator hash genuinely differs from the gate's.
+  It fetches the published record over a real `http.server` loopback socket
+  (the production `IMPLEMENTATION.published_source.fetch_published_record`,
+  anchor-verified against the pinned root), holds the gate PUBLIC key as
+  out-of-band configuration (base64, reconstructed locally), and runs
+  `verify_envelope(signed, interaction, target_url, record_source=<fetched>,
+  pinned_public_keys={key_id: gate_pub})` - signature (Step 1.5, against the
+  out-of-band pin) then currency-from-the-fetched-record (`reassert`
+  `record_source`) then binding. It imports verifier + transport reader + the
+  public-key reconstruction only; it never imports `pep.py`, and its env has the
+  signing key removed.
+- Five cases + the killer property: signed-valid honored DESPITE the divergent
+  disk (`REASSERTED_AND_BOUND`), with the local-disk contrast showing a
+  VL-038-style verify would have returned `REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED`;
+  keyless forge refused (`REF_VERIFY_SIGNATURE_INVALID`); tampered signed
+  envelope refused (`REF_VERIFY_SIGNATURE_INVALID`); record-fails-anchor refused
+  (`REF_TARGET_ANCHOR_MISMATCH`); absent envelope refused
+  (`REF_VERIFY_ENVELOPE_ABSENT`). Exit 0 iff all hold.
+
+**The readiness wiring.** `IMPLEMENTATION/readiness.py::_consistency` is narrowed:
+the END_TO_END green-consistency loop iterated EVERY capability, which would make
+green require `issuer_key_expiry` / `issuer_key_revocation` / `root_rotation` to
+be `exercised_e2e` + `transported` - incoherent, since those are not on the
+default signed chain and `root_rotation` is the separate ROOT_RECOVERY red. The
+loop now quantifies over a new module constant
+`END_TO_END_CAPABILITIES = ("issuer_signing", "enforcement_push")` (the
+capabilities the signed chain exercises end-to-end over transport). The
+`validate_manifest` honesty check (every true flag names a proof) is UNCHANGED -
+it still quantifies over every capability; only the predicate-green consistency
+narrows. `TESTS/readiness/test_deployment_predicates.py::test_end_to_end_no_shortcut`
+drops its xfail and is rewritten as the lighter in-process signed-chain
+regression gate (gate signs via the production env-var key path - the test
+restores an env-reading resolver over the conftest fixture's in-process lambda so
+the path under test is the deployed one; the heavy no-shortcut proof remains the
+runner). `EVIDENCE/readiness.json`: `issuer_signing` + `enforcement_push`
+`exercised_e2e`/`transported` -> true (proof: the runner);
+`END_TO_END_NO_SHORTCUT.green` -> true with the scope note in `blocked_by`
+(signed chain over real loopback transport, no shortcut; enumerated set
+{issuer_signing, enforcement_push}; does NOT assert multi-machine/TLS - the G5
+floor; does NOT close A3b freshness); the three off-chain capabilities stay
+false. Summary now 2 of 3 green | RED: ROOT_RECOVERY.
+
+**GR-2 formalized.** The readiness gate's "GR-rule candidate" (10_readiness_spec.md
+section 9, since VL-043) is formalized as governance rule GR-2 (readiness is
+test-derived, never human-attested) in `docs/MAINTENANCE_PROTOCOL.md`, originating
+VL-048, citing the spec's one principle (section 2).
+
+**Spec posture (Checkpoint B; landed first).** `docs/restructure/10_readiness_spec.md`
+section 4.2 (the END_TO_END definition) made explicit on the SIGNED chain and the
+enumerated dependency set; section 8 (what-goes-green) past-tense; section 9
+(GR-2 formalized). `docs/restructure/08_enforcement_design.md` section 6 gains a
+"VL-048 update" sibling to the VL-039 update (signed chain now on the default path
+over the section-6 transport; G5 floor + A3b unchanged). The spec posture landed
+as its own commit FIRST, per the VL-040/042/047 spec-precedes-build precedent.
+
+#### Findings
+
+1. **Source-first failure (mine), caught mid-session: "didn't render in context"
+   treated as "not on disk."** Every file in this session was present in
+   `/mnt/user-data/uploads/` the entire time; repeated attachment-render failures
+   were misread as the files being unavailable, prompting many redundant
+   re-uploads, until a directory listing showed them all on disk. This is the
+   Lesson 3 precondition-not-disposition failure one layer out (treat
+   "available on disk" as the binary precondition; check disk before asserting
+   absence). The corrective is behavioral: when an upload "fails to render,"
+   `view` the uploads directory before concluding anything.
+2. **Anchor line-wrap divergence (Lesson 2), caught pre-apply.** The first draft
+   of the `10_readiness_spec.md` section-4.2 anchor wrapped "RED today: transport
+   is\n   a loopback wrapper" at the wrong point; disk wraps it as "...transport
+   is\n   a loopback wrapper". The anchor-verification step against disk bytes
+   caught it before the apply-script ran. The line-wrap variant of Lesson 2.
+3. **Non-unique anchor (Lesson 5 set-exhaustiveness, caught pre-apply).** The
+   `10_readiness_spec.md` GR-2 edit anchored on "GR-rule candidate", which appears
+   twice (section 1 intro + section 9). The anchor was extended with section-9
+   context to be unique. Enumerate occurrences, then anchor.
+4. **Verification-step source-first failure (mine), caught by re-run.** The first
+   synthetic-fixture invariant check for the `readiness.py` edit used a wrong
+   string-split assertion that fired a false failure; the EDIT was correct, the
+   CHECK was wrong. Lesson 3 applies to the verification step itself, not only to
+   the edit: a from-inference assertion is as fragile as a from-inference anchor.
+5. **`envelope.py` module-docstring drift (load-bearing for a future T-prose-drift,
+   NOT fixed here).** `IMPLEMENTATION/envelope.py` lines 42-43 still read "This
+   module is NOT imported by evaluator.py or by pep.py at VL-025" and "Wiring
+   pep.py to emit envelopes is VL-029's domain" - stale since VL-029/047 (pep.py
+   imports and signs). Out of VL-048 scope; named as a T-prose-drift candidate.
+6. **ANCHOR-2-vs-conftest honesty seam (recorded for transparency).** The lighter
+   pytest ANCHOR-2 exercises the env-RESOLUTION honestly (it reads the env vars,
+   not an in-process-injected key) but through a re-implementation of pep's env
+   branch rather than pep's literal `_get_signing_key` (the autouse fixture has
+   overwritten the name by the time the test runs). Together with the runner
+   (which drives pep's literal env path in a real process) the pair is honest; the
+   pytest test alone is env-path-SHAPED. A stricter follow-up (capture pep's
+   original function via a conftest hook) is a small optional hardening, named not
+   actioned.
+
+#### Files affected
+
+- `EVIDENCE/proofs/g5_signed_cross_host_001_runner.py` (new) + `.log` + `.md`
+- `IMPLEMENTATION/readiness.py` (`_consistency` narrowed; `END_TO_END_CAPABILITIES` added)
+- `TESTS/readiness/test_deployment_predicates.py` (ANCHOR 2 xfail dropped + wired)
+- `EVIDENCE/readiness.json` (issuer_signing + enforcement_push e2e/transported; END_TO_END green + scope note)
+- `docs/restructure/10_readiness_spec.md` (sections 4.2 / 8 / 9)
+- `docs/restructure/08_enforcement_design.md` (section 6 VL-048 update)
+- `docs/MAINTENANCE_PROTOCOL.md` (GR-2)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (this STATE + ledger commit)
+
+#### Files NOT affected
+
+- `IMPLEMENTATION/pep.py`, `IMPLEMENTATION/verifier.py`, `IMPLEMENTATION/envelope.py`,
+  `IMPLEMENTATION/evaluator.py`, `IMPLEMENTATION/published_source.py`,
+  `IMPLEMENTATION/request_validator.py` - byte-unchanged (the fetch becomes real on
+  the signed chain; the verify stays as-is; constraint f). CANON, MANIFEST,
+  `SPEC/` unchanged. `TESTS/conftest.py` unchanged (the runner and the ANCHOR-2
+  test both bypass it for the production key path). `TESTS/adversarial/test_enforcement.py`
+  unchanged (its `build_enforcing_target_app` is the unsigned VL-038 target; the
+  signed target lives in the runner, D-2). No new invariant; section 14 holds.
+
+#### Citation discipline (VL-012)
+
+This STATE + ledger commit does not cite its own commit hash. It cites the spec
+posture commit `2b48336` and the build commit `a89c9b1`. Prior
+substantive entry: VL-047 (the mandatory signing cutover; DEFAULT_SECURE green).
+Repo test set 199 passed + 2 xfailed -> 200 passed + 1 xfailed (real env): the
+END_TO_END_NO_SHORTCUT predicate xfail becomes a real pass, the rewritten ANCHOR-2
+test passes, and the ROOT_RECOVERY xfail remains. The runner exits 0 (all
+invariants hold).
+
+#### Next trajectory action
+
+The readiness gate's LAST red: ROOT_RECOVERY - wire the VL-044 planned-rotation
+primitive to `pep.py`'s default path AND run it over real transport with no
+shortcut (likely reuses this session's runner transport). Then A1 target-side
+admission policy (the gate-unreachable floor); caller-carry / proxy-removal (the
+section-14-faithful architecture); T-bookkeeping (G1/G8/G9/G11/G14 + `server.py`
+retirement); and the remaining T-prose-drift (the `envelope.py` module-docstring
+lines 42-43; the `verifier.py` Step 1.5 comment; the stale trailing "Next open
+action" prose). 2 of 3 deployment predicates green; "forgery-resistant" stays
+bounded and out of any deposit. None blocking.
