@@ -12381,3 +12381,141 @@ retirement); and the remaining T-prose-drift (the `envelope.py` module-docstring
 lines 42-43; the `verifier.py` Step 1.5 comment; the stale trailing "Next open
 action" prose). 2 of 3 deployment predicates green; "forgery-resistant" stays
 bounded and out of any deposit. None blocking.
+
+### VL-049 - 2026-06-04 - T-root-recovery-wire: planned root rotation consulted target-side over the signed cross-host chain; ROOT_RECOVERY goes green (3 of 3)
+
+A WIRING/trajectory move per VL-017a: it wires the VL-044 planned-rotation +
+per-root-status primitive onto the VL-048 signed cross-host transport, so the
+LAST readiness red goes green (3 of 3). Checkpoint A reading (A): ROOT_RECOVERY
+is TARGET-SIDE rotation consulted on the live no-shortcut chain the default
+forward drives; the gate's default forward (pep.py) is UNCHANGED (rotation is
+target-side posture, parallel to how END_TO_END's currency-from-record is
+target-side). The "wired to the default path" wording dissolved to mean
+consulted-on-the-live-chain target-side, not a pep.py change. Enumerated
+dependency set: {root_rotation, issuer_key_revocation}.
+
+Proof of record - EVIDENCE/proofs/root_recovery_cross_host_001_runner.py: a real
+two-process, real-socket, genuinely-divergent-disk run extending the VL-048
+g5 runner. The gate signs on its default path via the PRODUCTION env-var key
+path (NOT the conftest fixture); a target SUBPROCESS with a byte-divergent
+evaluator.py, pinning ONLY R1 out-of-band and never re-pinned, fetches the
+published + root + key records over real loopback sockets via the production
+fetch_published_record / fetch_root_record / fetch_key_record, builds the
+root-status view (R1 designates R2) and the key-record trust view (key record
+signed by the designated-active R2, vouching the gate's issuer key), and
+verifies signature (R2-vouched key) + currency-from-the-fetched-record +
+binding. Six cases: KILLER honor-despite-divergent-disk (REASSERTED_AND_BOUND);
+keyless forge -> REF_VERIFY_SIGNATURE_INVALID; revoked R2 ->
+REF_VERIFY_ROOT_REVOKED; retired R2 new record -> REF_VERIFY_ROOT_RETIRED;
+root-record fetch failure -> REF_VERIFY_ROOT_RECORD_INVALID; stale root ->
+REF_VERIFY_ROOT_RECORD_STALE. Exit 0; the gate evaluator and the target's local
+evaluator hashes differ in the real-env run, so the honor is genuinely over a
+divergent disk, and the local-disk contrast is
+REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED (KILLER PROPERTY holds).
+
+Checkpoint C decision (b): IMPLEMENTATION/key_record_source.py::fetch_key_record
+at HEAD did not thread root_status_view to load_key_record_from_bytes, so an
+R2-signed key record (target pinning only R1) would be refused; the rotation
+case cannot run over the production transport wrapper without the view reaching
+the validator. fetch_key_record gains an additive root_status_view=None
+passthrough (default None = exact VL-042 byte-behavior), threaded to the
+UNCHANGED load_key_record_from_bytes. This is the only seam; verify_envelope and
+the validation logic stay byte-unchanged (constraint g: the fetch becomes real,
+the verify/validate stays as-is). key_record_source.py moves from "not affected"
+to a one-param additive edit; no spec re-do (artifact 09 already documents the
+loader's root_status_view param; fetch_key_record is its thin transport sibling).
+
+IMPLEMENTATION/readiness.py: ROOT_RECOVERY_CAPABILITIES =
+(root_rotation, issuer_key_revocation) + a _consistency ROOT_RECOVERY clause -
+green requires those two exercised_e2e + transported (mirrors END_TO_END); it
+does NOT require wired_to_default, honest since the gate forward is unchanged,
+and load-bearing (a green predicate with a typed-false dependency is caught in
+sandbox). EVIDENCE/readiness.json: root_rotation + issuer_key_revocation
+exercised_e2e/transported -> true (proof: the runner); wired_to_default stays
+false; ROOT_RECOVERY.green -> true with a scope note (planned in-band R1->R2 over
+real transport; out-of-band COMPROMISE recovery and true multi-machine/TLS named
+as floors). validate_manifest honest; summary 3 of 3 green.
+TESTS/readiness/test_deployment_predicates.py::test_root_recovery_wired drops its
+xfail and becomes the in-process logic regression gate (option alpha; drives the
+gate's default path via the production env-var key path, builds records
+in-process, asserts honor + revoked/retired refusals); the heavy no-shortcut
+transport proof is the runner. Spec commit 52d3764 (artifact 10 section 4 item 3
++ artifact 08 section 6) precedes build commit 7b0f258. Canon 8.2/9/11.9/13/14;
+no new invariant; section 14 holds (rotation is target-side, the root is the
+trusted identity under the narrowed reading). NO follow-up evaluate (wiring onto
+transport moves no trust boundary; transitive designation was SOUND 3-0 at the
+VL-044 follow-up). pytest 200 + 1 xfailed -> 201 + 0 xfailed (real env).
+
+#### Process findings
+
+1. **wrong-repo-via-parent-.git (new session-mechanics family).** The spec
+   apply-script was first run from ~/Downloads (no .git there); git walked up to
+   a stray ~/.git and edited nothing useful. Corrective: anchor every git/grep at
+   ~/Elyon-Sol; the build apply-script's absolute REPO_ROOT then did exactly
+   that. Kin to VL-037's scratch-in-repo family (cwd discipline).
+2. **Mid-session laptop death + machine-image restore (recovery, no loss).**
+   After the spec edits applied (unstaged) the laptop died; the restored tree
+   showed exactly the two spec files (08_/10_) modified-unstaged. HEAD verified
+   still 7a6cf01, diff --stat matched the intended +58/-5, grep ASCII-clean; then
+   committed clean to 52d3764. Verify-then-commit on a restored image, no content
+   lost.
+3. **apply-script idempotence bug (new_str contains old_str).** The build
+   apply-script's R1 edit appended ROOT_RECOVERY_CAPABILITIES after the preserved
+   END_TO_END_CAPABILITIES line, so new_str contained old_str as a prefix; the
+   unique-anchor APPLY branch re-fired on a second run and would have doubled the
+   block. Caught by the fixture idempotent re-run (+758 on run 2); fixed by
+   checking new_str-present (already-applied) BEFORE the APPLY branch. The EDIT
+   was correct; the verification harness's branch order was wrong - VL-048
+   finding-4 family. Candidate apply_script_template.py refinement: for
+   append-style edits the idempotence check must precede the apply branch.
+4. **ASCII-sweep coverage gap (Lesson 7 stage-2 family).** The build
+   apply-script's edits (code + JSON) were ASCII-swept in the sandbox, but the
+   standalone .md proof doc was authored separately and NOT swept; it shipped with
+   em-dashes / >= / -> and was caught only by the author's Checkpoint D real-env
+   sweep, then fixed by --amend (build hash 1ee5674 -> 7b0f258). Coverage
+   refinement: the byte-sweep must cover EVERY deliverable, not only the files the
+   apply-script touches. (This STATE+ledger apply-script ASCII-asserts each
+   inserted block before writing, applying the corrective in the same commit.)
+
+#### Files affected
+
+- EVIDENCE/proofs/root_recovery_cross_host_001_runner.py (new) + .log + .md (build 7b0f258)
+- IMPLEMENTATION/key_record_source.py (fetch_key_record additive root_status_view passthrough, option b)
+- IMPLEMENTATION/readiness.py (ROOT_RECOVERY_CAPABILITIES + _consistency ROOT_RECOVERY clause)
+- TESTS/readiness/test_deployment_predicates.py (ANCHOR 3 xfail dropped + wired, option alpha)
+- EVIDENCE/readiness.json (root_rotation + issuer_key_revocation e2e/transported; ROOT_RECOVERY green + scope note)
+- docs/restructure/10_readiness_spec.md + docs/restructure/08_enforcement_design.md (spec commit 52d3764)
+- STATE.md, EVIDENCE/verification_ledger.md (this STATE + ledger commit)
+
+#### Files NOT affected
+
+- IMPLEMENTATION/pep.py, verifier.py, envelope.py, evaluator.py,
+  published_source.py, request_validator.py - byte-unchanged (the gate default
+  forward is unchanged; verify_envelope + load_key_record_from_bytes logic
+  unchanged; only the fetch_key_record transport wrapper gains the additive
+  passthrough; constraint g). CANON, MANIFEST, SPEC/ unchanged. TESTS/conftest.py
+  unchanged (the runner and the ANCHOR-3 test both bypass it for the production
+  key path). No new invariant; section 14 holds.
+
+#### Citation discipline (VL-012)
+
+This STATE + ledger commit does not cite its own commit hash. It cites the spec
+commit 52d3764 and the build commit 7b0f258. Prior substantive entry: VL-048 (the
+signed cross-host chain; END_TO_END_NO_SHORTCUT green, 2 of 3). pytest 200 passed
++ 1 xfailed -> 201 passed + 0 xfailed (real env): the ROOT_RECOVERY xfail becomes
+a real pass; the runner is not pytest-collected and exits 0. 3 of 3 deployment
+predicates green.
+
+#### Next trajectory action
+
+The readiness gate's three reds are all green; the finite road it named is
+walked. Remaining (none blocking, none a readiness predicate): A1 target-side
+admission policy (the gate-unreachable floor); caller-carry / proxy-removal (the
+section-14-faithful architecture); T-bookkeeping (G1/G8/G9/G11/G14 + server.py
+retirement); T-prose-drift (the envelope.py module-docstring lines 42-43; the
+verifier.py Step 1.5 comment; the long-stale trailing "Next open action" prose
+below STATE item 44; and a backfill of the drifted Current-verified-state bullets
+for VL-038/039/048/049). The named floors BEYOND the gate: out-of-band
+root/issuer COMPROMISE recovery (irreducibly out-of-band) and true multi-machine
++ TLS (the G5 floor). "forgery-resistant" stays BOUNDED
+(signed-path-under-uncompromised-root) and out of any deposit. None blocking.
