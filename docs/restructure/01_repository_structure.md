@@ -63,7 +63,6 @@ Elyon-Sol/
 +-- IMPLEMENTATION/
 |   +-- evaluator.py                   # three-condition gate
 |   +-- pep.py                         # PEP / admission logic
-|   +-- server.py                      # HTTP gate
 |   +-- target.py                      # downstream target stub
 |   \-- replay/
 |       \-- receipt.py                 # replay-receipt subsystem
@@ -148,8 +147,8 @@ proposal but no longer planned for the honest-base track).
   `docs/restructure/03_vocabulary_ledger.md`. Same reasoning: planning
   artifact until promoted.
 - `SPEC/request_schema.md` - **PENDING.** Does not exist in any form. The
-  authoritative request/response shape is currently implicit in `pep.py`
-  and `server.py`. Closing G2 (request schema drift) requires creating
+  authoritative request/response shape is currently implicit in `pep.py`.
+  Closing G2 (request schema drift) requires creating
   this file. Listed under "Pending under honest-base track" below.
 
 The original proposal's `SPEC/` directory is therefore **deferred until the
@@ -162,8 +161,13 @@ G0 build track**, except for `request_schema.md` which is honest-base work.
 - `IMPLEMENTATION/envelope.py` - **DEFERRED.** Original proposal already
   marked this "(future)". It is part of the G0 build track, not the
   honest-base track.
-- `IMPLEMENTATION/server.py` - **PRESENT (not in original proposal).** The
-  HTTP gate. The original proposal underspecified the HTTP layer.
+- `IMPLEMENTATION/server.py` - **RETIRED (VL-051).** Was a parallel
+  un-enveloped HTTP gate (called `evaluate()` and forwarded with no
+  envelope, no signing, no verifier); kept through VL-038+ as "a parallel
+  un-enveloped gate, named not retired" (ledger VL-040 carry-forward).
+  Retired post-3-of-3: `pep.py` is the sole gate, and a second weaker gate
+  beside it is exactly the ambiguity the readiness gate's premise argues
+  against. See VL-051.
 - `IMPLEMENTATION/target.py` - **PRESENT (not in original proposal).** The
   downstream target stub used by tests.
 - `IMPLEMENTATION/replay/receipt.py` - **PRESENT (not in original proposal).**

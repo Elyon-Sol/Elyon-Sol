@@ -12659,3 +12659,131 @@ open but not scheduled" subsection. The named floors BEYOND the gate are unchang
 out-of-band root/issuer COMPROMISE recovery (irreducibly out-of-band) and true
 multi-machine + TLS (the G5 floor). "forgery-resistant" stays BOUNDED
 (signed-path-under-uncompromised-root) and out of any deposit. None blocking.
+
+### VL-051 - 2026-06-05 - T-server-retire: retire IMPLEMENTATION/server.py
+
+**Status:** RECORDED (bookkeeping / trajectory). NO follow-up evaluate (no claim
+about the world).
+**Author:** Claude (working session with the project author)
+**Classification:** bookkeeping / trajectory move per VL-017a - a file delete
+plus structural-doc reconciliation. It removes a deliberately-tracked artifact
+and so owes an explicit, self-documenting decision; the same family as VL-046's
+ledger de-dup (a justified removal that owes its own record so the deletion is
+itself on the append-only record). No admission-path change; no new invariant;
+section 14 holds; pytest stays 201 passed + 0 xfailed (nothing imports or tests
+server.py).
+
+#### What was retired and why
+
+`IMPLEMENTATION/server.py` - the old FastAPI `/governed-call` that calls
+`evaluate()` directly and forwards with a raw `requests.post`, with no envelope,
+no signing, and no verifier - is removed by `git rm`. It was kept deliberately
+through VL-038+; the keep-decision being reversed is recorded at the VL-040
+carry-forward (`EVIDENCE/verification_ledger.md` ~line 10409):
+"`server.py` (a parallel un-enveloped gate) remains in the tree, named not
+retired; a T-bookkeeping candidate." Post-3-of-3, `pep.py` is the only real
+gate; a second, weaker gate sitting beside it in `IMPLEMENTATION/` is exactly
+the live-code ambiguity the readiness gate's whole premise argues against (a
+future reader can mistake it for live code). This entry reverses that keep and
+records the retirement.
+
+#### Checkpoint B (delete vs deprecate; Decision 1): DELETE
+
+The delete-vs-deprecate call was made AFTER a source-first read of
+`docs/restructure/01_repository_structure.md` around the three reference sites,
+not before. The G4/G2 narrative does NOT teach through server.py as a live
+contrast example:
+- At artifact 01 line 152 server.py is named only incidentally, beside `pep.py`,
+  as a place where the request shape was implicit before `request_schema.md`
+  existed - not a contrast the prose leans on.
+- At artifact 01 line 165 server.py is a structural presence annotation
+  ("PRESENT (not in original proposal)"), not a pedagogical contrast.
+Neither needs server.py to survive to make its point, so the Checkpoint B
+deprecation fallback (a deprecation header pointing at pep.py, delete
+rescheduled) did NOT fire. DELETE is the correct call, consistent with the
+repo's no-ambiguous-artifacts posture (git history preserves the file; this
+entry documents the removal).
+
+Code-layer delete-cleanliness (confirmed by VL-050's grep, re-confirmed this
+session): no `.py` module imports server.py (only stdlib
+`http.server`/`socketserver`); README's run line is `uvicorn IMPLEMENTATION.pep:app`;
+no Procfile / Dockerfile / CI / `server:app` invocation exists. The stale
+`IMPLEMENTATION/__pycache__/server.cpython-313.pyc` is gitignored and untracked;
+it regenerates to nothing once server.py is gone and is NOT hand-staged.
+
+#### The edits (one commit; Decision 2 / Decision 3 single VL-051 entry)
+
+- **git rm** `IMPLEMENTATION/server.py` (tracked removal; a separate explicit
+  command, not the apply-script).
+- **artifact 01** (`docs/restructure/01_repository_structure.md`), three surgical
+  sites (Decision 5): tree line removed (mechanical); the G2-PENDING prose at the
+  former line 152 de-referenced server.py ("implicit in `pep.py`."); the
+  structural annotation at the former line 165 flipped from
+  **PRESENT (not in original proposal)** to **RETIRED (VL-051)** with a one-line
+  rationale (it does not vanish).
+- **README.md**: the `server.py HTTP server entry` structure-tree line removed
+  (mechanical; `pep.py` is already named "HTTP boundary" two lines up).
+- **STATE.md**: the Last-updated line rewritten to a VL-051 descriptor; a
+  Current-verified-state bullet added recording the retirement; and item 44's
+  forward "Next:" guidance had "+ `server.py` retirement" dropped from its
+  T-bookkeeping open list (Decision 4: forward guidance only).
+
+#### Findings
+
+1. **Residual G2-PENDING staleness left out of scope (artifact 01 former line
+   152).** That bullet still reads `SPEC/request_schema.md - **PENDING.** Does
+   not exist in any form.` - false since G2 closed at VL-014..VL-019 (the schema
+   exists; the validator is at `IMPLEMENTATION/request_validator.py`). The VL-051
+   edit removed only the retired-file reference; the bullet's broader staleness is
+   a distinct T-prose-drift item, NOT chased here (Checkpoint A: keep artifact 01
+   surgical, do not let 152/165 become a section rewrite).
+2. **Decision 4 applied (historical mentions left).** STATE.md and the ledger
+   carry MANY "T-bookkeeping (... + `server.py` retirement)" mentions in trailing
+   prose. Only the single FORWARD-looking STATE open-list mention (item 44) was
+   updated; the nine historical STATE item mentions (items 35-43) and all
+   historical ledger mentions (including the VL-040 carry-forward being reversed)
+   are left verbatim - they were true when written, and chasing every string is
+   drift-chasing, not retirement.
+3. **`__pycache__` artifact noted, not staged** (see Checkpoint B): gitignored,
+   untracked, regenerates to nothing; absent from `git status`.
+
+#### Files affected
+
+- `IMPLEMENTATION/server.py` (deleted via `git rm`)
+- `docs/restructure/01_repository_structure.md` (three sites; +244 bytes)
+- `README.md` (tree line removed; -51 bytes)
+- `STATE.md` (Last-updated + Current-verified-state bullet + item-44 forward
+  guidance; net +135 bytes)
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- All other code (`pep.py`, `evaluator.py`, `verifier.py`, `envelope.py`,
+  `request_validator.py`, `key_record_source.py`, `root_record_source.py`,
+  `published_source.py`, `readiness.py`, `replay/receipt.py`), all tests, CANON,
+  MANIFEST, every `SPEC/` and other `docs/restructure/*` and `docs/methodology/*`
+  artifact, `.gitignore`. No admission-path change; no new invariant; section 14
+  holds.
+
+#### Citation discipline (VL-012)
+
+Single commit (Decision 2: the `git rm`, the doc edits, the STATE update, and
+this ledger entry are one logical unit). It does not cite its own commit hash.
+Prior substantive entry: VL-050 (T-prose-drift consolidation) at `83a9406`. Repo
+test set 201 passed + 0 xfailed, unchanged (no code behavior touched; nothing
+imported or tested server.py).
+
+#### Next trajectory action
+
+Unchanged by this retirement. None is a readiness predicate; the gate's three
+reds are all green. Open (none blocking): A1 target-side admission policy (the
+gate-unreachable floor); caller-carry / proxy-removal (the section-14-faithful
+architecture); T-bookkeeping (G11 manifest-source asymmetry and G14 unknown-key
+refusal code, each owing its own spec-then-build increment under GR-2; plus G1
+verified-closed and G8/G9 near-closed per VL-050); the residual artifact-01
+G2-PENDING staleness (finding 1) and a candidate VL-033-style closure-prune of
+STATE.md's "Known items open but not scheduled" subsection. The named floors
+BEYOND the gate are unchanged: out-of-band root/issuer COMPROMISE recovery
+(irreducibly out-of-band) and true multi-machine + TLS (the G5 floor).
+"forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-root) and out
+of any deposit. None blocking.
