@@ -265,9 +265,10 @@ def verify_envelope(
             return _reject(REF_VERIFY_ENVELOPE_ABSENT)
 
     # ----- Step 1.5: issuer signature (VL-040..042; signed or record path) -----
-    # Runs only when the target supplies pinned_public_keys (the
-    # signature-required policy). With pinned_public_keys=None the unsigned
-    # path is byte-behavior-unchanged. Fail-closed (canon section 9): a
+    # Runs when the target supplies pinned_public_keys OR a key_record_view
+    # (the signature-required / record path; VL-042 added the record path).
+    # With both None the unsigned path is byte-behavior-unchanged.
+    # Fail-closed (canon section 9): a
     # missing / malformed / unverifiable signature, or an unknown key_id, is
     # a REFUSE, never a downgrade to the unsigned path. Checked BEFORE
     # reassert() so a forgery is rejected on provenance before any currency

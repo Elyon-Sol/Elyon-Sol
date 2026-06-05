@@ -12519,3 +12519,143 @@ for VL-038/039/048/049). The named floors BEYOND the gate: out-of-band
 root/issuer COMPROMISE recovery (irreducibly out-of-band) and true multi-machine
 + TLS (the G5 floor). "forgery-resistant" stays BOUNDED
 (signed-path-under-uncompromised-root) and out of any deposit. None blocking.
+
+### VL-050 - 2026-06-05 - T-prose-drift + prose-bookkeeping consolidation: narrative refreshed to match the code that outran it; no capability/trajectory advance
+
+**Status:** RECORDED (prose). NO follow-up evaluate (no claim about the world).
+**Author:** Claude (working session with the project author)
+**Classification:** efficiency move per VL-017a's distinction - process/record
+hardening that brings the stale narrative artifacts current with the code. No
+code behavior, canon, manifest, spec, or test change; pytest stays 201 passed +
+0 xfailed. The board is unchanged at 3 of 3 deployment predicates green.
+
+**Why no follow-up evaluate.** The cross-model evaluate (CLAIM track) gates new
+claims ABOUT THE WORLD. VL-050 makes none: it corrects two code comments, removes
+dead STATE.md prose, and backfills three Current-verified-state bullets from
+already-recorded ledger entries. No new world-claim to derive-and-grade; the
+"forgery-resistant" bound is untouched (stays signed-path-under-uncompromised-root,
+out of any deposit).
+
+#### The edits (one prose commit; Decision 1 / Decision 4 single VL-050 entry)
+
+- **E1 `IMPLEMENTATION/envelope.py` module-docstring lines 42-43.** The stale
+  "This module is NOT imported by evaluator.py or by pep.py at VL-025. Wiring
+  pep.py to emit envelopes is VL-029's domain." is corrected: pep.py DOES import
+  envelope.py (build_envelope() wired onto every ELIGIBLE decision at VL-029;
+  sign_envelope() made the default forward at VL-047). The one-sided boundary
+  stated in lines 30-40 still holds and is reaffirmed: envelope.py reads from
+  evaluator.py via manifest_sha256(), never the reverse, and evaluator.py does
+  not import envelope.py. Comment-only; no symbol or behavior change.
+
+- **E2 `IMPLEMENTATION/verifier.py` Step 1.5 comment.** The body sentence "Runs
+  only when the target supplies pinned_public_keys (the signature-required
+  policy). With pinned_public_keys=None the unsigned path is
+  byte-behavior-unchanged." contradicted the guard one line below it
+  (`if pinned_public_keys is not None or key_record_view is not None:`) since
+  VL-042 added the record path. Corrected to "Runs when the target supplies
+  pinned_public_keys OR a key_record_view (the signature-required / record path;
+  VL-042 added the record path). With both None the unsigned path is
+  byte-behavior-unchanged." The comment header already read "signed or record
+  path"; the body now agrees. Comment-only; the logic was already correct.
+
+- **E3 `STATE.md` C1: stale trailing "Next open action" prose removed.** The
+  orphaned block below item 44 - the severed "4 (SPEC/request_schema.md drafted +
+  verified + corrected)" item-4 fragment, the VL-020-era "Suggested next move ...
+  VL-021" queue-drain, and "Decisions parked for resolution" (all resolved by
+  VL-016/VL-020) - is removed by boundary markers, leaving item 44 followed
+  cleanly by the "Known items open but not scheduled" subsection. Per Checkpoint A
+  the "Known items" subsection is LEFT intact: it is a backlog list, not
+  Next-action prose, and several of its VL-011..VL-020 findings have no citable
+  closure event; a closure-prune of the citably-closed items (the GR-2 candidate,
+  closed at VL-048; the .gitignore audit candidate) is a separate VL-033-style
+  pass, not absorbed here.
+
+- **E4 `STATE.md` C2: Current-verified-state backfill.** Brief bullets for VL-039,
+  VL-048, and VL-049 are inserted after the VL-047 bullet (Decision 3), mirroring
+  the VL-047 bullet form, sourced from their ledger entries (VL-039 at `c964612`
+  with the post-VL-038 audit disposition at `15c53cb` folded in per where the
+  ledger records it; VL-048 spec `2b48336` + build `a89c9b1`; VL-049 spec `52d3764`
+  + build `7b0f258`). VL-038's build bullet already existed and is unchanged; the
+  post-VL-038 audit folds into the VL-039 bullet.
+
+- **E5 `STATE.md` "Last updated:" line** rewritten to a VL-050 descriptor.
+
+#### Findings recorded
+
+1. **server.py retirement HALTED out of scope at Checkpoint B.** The `--include=*.py`
+   grep showed no module imports it (only stdlib `http.server`/`socketserver`), and
+   README's run line is `uvicorn IMPLEMENTATION.pep:app`, so it is delete-clean at
+   the code layer. But the non-.py grep surfaced two living doc references in
+   `docs/restructure/01_repository_structure.md` (a tree line at 66, a G2-closure
+   prose sentence at 152, and an analytical "PRESENT (not in original proposal)"
+   annotation at 165) plus the `README.md:478` tree line, and the ledger (~10351-10409)
+   records server.py as a DELIBERATE keep ("a parallel un-enveloped gate, named not
+   retired"). Deleting it therefore reverses a documented decision and forces an
+   analysis rewrite of artifact 01 - a structural-doc change, not prose drift. Per
+   Checkpoint B it is rescheduled as its own small retirement increment (file delete
+   + README:478 + artifact 01 66/152/165 + a ledger rationale; delete-vs-deprecate
+   decided there with the docs in view), NOT absorbed into this prose commit.
+
+2. **The .gitignore scratch guard was found ALREADY present (opener-vs-disk
+   divergence).** The opener listed a `.gitignore` guard for
+   `apply_vl*.py`/`vl*_commit_msg.txt`/`vl*_ledger_entry.md` as in-scope; disk shows
+   it present since VL-037 follow-up + VL-042 (root-anchored, with the documented
+   comment block). Not edited; re-adding would duplicate rules. Third confirmed
+   instance of the already-present family (after VL-042 finding 3 and VL-045). The
+   Lesson 3 source-first precondition caught the opener's prediction before any edit.
+
+3. **G1 (README test-count source of truth) found ALREADY addressed.** README lines
+   318-322 already state the README does not hardcode test counts and pins STATE.md
+   as the count source for the current commit; STATE + ledger carry the live count.
+   The residual is nil; recorded as verified-closed rather than silently rewritten.
+   Fourth instance of the opener-vs-disk already-present family in this session.
+
+4. **G8/G9 evidence-doc notes: verified near-closed, no proof rewrite.**
+   `EVIDENCE/archive/stability_proof_001.md` (G9) already carries a NON-CURRENT
+   header citing "G9 (truncated mid-JSON)"; G8's narrated proofs are superseded by
+   the executable runners (g3 enforcement, g5 cross-host, root_recovery, signing).
+   Recorded here; no file edit, per the opener's "notes only, no proof rewrite" and
+   the disk showing both effectively already noted.
+
+5. **The two VL-049 scratch-in-root paste artifacts** (a stray `...log` and a `main`
+   file) are recorded as a second instance of the scratch-in-root family (after
+   VL-037); the corrective - read `git clean -n` output and stage only intended
+   paths - is already on the books and is applied in this session's apply-script
+   next-steps checklist (explicit per-path `git add`, never `git add -A`).
+
+#### Files affected
+
+- `IMPLEMENTATION/envelope.py` (E1; comment-only)
+- `IMPLEMENTATION/verifier.py` (E2; comment-only)
+- `STATE.md` (E3 removal + E4 backfill + E5 last-updated)
+- `EVIDENCE/verification_ledger.md` (this VL-050 entry)
+
+#### Files NOT affected
+
+- All other code (`pep.py`, `evaluator.py`, `request_validator.py`,
+  `key_record_source.py`, `root_record_source.py`, `published_source.py`,
+  `readiness.py`), all tests, CANON, MANIFEST, every `SPEC/` and
+  `docs/restructure/*` and `docs/methodology/*` artifact, `.gitignore`, and
+  `IMPLEMENTATION/server.py` (HALTED to its own increment, finding 1). No
+  admission-path change; no new invariant; section 14 holds.
+
+#### Citation discipline (VL-012)
+
+This single prose commit appends this entry and does not cite its own hash. Prior
+substantive entry: VL-049 (T-root-recovery-wire; ROOT_RECOVERY green, 3 of 3,
+STATE + ledger at the VL-049 commit). Repo test set 201 passed + 0 xfailed,
+unchanged (no code behavior touched).
+
+#### Next trajectory action
+
+Unchanged by this consolidation. None is a readiness predicate; the gate's three
+reds are all green. Open (none blocking): the server.py retirement increment
+(finding 1); A1 target-side admission policy (the gate-unreachable floor);
+caller-carry / proxy-removal (the section-14-faithful architecture); T-bookkeeping
+(G11 manifest-source asymmetry and G14 unknown-key refusal code, each owing its
+own spec-then-build increment under GR-2; plus G8/G9 if a sharper note is ever
+wanted); and a candidate VL-033-style closure-prune of the STATE.md "Known items
+open but not scheduled" subsection. The named floors BEYOND the gate are unchanged:
+out-of-band root/issuer COMPROMISE recovery (irreducibly out-of-band) and true
+multi-machine + TLS (the G5 floor). "forgery-resistant" stays BOUNDED
+(signed-path-under-uncompromised-root) and out of any deposit. None blocking.

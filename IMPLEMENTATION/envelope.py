@@ -39,8 +39,11 @@ resulting booleans into build_envelope() as parameters. This keeps
 the integration boundary one-sided and matches receipt.py's pattern
 (caller passes decision and condition results in).
 
-This module is NOT imported by evaluator.py or by pep.py at VL-025.
-Wiring pep.py to emit envelopes is VL-029's domain.
+This module IS imported by pep.py: VL-029 wired build_envelope() onto
+every ELIGIBLE decision, and VL-047 made sign_envelope() the gate's
+default forward. It is NOT imported by evaluator.py - the one-sided
+boundary above holds (envelope.py reads from evaluator.py, never the
+reverse).
 
 ==============================================================
 Canonicalization discipline
