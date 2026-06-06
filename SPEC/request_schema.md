@@ -311,6 +311,26 @@ code, which would silently accept unknown keys inside `context`. The
 strictness is intentional: silent acceptance is the surface that let
 G6 live undetected.
 
+### Unknown key inside `interaction`
+
+A key inside the `interaction` object that is neither one of the
+required fields (`AP`, `OP`, `context`, `expected_manifest_version`,
+`expected_manifest_sha256`) nor a CCS-shaped key (which is caught
+first by the rule above). REFUSED. Refusal reason code:
+`REF_SCHEMA_UNKNOWN_KEY`.
+
+This is distinct from `REF_SCHEMA_TYPE_MISMATCH` (a present field of
+the wrong type) and from the unknown-keys-inside-`context` question
+(open question 1, which is about the opaque `context` object, not the
+`interaction` object). A `context`-internal key is not constrained
+here; an `interaction`-level key outside the required set is. The
+fail-closed posture (section 1, section 9) refuses what it cannot
+account for: an unexpected `interaction` field signals a caller
+working from a different schema, and the gate names that cause rather
+than mislabeling it as a type error. Resolves G14 (added VL-054,
+replacing the provisional `REF_SCHEMA_TYPE_MISMATCH` mapping that
+VL-018 used as the closest extant code).
+
 ---
 
 ## PEP boundary behavior
