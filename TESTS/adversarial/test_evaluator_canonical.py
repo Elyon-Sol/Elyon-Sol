@@ -87,18 +87,18 @@ bare canon citation:
     docs/restructure/05_admissibility_envelope_spec.md. Citation is
     therefore canon-11.9-via-artifact-05.
 
-G11 note (VL-034 Decision F, B-park): manifest_sha256() ignores its
-optional path argument and always hashes the on-disk MANIFEST_PATH.
-So manifest_integrity_valid() reads the version from its `manifest`
-argument but reads the sha256 from disk -- a manifest-source
-asymmetry tracked as G11 in
-docs/restructure/04_current_vs_claimed.md (bookkeeping batch). These
-tests use manifest_integrity_valid()'s actual behavior (live disk
-hash via manifest_sha256()); G11 is documented here but is NOT made a
-test obligation in this suite. Per VL-034 constraint (i), no test
-pins a literal hash VALUE: the expected sha is derived live from
-manifest_sha256() so the suite survives a GR-1 canon/manifest-version
-event without edits.
+G11 note (closed at VL-053): manifest_sha256() hashes the on-disk
+MANIFEST_PATH. Before VL-053, manifest_integrity_valid() read the
+version from its `manifest` argument but the sha256 from disk -- a
+manifest-source asymmetry (G11, surfaced VL-012) that let a divergent
+passed manifest yield a split-source integrity verdict. VL-053 adds a
+divergence guard (the passed manifest must BE the on-disk source, else
+fail closed); the characterization is
+test_manifest_integrity_rejects_divergent_manifest below. The positive
+manifest tests below pass the on-disk manifest (load_manifest()), so the
+guard is a no-op for them. Per constraint (i), no test pins a literal
+hash VALUE: the expected sha is derived live from manifest_sha256() so
+the suite survives a GR-1 canon/manifest-version event without edits.
 
 Ledger: VL-034 (canon-derived tests for the evaluator domain; G7
 complete).
@@ -380,8 +380,9 @@ def test_t26_type_violation_fails_closed():
 # manifest_sha256() in each test, never pinned as a literal value, so
 # this suite survives a GR-1 canon/manifest-version event without edits.
 #
-# G11 (VL-034 Decision F, B-park): manifest_sha256() ignores its
-# argument and hashes the on-disk MANIFEST_PATH; documented, not tested.
+# G11 (closed VL-053): the manifest-source asymmetry (manifest_integrity_valid
+# read version from the argument, sha from disk) is closed by a divergence
+# guard; test_manifest_integrity_rejects_divergent_manifest characterizes it.
 # ---------------------------------------------------------------------------
 
 
@@ -494,3 +495,37 @@ def test_manifest_sha256_pin_missing_fails_closed():
     manifest = load_manifest()
     ctx = {"expected_manifest_version": manifest["version"]}
     assert manifest_integrity_valid(ctx, manifest) is False
+
+
+def test_manifest_integrity_rejects_divergent_manifest():
+    """
+    Canon section 9 (Reproducibility): "fail closed under any missing or
+    invalid input conditions"; canon 11.9 "the manifest must be ...
+    integrity-verifiable."
+
+    G11 characterization (VL-053). Before VL-053,
+    manifest_integrity_valid() read the version from its `manifest`
+    argument but the sha256 from the on-disk MANIFEST/manifest.json via
+    manifest_sha256(), ignoring the argument. A caller passing a manifest
+    that DIVERGES from the on-disk source -- different AR/R, same version,
+    with the caller pinning the on-disk sha -- passed the version check
+    (argument) and the sha check (disk) and returned True, even though
+    AC^3/T^26 were evaluated against the divergent argument: a split-source
+    integrity verdict (the asymmetry tracked as G11, surfaced VL-012).
+
+    Per constraint (i) no literal hash is pinned: the caller pins the LIVE
+    on-disk sha via manifest_sha256() and the LIVE on-disk version via
+    load_manifest(); only the manifest CONTENT (AR/R) diverges. On the
+    pre-VL-053 behavior this returned True (the masked verdict); on the
+    VL-053 divergence guard it returns False (fail closed). This test
+    asserts the fixed behavior.
+    """
+    on_disk = load_manifest()
+    divergent = dict(on_disk)
+    divergent["AR"] = on_disk["AR"] + ["doctor_authorized"]
+    divergent["R"] = on_disk["R"] + ["patient_access"]
+    ctx = {
+        "expected_manifest_version": on_disk["version"],
+        "expected_manifest_sha256": manifest_sha256(),
+    }
+    assert manifest_integrity_valid(ctx, divergent) is False

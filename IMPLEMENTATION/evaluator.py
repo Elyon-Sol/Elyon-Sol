@@ -79,6 +79,20 @@ def manifest_integrity_valid(ctx, manifest):
     implementation (see docs/restructure/05_admissibility_envelope_spec.md;
     gap G0 in docs/restructure/04_current_vs_claimed.md; ledger VL-012).
     """
+    # G11 fix (VL-053): the passed manifest is the source of truth for
+    # the version and the AR/R sets ac3_valid/t26_valid read, but
+    # manifest_sha256() below hashes the on-disk MANIFEST/manifest.json.
+    # Before trusting that split-source check, require the passed manifest
+    # to BE the on-disk source; a divergent manifest fails closed (canon
+    # section 9) rather than yielding an integrity verdict whose version
+    # came from the argument and whose sha came from a different file.
+    # Closes the manifest-source asymmetry (G11, surfaced VL-012) WITHOUT
+    # changing what manifest_sha256() hashes: the on-disk file remains the
+    # single pinned source of truth (expected_manifest_sha256,
+    # published_hashes.json, decision_sha256, reassert() Row 4).
+    if manifest != load_manifest():
+        return False
+
     expected_version = ctx.get("expected_manifest_version")
     actual_version = manifest.get("version")
 

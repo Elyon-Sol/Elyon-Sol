@@ -1,33 +1,41 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 
-from IMPLEMENTATION.evaluator import evaluate
+from IMPLEMENTATION.evaluator import evaluate, load_manifest, manifest_sha256
 
 
-TEST_MANIFEST = {
-    "version": "1.0",
-    "interaction_type": "synthetic_ct_authorization",
-    "AR": ["identity", "role", "doctor_authorized"],
-    "R": ["session", "request", "patient_access"],
-}
+# VL-053: fixtures repointed to the on-disk manifest. Before VL-053,
+# TEST_MANIFEST / MUTABLE_MANIFEST carried a doctor_authorized /
+# patient_access schema that DIVERGED from MANIFEST/manifest.json; the
+# tests passed only because manifest_integrity_valid() read the sha from
+# disk (G11, the manifest-source asymmetry surfaced at VL-012) while AC^3
+# / T^26 evaluated the divergent argument -- a split-source ELIGIBLE. The
+# VL-053 divergence guard fails closed on a manifest that is not the
+# on-disk source, so the fixtures are repointed to load_manifest() and the
+# authorized/unauthorized contrast is rebuilt on the on-disk AR/R sets.
+# SHA is derived live (no literal hash pin; survives a GR-1 event).
+TEST_MANIFEST = load_manifest()
 
-SHA = "a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"
+SHA = manifest_sha256()
 
 results = []
 results_lock = Lock()
 
 
+# Authorized: AP/OP each satisfy the on-disk AR=[identity, role] /
+# R=[session, request] and pin the live version + sha -> ELIGIBLE.
 AUTHORIZED_CTX = {
-    "AP": ["identity", "role", "doctor_authorized"],
-    "OP": ["session", "request", "patient_access"],
-    "expected_manifest_version": "1.0",
+    "AP": ["identity", "role"],
+    "OP": ["session", "request"],
+    "expected_manifest_version": TEST_MANIFEST["version"],
     "expected_manifest_sha256": SHA,
 }
 
+# Unauthorized: AP omits the required "role" -> AC^3 fails -> REFUSE.
 UNAUTHORIZED_CTX = {
-    "AP": ["identity", "role"],
-    "OP": ["session", "request", "patient_access"],
-    "expected_manifest_version": "1.0",
+    "AP": ["identity"],
+    "OP": ["session", "request"],
+    "expected_manifest_version": TEST_MANIFEST["version"],
     "expected_manifest_sha256": SHA,
 }
 
@@ -106,9 +114,9 @@ def test_concurrent_replay_receipts_match_isolated_receipts():
 
 
 BAD_SHA_CTX = {
-    "AP": ["identity", "role", "doctor_authorized"],
-    "OP": ["session", "request", "patient_access"],
-    "expected_manifest_version": "1.0",
+    "AP": ["identity", "role"],
+    "OP": ["session", "request"],
+    "expected_manifest_version": TEST_MANIFEST["version"],
     "expected_manifest_sha256": "BAD_MANIFEST_SHA",
 }
 
@@ -142,12 +150,8 @@ import copy
 import time
 
 
-MUTABLE_MANIFEST = {
-    "version": "1.0",
-    "interaction_type": "synthetic_ct_authorization",
-    "AR": ["identity", "role", "doctor_authorized"],
-    "R": ["session", "request", "patient_access"],
-}
+# VL-053: repointed to the on-disk manifest (see the fixture note above).
+MUTABLE_MANIFEST = load_manifest()
 
 
 def run_mutating_authorized():
@@ -168,11 +172,15 @@ def mutate_manifest_during_execution():
 def test_manifest_mutation_during_concurrent_evaluation():
     results.clear()
 
-    MUTABLE_MANIFEST["AR"] = [
-        "identity",
-        "role",
-        "doctor_authorized",
-    ]
+    # VL-053: a deep-copied snapshot taken BEFORE the concurrent mutation
+    # is on-disk-consistent and evaluates ELIGIBLE; the VL-053 divergence
+    # guard would fail-close a snapshot taken AFTER the mutation (AR
+    # diverges from the on-disk source). The 50 authorized tasks submit
+    # before the mutation task (which sleeps 0.001s), so all 50 snapshot
+    # the pre-mutation manifest -> 50 ELIGIBLE. The guard makes this timing
+    # assumption load-bearing (pre-VL-053 a post-mutation AR shrink still
+    # evaluated ELIGIBLE); recorded as a VL-053 finding.
+    MUTABLE_MANIFEST["AR"] = ["identity", "role"]
 
     with ThreadPoolExecutor(max_workers=20) as executor:
 
