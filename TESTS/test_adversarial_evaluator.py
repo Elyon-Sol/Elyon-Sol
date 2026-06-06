@@ -1,9 +1,9 @@
 import pytest
 
-from IMPLEMENTATION.evaluator import evaluate, load_manifest
+from IMPLEMENTATION.evaluator import evaluate, load_manifest, manifest_sha256
 
 
-SHA = "a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"
+SHA = manifest_sha256()
 
 CASES = [
     {"name": "ap_missing_key", "ctx": {"OP": ["session", "request"], "expected_manifest_version": "1.0"}, "expected": "REFUSE"},

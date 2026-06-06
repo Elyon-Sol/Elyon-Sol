@@ -3,10 +3,11 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 from IMPLEMENTATION.pep import app
+from IMPLEMENTATION.evaluator import manifest_sha256
 
 client = TestClient(app)
 
-SHA = "a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"
+SHA = manifest_sha256()
 
 
 # ----------------------------------------------------------------------------

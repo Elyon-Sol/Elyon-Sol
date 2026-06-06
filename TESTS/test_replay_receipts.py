@@ -1,7 +1,8 @@
 from IMPLEMENTATION.replay.receipt import create_receipt, verify_receipt
+from IMPLEMENTATION.evaluator import manifest_sha256
 
 
-SHA = "a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"
+SHA = manifest_sha256()
 
 
 def test_receipt_hash_is_deterministic_with_fixed_timestamp():
