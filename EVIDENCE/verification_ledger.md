@@ -13771,3 +13771,119 @@ entry rewritten (append-only). pytest 203 + 0 xfailed unchanged.
 
 Citation discipline (VL-012): teeth commit 14291d9; prior substantive entry VL-057
 (T-referent-binding) at b1330cd. This entry cites those, not its own hash.
+
+### VL-057 second follow-up - 2026-06-06 - demotion completed: the 5 missed convergence verdicts demoted; two bounding notes
+
+**Status:** RECORDED (governance / methodology). NO follow-up evaluate (per GR-3,
+which this completes the application of).
+**Author:** Claude (drafting surface) under the project author's reasoning. The
+set, and the verification-vs-evaluation line, are the author's call; the wording
+is mechanical.
+**Classification:** governance / methodology-rule per VL-017a (completes the
+VL-057 demotion; append-only; no admission-path change).
+
+#### Why this entry exists
+
+VL-057 (the demotion entry, b1330cd) reclassified 4 cross-model convergence
+verdicts from evidence to framing stress-test: VL-023 follow-up, VL-040 follow-up
+2, VL-042 follow-up, VL-044 follow-up. A pre-push grep of the ledger for
+`convergent` / `N-0` / `SOUND` (the GR-3 self-check applied to the record itself)
+found 5 MORE entries that used cross-model convergence as confirmation of
+soundness or value and were NOT named - so VL-057's list, presented as closed,
+was incomplete. Incompleteness here is itself the overclaim-by-omission GR-3
+exists to catch, one level up: a partial demotion quietly implies the unnamed
+entries were fine. This entry completes the set.
+
+#### The 5 now demoted (append-only; the entries stand verbatim)
+
+Their convergence is DEMOTED from evidence to framing stress-test - it shows the
+framing was coherent and persuasive to agreeable judges fed a shared, authored
+input; it does NOT establish soundness or value against the world. The
+referent-bound results each entry also carries (tests, runners, pytest counts,
+re-readable diffs) are UNTOUCHED.
+- VL-025 follow-up - cross-model "convergent: envelope.py honors the intent of
+  artifact 05 + canon section 12-13."
+- VL-031 - the Q1-Q4 "convergent" table on the 07_continuity_recursion artifact.
+- VL-036 - "P1 convergent" on the enforcement design (artifact 08).
+- VL-039 follow-up - "convergent verdict: PARTIAL" on G5 trust-reduction.
+- VL-040 follow-up 1 - signed-path forgery re-probe, "convergent NO."
+
+Demoted set is now 9 (the VL-057 four plus these five).
+
+NOT demoted, by deliberate scope (the author's verification-vs-evaluation line):
+- VL-039 follow-up 2 - a forgery FINDING (the envelope is tamper-evident, not
+  forgery-resistant; decision_sha256 unkeyed). Referent-adjacent: a constructive
+  result about what the artifact does, not a model's value verdict.
+- VL-024 - a derivation (the strengthening argument), not a cross-model run. It
+  CITES VL-023 follow-up's convergence, so it inherits the demotion per note (a)
+  below; it is not itself a demoted verdict.
+
+#### The principle this completes (the core)
+
+The referent for "is this sound / secure / valuable" comes from OUTSIDE the
+authored loop. Inside the loop - the IDE, the tests the author wrote, the canon
+the author wrote, the framing, another model reading that framing - nothing can
+be that referent, because all of it is downstream of the author's choices and
+shares the author's blind spots. Outside the loop - a stranger attacking a live
+surface, a stake-free rebuild, an adversary who does not know the canon - has its
+own answer the framing cannot move. That is the definition of evidence for these
+questions, and GR-3 / Lesson 10 enforce it forward.
+
+Precision (so the rule is not read as "the IDE is worthless"): EXECUTION FACTS
+characterize behavior and survive demotion - a passing test proves "given input X,
+the gate emits/refuses Y," which a model's disposition cannot move, regardless of
+which tool produced the test. What execution facts CANNOT do is certify
+`secure` / `sound` / `valuable`, because the attacks a test checks are the ones
+the author thought of, and "no attack in my suite passes" is not "no attack
+exists." Tests characterize; they do not certify. The line is execution-fact
+(any source) = characterization vs evaluative-verdict = needs an external
+referent - not IDE-vs-external.
+
+#### Two bounding notes
+
+(a) DOWNSTREAM CITATIONS INHERIT THE DEMOTION. Anywhere a later entry cited a
+demoted verdict as an established premise (e.g. VL-024 leaning on VL-023 follow-up;
+VL-029 leaning on VL-025 follow-up), that lean is now load-bearing on demoted
+evidence and is itself demoted to the same status. Named, not chased: the entries
+are append-only and most also carry test evidence that survives; a future reader
+treats any citation of a demoted verdict as framing, not confirmation.
+
+(b) VL-008 IS BOUNDED BY GR-3. VL-008 (cross-model verification: task-to-source
+binding is the operative variable) is VALID for what it governs - a
+procedural-cleanliness check that a response derived from primary sources and
+stayed in scope. It is NOT, and never was, sufficient to make an evaluative
+verdict evidence: it validates the reasoning PROCEDURE, while the contamination
+(shared authorship of canon + code + framing + prompt) sits UPSTREAM of the
+procedure, where VL-008 does not look. VL-008's own "prior exposure does not
+disqualify, provided scope holds" clause is the seam the contamination slipped
+through - it treats the model's relationship to the artifact as a non-issue once
+scope is confirmed, when the artifact's relationship to its AUTHOR is the actual
+problem. VL-008 stands (append-only, correct in scope); GR-3 is the ceiling it
+lacked.
+
+#### Product framing (what phase this clarifies)
+
+Development plus DEV-SIDE verification is done; the tests are the dev-side suite
+and they pass (203 + 0). The cross-model evaluates were dev reviewing dev's own
+work and the record mislabeled them as external confirmation; "demote all" corrects
+the label. QA = external validation has NOT started and cannot yet: the binding
+gate is the G5 real-transport build, because a stranger cannot meaningfully attack
+a loopback simulation (the result would be inflated one layer over). See
+docs/methodology/external_verification_readiness.md (NOT READY; G5 the binding
+gate). One honest limit even of external QA: it can certify "attacks tried failed"
+and "an outsider found it solid / cheaply rebuilt," but not "this should exist" -
+that product-owner question stays the author's, like "what is the product" always
+was.
+
+#### Files affected / NOT affected
+
+Affected: STATE.md, EVIDENCE/verification_ledger.md (this entry).
+NOT affected: no code / canon / MANIFEST / SPEC / published_* change; no
+evaluator_sha256 roll; no new invariant; section 14 holds; no prior ledger or GR
+entry rewritten (append-only). pytest 203 + 0 xfailed unchanged.
+
+#### Citation discipline (VL-012)
+
+Prior substantive entry: VL-057 (T-referent-binding) at b1330cd; its teeth at
+14291d9 (Lesson 10 + GR-3); its STATE/ledger repair at d7dca51. This entry cites
+those, not its own hash.
