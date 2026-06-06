@@ -13178,3 +13178,28 @@ G11-pattern comment now stale - it cites the asymmetry as live; the
 `test_adversarial_evaluator.py` literal-hash pin per finding 5). The named
 floors BEYOND the gate are unchanged. "forgery-resistant" stays BOUNDED
 (signed-path-under-uncompromised-root) and out of any deposit.
+
+#### VL-053 citation addendum (appended post-push; append-only per VL-046)
+
+The VL-053 entry above describes the three-commit structure but predates the
+commit hashes (drafted before staging). Recording them as the authoritative
+citation of record:
+
+- spec `23f84ce` (artifact 06; the corrected manifest-source contract)
+- build `ba5805d` (cites spec `23f84ce`; evaluator.py guard + the
+  characterization test + the test_concurrency repoint + the rolled
+  `EVIDENCE/published_hashes.json`)
+- close `8925576` (cites spec `23f84ce` + build `ba5805d`, not its own hash per
+  VL-012; artifact 04 G11 -> RESOLVED + STATE + the VL-053 ledger entry)
+
+Pushed `a288aca..8925576`. Process finding: the build and close commit MESSAGES
+shipped with the literal placeholders `<SPEC>` / `<BUILD>` - a `-m` template
+substitution not performed before commit, not caught until after the push. The
+git DAG still encodes the spec <- build <- close parent chain, so traceability
+is intact; the message text is imprecise, not the structure. History was left
+as-is (no rebase/force-push of already-pushed public commits, conservative bias
+VL-033 T-cite-C); this appended addendum is the authoritative human-readable
+citation. Methodology candidate (not promoted here): a `-m`/`-F` commit message
+carrying an unsubstituted `<...>` placeholder should be caught pre-commit, the
+same class of pre-commit check as the ASCII grep and the anchor uniqueness gate.
+This addendum does not cite its own hash (VL-012).
