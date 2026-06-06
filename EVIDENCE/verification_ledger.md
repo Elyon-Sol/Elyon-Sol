@@ -13203,3 +13203,157 @@ citation. Methodology candidate (not promoted here): a `-m`/`-F` commit message
 carrying an unsubstituted `<...>` placeholder should be caught pre-commit, the
 same class of pre-commit check as the ASCII grep and the anchor uniqueness gate.
 This addendum does not cite its own hash (VL-012).
+### VL-054 - 2026-06-06 - T-G14-unknown-key: the unknown-key refusal code resolved via Option A
+
+**Status:** RECORDED (vocabulary correctness). NO follow-up evaluate (a
+refusal-code precision fix makes no new claim about the world; the
+"forgery-resistant" bound is untouched).
+**Author:** Claude (working session with the project author)
+**Classification:** trajectory move per VL-017a's distinction (a code change in
+`IMPLEMENTATION/` plus the test surface and structural-doc rows). Spec-precedes-
+build per the VL-040 / VL-042 / VL-047 / VL-053 precedent (the spec commit lands
+first and is cited by the build commit).
+
+#### What G14 was, and why Option A
+
+G14 (surfaced VL-017 + VL-017b, numbered at VL-018): an unknown non-CCS-shaped
+key directly inside the `interaction` object was refused fail-closed by the
+validator's step-4d set-difference check, but with `REF_SCHEMA_TYPE_MISMATCH` -
+the closest EXISTING code, mapped PROVISIONALLY at VL-018. The behavior was
+correct (the key IS refused); the gap was naming precision (TYPE_MISMATCH's
+natural reading is "field type is wrong," not "field is unexpected"). Lower-
+severity than G11: no silent-wrong-answer - nothing was admitted that should
+have been refused.
+
+The fork named in artifact 04 and the validator docstring: (a) add a new
+`REF_SCHEMA_UNKNOWN_KEY` code, or (b) formalize the `REF_SCHEMA_TYPE_MISMATCH`
+overload. Option A was chosen, decisively, after the source read:
+
+- The unknown-key path is a DISTINCT emission point (`request_validator.py`
+  step 4d, the `set(interaction.keys()) - _REQUIRED_INTERACTION_FIELDS` check)
+  that fires BEFORE the step-5 type checks. Splitting the code is a one-line
+  return change touching no other emission point.
+- The spec's "Rejected shapes" section has structural slots parallel to
+  "Authority/coverage of wrong type" and "CCS-shaped fields"; an "Unknown key
+  inside `interaction`" entry fits the house style.
+- No existing test pinned the provisional mapping. The VL-017 test author
+  deliberately left the case untested (test docstring lines 31-37: inventing a
+  code would have been tests driving the schema rather than deriving from it).
+  So Option A is ADDITIVE on the test side - the lower-churn path, inverting the
+  opener's cost worry. Option B would leave the refusal code permanently
+  mislabeling its cause, the exact defect G14 names.
+
+#### Checkpoint B (premise check): PASS, no halt
+
+Confirmed on disk that an unknown non-CCS key inside `interaction` (with valid
+manifest-pinning present) actually reaches `REF_SCHEMA_TYPE_MISMATCH` at step
+4d: 4a flat-key no, 4b top-level-CCS no, presence pass, 3 URL pass, 4b
+inside-CCS no, 4c pinning-present pass, 4d set-difference non-empty -> the
+provisional code. One nuance recorded: step 4d is reachable only when pinning is
+present (4c precedes it); a missing-pinning request gets
+`REF_SCHEMA_MANIFEST_PINNING_MISSING` first. The new test case therefore carries
+valid pinning (`**_valid_interaction()`) plus one extra non-CCS key. HALT did
+not fire.
+
+#### The edits (spec -> build -> close; single VL-054 entry)
+
+- **Spec commit `a2c5d41`:** `SPEC/request_schema.md` "Rejected shapes" gains an
+  "Unknown key inside `interaction`" subsection naming `REF_SCHEMA_UNKNOWN_KEY`,
+  with trigger semantics (unknown non-CCS key directly inside `interaction`,
+  fail-closed) and the explicit distinction from `REF_SCHEMA_TYPE_MISMATCH`
+  (present field of the wrong type) and from open question 1 (unknown keys
+  inside the opaque `context`, a separate still-open question). Step-4 prose was
+  NOT edited (its "appropriate code from Rejected shapes" now resolves via the
+  new entry); scope held per Checkpoint A. +1034 bytes.
+- **Build commit `5df3918` (cites `a2c5d41`):**
+    - `IMPLEMENTATION/request_validator.py`: the `REF_SCHEMA_UNKNOWN_KEY`
+      constant added to the emitted-by-`validate_request` group; step 4d's
+      return flipped from `REF_SCHEMA_TYPE_MISMATCH` to `REF_SCHEMA_UNKNOWN_KEY`
+      (the single emission change); the module-docstring "Generic unknown keys"
+      (a)/(b) section, the validation-order item-4d line, and the
+      ordering-rationale "provisional catch-all" phrase all de-provisionalized
+      to record the VL-054 resolution. The step-5 type-check
+      `REF_SCHEMA_TYPE_MISMATCH` returns (5 of them) and the
+      `REF_SCHEMA_PARSE_ERROR` boundary are byte-unchanged (verified:
+      `TYPE_MISMATCH` returns 6 -> 5, `UNKNOWN_KEY` returns 0 -> 1).
+    - `TESTS/adversarial/test_request_schema.py`: the scope-note (docstring
+      lines 31-37) updated from "intentionally NOT tested" to the VL-054
+      resolution; a new spec-derived reject case `unknown_key_inside_interaction`
+      (valid pinning + one extra non-CCS key) asserts `REF_SCHEMA_UNKNOWN_KEY`.
+      G7 discipline: derives from the spec's rejected-shapes list, not canon.
+    - pytest: schema suite 27 -> 28; repo 202 -> 203 + 0 xfailed (real env).
+- **Close commit (this commit; cites `a2c5d41` + `5df3918`, not its own):**
+  `docs/restructure/04_current_vs_claimed.md` G14 row PARTIALLY ADDRESSED ->
+  RESOLVED (the moot "(candidate GR-2)" label dropped - GR-2 was formalized at
+  VL-048 as the readiness rule); `STATE.md` "Known open gaps" G14 summary
+  mirrored to RESOLVED, a VL-054 Current-verified-state bullet added, the
+  Last-updated line rewritten (VL-053 demoted to PREVIOUS per the header
+  convention); this ledger entry.
+
+#### Findings
+
+1. **No existing test pinned the provisional mapping - the fix is additive, not
+   a flip.** The opener anticipated "the one test that pinned the provisional
+   `REF_SCHEMA_TYPE_MISMATCH` mapping"; the disk read found none. The VL-017
+   author deliberately left the unknown-key case untested (docstring lines
+   31-37) to avoid tests driving the schema. So VL-054's spec commit created the
+   code first, and the new test then derives from the spec - the honest order.
+   The real discriminating-test count was 27 (25 parametrized reject cases +
+   parse-error + positive), not an assumed number; now 28.
+2. **Spec step-4 prose left unedited (scope hold).** PEP-boundary-behavior step
+   4 says "no unknown top-level keys inside `interaction` ... REFUSE with
+   appropriate code from Rejected shapes." Once the new Rejected-shapes entry
+   exists, that reference resolves correctly with no edit; touching step 4 would
+   have been a second line-wrap-fragile site for no gain (Checkpoint A).
+3. **open question 1 kept distinct from G14.** G14 is unknown keys directly
+   inside `interaction`; open question 1 is unknown keys inside the opaque
+   `interaction.context` (still open, default-allow recommended). The new spec
+   entry and the validator both keep these separate; `context`-internal keys
+   remain unconstrained.
+4. **Carried, out of scope: the numbered "Next open action" list (items 30-44)
+   is stale.** It does not include VL-045 through VL-054 and carries historical
+   "T-bookkeeping (G1/G8/G9/G11/G14)" mentions throughout. Per the
+   VL-045/050/051/052/053 precedent (the Decision-4 family: update only the
+   forward-looking current claim, leave historical mentions), this entry updates
+   only the G14 summary status and adds a Current-verified-state bullet; the
+   numbered-list staleness is a standing T-prose-drift item, not chased here.
+
+#### Files affected
+
+- `SPEC/request_schema.md` (spec commit `a2c5d41`; +1034 bytes)
+- `IMPLEMENTATION/request_validator.py` (build commit `5df3918`)
+- `TESTS/adversarial/test_request_schema.py` (build commit `5df3918`)
+- `docs/restructure/04_current_vs_claimed.md` (close commit; G14 -> RESOLVED)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (close commit)
+
+#### Files NOT affected
+
+- CANON, MANIFEST, `IMPLEMENTATION/evaluator.py`, `envelope.py`, `pep.py`,
+  `verifier.py`, and all other code - byte-unchanged. No `published_hashes.json`
+  roll (no hashed-file edit; contrast VL-053, where editing `evaluator.py`
+  rolled `evaluator_sha256`). No new invariant; canon section 9 (fail-closed)
+  basis; section 14 holds. The step-5 `REF_SCHEMA_TYPE_MISMATCH` triggers and
+  the `REF_SCHEMA_PARSE_ERROR` boundary are unchanged.
+
+#### Citation discipline (VL-012)
+
+Three commits: spec `a2c5d41`, build `5df3918` (cites the spec hash, substituted
+as a real value - no placeholder, per VL-053's finding), close (this commit;
+cites the spec and build hashes, not its own). Prior substantive entry: VL-053
+(T-G11-manifest-source) - chain spec `23f84ce` -> build `ba5805d` -> close
+`8925576` -> citation addendum `1d093ef`. pytest 202 -> 203 + 0 xfailed.
+
+#### Next trajectory action
+
+Unchanged set, none blocking, none a readiness predicate (the gate's three reds
+are green). Open: the cross-signer overlap-phrasing tighten in
+`11_root_record_spec.md` section 6.3 as its own small spec-tighten increment; A1
+target-side admission policy; caller-carry / proxy-removal (the
+section-14-faithful architecture - the first move there is a scope decision, not
+a build, per the VL-054 opener tail); remaining T-prose-drift (the numbered
+"Next open action" list staleness per finding 4; the `envelope.py` `reassert()`
+Row-4 G11-pattern comment now stale post-VL-053; the three literal-`SHA` pins in
+`test_adversarial_evaluator.py` / `test_pep.py` / `test_replay_receipts.py` per
+VL-053 finding 5). The named floors BEYOND the gate are unchanged.
+"forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-root) and out
+of any deposit.
