@@ -13614,3 +13614,102 @@ not enumerate VL-045..VL-056). The named floors beyond the gate (out-of-band
 root/issuer COMPROMISE recovery; true multi-machine + TLS, the G5 floor) are
 unchanged. "forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-
 root) and out of any deposit.
+
+### VL-057 - 2026-06-06 - T-referent-binding: external-verification-readiness artifact landed; convergence demoted from evidence to framing stress-test
+
+**Status:** RECORDED (governance / methodology). NO follow-up evaluate - and the
+rule recorded here is why: a model evaluate could not validate this entry,
+because the entry's content is that model evaluates do not validate.
+**Author:** Claude (drafting surface) under the project author's reasoning. The
+INSIGHT is the author's; the wording is mechanical. This entry is adopted because
+the author reasoned to it, not because any model graded it sound.
+**Classification:** governance / methodology-rule per VL-017a (a constraint on
+what counts as evidence; neither capability nor trajectory; kin to VL-043's
+GR-track instrument and the bounded-claims discipline).
+
+#### The insight
+
+When the artifact under review, its framing, and the evaluate prompt are all
+produced by the same iterative build surface (Claude as the build surface here),
+a cross-model judgment of the artifact's soundness / novelty / value / worth
+measures the persuasiveness of the framing, not the truth of the claim.
+Convergence among agreeable judges fed a shared framed input is CORRELATED error,
+not independence; adding judges launders the bias rather than cancelling it. The
+contamination is upstream of procedure: a procedurally clean response (scope
+confirmed, derive-before-grade, within-body per Lesson 6) is still non-evidential
+on these questions, because no procedure it follows reaches outside the text it
+was given. A model-sourced claim is evidence only if bound to a referent the
+framing cannot move - execution (a test/runner passes or fails) or
+adversarial-by-construction (produce the bypass, or demonstrably cannot). The
+framing decision (gate-is-the-product vs method-is-the-product) is the author's;
+no quantity of models can settle a question about intent.
+
+#### The demotion (append-only; nothing rewritten)
+
+These entries recorded cross-model convergence as confirmation of SOUNDNESS or
+VALUE. Their convergence is DEMOTED from evidence to framing stress-test: it
+shows the framing was coherent and persuasive to agreeable judges; it does NOT
+establish soundness or value against the world. The entries stand verbatim
+(append-only); this is the forward reclassification.
+- VL-023 follow-up (recursive-continuity, "convergent on PARTIAL HOLDS").
+- VL-040 follow-up 2 (key-governance, "3-0 convergent").
+- VL-042 follow-up (new-trust-root, convergent).
+- VL-044 follow-up (transitive-root-designation, "SOUND, 3-0 convergent").
+- This session's framework-comparative evaluate (the single-model run and the
+  review of it) is likewise framing stress-test, not evidence.
+What survives untouched: every referent-bound result those sessions also carry -
+the tests, the runners, the pytest counts, the readiness predicates. Only the
+evaluative convergence is demoted.
+
+#### Landed this commit
+
+- docs/methodology/external_verification_readiness.md (new): the referent-bound
+  criterion for outside HUMAN verification (a human reading the self-account is
+  inflated too; readiness is an attackable real-transport deployment + a
+  falsifiable claim sheet + a stake-free rebuild referent + a blind reviewer, not
+  polished docs). Honest current verdict: NOT READY; binding reason is referent
+  quality (loopback transport, no rebuild referent), not documentation - the G5
+  real-transport floor is the load-bearing gate.
+- STATE.md current-state bullet + Last-updated rotation; this ledger entry.
+
+#### Deferred to a VL-057 follow-up (need live-disk anchors)
+
+- Lesson 10 -> docs/methodology/session_mechanics_lessons.md (the failure mode,
+  the referent-binding line, the corrective rule, the self-check).
+- GR-3 -> docs/MAINTENANCE_PROTOCOL.md (no model evaluative judgment is evidence
+  or may move a claim; cross-model runs only as adversarial break-it tasks or
+  explicitly-labeled framing stress-tests; the evaluate-side analog of GR-2).
+These are named, not landed, so this commit carries no dangling reference to
+content not yet on disk; the artifact's own text points only at this entry.
+
+#### Why this is the credible move, not a retreat
+
+The bounded-claims discipline kept strong words out of deposits until their floor
+existed. This entry turns that discipline on the apparatus: convergence stats were
+a strong word without a floor. Demoting them voluntarily is the most credible act
+in the record - a reviewer who sees the project downgrade its own validation stats
+trusts the referent-bound parts (the runners, the gate) more, not less.
+
+#### Files affected / NOT affected
+
+Affected: docs/methodology/external_verification_readiness.md (new); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+NOT affected: no code / canon / MANIFEST / SPEC / published_* change; no
+evaluator_sha256 roll; no new invariant; section 14 holds; no prior ledger entry
+rewritten (append-only). pytest 203 + 0 xfailed unchanged.
+
+#### Citation discipline (VL-012)
+
+Prior substantive entry: VL-056 (T-cross-signer-phrasing) - verify-clean close at
+b91b425. This entry does not cite its own hash. Renumber note: this precedes the
+deposit-readiness audit, which becomes VL-058 (was VL-057) per the VL-026 Order-B
+precedent and now runs under the referent-binding rule.
+
+#### Next trajectory action
+
+The VL-057 follow-up landing Lesson 10 + GR-3 (live-disk anchors). Then the
+deposit-readiness audit (VL-058) under the referent-binding rule. External
+readiness is governed by external_verification_readiness.md, whose binding gate
+is the G5 real-transport floor - the production program's first engineering step,
+not a framing or evaluate task. "forgery-resistant" stays BOUNDED
+(signed-path-under-uncompromised-root) and out of any deposit.
