@@ -146,10 +146,11 @@ proposal but no longer planned for the honest-base track).
 - `SPEC/vocabulary.md` - **DIVERGED.** Lives at
   `docs/restructure/03_vocabulary_ledger.md`. Same reasoning: planning
   artifact until promoted.
-- `SPEC/request_schema.md` - **PENDING.** Does not exist in any form. The
-  authoritative request/response shape is currently implicit in `pep.py`.
-  Closing G2 (request schema drift) requires creating
-  this file. Listed under "Pending under honest-base track" below.
+- `SPEC/request_schema.md` - **PRESENT.** The authoritative request/response
+  shape, locked at VL-014..VL-019 (G2 closed). It names the rejected and
+  accepting wire shapes; the validator is `IMPLEMENTATION/request_validator.py`
+  (VL-018), wired into `pep.py` at VL-019. Originally honest-base work, now
+  landed.
 
 The original proposal's `SPEC/` directory is therefore **deferred until the
 G0 build track**, except for `request_schema.md` which is honest-base work.
@@ -302,10 +303,10 @@ begins. Each corresponds to an item in STATE.md's "Next open action".
    remaining four proofs are evaluated: each verified against current
    code moves to `proofs/`; any that cannot be verified moves to
    `archive/`.
-3. **Request schema** (closes G2). Create the authoritative request
-   schema as a single source of truth - location to be decided when the
-   work begins (top-level `SPEC/request_schema.md` per the proposal, or
-   somewhere lighter-weight if `SPEC/` is not yet warranted).
+3. **Request schema** (closed G2). The authoritative request schema landed
+   at `SPEC/request_schema.md` (VL-014..VL-019): it names the rejected and
+   accepting wire shapes, the validator is `IMPLEMENTATION/request_validator.py`
+   (VL-018), and `pep.py` was wired to it at VL-019.
 
 **Done during this session (artifact 01 revision):**
 - Commit `MANIFEST/manifest.json` and correct the `.gitignore` overmatch

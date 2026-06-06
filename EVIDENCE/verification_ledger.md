@@ -12787,3 +12787,165 @@ BEYOND the gate are unchanged: out-of-band root/issuer COMPROMISE recovery
 (irreducibly out-of-band) and true multi-machine + TLS (the G5 floor).
 "forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-root) and out
 of any deposit. None blocking.
+### VL-052 - 2026-06-05 - T-prose-bookkeeping-sweep: the Tier-1 honesty sweep
+
+**Status:** RECORDED (prose / record hardening). NO follow-up evaluate (no claim
+about the world).
+**Author:** Claude (working session with the project author)
+**Classification:** efficiency move per VL-017a's distinction - it corrects an
+actively-false structural-doc claim, records three already-true-on-disk gap
+statuses, and prunes one citably-closed backlog item. No code behavior, canon,
+manifest, SPEC, or test change; pytest stays 201 passed + 0 xfailed. The board is
+unchanged at 3 of 3 deployment predicates green. Kin to VL-045 / VL-050 (prose /
+record hardening).
+
+**Why this commit.** In an honest-provenance project a wrong claim outranks
+drift. `docs/restructure/01_repository_structure.md` still asserted
+`SPEC/request_schema.md` is **PENDING / "does not exist in any form"** - false
+since G2 closed at VL-014..VL-019 (the schema exists; the validator is
+`IMPLEMENTATION/request_validator.py`, VL-018; wired into `pep.py` at VL-019).
+VL-051 deliberately left this (its surgical scope removed only the server.py
+reference from the same bullet; recorded as VL-051 finding 1). This entry closes
+VL-051 finding 1 and folds three at-hand status records plus one prune into the
+same efficiency commit.
+
+#### The edits (one commit; single VL-052 entry)
+
+- **A. `docs/restructure/01_repository_structure.md` (2 edits, +57 bytes).**
+  A1: the `SPEC/request_schema.md` reconciliation bullet rewritten from
+  **PENDING / "Does not exist in any form" / "Listed under Pending under
+  honest-base track below"** to **PRESENT** - the authoritative request/response
+  shape locked at VL-014..VL-019 (G2 closed), validator named, pep.py wiring
+  cited; the forward cross-reference dropped so the two sites no longer depend on
+  each other. A2: the downstream "Pending under the honest-base track" numbered
+  item 3 ("**Request schema** (closes G2). Create the authoritative request
+  schema ... location to be decided when the work begins") rewritten to
+  "**Request schema** (closed G2). The authoritative request schema landed at
+  `SPEC/request_schema.md` (VL-014..VL-019) ...". The two sites now agree.
+  Decision 1 of the opener locked to the minimal consistent pair (surgical bullet
+  + the one cross-referencing item); the G2 narrative was NOT rewritten
+  (Checkpoint A).
+
+- **B. `docs/restructure/04_current_vs_claimed.md` (4 edits, +1501 bytes).**
+  B1: G1 row gains `- **Status: RESOLVED** (VL-052)` - the count-discipline is on
+  disk (`README.md` hardcodes no counts; pins `STATE.md` + the latest `VL-NNN`
+  ledger entry as the authoritative count for the current commit; verified VL-050
+  finding 3). The Action's literal `EVIDENCE/STATE.md` path is noted as having
+  landed at root-level `STATE.md`, satisfying the "README references it, hardcodes
+  nothing" criterion. B2: G8 row gains `- **Status: NEAR-CLOSED** (status note)` -
+  the machine-checkable half is met (executable runners in `EVIDENCE/proofs/`,
+  each exit 0, supersede the narrated prose proofs; VL-050 finding 4); residual is
+  CI + STATE regenerability; NOT a RESOLVED flip, no proof rewrite. B3: G9 row
+  gains `- **Status: NEAR-CLOSED** (status note)` -
+  `EVIDENCE/archive/stability_proof_001.md` carries a NON-CURRENT / ARCHIVED
+  header citing G2 / G5 / G9 (archived 2026-05-15, VL-011), preserved-marked-
+  non-current (the third path the Action did not enumerate; VL-050 finding 4); no
+  archive-file edit. B4: priority-order item 6 reworded from
+  "G1, G8, G9, G11 - bookkeeping; do in a batch" to G1 RESOLVED + G8/G9
+  NEAR-CLOSED + G11 owes its own spec-then-build increment.
+
+- **C. `STATE.md` (6 edits, +2086 bytes net).** C1: the "Known items open but not
+  scheduled" candidate-GR-2 spec-defines-the-rename item removed (-485 bytes) -
+  moot, because GR-2 was formalized at VL-048 as the readiness rule
+  (`docs/MAINTENANCE_PROTOCOL.md` GR-2), so the rename-candidate can never become
+  GR-2, and the spec-defines-the-change practice is de-facto operative
+  (spec-precedes-build at VL-040 / VL-042 / VL-047 / VL-048 / VL-049). Subsection
+  10 -> 9. C2/C3/C4: the "Known open gaps" summary mirrored to artifact 04 (G1 ->
+  RESOLVED; G8 / G9 -> near-closed notes) - a consistency edit (Decision D2): once
+  artifact 04 flips G1, the STATE summary's "G1 - README test count stale" is the
+  wrong claim, and G2 / G3 / G7 in that same summary already carry RESOLVED. C5:
+  the VL-052 Current-verified-state bullet inserted before "## What is locked vs.
+  open". C6: the "Last updated:" line rewritten to a VL-052 descriptor.
+
+#### Decisions locked
+
+1. Sub-edit-1 reconciliation shape: the minimal consistent pair (A1 + A2), no G2
+   narrative rewrite (opener Decision 1; Checkpoint A).
+2. Single efficiency commit (the edits across artifact 01 + artifact 04 + STATE +
+   this ledger entry) (opener Decision 2).
+3. Single VL-052 ledger entry (opener Decision 3).
+4. STATE update via the prune (C1) plus a Current-verified-state bullet (C5) and
+   the Last-updated line (C6) (opener Decision 4).
+5. **D1 - Known-item #7 (`.gitignore` audit candidate) KEPT, overriding the
+   opener's prune intent.** Source-first read of the on-disk `.gitignore`: the
+   opener's stated basis ("guard present since VL-037 f/u + VL-042") is the
+   root-anchored SCRATCH guard (`/apply_vl*.py`, `/vl*_commit_msg.txt`,
+   `/vl*_ledger_entry.md`, `/published_*.json`) - a different concern than item
+   #7's CANDIDATE ACTION, a proactive comprehensive `.gitignore` audit across all
+   seven domain directories. The collisions that actually bit (MANIFEST/, *.log)
+   are guarded reactively (VL-010, VL-017), but the proposed comprehensive sweep
+   has no citable closure event; it is not moot the way item #4 is. Per VL-033
+   Decision T-cite-C (prune only on a citable event), it stays. Recorded as
+   finding 1 (the opener-vs-disk already-present / scope-classification family).
+6. **D2 - STATE "Known open gaps" summary mirror INCLUDED** (C2/C3/C4), as the
+   wrong-claim-outranks-drift consequence of B1/B2/B3.
+7. **D3 - artifact 01 line 155 ("except for `request_schema.md` which is
+   honest-base work") LEFT.** Not false: the SPEC/ directory remains deferred
+   except for this one honest-base file, which now exists. No edit.
+
+#### Findings
+
+1. **Opener-vs-disk scope-classification (the already-present family, ~6th
+   instance after VL-042 / VL-045 / VL-050).** The opener named Known-item #7 as a
+   prune target citing "guard present since VL-037 f/u + VL-042"; the disk read
+   shows that guard addresses the SCRATCH concern, not item #7's domain-directory
+   audit candidate. Item #7 KEPT (D1). The Lesson 3 source-first precondition
+   caught the conflation before any edit; the author is the final arbiter on scope
+   (VL-033 finding 3) if item #7's candidate action is read as dead-by-disinterest
+   rather than open.
+2. **Carried, out of scope: artifact 01's "Pending under the honest-base track"
+   items 1 and 2 are also stale-landed.** Item 1 (maintenance-protocol artifact /
+   GR-1) landed at VL-007-era; item 2 (EVIDENCE/proofs+archive) landed at VL-011.
+   The whole section is a pre-G0 snapshot. Reconciling items 1-2 (or restructuring
+   the section so a "Pending" heading no longer lists landed items) is the
+   section rewrite Checkpoint A forbids here; left for a future dedicated
+   artifact-01 T-prose-drift pass. This entry touched only the request_schema
+   references (VL-051 finding 1), per strict scope.
+3. **Apply-script discipline applied.** Synthetic-fixture pre-verification (>2
+   edit sites) ran against disk-byte copies of all three files before the real
+   run; every one of the 12 anchors matched exactly once; the idempotence re-run
+   aborted at edit 1 (no double-apply); the apply-script carries an explicit
+   ASCII-guard that aborts before write on any non-ASCII byte (Lesson 7 stage-2,
+   covering every edited region). Byte deltas: artifact 01 +57, artifact 04 +1501,
+   STATE +2086 net.
+
+#### Files affected
+
+- `docs/restructure/01_repository_structure.md` (A1 + A2; +57 bytes)
+- `docs/restructure/04_current_vs_claimed.md` (B1 + B2 + B3 + B4; +1501 bytes)
+- `STATE.md` (C1 prune + C2/C3/C4 summary mirror + C5 bullet + C6 last-updated;
+  +2086 bytes net)
+- `EVIDENCE/verification_ledger.md` (this entry)
+
+#### Files NOT affected
+
+- `README.md` (the G1 basis; verified, not touched - opener sub-edit 2).
+- `.gitignore` (item #7 kept; the scratch guards verified present, no edit).
+- `EVIDENCE/archive/stability_proof_001.md` (G9 near-closed status recorded in
+  artifact 04 only; no archive-file edit - opener sub-edit 3).
+- `EVIDENCE/proofs/*` (the G8 runners cited, not modified).
+- All code (`pep.py`, `evaluator.py`, `verifier.py`, `envelope.py`,
+  `request_validator.py`, `key_record_source.py`, `root_record_source.py`,
+  `published_source.py`, `readiness.py`, `replay/receipt.py`), all tests, CANON,
+  MANIFEST, every `SPEC/` artifact, and the other `docs/restructure/*` and
+  `docs/methodology/*` artifacts. No admission-path change; no new invariant;
+  section 14 holds.
+
+#### Citation discipline (VL-012)
+
+Single efficiency commit; it does not cite its own commit hash. Prior substantive
+entry: VL-051 (T-server-retire) at `10e5078`. Repo test set 201 passed + 0
+xfailed, unchanged (no code behavior touched).
+
+#### Next trajectory action
+
+Unchanged by this sweep. None is a readiness predicate; the gate's three reds are
+all green. Open (none blocking): the residual artifact-01 "Pending under the
+honest-base track" items 1-2 staleness (finding 2) as a future dedicated
+artifact-01 pass; G11 (manifest-source asymmetry) and G14 (unknown-key refusal
+code) each owe their own spec-then-build increment under GR-2; A1 target-side
+admission policy (the gate-unreachable floor); caller-carry / proxy-removal (the
+section-14-faithful architecture). The named floors BEYOND the gate are unchanged:
+out-of-band root/issuer COMPROMISE recovery (irreducibly out-of-band) and true
+multi-machine + TLS (the G5 floor). "forgery-resistant" stays BOUNDED
+(signed-path-under-uncompromised-root) and out of any deposit. None blocking.

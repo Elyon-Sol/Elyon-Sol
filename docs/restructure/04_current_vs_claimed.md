@@ -57,6 +57,12 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   stale README.
 - **Action:** Create `EVIDENCE/STATE.md` pinned to a commit hash as the only authoritative
   count. README references it; hardcodes nothing.
+- **Status: RESOLVED** (VL-052) - the count-discipline is on disk: `README.md` hardcodes
+  no test counts and pins `STATE.md` (under "Current verified state") plus the latest
+  `VL-NNN` ledger entry as the authoritative count for the current commit (verified
+  VL-050 finding 3). The Action's literal path was `EVIDENCE/STATE.md`; the count source
+  landed as root-level `STATE.md`, which satisfies the "README references it, hardcodes
+  nothing" criterion.
 
 ### G2  -  Request schema drift
 - **Code:** `pep.py` accepts `{target_url, context: {...}}` (nested). Confirmed by
@@ -141,11 +147,21 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Delta:** No proof is machine-checkable.
 - **Action:** Each proof in `EVIDENCE/proofs/` names the test(s) backing it and the commit
   they passed at. Add CI; make `STATE.md` regenerable.
+- **Status: NEAR-CLOSED** (VL-052, status note) - the machine-checkable half is met:
+  `EVIDENCE/proofs/` carries executable runners (g3 enforcement, g4 refused-bypass, g5
+  cross-host, g5 signed-cross-host, signing-forgery-defeated, root-recovery-cross-host,
+  and siblings), each exiting 0, superseding the narrated prose proofs (VL-050 finding 4).
+  Residual: no CI harness and `STATE.md` is not auto-regenerable. Not a RESOLVED flip;
+  status recorded, no proof rewrite.
 
 ### G9  -  `stability_proof_001.md` is truncated
 - **Claimed:** Sets up a 50-iteration stability test, ends mid-JSON with no results.
 - **Delta:** The one stability proof contains no proof.
 - **Action:** Finish it or delete it.
+- **Status: NEAR-CLOSED** (VL-052, status note) - `EVIDENCE/archive/stability_proof_001.md`
+  carries a NON-CURRENT / ARCHIVED header citing G2 / G5 / G9 (archived 2026-05-15,
+  ledger VL-011): the truncated proof was preserved-marked-non-current, the third path the
+  Action did not enumerate (VL-050 finding 4). Status recorded; no archive-file edit.
 
 ---
 
@@ -278,5 +294,5 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 3. **G0 rename + G6 + G10**  -  RESOLVED (VL-012). See Resolved gaps.
 4. **G2 + G12 + G13**  -  schema-layer work. PARTIALLY closed (VL-014 + VL-015 + VL-016: schema drafted, cross-model-verified, corrected). Full G2 closure pairs with proposed VL-017 (failing schema-shape tests), VL-018 (validator), VL-019 (PEP wiring). G12 and G13 canon-layer halves remain open pending canon-version event under GR-1.
 5. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete. **RESOLVED at VL-030** (README rewrite + Zenodo Revision 2).
-6. G1, G8, G9, G11  -  bookkeeping; do in a batch. (G11 added VL-012; G2 removed from bookkeeping by VL-016 since it now has its own active track at item 4.)
+6. **G1**  -  RESOLVED (VL-052; README count-discipline on disk). **G8, G9**  -  NEAR-CLOSED (VL-052 status notes: executable runners supersede narration; the stability proof is archived non-current). **G11**  -  bookkeeping; owes its own spec-then-build increment. (G11 added VL-012; G2 removed from bookkeeping by VL-016 since it now has its own active track at item 4.)
 7. **G4, G5**  -  build-outward scope, after the base is honest.

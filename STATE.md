@@ -6,7 +6,7 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-06-05 (VL-051 T-server-retire: retired IMPLEMENTATION/server.py, the parallel un-enveloped gate kept through VL-038+ as 'a parallel un-enveloped gate, named not retired' (ledger VL-040 carry-forward, ~line 10409). Post-3-of-3, pep.py is the sole gate; a second weaker gate beside it in IMPLEMENTATION/ is the live-code ambiguity the readiness gate's premise argues against. git rm of server.py + doc reconciliation at three sites in docs/restructure/01_repository_structure.md (tree line removed; the G2-PENDING prose de-referenced server.py - its separate G2-PENDING staleness left for a future T-prose-drift; the structural annotation flipped PRESENT -> RETIRED(VL-051)) + README tree line removed. Checkpoint B: DELETE not deprecate - the G2 narrative does not teach through server.py as a live contrast (named only incidentally beside pep.py at 152; a presence annotation at 165), so the deprecation fallback did not fire. Single commit (git rm + docs + STATE + ledger; Decision 2); ledger VL-051 reverses the VL-040 carry-forward keep-decision with rationale, the rare justified delete that owes its own record (VL-046 family). No canon/manifest/SPEC/code-behavior/test change; nothing imports or tests server.py. This commit does not cite its own hash (VL-012). pytest 201 + 0 xfailed unchanged.)
+Last updated: 2026-06-05 (VL-052 T-prose-bookkeeping-sweep: the Tier-1 honesty sweep. artifact 01's stale "SPEC/request_schema.md PENDING / does not exist in any form" claim corrected to PRESENT / RESOLVED-at-G2 at both the reconciliation bullet and the downstream "Pending under the honest-base track" item 3 (closes VL-051 finding 1; the validator is IMPLEMENTATION/request_validator.py at VL-018, wired into pep.py at VL-019). artifact 04: G1 -> RESOLVED (VL-052; README count-discipline on disk per VL-050 f3) + priority-order line; G8/G9 -> NEAR-CLOSED status notes (executable runners supersede narration; the stability proof is archived non-current), no proof rewrite. STATE "Known open gaps" summary mirrored (G1 RESOLVED; G8/G9 near-closed). STATE "Known items" closure-prune: candidate-GR-2 spec-defines-the-rename removed (moot - GR-2 formalized at VL-048 as the readiness rule); .gitignore audit-candidate KEPT (no citable closure; the opener's "guard present" basis is the scratch guard, a different concern than that item's domain-directory audit; conservative bias VL-033 T-cite-C; subsection 10 -> 9). Carried finding: artifact 01's "Pending under the honest-base track" items 1-2 also stale-landed but left out of scope - a future dedicated artifact-01 pass. No code/canon/manifest/SPEC/test change; pytest 201 + 0 xfailed. Single efficiency commit; does not cite its own hash (VL-012).)
 
 
 ---
@@ -905,6 +905,8 @@ manifest layer. CCS has drifted - see G0 below.
 
 - **VL-051 T-server-retire: `IMPLEMENTATION/server.py` retired; `pep.py` is the sole gate (this commit).** The parallel un-enveloped FastAPI gate (`/governed-call` calling `evaluate()` then forwarding with no envelope / signing / verifier) is removed by `git rm`. It was kept deliberately through VL-038+ (ledger VL-040 carry-forward, ~line 10409: "a parallel un-enveloped gate, named not retired"); retired post-3-of-3 because a second, weaker gate beside `pep.py` in `IMPLEMENTATION/` is the live-code ambiguity the readiness gate's premise argues against. Checkpoint B confirmed DELETE over deprecate: the G2 narrative in `docs/restructure/01_repository_structure.md` does not teach through server.py as a live contrast (line 152 names it only incidentally beside `pep.py`; line 165 is a presence annotation). Doc reconciliation: artifact 01 tree line removed, the G2-PENDING prose de-referenced (its separate G2-PENDING staleness left for a future T-prose-drift), the structural annotation flipped PRESENT -> RETIRED(VL-051); `README.md` tree line removed. No code-behavior / canon / manifest / SPEC / test change; nothing imports or tests server.py. pytest 201 + 0 xfailed unchanged. Classification: bookkeeping / trajectory move per VL-017a's distinction (a tracked-artifact delete owing an explicit ledger record; the VL-046 family).
 
+- **VL-052 T-prose-bookkeeping-sweep: the Tier-1 honesty sweep (this commit).** One efficiency commit removing the highest-value record-debt. (1) The actively-false claim in `docs/restructure/01_repository_structure.md` that `SPEC/request_schema.md` is PENDING / "does not exist in any form" is corrected to PRESENT / RESOLVED-at-G2 (the schema exists, the validator is `IMPLEMENTATION/request_validator.py` (VL-018), wired into `pep.py` at VL-019); both the reconciliation bullet and the downstream "Pending under the honest-base track" item 3 moved so the two sites agree (closes VL-051 finding 1). (2) `docs/restructure/04_current_vs_claimed.md`: G1 flipped to RESOLVED (VL-052; README count-discipline verified on disk per VL-050 finding 3) with the priority-order line; G8 and G9 given NEAR-CLOSED status notes (executable runners supersede narration; the stability proof is archived non-current) with no proof rewrite. (3) STATE "Known open gaps" summary mirrored (G1 RESOLVED; G8/G9 near-closed). (4) STATE "Known items open but not scheduled" closure-prune: the candidate-GR-2 spec-defines-the-rename item removed (moot - GR-2 was formalized at VL-048 as the readiness rule); the `.gitignore` audit-candidate item KEPT (source read: the opener's "guard present" basis is the scratch guard, a different concern than that item's domain-directory collision audit, which has no citable closure - conservative bias per VL-033 T-cite-C). Carried finding: artifact 01's "Pending under the honest-base track" items 1 and 2 (maintenance-protocol artifact; EVIDENCE/proofs+archive) are also stale-landed but left out of scope - a future dedicated artifact-01 pass (Checkpoint A: not a G2-narrative rewrite). No code / canon / manifest / SPEC / test change; pytest 201 + 0 xfailed unchanged. No follow-up evaluate (no claim about the world). Classification: efficiency move per VL-017a's distinction.
+
 ## What is locked vs. open
 
 - **Locked:** canon v0.9.8.4. Corrected only by version increment, never by
@@ -1359,14 +1361,6 @@ Known items open but not scheduled (do not block the G0 build track):
   normalization in `manifest_integrity_001.md`. Acknowledged here
   rather than as a new ledger entry because the ledger documents
   verification claims, not cosmetic process artifacts. No action.
-- VL-014 process finding: the spec-defines-the-rename pattern has
-  occurred twice now (VL-012 for `ccs_valid` ->
-  `manifest_integrity_valid`; VL-014 for outer `context` ->
-  `interaction` rename, code change deferred to proposed VL-019).
-  Candidate governance rule GR-2 (spec-defines-the-rename; code
-  change is a separate commit citing the spec entry) flagged in
-  the VL-014 entry; not formally proposed and not added to
-  `docs/MAINTENANCE_PROTOCOL.md` here. Decision deferred.
 - VL-014 process finding: chat-pasted multi-line `git commit -m`
   blocks have now failed twice. Operational lesson recorded in
   the VL-014 entry; the VL-016 commit uses `git commit -F <file>`
@@ -1459,6 +1453,9 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   markers in `test_ccs_canonical.py` xpassed and removed in the
   same commit.
 - **G1** - README test count stale / no commit-pinned source of truth.
+  **RESOLVED** (VL-052): `README.md` hardcodes no counts and pins `STATE.md` plus
+  the latest `VL-NNN` ledger entry as the authoritative count for the current commit
+  (VL-050 finding 3). See `docs/restructure/04_current_vs_claimed.md`.
 - **G2** - request schema drift (interception proofs document a dead API).
   **RESOLVED** (VL-014 + VL-015 + VL-016 + VL-017 + VL-018 + VL-019):
   SPEC/request_schema.md names the rejected and accepting
@@ -1492,7 +1489,11 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   Both domains now have tests whose lineage runs from canon to
   assertion.
 - **G8** - evidence proofs are narrated, not executable.
+  **NEAR-CLOSED** (VL-052): executable runners in `EVIDENCE/proofs/` supersede the
+  narrated proofs (VL-050 finding 4); residual is CI + STATE regenerability. See artifact 04.
 - **G9** - `stability_proof_001.md` is truncated.
+  **NEAR-CLOSED** (VL-052): archived with a NON-CURRENT header (VL-011); preserved-
+  marked-non-current rather than finished or deleted (VL-050 finding 4). See artifact 04.
 - **G11** - manifest-source asymmetry: `manifest_sha256()` reads from
   disk via hardcoded path, ignoring the manifest argument passed to
   `manifest_integrity_valid()` (surfaced by VL-012). Bookkeeping
