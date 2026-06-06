@@ -424,10 +424,12 @@ def reassert(envelope: Dict[str, Any], record_source: Optional[Dict[str, Any]] =
 
     # ----- Row 4: manifest_sha256 mismatch -> RE-EVALUATE-REQUIRED -----
     # Canon basis: whitepaper section 7 / section 12.4 - "manifest version/
-    # schema transition." The manifest hash function reads from disk via
-    # the same hardcoded-path pattern flagged as G11 (manifest-source
-    # asymmetry surfaced at VL-012); envelope.py uses it as-is, matching
-    # the existing-pattern boundary.
+    # schema transition." manifest_sha256() hashes the on-disk
+    # MANIFEST/manifest.json, the single pinned source of truth. The
+    # manifest-source asymmetry once tracked here as G11 (surfaced VL-012)
+    # was closed at VL-053: manifest_integrity_valid() now fails closed on
+    # a passed manifest that diverges from that on-disk source. The on-disk
+    # file remains what manifest_sha256() hashes, so Row 4 reads it as-is.
     live_manifest_sha256 = (
         manifest_sha256() if record_source is None
         else record_source["manifest_sha256"]
