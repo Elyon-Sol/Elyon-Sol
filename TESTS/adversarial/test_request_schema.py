@@ -29,12 +29,16 @@ code), VL-020 (artifact 05 freshness pass).
 
 Notes on scope:
 - The schema names a step-4 "no unknown top-level keys inside
-  interaction" rule but does not enumerate a distinct refusal code
-  for that case (REF_SCHEMA_RESERVED_CCS is narrower: keys
-  containing 'ccs'). That case is intentionally NOT tested here;
-  inventing a code would be tests driving the schema rather than
-  deriving from it. Flagged in the VL-017 ledger entry as a
-  schema-side follow-up.
+  interaction" rule. As of VL-054 it enumerates a distinct refusal
+  code for that case: REF_SCHEMA_UNKNOWN_KEY (SPEC/request_schema.md
+  "Rejected shapes" -> "Unknown key inside interaction"), distinct
+  from REF_SCHEMA_RESERVED_CCS (narrower: keys containing 'ccs') and
+  from REF_SCHEMA_TYPE_MISMATCH (a present field of the wrong type).
+  The case "unknown_key_inside_interaction" below asserts it; it
+  derives from the spec's rejected-shapes list, not from canon (G7
+  discipline). Before VL-054 the case was intentionally NOT tested
+  (inventing a code would have been tests driving the schema); the
+  VL-054 spec commit added the code, so the test now derives from it.
 - REF_SCHEMA_PARSE_ERROR (malformed JSON) is tested via raw bytes
   sent to TestClient; the other negative cases send well-formed
   JSON with schema-rejected shape.
@@ -421,6 +425,22 @@ NEGATIVE_CASES = [
             },
         },
         "REF_SCHEMA_RESERVED_CCS",
+    ),
+    # REF_SCHEMA_UNKNOWN_KEY: an unknown non-CCS key directly inside
+    # `interaction`, with valid pinning present so step 4c passes and
+    # the set-difference check at step 4d fires (VL-054 / G14). Distinct
+    # from REF_SCHEMA_TYPE_MISMATCH (present field of wrong type) and
+    # REF_SCHEMA_RESERVED_CCS (key containing 'ccs').
+    (
+        "unknown_key_inside_interaction",
+        {
+            "target_url": "http://127.0.0.1:9000/target",
+            "interaction": {
+                **_valid_interaction(),
+                "extra_field": "unexpected",
+            },
+        },
+        "REF_SCHEMA_UNKNOWN_KEY",
     ),
 ]
 

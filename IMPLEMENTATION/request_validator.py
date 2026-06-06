@@ -74,20 +74,23 @@ section (Candidate 2). Two independent surface events make this a
 real spec gap, not a candidate; upgraded in VL-018's ledger entry
 to a numbered artifact-04 row.
 
-The validator's PROVISIONAL handling here, pending the spec edit:
-unknown non-CCS-shaped keys inside `interaction` are refused with
-REF_SCHEMA_TYPE_MISMATCH as the closest extant code. The mapping
-is provisional because TYPE_MISMATCH's natural reading is "field
-type is wrong," not "field is unexpected." The spec edit (proposed
-post-VL-018) should either:
-  (a) define a new REF_SCHEMA_UNKNOWN_KEY code, or
-  (b) explicitly designate TYPE_MISMATCH as covering unknown-key
-      cases (formalizing this provisional choice).
+RESOLVED at VL-054 (Option A). Unknown non-CCS-shaped keys inside
+`interaction` are refused with REF_SCHEMA_UNKNOWN_KEY, the code that
+names the cause ("field is unexpected"). This replaces the VL-018
+provisional mapping to REF_SCHEMA_TYPE_MISMATCH, whose natural
+reading is "field type is wrong," not "field is unexpected." The
+spec edit took option (a): SPEC/request_schema.md "Rejected shapes"
+gains an "Unknown key inside `interaction`" entry naming
+REF_SCHEMA_UNKNOWN_KEY (VL-054 spec commit). Option (b) (overloading
+TYPE_MISMATCH) was rejected: the whole value of the fix is
+vocabulary honesty, and the unknown-key path is a distinct emission
+point (step 4d, the set difference below) separate from the step-5
+type checks.
 
 The validator does NOT fail-open on unknown keys (which would
 violate the spec's step-4 prohibition); fail-closed is preserved.
-The downstream cost of the provisional mapping is a slightly
-misleading refusal code; the spec edit retires that cost.
+The provisional mapping's cost (a slightly misleading refusal code)
+is retired.
 
 ==============================================================
 Validation order (load-bearing per spec PEP boundary behavior)
@@ -111,8 +114,8 @@ adapted for the parsed-dict input contract:
 4c. Manifest pinning presence: expected_manifest_version and
     expected_manifest_sha256 both present in `interaction`.
     -> REF_SCHEMA_MANIFEST_PINNING_MISSING
-4d. Unknown-key check inside `interaction` (provisional, see
-    Candidate 2 above). -> REF_SCHEMA_TYPE_MISMATCH
+4d. Unknown-key check inside `interaction` (resolved VL-054, see
+    "Generic unknown keys" above). -> REF_SCHEMA_UNKNOWN_KEY
 5. Type/format checks on each field. -> REF_SCHEMA_TYPE_MISMATCH
 
 Ordering rationale: 4a before 4b before 4c before 4d. Flat-key is
@@ -124,7 +127,7 @@ before pinning-missing because a CCS-shaped field signals a
 specific G0-track violation that warrants explicit naming over a
 generic missing-field message. Pinning-missing before unknown-key
 because pinning is required and named; unknown-key is the
-provisional catch-all.
+catch-all for keys outside the required set.
 
 This is one specific deterministic ordering; alternative orderings
 are defensible but a deterministic one is required so that diagnoses
@@ -164,6 +167,7 @@ REF_SCHEMA_FLAT_KEYS = "REF_SCHEMA_FLAT_KEYS"
 REF_SCHEMA_MANIFEST_PINNING_MISSING = "REF_SCHEMA_MANIFEST_PINNING_MISSING"
 REF_SCHEMA_RESERVED_CCS = "REF_SCHEMA_RESERVED_CCS"
 REF_SCHEMA_TYPE_MISMATCH = "REF_SCHEMA_TYPE_MISMATCH"
+REF_SCHEMA_UNKNOWN_KEY = "REF_SCHEMA_UNKNOWN_KEY"
 
 # NAMED here for VL-019's pep.py import; NOT emitted by validate_request()
 # because the validator's input contract is a parsed dict. See module
@@ -365,15 +369,19 @@ def validate_request(
     ):
         return None, REF_SCHEMA_MANIFEST_PINNING_MISSING
 
-    # ----- Step 4d: Unknown keys inside interaction (PROVISIONAL) -----
+    # ----- Step 4d: Unknown keys inside interaction -----
     # See module docstring "Generic unknown keys inside interaction"
     # for the rationale. CCS-shaped keys have already been caught
     # above (step 4b inside-interaction); whatever reaches here is
-    # an unknown non-CCS-shaped key. Provisional mapping:
-    # REF_SCHEMA_TYPE_MISMATCH pending the post-VL-018 spec edit.
+    # an unknown non-CCS-shaped key. Resolved at VL-054 (Option A):
+    # emit REF_SCHEMA_UNKNOWN_KEY, the code that names the cause,
+    # replacing the provisional REF_SCHEMA_TYPE_MISMATCH mapping
+    # VL-018 used as the closest extant code. Spec:
+    # SPEC/request_schema.md "Rejected shapes" -> "Unknown key
+    # inside interaction."
     unknown_keys = set(interaction.keys()) - _REQUIRED_INTERACTION_FIELDS
     if unknown_keys:
-        return None, REF_SCHEMA_TYPE_MISMATCH
+        return None, REF_SCHEMA_UNKNOWN_KEY
 
     # ----- Step 5: Type/format checks -----
     # AP, OP: arrays of strings.
