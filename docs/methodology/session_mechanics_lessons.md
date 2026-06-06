@@ -951,6 +951,57 @@ Lessons can be:
   Lesson-4 threshold-category demonstration; both lessons cite the
   event).
 
+## Lesson 10: Model judgments of value are not evidence when the artifact and the prompt share an author (contamination is upstream of procedure)
+
+A cross-model "evaluate" of the framework's soundness, novelty, or worth feels
+like external validation, and convergence across models ("SOUND, 3-0") reads as
+independent confirmation. It is not, when the artifact under review, its framing,
+and the evaluate prompt were all produced by the same iterative build surface.
+Agreeable judges fed a shared framed input produce CORRELATED error, not
+independent confirmation; adding judges launders the bias rather than cancelling
+it. The verdict measures the persuasiveness of the prompt, not the truth of the
+claim.
+
+This is distinct from Lesson 6. Lesson 6 is about a single response faking
+scope-discipline (presentation-indistinguishability within one response). Lesson
+10 is sharper and worse: a response can be procedurally CLEAN under Lesson 6 -
+scope confirmed, derive-before-grade, within-body discipline held - and still be
+non-evidential, because the contamination is UPSTREAM of any procedure the
+response could follow. No amount of in-response discipline reaches outside the
+text the response was given, and that text is the project's.
+
+The line that decides it: a model-sourced claim is evidence only if it is bound
+to a referent the framing cannot move. Execution (a test or runner passes or
+fails) and adversarial-by-construction tasks (produce the bypass, or demonstrably
+cannot) are referent-bound - a model that wants to please still cannot make a
+forged envelope verify or a passing test fail. Evaluative questions (is this good
+/ novel / worth it / sound) have no such referent when the source is the
+project's own surface; they bind to text, and the text is the project's.
+
+Corrective:
+- A cross-model run may be commissioned ONLY as (a) an adversarial break-it task
+  with a pass/fail referent, or (b) an explicitly-labeled FRAMING STRESS-TEST.
+- Class (b) output may NOT be logged as evidence, may NOT move a bounded claim,
+  and may NOT be cited as "convergent" or "N-0" confirmation of soundness or
+  value. It is a stylistic check on the framing, nothing more.
+- "Is this sound / valuable / novel / worth continuing" runs are RETIRED.
+  Reframe them as "break it" or "rebuild the cheaper equivalent and show it
+  works," which carry referents.
+- The framing decision (what is the product) is the author's; no quantity of
+  models can settle a question about intent.
+
+Self-check: before commissioning or citing a cross-model run, ask - is the
+question bound to a referent outside the text the project wrote? If no, it is a
+framing stress-test (class b); record it as such or not at all. Before writing
+"convergent" / "N-0" / "SOUND" in the ledger, ask - convergent on a referent, or
+convergent on the framing?
+
+This lesson is formalized as governance in GR-3 (MAINTENANCE_PROTOCOL.md) and was
+established by the VL-057 demotion entry, which reclassified the prior convergence
+verdicts (VL-023 / VL-040 / VL-042 / VL-044 follow-ups) from evidence to framing
+stress-test. See also docs/methodology/external_verification_readiness.md for the
+human-verification analog: a human reading the self-account is inflated too.
+
 Changes to this file are recorded in the ledger as
 methodology-artifact updates, classified as efficiency moves rather
 than trajectory moves per VL-017a's distinction.

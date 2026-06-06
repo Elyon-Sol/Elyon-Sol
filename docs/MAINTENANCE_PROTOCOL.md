@@ -74,3 +74,40 @@ ACTIVE | SUPERSEDED | RETIRED
 - Honest ceiling (recorded under this rule): the gate catches claim-vs-wiring
   divergence; it does NOT perform the wiring. The remaining red
   (ROOT_RECOVERY) is real engineering the gate cannot do for the project.
+
+### GR-3 - Evidence is referent-bound; model evaluative judgment is not evidence
+- Date established: 2026-06-06
+- Originating ledger entry: VL-057
+- Status: ACTIVE
+- Rule: A bounded claim about the system or its worth moves only on a
+  referent-bound result: a passing or failing test/runner (execution), or an
+  adversarial-by-construction outcome (a demonstrated bypass, or a demonstrated
+  inability to produce one). No model-sourced evaluative judgment - soundness,
+  novelty, value, "convergent", "N-0" - is evidence or may move a claim, because
+  when the artifact under review and the evaluate prompt share an author the
+  judgment measures framing, not the world. A cross-model run is permitted ONLY
+  as (a) an adversarial break-it task with a pass/fail referent, or (b) an
+  explicitly-labeled framing stress-test whose output reaches neither the
+  evidence record (the ledger) nor any claim.
+- Scope: every cross-model "evaluate" the project commissions; every ledger use
+  of "convergent" / "N-0" / "SOUND" as confirmation; the
+  `cross_model_evaluate_template`. Referent-bound results (tests, runners, pytest
+  counts, the readiness predicates under GR-2) are unaffected - they ARE the
+  evidence this rule routes belief toward.
+- Rationale: when one iterative build surface produces the artifact, its framing,
+  AND the evaluate prompt, agreeable judges fed that shared framed input produce
+  correlated error, not independent confirmation; adding judges launders the bias
+  rather than cancelling it. The contamination is upstream of procedure, so a
+  procedurally clean evaluate is still non-evidential on value/soundness. This is
+  the evaluate-side analog of GR-2: GR-2 forbids a human-attested readiness value
+  standing in for a test; GR-3 forbids a model-persuaded value judgment standing
+  in for a referent-bound result. See Lesson 10
+  (`docs/methodology/session_mechanics_lessons.md`), the VL-057 demotion entry
+  (which demoted the VL-023 / VL-040 / VL-042 / VL-044 follow-up convergence
+  verdicts), and `docs/methodology/external_verification_readiness.md` (the
+  human-verification analog).
+- Honest ceiling (recorded under this rule): this rule constrains what may COUNT
+  as evidence; it does not itself produce evidence. The referent-bound results it
+  routes belief toward (real-transport adversarial attack; a stake-free rebuild
+  attempt) largely do not yet exist - `external_verification_readiness.md` records
+  the project as NOT READY, the binding gate being the G5 real-transport floor.
