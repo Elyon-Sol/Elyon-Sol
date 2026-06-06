@@ -176,11 +176,31 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   values happen to match the on-disk file, not the inline test fixtures.
   The check is internally inconsistent: AC^3 and T^26 verify against the
   passed manifest argument; SHA256 verifies against disk.
-- **Action:** Either (a) `manifest_sha256` should accept the manifest
-  argument and hash it in memory; or (b) the API contract should be
-  explicit that the manifest parameter is only consulted for AR/R/version
-  and the SHA is always read from disk. Resolution deferred; flagged for
-  scheduling.
+- **Action:** Resolved at VL-053 via path (b)-with-guard: the API contract
+  is explicit that `manifest_sha256()` always hashes the on-disk
+  `MANIFEST/manifest.json` (the single pinned source of truth), AND
+  `manifest_integrity_valid()` fails closed when its passed `manifest`
+  argument diverges from that on-disk source. Path (a) (hash the passed
+  dict) was rejected at Checkpoint B: it changes the VALUE
+  `manifest_sha256()` returns (file-bytes -> canonical-dict), which ripples
+  into the envelope's `manifest_sha256` field, `decision_sha256`, artifact
+  05's line-51 contract, and the literal manifest-SHA test pins. Path (b)
+  leaves the `manifest_sha256` value unchanged, so those stay true. Both
+  paths edit `evaluator.py` and therefore roll `evaluator_sha256` forward in
+  the committed `EVIDENCE/published_hashes.json` -- the canon-12.4-expected
+  consequence of any deliberate evaluator change, regenerated at VL-053 via
+  `EVIDENCE/published_hashes_gen.py` (only that field moved; `canon_sha256`
+  and `manifest_sha256` byte-identical). Path (b)'s smaller blast radius is
+  the manifest-value invariance, not avoiding the committed record.
+- **Status: RESOLVED** (VL-053). Build: the divergence guard in
+  `IMPLEMENTATION/evaluator.py::manifest_integrity_valid()`. Test:
+  `TESTS/adversarial/test_evaluator_canonical.py::test_manifest_integrity_rejects_divergent_manifest`
+  (canon section 9 + 11.9; fails on the pre-VL-053 split-source True,
+  passes on the guard's fail-closed False; sha derived live per constraint
+  i). Masked-bug check: the divergent-manifest callers were in
+  `TESTS/test_concurrency.py` (inline `TEST_MANIFEST`/`MUTABLE_MANIFEST`,
+  Delta above), not on any production path (`pep.py` uses
+  `load_manifest()`); repointed to the on-disk manifest at VL-053.
 - **Related:** G6/G10 disambiguation pass (VL-012) surfaced this during
   full read of `test_concurrency.py`; not in pass scope.
 

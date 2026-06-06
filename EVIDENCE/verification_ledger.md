@@ -12949,3 +12949,232 @@ section-14-faithful architecture). The named floors BEYOND the gate are unchange
 out-of-band root/issuer COMPROMISE recovery (irreducibly out-of-band) and true
 multi-machine + TLS (the G5 floor). "forgery-resistant" stays BOUNDED
 (signed-path-under-uncompromised-root) and out of any deposit. None blocking.
+
+### VL-053 - 2026-06-06 - T-G11-manifest-source: the manifest-source asymmetry closed via path (b)-with-guard
+
+**Status:** RECORDED (capability/correctness). NO follow-up evaluate (the fix
+moves no trust boundary and makes no new claim about the world; the
+"forgery-resistant" bound is untouched).
+**Author:** Claude (working session with the project author)
+**Classification:** capability/correctness trajectory move per VL-017a's
+distinction (a code fix in `IMPLEMENTATION/` plus the test surface and
+structural-doc rows). Spec-precedes-build per the VL-040/042/047 precedent
+(the spec commit lands first and is cited by the build commit).
+
+#### What G11 was, and why path (b)-with-guard
+
+G11 (surfaced VL-012): `manifest_integrity_valid(ctx, manifest)` read the
+version from its passed `manifest` argument but computed the sha256 via
+`manifest_sha256()`, which hashes the on-disk `MANIFEST/manifest.json` and
+ignores the argument. A caller passing a manifest that diverged from the
+on-disk file - same version, different AR/R, with the on-disk sha pinned -
+passed both the version check (argument) and the sha check (disk) and returned
+True, even though AC^3/T^26 were evaluated against the divergent argument. A
+split-source integrity verdict.
+
+Artifact 04's G11 row named the fork: (a) make `manifest_sha256` hash the
+passed manifest in memory; (b) make the contract explicit that the manifest
+parameter is consulted for version/AR/R and the sha is always disk-sourced.
+
+**Checkpoint B halt - path (a) rejected.** Path (a) (the opener's initial
+contract) hashes a parsed dict in canonical form, which cannot reproduce the
+file bytes, so it CHANGES the value `manifest_sha256()` returns (file-bytes ->
+canonical-dict). That value is load-bearing: `build_envelope()` writes it into
+`evaluated_against.manifest_sha256`, which is INSIDE the `decision_sha256` hash
+region, so every envelope's `decision_sha256` would shift; the committed
+`EVIDENCE/published_hashes.json` (VL-038, checked by
+`TESTS/adversarial/test_enforcement.py`) would need regeneration; artifact 05's
+envelope-structure line ("hash of MANIFEST/manifest.json at decision time")
+would become false; and the literal `SHA` pin in `TESTS/test_adversarial_evaluator.py`
+(a latent constraint-i violation) plus the `test_evaluator_canonical.py`
+positive cases would flip. A multi-file committed-evidence change the opener's
+own Scope-OUT says not to bundle.
+
+Path (b)-with-guard avoids the manifest-VALUE ripple: `manifest_sha256()` keeps
+hashing the on-disk file - the single pinned source of truth that
+`expected_manifest_sha256`, `published_hashes.json`, `decision_sha256`, and
+`reassert()` Row 4 already treat as ground truth - and `manifest_integrity_valid()`
+gains a fail-closed guard (`if manifest != load_manifest(): return False`, canon
+section 9) so the version source (argument) and the sha source (disk) can no
+longer be different manifests. The 23 adversarial + 22 canonical tests all pass
+`load_manifest()`, so the guard is a no-op for them (45 unchanged); artifact 05
+line 51 stays true; the `manifest_sha256` FIELD of the published record is
+unchanged. It does NOT avoid the committed record entirely: editing
+`evaluator.py` rolls the `evaluator_sha256` field of
+`EVIDENCE/published_hashes.json` (the canon-12.4 consequence of ANY deliberate
+evaluator change - path (a) incurs it too), so the record was regenerated live
+at VL-053 via `EVIDENCE/published_hashes_gen.py` and ships in the build commit.
+Decision: path (b)-with-guard (author-confirmed). See finding 6 - the initial
+Checkpoint B framing wrongly asserted no regen at all; the live suite caught it.
+
+#### The edits (spec -> build -> close; single VL-053 entry)
+
+- **Spec commit (artifact 06):** section 8.1 and 11.9 rows of
+  `docs/restructure/06_spec_to_code_traceability.md` state the corrected
+  manifest-source contract; the 11.9 row gains a forward cross-ref to the
+  characterization test (maintenance rule 3). No code touched; the contract is
+  stated before the build edits it (spec-defines-the-change).
+- **Build commit (code + tests):**
+    - `IMPLEMENTATION/evaluator.py`: the divergence guard at the top of
+      `manifest_integrity_valid()`; `manifest_sha256()` unchanged (the on-disk
+      file remains the hashed source of truth).
+    - `TESTS/adversarial/test_evaluator_canonical.py`: new canon-derived
+      characterization `test_manifest_integrity_rejects_divergent_manifest`
+      (canon section 9 + 11.9; passes a divergent manifest with the on-disk
+      version + live on-disk sha pinned; returns True pre-fix, False post-fix;
+      no literal hash, constraint i) augmenting the manifest group (Decision 2;
+      VL-034 Decision D precedent); the two stale G11 notes (module docstring +
+      inline 11.9 comment) updated from "B-park / documented, not tested" to
+      "closed VL-053."
+    - `TESTS/test_concurrency.py`: fixtures repointed to the on-disk manifest
+      (the Checkpoint B disposition - see findings 1, 2).
+    - `EVIDENCE/published_hashes.json`: regenerated live
+      (`EVIDENCE/published_hashes_gen.py`); `evaluator_sha256` rolls forward with
+      the evaluator edit (only that field; `canon_sha256` / `manifest_sha256`
+      byte-identical). Ships in the build commit so the record-verification tests
+      (`test_enforcement`, `test_cross_host`, `test_findings_001`) stay green at
+      that commit (finding 6).
+- **Close commit (artifact 04 + STATE + ledger):** artifact 04 G11 row Action
+  rewritten to the (b)-with-guard resolution + a **Status: RESOLVED** (VL-053)
+  bullet; STATE.md Known-open-gaps G11 summary -> RESOLVED, a VL-053
+  Current-verified-state bullet, the Last-updated line; this ledger entry.
+
+#### Findings
+
+1. **The opener's safe-to-defer rationale was false on disk (masked-bug
+   check).** The opener carried "G11 was safe to defer because no caller passed
+   a divergent manifest in practice." `TESTS/test_concurrency.py` has passed
+   divergent manifests (inline `TEST_MANIFEST`, `MUTABLE_MANIFEST`, with extra
+   `doctor_authorized` / `patient_access` AR/R) since it was written; per
+   artifact 04's G11 Delta they passed only because their pinned
+   `expected_manifest_sha256` happened to match the on-disk file rather than
+   their own fixtures. Those tests had been collecting masked-ELIGIBLE verdicts
+   the whole time. Corrected lifetime note: no PRODUCTION caller diverges
+   (`pep.py` uses `load_manifest()`), so no real-world wrong answer shipped; the
+   divergent callers all lived in the concurrency suite, where the masked
+   ELIGIBLE quietly undercut what those tests claimed to prove. Source-first
+   caught this against artifact 04's Delta before any commit; the file was read
+   on disk to confirm.
+
+2. **The fix flipped all four concurrency tests; disposition was repoint, not
+   record (Checkpoint B sub-decision).** Honoring the guard changes a current
+   passing result (the masked ELIGIBLEs become REFUSE), so per VL-027 bug-fix
+   discipline this was surfaced and decided, not bundled. Disposition: repoint
+   the fixtures to `load_manifest()` and rebuild the authorized/unauthorized
+   contrast on the on-disk `AR=[identity, role]` / `R=[session, request]` sets
+   (unauthorized = AP missing `role`); `SHA` derived live via `manifest_sha256()`
+   (removing a latent literal-hash pin in this file; constraint i). The
+   doctor/patient flavor cannot survive intact (it needs a manifest with those
+   requirements, and `MANIFEST/manifest.json` is unchanged - no canon/MANIFEST
+   change this session). The alternative (keep divergent fixtures, flip asserts
+   to REFUSE) loses the admit path and degrades the file's purpose; rejected.
+
+3. **The guard makes `test_manifest_mutation_during_concurrent_evaluation`'s
+   all-ELIGIBLE assertion timing-dependent.** Pre-VL-053, a deep-copied
+   snapshot taken AFTER the concurrent AR-shrink still evaluated ELIGIBLE
+   (shrinking AR only relaxes AC^3), so the test was timing-independent. With
+   the guard, a post-mutation snapshot diverges from disk and fails closed
+   (REFUSE), so the 50-ELIGIBLE assertion is now load-bearing on the 50
+   authorized tasks snapshotting before the mutator's 0.001s sleep. No
+   full-dict-guard repoint keeps the mutation meaningful AND timing-independent
+   (any divergence from disk now refuses). Disposition: OPTION A (keep the
+   test; document the timing assumption in a comment and here). The mutation
+   task is submitted last and sleeps, so all 50 snapshot the pre-mutation
+   manifest in practice. OPTION B (capture the pre-mutation ELIGIBLEs, then
+   mutate, then assert the divergent manifest REFUSES - demonstrating the guard
+   rather than racing it) is the strengthening rewrite, deferred.
+
+4. **Caller-completeness check.** Verified against the supplied sources that the
+   only divergent-manifest caller is `test_concurrency.py`: `pep.py` passes
+   `load_manifest()`; `envelope.py::build_envelope()` reads only
+   `manifest["version"]` and never calls `manifest_integrity_valid()`; the 23
+   adversarial and 22 canonical tests pass `load_manifest()`. A
+   `grep -rn "manifest_integrity_valid\|manifest_sha256" TESTS/ IMPLEMENTATION/`
+   in the real tree confirms the set (the session worked from uploaded copies;
+   `test_pep.py` was not among them and was grep-confirmed at apply time).
+
+5. **Latent literal-hash pins left untouched.** The
+   `grep -rn "manifest_integrity_valid\|manifest_sha256"` confirms a module-level
+   `SHA = "a21dea8b..."` literal (the on-disk file-bytes hash, a constraint-i
+   violation) in `test_adversarial_evaluator.py`, `test_pep.py`, and
+   `test_replay_receipts.py`. The guard is a no-op for all three (they pass
+   `load_manifest()` to `evaluate`/`pep`, never a divergent manifest), so the
+   pins stay valid and behavior is unchanged; they are left untouched per
+   Scope-OUT. (`test_concurrency.py` carried the same pin and is the one fixed
+   here, to a live derivation, because its fixtures were being repointed
+   anyway.) Converting the remaining three to live `manifest_sha256()` is a
+   separate constraint-i bookkeeping candidate.
+
+6. **Checkpoint B miss: "no published_hashes.json regen" was wrong; the live
+   suite caught it.** The pre-apply analysis asserted path (b) touches no
+   committed evidence (it appears above in the rejected framing and in the first
+   drafts of artifact 04 / STATE). That conflated two distinct things: path (b)
+   leaves the `manifest_sha256` VALUE unchanged (true - the real advantage over
+   path (a)), but ANY edit to `evaluator.py` rolls its file hash, and that file
+   hash is the `evaluator_sha256` FIELD of the committed
+   `EVIDENCE/published_hashes.json`. The first apply run rolled `evaluator.py`
+   (cf311cb7... -> 89a30ffe...) but not the record, so 10 record-verification
+   tests failed (`test_published_record_matches_live_envelope_pins` and the
+   cross-host / enforcement / findings paths that verify a live envelope against
+   the stale committed record). Regenerating the record live cleared all 10;
+   `canon_sha256` and `manifest_sha256` came back byte-identical, confirming only
+   the evaluator moved. The roll is the canon-12.4-expected consequence of a
+   deliberate evaluator change (cf. VL-040/041/042, which rolled it each time
+   they touched code). The real environment was the verification of record: the
+   claim was disproved by a green-bar requirement, not by argument. The three
+   `EVIDENCE/proofs/*.md` carrying the old `evaluator_sha256` are left as
+   HISTORICAL fact (they record what the VL-038/039/048 runs hashed; VL-053 does
+   not retroactively change those observations); no new proof is owed (the guard
+   touches neither the bypass nor the cross-host path).
+
+#### Files affected
+
+- `docs/restructure/06_spec_to_code_traceability.md` (spec commit; 8.1 + 11.9 rows)
+- `IMPLEMENTATION/evaluator.py` (build commit; the guard in
+  `manifest_integrity_valid()`)
+- `TESTS/adversarial/test_evaluator_canonical.py` (build commit; new test + two
+  G11-note updates)
+- `TESTS/test_concurrency.py` (build commit; fixtures repointed to disk)
+- `EVIDENCE/published_hashes.json` (build commit; `evaluator_sha256` rolled
+  forward, regenerated live - finding 6)
+- `docs/restructure/04_current_vs_claimed.md` (close commit; G11 -> RESOLVED)
+- `STATE.md`, `EVIDENCE/verification_ledger.md` (close commit)
+
+#### Files NOT affected
+
+- `IMPLEMENTATION/evaluator.py::manifest_sha256()` - signature and behavior
+  unchanged (still hashes the on-disk file; the fix is the guard in the caller).
+- `IMPLEMENTATION/envelope.py`, `pep.py`, `verifier.py` - byte-unchanged; the
+  envelope's `manifest_sha256` field, `decision_sha256`, and `reassert()` Row 4
+  are unchanged because the hashed source of truth is unchanged (the whole point
+  of path (b) over path (a)).
+- `docs/restructure/05_admissibility_envelope_spec.md` - line 51's "hash of
+  MANIFEST/manifest.json" stays true; no edit.
+- `TESTS/test_adversarial_evaluator.py` - the 23 code-derived tests; guard is a
+  no-op (finding 5).
+- CANON, MANIFEST, all SPEC/ - unchanged. No new invariant; canon section 9
+  (fail-closed) + 11.9 (integrity-verifiable) basis; section 14 holds.
+
+#### Citation discipline (VL-012)
+
+Three commits: spec (artifact 06), build (cites the spec hash), close (STATE +
+ledger; cites the spec and build hashes, not its own). Prior substantive entry:
+VL-052 (the Tier-1 prose sweep) at `a288aca`. pytest 201 + 0 xfailed -> 202 + 0
+xfailed (real env): the 4 repointed concurrency tests still pass; the one new
+characterization test passes; the guard is a no-op for the 45 disk-passing
+tests.
+
+#### Next trajectory action
+
+Unchanged set, none blocking, none a readiness predicate (the gate's three reds
+are green). Open: G14 (unknown-key refusal code, VL-054) owing its own
+spec-then-build increment under GR-2; the cross-signer overlap-phrasing tighten
+in `11_root_record_spec.md` section 6.3 / STATE / the VL-044-follow-up framing
+(code-derived: `root_record_source.py` closes only the within-record `seen_ids`
+analog; cross-signer is the named out-of-band hazard) as its own small
+spec-tighten increment; A1 target-side admission policy; caller-carry /
+proxy-removal; remaining T-prose-drift (the `envelope.py` reassert() Row-4
+G11-pattern comment now stale - it cites the asymmetry as live; the
+`test_adversarial_evaluator.py` literal-hash pin per finding 5). The named
+floors BEYOND the gate are unchanged. "forgery-resistant" stays BOUNDED
+(signed-path-under-uncompromised-root) and out of any deposit.
