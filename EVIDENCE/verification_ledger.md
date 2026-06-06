@@ -13357,3 +13357,123 @@ Row-4 G11-pattern comment now stale post-VL-053; the three literal-`SHA` pins in
 VL-053 finding 5). The named floors BEYOND the gate are unchanged.
 "forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-root) and out
 of any deposit.
+### VL-055 - 2026-06-06 - T-prose-drift: the G11 prose tail cleared (stale reassert() comment + the three literal-SHA pins)
+
+**Status:** RECORDED (record hygiene / GR-1 robustness). NO follow-up evaluate
+(a comment correction plus a value-preserving literal->call substitution make no
+new claim about the world; the "forgery-resistant" bound is untouched).
+**Author:** Claude (working session with the project author)
+**Classification:** efficiency / record-hardening per VL-017a's distinction (a
+comment edit in IMPLEMENTATION/ plus a behavior-preserving test-setup substitution
+plus structural-doc rows). No spec-precedes-build (no spec change; the comment and
+test edits ARE the increment).
+
+#### What this closed
+
+VL-053 (T-G11-manifest-source) closed G11 in code (the divergence guard in
+manifest_integrity_valid(); the on-disk MANIFEST/manifest.json remains the single
+pinned source of truth) but named two record-tail items for a separate increment:
+(1) a comment in IMPLEMENTATION/envelope.py still describing the asymmetry as live,
+and (2) the three literal-SHA pins (VL-053 finding 5). VL-055 takes both. Neither is
+a behavior change; there was no silent-wrong-answer in either.
+
+#### The edits (two content commits, then the close)
+
+- **Comment commit (IMPLEMENTATION/envelope.py):** the reassert() Row-4 comment said
+  the manifest hash "reads from disk via the same hardcoded-path pattern flagged as
+  G11 (manifest-source asymmetry surfaced at VL-012); envelope.py uses it as-is,
+  matching the existing-pattern boundary" - a live / flagged-open framing that
+  post-VL-053 is false. Rewritten to record the closure: manifest_sha256() hashes the
+  on-disk MANIFEST/manifest.json (the single pinned source of truth); the asymmetry
+  once tracked here as G11 was closed at VL-053 by the divergence guard; Row 4 reads
+  the on-disk file as-is. Comment text only; the Row-4 logic (the
+  manifest_sha256()/record_source read and the mismatch -> RE-EVALUATE-REQUIRED
+  return) is byte-unchanged. +180 bytes. This is the SINGLE stale G11-as-live comment
+  in the file (finding 1): build_envelope()'s docstring ("the on-disk hash is computed
+  via manifest_sha256(); the manifest argument provides only the version field") is
+  ACCURATE post-VL-053 (it states the intended split that path (b) preserved) and was
+  left; the module docstring carries no G11-live language.
+- **SHA-pin commit (three test files):** module-level SHA = "a21dea8b...823b8" (the
+  on-disk manifest file-bytes hash) converted to SHA = manifest_sha256() in
+  TESTS/test_adversarial_evaluator.py (the existing IMPLEMENTATION.evaluator import
+  extended), TESTS/test_pep.py (import added), and TESTS/test_replay_receipts.py
+  (import added). Mirrors the live derivation already used by TESTS/test_concurrency.py
+  and TESTS/adversarial/test_evaluator_canonical.py. Constraint-(i) / GR-1: the expected
+  value is now derived live, surviving a manifest-version event without a silent break.
+  Value-identical: the live manifest_sha256() equals the old literal (confirmed before
+  conversion - the Checkpoint B negative result, finding 2), so no test result flips and
+  the count is unchanged. Deltas -32 / +4 / +4 bytes.
+- **Close commit (artifact 04 + STATE + ledger):** artifact 04 G11 row gains a "Prose
+  tail cleared (VL-055)" bullet (no status transition - RESOLVED stands from VL-053);
+  STATE.md gains a VL-055 Current-verified-state bullet plus the Last-updated/PREVIOUS
+  rotation (VL-054 -> PREVIOUS); this entry.
+
+#### Findings
+
+1. **The stale G11-as-live comment was exactly one site, not several.** The opener
+   required reading envelope.py in full (reassert() Row-4 region + module docstring +
+   build_envelope() docstring) because the asymmetry might be "described in more than
+   one place." The full read found only the Row-4 comment stale. build_envelope()'s
+   docstring describes the version-from-argument / hash-from-disk split as the INTENDED
+   contract, which path (b)-with-guard preserved - accurate, left untouched. The honest
+   signal: the prose tail of G11 was one line of framing, now cleared.
+2. **Checkpoint B negative result: all three literals equalled the live hash before
+   conversion.** The conversion is value-preserving precisely because SHA ==
+   manifest_sha256() already; had any literal been stale (a silently-diverged pin still
+   passing for another reason), converting it would have FLIPPED a test and the opener's
+   Checkpoint B says HALT and reconcile. No flip; the literals were current. The pin's
+   defect was never a wrong value - it was the constraint-(i) fragility (it would break
+   on a future GR-1 manifest-version event).
+3. **The flagged VL-029/047 module-docstring drift was already current on disk;
+   deferred without edit.** STATE item 43 carried "the envelope.py module-docstring
+   lines 42-43 stale post-VL-029/047." On the full read, lines 42-46 correctly describe
+   VL-029's build_envelope() wiring and VL-047's sign_envelope() default forward -
+   already current (cleared at or after VL-047, untracked). Per the opener's default
+   (comment-accuracy for the G11 tail only; do not widen), no edit. Another instance of
+   the opener-prediction-vs-disk divergence the source-first precondition catches (the
+   already-current variant; same family as VL-042 / VL-045 / VL-052 findings).
+
+#### Files affected
+
+- IMPLEMENTATION/envelope.py (comment commit; reassert() Row-4 comment; +180 bytes)
+- TESTS/test_adversarial_evaluator.py, TESTS/test_pep.py, TESTS/test_replay_receipts.py
+  (SHA-pin commit; import + literal->call)
+- docs/restructure/04_current_vs_claimed.md (close commit; G11 prose-tail bullet)
+- STATE.md, EVIDENCE/verification_ledger.md (close commit)
+
+#### Files NOT affected
+
+- IMPLEMENTATION/envelope.py logic (reassert() / build_envelope() / sign_envelope()
+  bodies byte-unchanged; comment text only), evaluator.py, pep.py, verifier.py,
+  request_validator.py - no code-behavior change.
+- CANON, MANIFEST, all SPEC/, EVIDENCE/published_hashes.json - unchanged. Nothing here
+  edits a hashed-file source, so NO evaluator_sha256 roll and NO published_hashes.json
+  regen (contrast VL-053, where editing evaluator.py rolled the field).
+- The synthetic-record placeholders that are NOT manifest pins: test_signing_expiry.py's
+  M, test_key_record.py's "pinned-manifest-sha-placeholder", test_bypass.py's "0"*64 -
+  left (Scope-OUT; not finding-5 pins).
+- No new invariant; canon section 9 / 11.9 basis unchanged; section 14 holds.
+
+#### Citation discipline (VL-012)
+
+Comment commit + SHA-pin commit (independent; neither cites the other); the close
+(STATE + ledger) cites whatever content commits land, not its own hash. Prior
+substantive entry: VL-054 (T-G14-unknown-key) - chain spec a2c5d41 -> build 5df3918
+-> close (the prior tip). pytest 203 + 0 xfailed unchanged (the comment is inert; the
+SHA conversions are value-preserving).
+
+#### Next trajectory action
+
+Unchanged set, none blocking, none a readiness predicate (the gate's three reds are
+green). Tier-1 remaining after this: the cross-signer overlap-phrasing tighten in
+11_root_record_spec.md section 6.3 (a small spec increment); the deposit-readiness
+audit (README / Zenodo / public claims match the green board and the bounded
+"forgery-resistant" framing, no overclaim). Then Tier 1 is closed and the production
+plan (the section-14 scope decision first) is revisited as its own program. The three
+literal-SHA pins named in VL-053 finding 5 are now all converted (this entry); the
+remaining T-prose-drift not chased here is the numbered "Next open action" list (items
+30-44), which is stale (does not enumerate VL-045..VL-055) and is a standing
+dedicated-pass candidate. A1 target-side admission policy and caller-carry /
+proxy-removal remain the section-14 forks. The named floors BEYOND the gate are
+unchanged. "forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-root)
+and out of any deposit.

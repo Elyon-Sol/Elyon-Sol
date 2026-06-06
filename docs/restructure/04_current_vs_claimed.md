@@ -201,6 +201,13 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   `TESTS/test_concurrency.py` (inline `TEST_MANIFEST`/`MUTABLE_MANIFEST`,
   Delta above), not on any production path (`pep.py` uses
   `load_manifest()`); repointed to the on-disk manifest at VL-053.
+- **Prose tail cleared (VL-055):** the post-VL-053 stale `reassert()` Row-4
+  comment in `IMPLEMENTATION/envelope.py` (it had described the asymmetry as a
+  live flagged-open pattern) corrected to record this closure; the three
+  literal manifest-SHA pins (VL-053 finding 5) in
+  `TESTS/test_adversarial_evaluator.py`, `TESTS/test_pep.py`, and
+  `TESTS/test_replay_receipts.py` converted to live `manifest_sha256()`
+  (constraint-i / GR-1-safe). Behavior-inert; no status change (RESOLVED stands).
 - **Related:** G6/G10 disambiguation pass (VL-012) surfaced this during
   full read of `test_concurrency.py`; not in pass scope.
 
