@@ -13477,3 +13477,140 @@ dedicated-pass candidate. A1 target-side admission policy and caller-carry /
 proxy-removal remain the section-14 forks. The named floors BEYOND the gate are
 unchanged. "forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-root)
 and out of any deposit.
+
+### VL-056 - 2026-06-06 - T-cross-signer-phrasing: the within-record-vs-cross-signer split verified clean on disk; no spec edit
+
+**Status:** RECORDED (verify-clean / record hardening). NO follow-up evaluate
+(the transitive-root-designation evaluate already RAN at VL-044 follow-up,
+SOUND 3-0; VL-056 only confirms the DESCRIPTION matches the code and makes no
+new claim about the world; the "forgery-resistant" bound is untouched).
+**Author:** Claude (working session with the project author)
+**Classification:** methodology / verify-clean entry per VL-017a's distinction
+(no admission-path change; no spec edit; a STATE outcome bullet + this ledger
+entry only). No spec-precedes-build (no code, no spec change).
+
+#### The fork, resolved on the read: VERIFY-CLEAN (fork b), not EDIT
+
+The opener carried a live record tension: VL-053 and VL-054 "Next trajectory
+action" lines still listed 11_root_record_spec.md section 6.3 as owing a
+cross-signer-phrasing tighten, while VL-045 had recorded sections 6.3 / 7 step
+6 / 9 as VERIFIED CLEAN on disk. Both could not be live. The source-first read
+decides for VL-045: every prose site already draws the within-record-vs-cross-
+signer split exactly as the code does. No spec edit is owed. The VL-053/VL-054
+next-action lines are stale forward-references carried from the pre-VL-045
+backlog and never pruned; they live in the append-only ledger and are
+historical, not edited (VL-046 / VL-053-addendum discipline).
+
+#### Ground truth (the code the prose must match)
+
+IMPLEMENTATION/root_record_source.py:
+- Module docstring: cross-signer overlap conflict "is NOT a function of this
+  single-record loader - it sees one signer ... resolved by out-of-band re-pin
+  (spec section 6.3). What this loader DOES enforce is the WITHIN-record analog:
+  a root_key_id appearing more than once in one record's roots[] is malformed."
+- load_root_record_from_bytes step 6: the seen_ids set; a duplicate root_key_id
+  -> REF_VERIFY_ROOT_RECORD_INVALID, performed BEFORE the status-view build so a
+  dict keyed by root_key_id cannot silently dedupe a contradiction.
+- No cross-signer arbitration anywhere; it selects ONE signing_root_key_id and
+  verifies ONE publisher_signature.
+
+IMPLEMENTATION/key_record_source.py: the B-prime-2 sibling. Its within-record
+discipline is the serial-monotonic + freshness checks shared with the root
+reader; it carries no cross-signer concept (a key record has one signing root)
+and no duplicate-key_id seen_ids guard (step 5 builds trust_view[key_id]
+directly).
+
+#### Per-site on-disk finding (the edit-vs-verify-clean signal)
+
+- 11 section 6.3 heading: "(cross-signer; named, not loader-resolved)" - CLEAN.
+- 11 section 6.3 body: cross-signer named UNRESOLVABLE in-band, out-of-band
+  re-pin, "NOT a loader function"; within-record analog ->
+  REF_VERIFY_ROOT_RECORD_INVALID - CLEAN.
+- 11 section 7 step 6: within-record check named; "The CROSS-signer overlap
+  conflict ... the single-record loader cannot and does not resolve; out-of-band
+  re-pin, not a loader code" - CLEAN.
+- 11 section 9 reject code: REF_VERIFY_ROOT_RECORD_INVALID covers the within-
+  record duplicate/contradictory id; "the cross-signer overlap conflict is a
+  named deployment-layer hazard, not this code" - CLEAN.
+- 11 section 12 test list: cross-signer "documented as an out-of-band hazard the
+  loader does not resolve (a boundary the test states, not a loader code it
+  exercises)" - CLEAN.
+- 11 section 14 properties: "Overlap conflict is CROSS-signer and a named
+  deployment-layer hazard ... NOT a single-record loader function ... The loader
+  enforces only the WITHIN-record analog" - CLEAN.
+- 09_key_record_spec.md: zero cross-signer/overlap language (correct - cross-
+  signer is a root-record concept). Its loader step list (steps 1-7) claims no
+  within-record duplicate-key guard, matching the key reader - CLEAN, no parity
+  touch owed.
+- STATE.md: the VL-044 current-state bullet ("cross-signer conflict is NOT
+  loader-resolved"), the VL-044-follow-up bullet (reports OpenAI's OVERSTATED
+  grade and itself draws the split: "the loader fail-closes only the WITHIN-
+  record analog; cross-signer is the named out-of-band hazard ... code + spec
+  already draw it"), and the VL-045 bullet (records verified-clean) all draw the
+  split correctly - no STATE line overstates.
+- 04_current_vs_claimed.md / README.md: no cross-signer overstatement on the
+  grep (overlap / cross-signer / fail-clos).
+
+#### Checkpoint B (halt-class): no halt
+
+The read confirmed the loader actually fail-closes the within-record analog the
+spec claims (the seen_ids duplicate check returns REF_VERIFY_ROOT_RECORD_INVALID),
+and the spec claims no cross-signer resolution anywhere. No code-vs-spec defect
+to surface; the prose is already accurate, and no edit is manufactured (the
+VL-033 categories-B/C precedent: a verified-clean surface is a correct outcome).
+
+#### Findings
+
+1. VL-045 was right; the VL-053/VL-054 next-action lines were stale. The tension
+   resolves in VL-045's favor on disk. The corrective is forward (this entry +
+   the STATE outcome bullet); the append-only VL-053/VL-054 lines are not
+   rewritten. Opener-prediction-vs-disk family, the already-clean variant (after
+   VL-042 / VL-045 / VL-052 / VL-055).
+2. The append-only VL-044 / VL-044-follow-up framing is not overstated. They
+   REPORT OpenAI's OVERSTATED grade of the prompt's stated phrasing and
+   themselves draw the split correctly. The OVERSTATED grade was of the EVALUATE
+   PROMPT's wording, not of the code or spec; the prompt is off-repo (VL-008).
+   No ledger corrective owed.
+3. Out of scope, named not chased: the key reader has no duplicate-key_id guard.
+   Unlike the root reader's seen_ids step, key_record_source.py builds
+   trust_view[key_id] directly, so a duplicate key_id last-wins-dedupes rather
+   than failing closed. Artifact 09 does not claim otherwise, so this is not a
+   code-vs-spec defect or a cross-signer item; it is a benign robustness
+   asymmetry outside VL-056's strict scope. Recorded as a standing observation.
+
+#### Files affected
+
+- STATE.md (a VL-056 verified-clean current-state bullet + the Last-updated /
+  PREVIOUS rotation, VL-055 -> PREVIOUS)
+- EVIDENCE/verification_ledger.md (this entry)
+
+#### Files NOT affected
+
+- docs/restructure/11_root_record_spec.md, 09_key_record_spec.md,
+  04_current_vs_claimed.md, README.md - verified clean, no edit.
+- IMPLEMENTATION/root_record_source.py, key_record_source.py, verifier.py, all
+  code - byte-unchanged (Scope-OUT).
+- CANON, MANIFEST, all SPEC/, published_*.json - unchanged; no hashed-file edit,
+  so no evaluator_sha256 roll and no published-record regen. No new invariant;
+  section 14 holds.
+
+#### Citation discipline (VL-012)
+
+STATE + ledger in one commit; cites the prior tip, not its own hash. Prior
+substantive entry: VL-055 (T-prose-drift) - chain comment f58cbfb -> SHA-pins
+ce845cb -> close fc75ba2. pytest 203 + 0 xfailed unchanged (no code touched).
+
+#### Next trajectory action
+
+Tier-1 SPEC work is closed with this verify-clean. Remaining Tier-1: the
+deposit-readiness audit (VL-057; README / Zenodo / public claims match the green
+board (3 of 3) and the bounded "forgery-resistant" framing, no overclaim) - a
+public-claims audit, distinct in mode. Then Tier 1 is closed and the production
+plan (the section-14 scope decision first - caller-carry / proxy-removal is the
+section-14-faithful architecture; A1 target-side admission policy is the gate-
+unreachable floor) is revisited as its own program. Standing T-prose-drift not
+chased here: the numbered "Next open action" list (items 30-44) is stale (does
+not enumerate VL-045..VL-056). The named floors beyond the gate (out-of-band
+root/issuer COMPROMISE recovery; true multi-machine + TLS, the G5 floor) are
+unchanged. "forgery-resistant" stays BOUNDED (signed-path-under-uncompromised-
+root) and out of any deposit.
