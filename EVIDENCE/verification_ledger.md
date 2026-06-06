@@ -13713,3 +13713,61 @@ readiness is governed by external_verification_readiness.md, whose binding gate
 is the G5 real-transport floor - the production program's first engineering step,
 not a framing or evaluate task. "forgery-resistant" stays BOUNDED
 (signed-path-under-uncompromised-root) and out of any deposit.
+
+### VL-057 follow-up - 2026-06-06 - the forward teeth landed: Lesson 10 + GR-3
+
+**Status:** RECORDED (governance / methodology). NO follow-up evaluate (per the
+rule it lands).
+**Author:** Claude (drafting surface) under the project author's reasoning.
+**Classification:** governance / methodology-rule per VL-017a (lands the teeth the
+VL-057 artifact commit named-not-landed; live-disk anchors now available).
+
+The VL-057 artifact commit (external_verification_readiness.md + the convergence
+demotion, b1330cd) named Lesson 10 and GR-3 as DEFERRED pending live-disk anchors.
+The teeth landed in commit 14291d9:
+- docs/methodology/session_mechanics_lessons.md: Lesson 10 (model judgments of
+  value are not evidence when the artifact and the evaluate prompt share an
+  author; the referent-binding line; the corrective; the self-check). Appended
+  after Lesson 9, before the closing meta-trailer. Lesson count 9 -> 10.
+- docs/MAINTENANCE_PROTOCOL.md: GR-3 (evidence is referent-bound; model evaluative
+  judgment is not evidence; cross-model runs only as adversarial break-it or
+  explicitly-labeled framing stress-tests). Appended after GR-2; the evaluate-side
+  analog of GR-2. Status ACTIVE, originating VL-057.
+
+With this, the referent-binding rule is no longer only recorded (the VL-057
+artifact commit) but ENFORCED forward: a future opener proposing a soundness or
+value cross-model evaluate is now caught by GR-3 and Lesson 10, not by memory.
+
+Process finding (this repair). The four-file follow-up apply-script aborted
+mid-apply: it wrote the lessons and protocol files, then its STATE re-run guard
+fired a FALSE POSITIVE (it tested `if "VL-057 follow-up" in text`, but that phrase
+already appears in STATE's VL-057 MAIN prose), so STATE and the ledger were never
+written. A manual commit then captured only the two files that had landed
+(14291d9 = Lesson 10 + GR-3, each applied exactly once - verified by grep count).
+Two script defects, both corrected in the repair script: (1) NOT all-or-nothing -
+files were written one at a time, so a mid-sequence abort left a partial apply;
+the corrected script transforms and ASCII-gates ALL files in memory and writes
+only if every transform succeeds. (2) A guard keyed on a loose phrase that prior
+prose legitimately contains; the corrected guards key on applied-edit
+fingerprints (the exact bullet opening; this heading). New session-mechanics
+lesson candidate: apply-scripts must be all-or-nothing (stage every intended
+write, verify all, then commit to disk together) and re-run guards must key on an
+applied-edit fingerprint, never on a phrase that may appear in pre-existing
+content. Recovery is forward (VL-020 / VL-021 precedent): no history rewrite; this
+repair is a separate commit landing only the two pieces the abort skipped.
+
+Finding (named, not chased): GR-2's "Honest ceiling" bullet still reads "The
+remaining red (ROOT_RECOVERY) is real engineering the gate cannot do" - stale
+post-VL-049 (ROOT_RECOVERY went green; the board is 3 of 3). Append-only
+governance plus strict scope: NOT edited. A GR-2 amendment-entry (a new entry,
+never an in-place edit) is the corrective, deferred.
+
+Files affected (this repair commit): STATE.md, EVIDENCE/verification_ledger.md.
+Already landed (14291d9): docs/methodology/session_mechanics_lessons.md,
+docs/MAINTENANCE_PROTOCOL.md.
+NOT affected: no code / canon / MANIFEST / SPEC / published_* change; no
+evaluator_sha256 roll; no new invariant; section 14 holds; no prior ledger or GR
+entry rewritten (append-only). pytest 203 + 0 xfailed unchanged.
+
+Citation discipline (VL-012): teeth commit 14291d9; prior substantive entry VL-057
+(T-referent-binding) at b1330cd. This entry cites those, not its own hash.
