@@ -14014,3 +14014,42 @@ closes G5 and is the author's to arrange. Standing: the deposit-readiness audit
 (VL-059) under GR-3; A1 target-side policy and caller-carry / proxy-removal as the
 section-14 forks; T-bookkeeping (G1/G8/G9/G11/G14 + server.py retirement) and the
 T-prose-drift on the stale numbered Next-open-action list. None blocking.
+
+### VL-058 follow-up - 2026-06-06 - Lesson 11 promoted: Cowork-mount file + git mechanics (the CRLF-from-desktop-tools + unlink-EPERM findings)
+**Status:** RECORDED (methodology-artifact update). NO follow-up evaluate (GR-3).
+**Author:** Claude (working session with the project author).
+**Classification:** efficiency move per VL-017a (a methodology-lessons addition; no
+code / canon / test / spec change). Captures two environment findings the VL-058
+main entry named in prose (the .git-mount unlink-EPERM process note) plus one it
+did not durably record (the CRLF-from-desktop-tools divergence), promoting both to
+docs/methodology/session_mechanics_lessons.md as Lesson 11.
+
+#### What landed
+- docs/methodology/session_mechanics_lessons.md gains Lesson 11 (Cowork-mount file
+  and git mechanics): write tracked repo files LF from the Linux side, not via the
+  Cowork desktop Write/Edit tools (which emit CRLF on Windows); do not drive git
+  over the sandbox mount (it cannot unlink, so locks/temp leak and the index can
+  corrupt); if git must run over the mount, use the rename-not-unlink lock clear +
+  `git read-tree HEAD` repair + explicit-path staging pattern. Two surface events:
+  the VL-058 artifact-12 CRLF phantom-modified (resolved by `git checkout --`), and
+  the VL-058 .git-mount unlink-EPERM index corruption (recovered by read-tree).
+- Lesson count 10 -> 11.
+
+#### Why durable here, not in model memory
+The Cowork persistent-memory store was not reliably addressable this session, and
+the repo is the project's stated continuity layer regardless (no model memory).
+The findings are environment operational lessons, which is exactly what
+session_mechanics_lessons.md exists to hold. Written LF from the Linux side -
+applying Lesson 11 to its own commit.
+
+#### Files affected / NOT affected
+Affected: docs/methodology/session_mechanics_lessons.md (Lesson 11); STATE.md
+(Last-updated rotation + a follow-up current-state bullet); this ledger entry.
+NOT affected: no code / canon / MANIFEST / SPEC / published_* / readiness change;
+no evaluator_sha256 roll; no new invariant; section 14 holds. pytest 203 + 0
+xfailed unchanged (no test touched).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-058 (T-G5-transport) - design 37f9ab7 -> build 7894c5d
+-> close 31da5ec. This follow-up cites that chain, not its own hash. G5 stays OPEN;
+next trajectory action unchanged (step 1b, wire the seam).

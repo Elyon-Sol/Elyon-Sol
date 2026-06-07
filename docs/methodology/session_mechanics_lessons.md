@@ -1002,6 +1002,50 @@ verdicts (VL-023 / VL-040 / VL-042 / VL-044 follow-ups) from evidence to framing
 stress-test. See also docs/methodology/external_verification_readiness.md for the
 human-verification analog: a human reading the self-account is inflated too.
 
+## Lesson 11: Cowork-mount file and git mechanics (write tracked files LF from the Linux side; do not drive git over the sandbox mount)
+
+### Surface events
+- VL-058: docs/restructure/12_g5_transport_design.md was created and edited with
+  the Cowork desktop file tools, which write CRLF on Windows, while the commit was
+  made from the Linux sandbox side, which stored LF (the repo convention for all
+  .md / .py source). Result: a phantom "modified" working-tree file on the host
+  after push (CRLF working copy vs LF blob), content byte-identical modulo the
+  carriage returns. Resolved by `git checkout -- <file>` in the author's terminal.
+- VL-058: the sandbox .git mount returns EPERM on unlink for lock and temp files.
+  git writes its index and refs via rename (which the mount permits), so commits
+  land, but it cannot clean up .git/index.lock, .git/HEAD.lock, or tmp_obj_*
+  afterward; the leftover lock + a between-commit write corrupted the index once
+  (recovered with `git read-tree HEAD`). A stale 0-byte index.lock left by the
+  author's native terminal at session start was the initial trigger.
+
+### Failure mode
+A Cowork session has two filesystem views of the same repo: the host (reached by
+the desktop Write/Edit tools) and the Linux sandbox (reached by the shell over a
+mount). Files written by the desktop tools land CRLF on Windows; files written
+from the Linux side land LF. Editing on one side and committing from the other
+produces line-ending divergence the next `git status` flags. Separately, the
+sandbox's view of .git cannot unlink, so git's own lock and temp cleanup fails and
+the index can corrupt across successive git writes.
+
+### Corrective rule
+- WRITE TRACKED REPO FILES LF FROM THE LINUX SIDE (a Python apply-script with
+  newline="\n", or printf / a heredoc), NOT via the desktop Write/Edit tools,
+  which emit CRLF on Windows. The repo convention is LF for all .md / .py source;
+  only captured .log proofs carry CRLF.
+- DO NOT drive git (add / commit / reset / push) over the sandbox mount. Do the
+  file edits and runners in the sandbox; run git and push from the author's native
+  terminal, where unlink works and credentials live.
+- If git MUST run over the mount: clear leftover locks via `mv` (rename, not
+  unlink) before each write; repair a corrupted index with `git read-tree HEAD`;
+  never `git add -A` (explicit paths only); sweep the leftover .git cruft from the
+  native terminal afterward (git fsck stays clean, but the cruft accumulates).
+
+### Self-check
+After creating or editing a tracked file in a Cowork session, before committing:
+was it written from the Linux side (LF) or the desktop tools (CRLF)? If CRLF,
+normalize to LF before the commit. Before running any git write over the mount,
+ask: can this be run from the native terminal instead? Default to yes.
+
 Changes to this file are recorded in the ledger as
 methodology-artifact updates, classified as efficiency moves rather
 than trajectory moves per VL-017a's distinction.
