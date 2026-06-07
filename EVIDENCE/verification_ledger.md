@@ -13887,3 +13887,130 @@ entry rewritten (append-only). pytest 203 + 0 xfailed unchanged.
 Prior substantive entry: VL-057 (T-referent-binding) at b1330cd; its teeth at
 14291d9 (Lesson 10 + GR-3); its STATE/ledger repair at d7dca51. This entry cites
 those, not its own hash.
+
+### VL-058 - 2026-06-06 - T-G5-transport: G5 real-transport design artifact (12) + step-1 transport seam (transport.py) built-then-wire; in-env TLS substrate spiked
+**Status:** RECORDED (trajectory; a design artifact + the first build increment).
+NO follow-up evaluate (GR-3): the only validation here is the referent-bound seam
+runner, which passes; nothing in this entry is model-judged for soundness/value.
+**Author:** Claude (working session with the project author).
+**Classification:** trajectory move per VL-017a (a new restructure design artifact
++ a new IMPLEMENTATION/ module + a new EVIDENCE/proofs/ runner; STATE + ledger
+close). Spike-then-design-then-build-then-wire: the env spike preceded the design;
+the design (artifact 12) precedes the build (transport.py); the build is
+build-then-wire (no caller).
+
+#### What landed
+- Content commit (design) 37f9ab7: docs/restructure/12_g5_transport_design.md.
+  The G5 counterpart of 08_enforcement_design.md (design precedes build). It states
+  the two finish lines - (A) a G5-ready build (real cross-host TLS + a real
+  downstream policy + an attack harness; fully buildable by author+model) and (B)
+  G5 closed (the predicate green only because the system WITHSTOOD attack on a real
+  surface run by an EXTERNAL attacker; not promptable - author-written attacks run
+  by the author is dev QA-ing its own build, which GR-3 catches) - and the
+  buildable-vs-external split. Build order steps 1-5 are grounded in code on disk
+  (source-first): the two HTTP CLIENTS (the gate push at pep.py requests.post line
+  276 carrying the X-Elyon-Sol-Envelope header line 279; the record fetch at
+  published_source.fetch_published_record requests.get line 152) are already real;
+  the two SERVERS (an enforcing target; a record publisher) exist only as
+  runner/test scaffolding (the TARGET_DRIVER string in
+  g5_signed_cross_host_001_runner.py line 118; TESTS/adversarial/test_enforcement.py;
+  the http.server _serve at line 93). IMPLEMENTATION/target.py is an 8-line stub, so
+  a deployable reference enforcing target is the largest unbuilt (A) piece.
+- Content commit (build) 7894c5d: IMPLEMENTATION/transport.py +
+  EVIDENCE/proofs/g5_transport_seam_001_runner.py.
+  transport.py adds post_to_target / get_published: the gate-to-target push and the
+  published-record fetch with a TLS verification policy + optional client cert
+  resolved from args or the ELYON_TLS_CA_BUNDLE / ELYON_TLS_CLIENT_CERT env
+  (out-of-band, never in repo, parallel to pep._get_signing_key custody),
+  fail-closed by default (_resolve_verify returns True with no override). The
+  load-bearing property: with no args and no env, verify resolves to True and cert
+  to None, so the default request is BYTE-IDENTICAL to pep.py's current
+  requests.post(url, json=..., headers=..., timeout=10) and
+  published_source.py's current requests.get(url, timeout=timeout) - the property a
+  later wiring step relies on to change those modules without changing default
+  behavior. The seam runner proves it over a REAL TLS socket to a separate OS
+  process (no monkeypatch; contrast the VL-048 runner's fake_post): byte-identical
+  default resolution, push (X-Elyon-Sol-Envelope header + body intact), fetch
+  (record bytes intact), and fail-closed SSLError on an untrusted self-signed peer
+  for both hops. 7/7, exit 0.
+
+#### Env-capability spike (referent-bound, this session)
+A spike confirmed the build sandbox supports real TLS sockets between distinct OS
+processes with fail-closed cert verification (a trusted CA bundle is honored; an
+untrusted self-signed peer raises SSLError), with Python 3.10 + cryptography +
+requests + the openssl CLI. It found docker / docker-compose NOT available, and the
+sandbox is a single host. Consequence (folded into artifact 12 step 2): the in-env
+proof of steps 1-5 runs over plain multi-process + TLS on one host; the
+docker-compose and two-real-VM artifacts are deploy-target deliverables, validated
+only on real hosts, never greened in-env.
+
+#### Build-then-wire (no caller; default behavior unchanged)
+pep.py and published_source.py are byte-unchanged at this entry; transport.py has
+no callers (grep confirms only incidental docstring/comment uses of the word
+"transport" in those modules, not imports). The existing suite is therefore
+unaffected: pytest 203 + 0 xfailed unchanged. Wiring the seam (with default args =
+byte-identical) is step 1b, deferred to the next session along with the existing
+cross-host runners as the regression referent.
+
+#### GR-3 / GR-2 posture
+No cross-model evaluate ran; the only validation is the referent-bound seam runner
+(GR-3 class (a) characterization: "given these inputs the seam behaves thus"). No
+readiness.json change and no readiness flag added (the capability is built-but-
+unwired with no proof claimed; GR-2's build-then-wire is allowed, claimed-but-
+unwired is not, and nothing is claimed). G5 does NOT transition (still OPEN); the
+seam is necessary substrate, not a capability the gate exercises until wired. The
+design is explicit that in-loop attacks (steps 2-5) are characterization, never
+certification; "forgery-resistant" stays bounded and out of any deposit.
+
+#### Files affected
+- docs/restructure/12_g5_transport_design.md (new; design)
+- IMPLEMENTATION/transport.py (new; build)
+- EVIDENCE/proofs/g5_transport_seam_001_runner.py (new; build)
+- STATE.md, EVIDENCE/verification_ledger.md (this close commit)
+
+#### Files NOT affected
+- IMPLEMENTATION/pep.py, published_source.py, verifier.py, envelope.py,
+  evaluator.py, request_validator.py, key_record_source.py, root_record_source.py,
+  readiness.py - byte-unchanged (build-then-wire; the seam has no caller).
+- CANON, MANIFEST, all SPEC/, EVIDENCE/published_hashes.json, EVIDENCE/readiness.json
+  - unchanged; no hashed-file edit, so no evaluator_sha256 roll and no published-
+  record regen. No new invariant; canon section 14 holds (transport is verification
+  I/O).
+
+#### Process note (session-mechanics): the .git mount cannot unlink
+The build sandbox's .git mount returns EPERM on unlink for lock/temp files
+(.git/index.lock, HEAD.lock, tmp_obj_*). git WRITES its index/refs via rename
+(which the mount permits), so commits land, but git cannot clean up its own lock
+files afterward, which corrupted the index between commit A and commit B once
+(recovered with `git read-tree HEAD`). Working recipe used: clear any leftover
+.lock via `mv` (rename, not unlink) before each git write, and `git read-tree HEAD`
+to repair the index after a commit if needed. The stale 0-byte index.lock at
+session start (from the author's MINGW64 terminal) was the original trigger; it was
+moved aside, not deleted. Leftover .git cruft (index.lock.* / *.lock.cleared.* /
+tmp_obj_*) is harmless (git fsck clean) but should be swept from the author's
+terminal where unlink works. Candidate session-mechanics lesson: git writes from
+this mount need the rename-not-unlink + read-tree-repair pattern, or the close
+should be run from the author's native terminal.
+
+#### Citation discipline (VL-012)
+Chain: design 37f9ab7 -> build 7894c5d -> this STATE + ledger
+close. This entry cites the two content commits, not its own hash. Prior
+substantive entry: VL-057 second follow-up (the demotion completion) at 0c1ac4b.
+Renumber note: the reserved deposit-readiness audit (the vl057_session_opener.md
+draft) becomes VL-059 per the VL-026 Order-B precedent and now runs under GR-3.
+pytest 203 + 0 xfailed unchanged.
+
+#### Next trajectory action
+Step 1b: wire the seam into pep.py + published_source.py with default args
+(byte-identical), proving the full suite AND the existing cross-host runners
+(g5_signed_cross_host_001_runner.py, root_recovery_cross_host_001_runner.py) still
+pass; halt if anything moves (the wiring is not then byte-identical). Then artifact
+12 step 4 (the reference enforcing target; supersede the target.py stub), step 2
+(multi-process + TLS harness in-env; docker-compose as deploy-target), step 3
+(TLS/cert + trust bootstrap), step 5 (attack harness mapped to
+external_verification_readiness.md gate 2, including the honestly-open A3b
+stale-record attack). Finish line (B) - the external attacker on a real surface -
+closes G5 and is the author's to arrange. Standing: the deposit-readiness audit
+(VL-059) under GR-3; A1 target-side policy and caller-carry / proxy-removal as the
+section-14 forks; T-bookkeeping (G1/G8/G9/G11/G14 + server.py retirement) and the
+T-prose-drift on the stale numbered Next-open-action list. None blocking.
