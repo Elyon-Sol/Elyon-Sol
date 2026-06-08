@@ -249,6 +249,16 @@ def build_reference_target_app(
         app.state.received.append(interaction)  # the target acts only here
         return {"honored": True, "reason": result["reason"]}
 
+    @app.get("/received")
+    async def received():
+        """Observability (read-only): how many calls the target has acted on.
+
+        Lets a multi-process / real-transport runner confirm an honor verdict over
+        a real socket without redelivering the envelope. Not part of the admission
+        policy and not a trust surface; it discloses only an integer count.
+        """
+        return {"count": len(app.state.received)}
+
     return app
 
 

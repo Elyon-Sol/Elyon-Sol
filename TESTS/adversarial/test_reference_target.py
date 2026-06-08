@@ -246,3 +246,16 @@ def test_reference_target_fails_closed_when_unconfigured(gate_signing):
     assert resp.status_code == 403
     assert resp.json()["detail"]["reason"] == REF_TARGET_NOT_CONFIGURED
     assert app.state.received == []
+
+
+def test_reference_target_received_endpoint_reflects_acted_count(gate_signing):
+    """The read-only /received observability endpoint reports the acted-on count:
+    0 before any honored call, 1 after one. This is what a multi-process /
+    real-transport runner reads to confirm an honor verdict over a real socket
+    without redelivering the envelope (it is not part of the admission policy)."""
+    app, client = _make_target(gate_signing)
+    assert client.get("/received").json()["count"] == 0
+    interaction = _normalized_interaction()
+    env = _signed_envelope(gate_signing, interaction=interaction)
+    assert _post(client, interaction, env).status_code == 200
+    assert client.get("/received").json()["count"] == 1
