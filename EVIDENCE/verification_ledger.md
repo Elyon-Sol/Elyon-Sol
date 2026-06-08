@@ -14149,3 +14149,126 @@ then steps 2 (multi-process + TLS in-env; docker-compose as deploy-target), 3 (T
 Standing, none blocking: VL-059 deposit-readiness audit (GR-3); A1 target-side policy;
 caller-carry / proxy-removal (section-14 forks); T-bookkeeping (G1/G8/G9/G11/G14 +
 server.py retirement) and the T-prose-drift on the stale numbered Next-open-action list.
+                    
+
+### VL-061 - 2026-06-08 - T-G5-transport: artifact 12 step 4 - the standalone, deployable reference enforcing target (supersedes the target.py stub)
+**Status:** RECORDED (trajectory / build per VL-017a; the "single largest not-built
+item for (A)" - artifact 12 section 3 - is now built).
+NO follow-up evaluate (GR-3): the only validation is referent-bound - the new pytest
+module, the full suite, and the runners, all green; nothing here is model-judged for
+soundness/value.
+**Author:** Claude (working session with the project author).
+**Classification:** trajectory move per VL-017a (a new deployable service module + its
+pytest regression floor + an EVIDENCE runner; no canon / SPEC / MANIFEST / published_*
+change). Build-then-wire (VL-025 / VL-037 / VL-058 precedent): the target is built with
+NO caller wired - the gate still only POSTs to a target_url, and the target.py stub is
+left in place (no code importer of it); promoting the two-node harness to run THIS target
+as node B (replacing the stub) is artifact 12 step 2.
+
+#### What landed (three new files)
+- `IMPLEMENTATION/reference_target.py` (NEW): the reference enforcing target promoted out
+  of scaffolding into a real, deployable FastAPI service
+  (`uvicorn IMPLEMENTATION.reference_target:app`). On each POST to /target it, by its OWN
+  policy: (1) resolves out-of-band configuration from the environment - `ELYON_TARGET_URL`
+  (the URL it serves, for the binding check), `ELYON_PUBLISHER_URL`,
+  `ELYON_PINNED_ROOT_SHA256` (the published-record anchor), `ELYON_GATE_KEY_ID` +
+  `ELYON_GATE_PUBLIC_KEY_HEX` (the pinned gate signing public key) - incomplete / malformed
+  config FAILS CLOSED (`REF_TARGET_NOT_CONFIGURED`), the same per-request fail-closed
+  posture pep.py takes with no signing key; (2) reads the `X-Elyon-Sol-Envelope` header
+  (absent / unparseable -> treated as no envelope -> A1 reaches step 4 as
+  `REF_VERIFY_ENVELOPE_ABSENT`); (3) fetches + anchor-verifies the published record via the
+  production `published_source.fetch_published_record` (None -> `REF_TARGET_ANCHOR_MISMATCH`,
+  fail-closed before trusting any currency claim; the fetch runs off the event loop via
+  `run_in_threadpool`); (4) calls `verifier.verify_envelope(envelope, interaction,
+  target_url, record_source=<fetched>, pinned_public_keys=<pinned gate key>)` - a pinned key
+  is supplied, so the issuer signature is REQUIRED and checked fail-closed before currency
+  (the signed path; the production gate signs every default forward, VL-047), currency is
+  checked against the FETCHED record not local disk (Decision C / D-b, VL-039), and the
+  binding (request_context + target_url) closes same-state replay (A3). Honors (200, records
+  the interaction on `app.state.received`) iff verify_envelope accepts; otherwise 403, does
+  not act. A `build_reference_target_app(config_provider, fetch)` factory makes config and the
+  fetch hop injectable for tests; the module-level `app` resolves config from the environment
+  per request.
+- `TESTS/adversarial/test_reference_target.py` (NEW): 8 tests driving the real app via
+  TestClient with an injected config_provider (the out-of-band pins) and an injected fetch
+  (the publisher TestClient, deterministic / network-free), envelopes SIGNED with the autouse
+  `gate_signing` conftest key (the pinned-key path requires a signature). Cases: honor (acted
+  exactly once), A1 absent-envelope, keyless forge, A2 tampered-signed-envelope, A3
+  replay/binding mismatch, target_url swap, record-fails-anchor, and unconfigured fail-closed.
+- `EVIDENCE/proofs/g5_reference_target_001_runner.py` (NEW): the no-shortcut evidence runner.
+  Conftest-free; configures the DEPLOYABLE module-level app ENTIRELY through its real
+  `config_from_env` path (sets the `ELYON_*` env, no injected config); the published-record
+  hop is the production `fetch_published_record` over a REAL stdlib http.server loopback
+  socket (nothing on the fetch boundary monkeypatched); the envelope is produced and SIGNED
+  by the real pep.py /governed-call ELIGIBLE path with the gate key resolved through the
+  PRODUCTION env path (`ELYON_SIGNING_KEY_HEX` + `ELYON_SIGNING_KEY_ID`), and the gate public
+  key is pinned out-of-band as hex. Seven cases + acted-exactly-once; exits 0 iff all hold.
+
+#### The reference policy (NOT authored-to-pass) - the finish-line-(B) requirement
+The acceptance criterion is solely "verify_envelope accepts against the anchor-verified
+fetched record AND the pinned gate signature verifies." The target consults only its
+out-of-band pins and the production verifier; it is not tuned to any author happy-path
+vector. This is the load-bearing property for finish line (B): a target an EXTERNAL attacker
+can point at must not be calibrated to the author's vectors (artifact 12 sections 2, 4).
+Per GR-3, any attack run in-loop against this target is characterization, never
+certification; G5 CLOSED requires the external attacker (artifact 12 section 1).
+
+#### Reason vocabulary
+Two target-layer codes owned by this module: `REF_TARGET_NOT_CONFIGURED` (incomplete
+out-of-band config) and `REF_TARGET_ANCHOR_MISMATCH` (the fetch/anchor failure; the same name
+the promoted scaffolding used in test_cross_host.py and g5_signed_cross_host_001_runner.py).
+Every other refusal reason is the `REF_VERIFY_*` code verify_envelope returns, surfaced
+unchanged (ENVELOPE_ABSENT, SIGNATURE_INVALID, BINDING_MISMATCH, etc.).
+
+#### Verification (referent-bound)
+- New module: `TESTS/adversarial/test_reference_target.py` 8/8 passed.
+- Full suite: 211 passed (was 203 at VL-060; +8, the new module). No existing test changed.
+- New runner: `g5_reference_target_001_runner.py` ALL INVARIANTS HOLD - honor
+  (REASSERTED_AND_BOUND), keyless forge (REF_VERIFY_SIGNATURE_INVALID), replay
+  (REF_VERIFY_BINDING_MISMATCH), target_url swap (REF_VERIFY_BINDING_MISMATCH), absent
+  envelope / A1 (REF_VERIFY_ENVELOPE_ABSENT), tampered record (REF_TARGET_ANCHOR_MISMATCH),
+  unconfigured (REF_TARGET_NOT_CONFIGURED); acted exactly once (only the honored call).
+- Regression: `g5_signed_cross_host_001_runner`, `root_recovery_cross_host_001_runner`,
+  `g5_transport_seam_001_runner`, `g5_cross_host_001_runner` all exit 0 - nothing moved.
+
+#### G5 posture (unchanged; still OPEN)
+A deployable reference target is finish line (A) for step 4, exercised over the CURRENT
+loopback transport. It does NOT close G5: the gate->target hop is still modeled
+(capture/redeliver, as all prior cross-host runners do); real cross-host TLS transport is
+artifact 12 steps 2-3; and G5 CLOSED (B) requires an EXTERNAL attacker on a real surface,
+author-arranged. `external_verification_readiness.md` keeps the (B) gate as the floor;
+`forgery-resistant` stays bounded and out of any deposit.
+
+#### Files affected
+- IMPLEMENTATION/reference_target.py (new), TESTS/adversarial/test_reference_target.py
+  (new), EVIDENCE/proofs/g5_reference_target_001_runner.py (new).
+- STATE.md, EVIDENCE/verification_ledger.md (this close commit).
+
+#### Files NOT affected
+- IMPLEMENTATION/target.py - the stub is LEFT IN PLACE (superseded, not deleted; no code
+  imports it; its removal is safe once step 2 wires the harness to the new target).
+- IMPLEMENTATION/pep.py, transport.py, verifier.py, published_source.py, envelope.py,
+  evaluator.py, request_validator.py - byte-unchanged (the gate's default path is untouched;
+  build-then-wire).
+- CANON, MANIFEST, all SPEC/, EVIDENCE/published_hashes.json, EVIDENCE/readiness.json -
+  unchanged; no hashed-file edit, so no evaluator_sha256 roll and no published-record regen;
+  no readiness flag change (no predicate claims cross-host transport). No new invariant;
+  canon section 14 holds (the target verifies and acts/refuses; transport is verification I/O).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-060 (T-G5-transport-wire) - build b814ca0 / close 70407e4. This
+entry cites the artifact-12 design (37f9ab7, VL-058) and names its three new build files; it
+does not cite its own (STATE + ledger close) hash. VL-059 stays reserved for the
+deposit-readiness audit under GR-3.
+
+#### Next trajectory action
+Artifact 12 step 2 (the chain as separate OS processes on separate endpoints over real TLS
+in-env: gate node A -> the reference target node B -> publisher, with the gate->target hop a
+REAL socket rather than the modeled capture/redeliver; docker-compose + a two-real-VM note as
+deploy-target artifacts, not greened in-env), then step 3 (TLS/cert + the out-of-band trust
+bootstrap) and step 5 (the attack harness mapped to external_verification_readiness.md gate 2,
+including the honestly-open A3b stale-record attack). Finish line (B) - external attacker on a
+real surface - closes G5, author-arranged. Standing, none blocking: VL-059 deposit-readiness
+audit (GR-3); A1 target-side policy; caller-carry / proxy-removal (section-14 forks);
+T-bookkeeping (G1/G8/G9/G11/G14 + server.py retirement + the now-safe target.py-stub removal)
+and the T-prose-drift on the stale numbered Next-open-action list.
