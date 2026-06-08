@@ -14534,3 +14534,73 @@ Record freshness (A3b sub-case b): give the published record(s) a signed freshne
 enforce it on the fetch/verify path, mirroring this cutover. Then optionally replay/exactly-once
 (nonce) and cross-host clock-skew tolerance. Standing: G5 transport step 5 + deploy artifacts;
 finish line (B) author-arranged.
+
+### VL-066 - 2026-06-08 - T-G5-continuity + wedge: replay / exactly-once closed (signed decision_id + executor seen-set); wedge property demonstrated end-to-end on an agent tool-call surface
+**Status:** RECORDED (trajectory / continuity + wedge demonstration). Referent-bound: pytest
+216 -> 218 (replay + decision_id-signed), and a runnable demo (7/7) showing a side-effecting
+tool fires only when admitted. Nothing model-judged (GR-3).
+**Author:** Claude (working session with the project author).
+**Classification:** trajectory / continuity + wedge demonstration per VL-017a. No new canon
+invariant; no `reassert()`/CCS change; no hashed-file change (envelope/pep/verifier/
+reference_target are not hashed). Builds on VL-065 (decision freshness, b593b9b/d510ea8).
+
+#### The gap closed: replay within the freshness window (exactly-once)
+Decision freshness (VL-065) bounds how LONG a captured decision is usable but does not deny
+REPLAY within that window - a time-window cannot distinguish a first use from a replay
+(byte-identical, both in-window); that requires the executor to REMEMBER what it has honored.
+The window's role is to BOUND that memory: an honored decision only needs to be remembered
+until its `not_after`, then evicted.
+
+#### What landed
+- `IMPLEMENTATION/envelope.py`: `sign_envelope(..., decision_id=None)` adds a per-issuance
+  `decision_id` to the signed envelope; `decision_id` added to `_HASH_EXCLUDED_KEYS` (so it is
+  signed/tamper-proof but excluded from `decision_sha256` - the wire decision hash is
+  unchanged, like `not_after`).
+- `IMPLEMENTATION/pep.py`: the default ELIGIBLE forward stamps `decision_id=uuid.uuid4().hex`.
+- `IMPLEMENTATION/verifier.py`: new `REF_VERIFY_REPLAY` constant (the REF_VERIFY_* home).
+  verify_envelope is UNCHANGED and stays pure - it does not emit REF_VERIFY_REPLAY; anti-replay
+  is the acting party's stateful concern.
+- `IMPLEMENTATION/reference_target.py`: a TTL-bounded seen-set (`app.state.seen`,
+  decision_id -> not_after) checked after verify_envelope accepts; an already-honored
+  decision_id is refused with REF_VERIFY_REPLAY; entries pruned once their not_after passes.
+  NOTE recorded in code + here: the seen-set is PER-INSTANCE; a horizontally-scaled executor
+  needs a SHARED cache (e.g. Redis, TTL = max-age) or a replay can cross instances. The window
+  keeps that shared cache small.
+- `EVIDENCE/proofs/wedge_agent_toolcall_001_runner.py` (NEW): the wedge demonstration on an
+  MCP-shaped tool-call surface. A side-effecting tool executes ONLY when the call carries a
+  valid admission BOUND to that exact tool call, CURRENT vs the published record, FRESH, and
+  not previously honored; refused (tool does not fire) on replay / un-attested (A1) / rebind
+  (different tool or args) / drift (evaluator state moved) / stale. 7/7; tool fired exactly
+  once. FIDELITY (honest): models the `tools/call` shape and the executor-side gate; NOT a full
+  MCP server; in-process with an in-memory record; real TLS transport is proven separately by
+  g5_multiprocess_tls_001_runner.
+- `TESTS/adversarial/test_reference_target.py`: replay refusal + decision_id-is-signed (tamper)
+  tests; the signed-envelope helper now stamps a decision_id. `TESTS/test_pep.py`:
+  EXPECTED_ENVELOPE_TOP_KEYS gains `decision_id`.
+
+#### The falsifiable wedge claim - now holds in-process end-to-end
+"An admitted action cannot be executed downstream if (a) not admitted, (b) replayed or rebound,
+(c) the state that justified it changed, or (d) it is stale - and the executor verifies all
+independently of the caller." (a)/(b-rebind)/(c)/(d) were closed by VL-038/039/040/047/061/065;
+(b-replay / exactly-once) closes here. The demo exercises all of them on the tool-call surface.
+
+#### Verification
+- Full suite 216 -> 218 + 0 xfailed.
+- `wedge_agent_toolcall_001_runner.py`: 7/7, "tool fired exactly once" HOLDS, exit 0.
+
+#### Honest scope - not closed
+- The replay seen-set is PER-INSTANCE (single executor). Multi-instance exactly-once needs a
+  shared cache - the genuinely hard distributed-dedup part; flagged, not built.
+- Record freshness (A3b sub-case b) remains deferred (the B-prime-1 -> signed-record migration).
+- The demo is in-process; a real MCP server, a latency/throughput budget, integration
+  ergonomics, and an EXTERNAL attacker on a real surface are all still unproven.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-065 (decision freshness, b593b9b build / d510ea8 close). This entry
+cites VL-065 and the runner that demonstrates the property; it does not cite its own
+(STATE + ledger) hash.
+
+#### Next trajectory action
+Toward a production wedge: a shared replay cache for multi-instance executors; record freshness
+(A3b sub-case b); a real MCP-server integration + latency budget; and the G5 real-transport
+finish line (artifact 12 step 5 + deploy artifacts; finish line B author-arranged).
