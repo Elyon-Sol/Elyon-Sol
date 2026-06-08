@@ -238,6 +238,7 @@ EXPECTED_ENVELOPE_TOP_KEYS = {
     "timestamp_utc",
     "issuer_key_id",
     "issuer_signature",
+    "not_after",
 }
 
 

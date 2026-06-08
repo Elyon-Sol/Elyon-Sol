@@ -58,6 +58,7 @@ demonstrations). DEFAULT_SECURE goes green (EVIDENCE/readiness.json).
 
 import json
 import os
+from datetime import datetime, timezone, timedelta
 
 import requests
 from fastapi import FastAPI, HTTPException, Request
@@ -79,6 +80,16 @@ from IMPLEMENTATION.transport import post_to_target
 
 
 app = FastAPI(title="Elyon-Sol PEP")
+
+
+# VL-065 decision freshness (A3b close): the default ELIGIBLE forward stamps a
+# signed not_after (decision max-age) so a captured, validly-signed decision is
+# NOT honored arbitrarily later. Verification-layer policy enforced by
+# verify_envelope step 1.5b (the proven key-expiry primitive applied to the
+# decision); no new canon invariant, no reassert() change. not_after is inside
+# the signature (tamper-proof) and excluded from decision_sha256, so the wire
+# decision hash is unchanged. Configurable out-of-band; defaults to 300s.
+DECISION_MAX_AGE_SECONDS = int(os.environ.get("ELYON_DECISION_MAX_AGE_SECONDS", "300"))
 
 
 # VL-047 mandatory signing cutover: the gate's default forward signs every
@@ -250,7 +261,10 @@ async def governed_call(request: Request):
                 "forward unsigned (VL-047 mandatory signing cutover)"
             )
         signing_key, key_id = signing
-        envelope = sign_envelope(envelope, signing_key, key_id)
+        not_after = datetime.now(timezone.utc) + timedelta(
+            seconds=DECISION_MAX_AGE_SECONDS
+        )
+        envelope = sign_envelope(envelope, signing_key, key_id, not_after=not_after)
     except Exception as e:
         raise HTTPException(
             status_code=403,
