@@ -14342,3 +14342,75 @@ VL-030; it does not cite its own (STATE + ledger + artifacts) hash.
 Unchanged: artifact 12 step 2 (the chain as separate OS processes over real TLS in-env,
 gate -> reference target -> publisher, with the gate->target hop a real socket), then steps 3
 and 5; finish line (B) author-arranged.
+
+### VL-063 - 2026-06-08 - T-G5-transport: multi-process + real-TLS chain (artifact 12 steps 2-3, in-env); gate / reference target / publisher as three OS processes over CA-verified TLS
+**Status:** RECORDED (trajectory / build per VL-017a). Referent-bound: a runnable chain over
+real TLS sockets with exit-coded honor/refuse assertions; nothing model-judged (GR-3).
+**Author:** Claude (working session with the project author).
+**Classification:** trajectory move per VL-017a. Realizes artifact 12 steps 2 and 3 at the
+single-host (no-docker, no external attacker) fidelity the build sandbox supports: separate
+OS processes over real TLS with a local test CA + out-of-band anchor/key pinning. No canon /
+SPEC / MANIFEST / evaluator / published_* / readiness change; no new invariant (canon
+section 14: transport is verification I/O).
+
+#### What landed
+- `IMPLEMENTATION/publisher.py` (NEW): a minimal standing published-record publisher,
+  promoting the runners' ephemeral `_serve` http.server into a deployable service
+  (`uvicorn IMPLEMENTATION.publisher:app --ssl-*`). Serves `EVIDENCE/published_hashes.json`
+  (path from `ELYON_PUBLISHED_RECORD`) VERBATIM at `/published_hashes.json`, so the served
+  bytes' sha256 equals the target's pinned anchor; a missing record is a fail-closed 503.
+  Trust is not placed in the publisher or transport - the target anchor-verifies the fetched
+  bytes (`published_source.load_record_from_bytes`).
+- `IMPLEMENTATION/reference_target.py` (MODIFIED): adds a read-only `GET /received` returning
+  `{"count": len(app.state.received)}`. Observability only (not part of the admission policy,
+  not a trust surface; discloses an integer) - it lets a real-transport runner confirm an
+  honor verdict over a real socket WITHOUT redelivering the envelope.
+- `EVIDENCE/proofs/g5_multiprocess_tls_001_runner.py` (NEW): the in-env chain runner. It
+  generates a local test CA + one leaf cert (SAN 127.0.0.1 / localhost) with `cryptography`,
+  starts publisher / reference target / gate as three separate uvicorn processes over HTTPS,
+  and exercises four real TLS hops (runner->gate, gate->target, target->publisher,
+  runner->target). The gate forward and the record fetch verify against the CA via the
+  VL-058/060 transport seam (`ELYON_TLS_CA_BUNDLE`). Honor is driven THROUGH the gate
+  (gate->target->publisher) and confirmed via the target's `/received` count (no
+  capture/redeliver); forge / replay / target_url-swap / absent-envelope are posted DIRECTLY
+  to the target (the attacker model). Exit 0 iff honor acts exactly once and every
+  adversarial call is refused with the expected REF_* reason.
+- `TESTS/adversarial/test_publisher.py` (NEW, 2): the publisher serves the committed record
+  verbatim and the served bytes anchor to the committed record (a target fetching it and
+  anchor-verifying accepts). `TESTS/adversarial/test_reference_target.py` (+1): `/received`
+  reports 0 before any honored call and 1 after one.
+
+#### Verification (referent-bound)
+- `EVIDENCE/proofs/g5_multiprocess_tls_001_runner.py`: ALL INVARIANTS HOLD over the real-TLS
+  multi-process chain - honor (gate->target->publisher, target acted exactly once),
+  REF_VERIFY_SIGNATURE_INVALID (forge), REF_VERIFY_BINDING_MISMATCH (replay + target_url
+  swap), REF_VERIFY_ENVELOPE_ABSENT (A1), and no adversarial call acted; exit 0.
+- Full suite 211 -> 214 (the 3 new tests), 0 xfailed. No existing test changed.
+
+#### G5 posture (still OPEN)
+This is finish line (A) at single-host fidelity: real TLS between distinct OS processes on
+one box. It is NOT (B): there is no second machine and no EXTERNAL attacker. The
+docker-compose file, the two-real-VM promotion with real-CA certs, and a public surface
+remain deploy-target artifacts; G5 CLOSED requires an external attacker on a real surface
+(artifact 12 section 1; `external_verification_readiness.md`). Per GR-3 any in-loop attack
+characterizes, never certifies.
+
+#### Files NOT affected
+- `IMPLEMENTATION/pep.py`, `transport.py`, `verifier.py`, `published_source.py`,
+  `envelope.py`, `evaluator.py`, `request_validator.py` - byte-unchanged (the chain uses them
+  as-is; the only IMPLEMENTATION edit is the additive `/received` endpoint on the reference
+  target and the new publisher module).
+- CANON, MANIFEST, all SPEC/, `EVIDENCE/published_hashes.json`, `EVIDENCE/readiness.json` -
+  unchanged; no hashed-file edit, so no evaluator_sha256 roll and no published-record regen;
+  no readiness flag change (no predicate claims real cross-host transport).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-062 (external-interception evidence + Zenodo Rev. 3). This entry
+cites its own build files by name and does not cite its own (STATE + ledger) hash. VL-059
+stays reserved for the deposit-readiness audit.
+
+#### Next trajectory action
+Step 5 - the attack harness mapped to `external_verification_readiness.md` gate 2 (the next
+in-loop buildable) - and the deploy-target artifacts (docker-compose, two-real-VM note,
+real-CA certs). Finish line (B), external attacker on a real surface, closes G5,
+author-arranged.
