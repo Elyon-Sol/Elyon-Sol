@@ -14649,3 +14649,33 @@ directive doc and does not cite its own (STATE + ledger) hash.
 
 #### Next trajectory action
 Execute artifact 13 top-down, starting A1 (retire target.py).
+
+### VL-068 - 2026-06-08 - A1 (artifact 13, Phase A): retire the target.py stub (superseded by the reference enforcing target)
+**Status:** RECORDED (bookkeeping / hygiene). Referent-bound: grep confirms no code importer;
+suite 218 unchanged.
+**Author:** Claude (working session with the project author).
+**Classification:** bookkeeping / hygiene per VL-017a. First Phase-A item of the artifact-13
+directive. No canon / SPEC / evaluator / published_* / hashed-file change.
+
+#### What landed
+- `IMPLEMENTATION/target.py` removed (via `git rm`): an 8-line non-verifying stub
+  ({"status":"EXECUTED"} with no verification). Superseded by `IMPLEMENTATION/reference_target.py`
+  (the reference enforcing target, VL-061), which verifies before acting. Confirmed no Python
+  importer (`import target` / `from IMPLEMENTATION.target` grep-clean; only docs/ledger
+  referenced it).
+- `README.md` and `docs/restructure/01_repository_structure.md`: the `target.py` tree lines
+  replaced with `reference_target.py` (VL-061) + `publisher.py` (VL-063); artifact-01's prose
+  entry changed from PRESENT to RETIRED, with the two real services named as the present
+  not-in-original additions.
+
+#### Verification
+- Suite 218 + 0 xfailed, UNCHANGED (target.py was never imported by any test or runner).
+- Only remaining `target.py` reference in current docs is the intentional artifact-01 RETIRED
+  note; historical ledger/STATE mentions are left as accurate record.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-067 (the artifact-13 directive). This entry does not cite its own
+(removal + doc + STATE + ledger) hash.
+
+#### Next trajectory action
+A2 - retire `server.py` (the next Phase-A clean-base item).
