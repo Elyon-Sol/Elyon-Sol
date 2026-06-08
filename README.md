@@ -545,7 +545,7 @@ the source of truth and this README is the stale one.
 
 ## License
 
-See `LICENSE` in the repository root.
+**Proprietary - all rights reserved.** Copyright (c) 2026 Justin LaPorte. See `LICENSE` in the repository root. No right to use, copy, modify, distribute, or sell this software is granted except under a separate written agreement with the copyright holder. "Elyon-Sol" is a trademark of Justin LaPorte (application pending). Prior public releases of portions of this software under the MIT License remain MIT-licensed for those released copies; this repository and all subsequent releases are proprietary.
 
 ---
 
