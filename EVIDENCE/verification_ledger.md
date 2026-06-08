@@ -14272,3 +14272,73 @@ real surface - closes G5, author-arranged. Standing, none blocking: VL-059 depos
 audit (GR-3); A1 target-side policy; caller-carry / proxy-removal (section-14 forks);
 T-bookkeeping (G1/G8/G9/G11/G14 + server.py retirement + the now-safe target.py-stub removal)
 and the T-prose-drift on the stale numbered Next-open-action list.
+
+### VL-062 - 2026-06-08 - evidence/publication: external-interception evidence committed (webhook.site third-party receiver); Zenodo Enforcement Evidence Addendum advanced to Revision 3
+**Status:** RECORDED (evidence / publication). Referent-bound: the artifact is a measured
+HTTP run with third-party side-effect observation; no model judgment of soundness/value is
+involved (GR-3).
+**Author:** Claude (working session with the project author); the run was executed by the
+author at the snapshot commit.
+**Classification:** evidence / publication per VL-017a (a committed reproducible proof
+artifact + a publication-provenance copy; no code / canon / SPEC / MANIFEST / evaluator /
+published_* / readiness change; no new invariant). Trajectory is unchanged - the G5 build
+track's next action remains artifact 12 step 2.
+
+#### What landed
+- `EVIDENCE/proofs/external_interception_webhook_001_runner.py` (NEW): a manual, author-run
+  evidence runner (it makes REAL external POSTs). It drives the gate (`/governed-call`) with
+  the addendum's REFUSE/ELIGIBLE sequence (sanity 1+1, Block 2 50+50, Block 3 51/51
+  alternating = 204 calls, 102 ELIGIBLE), the ELIGIBLE forward targeting the webhook.site
+  third-party receiver. By default it self-starts the PEP with an ephemeral Ed25519 signing
+  key via the production env path (VL-047 mandatory signing); `ELYON_GATE_URL` overrides to
+  drive an externally started gate. Best-effort webhook.site request-count verification with
+  a baseline-offset fallback (BASELINE_INBOX = 155, so the existing token URL is reused
+  without creating a new one).
+- `EVIDENCE/proofs/external_interception_webhook_001.log` (NEW): the run of record at
+  snapshot c756f8f.
+- `EVIDENCE/proofs/external_interception_webhook_001.md` (NEW): the prose proof.
+- `docs/zenodo/enforcement_evidence_addendum_rev3.md` (NEW): the provenance copy of the
+  Zenodo Enforcement Evidence Addendum Revision 3 (the published PDF/abstract are uploaded to
+  Zenodo, not stored in-repo).
+
+#### The measured result (snapshot c756f8f, webhook.site third-party receiver)
+204 HTTP calls; 102 REFUSE all returning 403 with 0 external POSTs; 102 ELIGIBLE all
+returning 200 with exactly 102 external POSTs; 0 unexpected outcomes. The webhook.site inbox
+moved 155 -> 257 (baseline offset 155 + 102 ELIGIBLE), confirmed in the control panel. Each
+ELIGIBLE call returns 200 only after the gate's outbound POST to the receiver completes, so
+the external-POST count is confirmed gate-side and corroborated third-party by the inbox
+delta. Each forwarded envelope is gate-signed (VL-047).
+
+#### Addendum Revision 3 (supersedes Revision 2 / VL-030)
+The Zenodo addendum advances from Revision 2 (snapshot 89ff2f9, 2026-05-25, VL-029, 84
+tests) to Revision 3 (snapshot c756f8f, 2026-06-08, VL-061, 211 tests). It records the
+capabilities built since Rev. 2 while the canon stayed locked (target-side verifier,
+envelope delivery + enforcing target, issuer signing as the mandatory default, key/root
+records with revocation and planned rotation, cross-host record transport, the readiness
+instrument, and the reference enforcing target), refreshes Section 1 (211 tests, 0 xfailed)
+and Section 2 (this interception run), and adds an explicit "Honest scope and open items"
+section.
+
+#### Honest scope (GR-3)
+The interception run is third-party OBSERVATION of side effects, author-driven, over loopback
+transport between gate and receiver - NOT an external adversarial pen-test on a real
+multi-host surface. True multi-machine networking + TLS and an attacker external to the build
+remain the named G5 floor and the finish line (B), per
+`docs/methodology/external_verification_readiness.md`. The addendum and this entry do not
+claim G5 closed.
+
+#### Files NOT affected
+- No `IMPLEMENTATION/` change; no `pep.py` / verifier / envelope / evaluator / canon /
+  MANIFEST / SPEC / `published_*` / `readiness.json` edit. No hashed-file edit, so no
+  evaluator_sha256 roll and no published-record regen. pytest 211 + 0 xfailed unchanged (the
+  new runner is a manual evidence script, not a collected pytest test).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-061 (T-G5-transport; reference enforcing target). This entry
+cites the snapshot under test c756f8f and supersedes the Rev. 2 publication recorded at
+VL-030; it does not cite its own (STATE + ledger + artifacts) hash.
+
+#### Next trajectory action
+Unchanged: artifact 12 step 2 (the chain as separate OS processes over real TLS in-env,
+gate -> reference target -> publisher, with the gate->target hop a real socket), then steps 3
+and 5; finish line (B) author-arranged.
