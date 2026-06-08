@@ -14467,3 +14467,70 @@ Unchanged: artifact 12 step 5 (the attack harness mapped to the claim sheet), th
 deploy-target artifacts; finish line (B) author-arranged. Governance follow-ups noted outside
 the trajectory: finish the trademark; (if pursued) a US patent conversation within the
 disclosure grace window; a forward-looking NOTICE on the historical public repository.
+
+### VL-065 - 2026-06-08 - T-G5-continuity: decision freshness; A3b sub-case (a) closed - the default ELIGIBLE forward stamps a signed decision max-age and the verifier refuses a stale captured decision
+**Status:** RECORDED (trajectory / continuity). Referent-bound: a failing test pinned the gap
+(a captured signed decision honored 10 years later), the fix flipped it to refused, and the
+full suite is green. Nothing model-judged (GR-3).
+**Author:** Claude (working session with the project author).
+**Classification:** trajectory / continuity move per VL-017a. A default-path cutover (like
+VL-047's mandatory signing): the capability already existed; this entry wires the default to
+use it. No new canon invariant; no `reassert()`/CCS change.
+
+#### The gap (A3b sub-case a), pinned by test before the fix
+`reassert()` compares only repository-state hashes (canon / decision_sha256 / evaluator /
+manifest); it has NO temporal dimension. `timestamp_utc` is excluded from BOTH the hash and
+the signature regions ("carries no security weight"), so it cannot bear freshness. The
+default ELIGIBLE forward stamped no `not_after`. Consequence: a captured, validly-signed
+ELIGIBLE envelope was honored arbitrarily later as long as canon/evaluator/manifest had not
+changed. Demonstrated by `TESTS/adversarial/test_decision_freshness.py::test_default_decision_refused_when_stale`,
+which FAILED against pre-fix HEAD ("A3b OPEN: a stale signed decision is still honored").
+
+#### What landed
+- `IMPLEMENTATION/pep.py`: the ELIGIBLE branch now stamps a SIGNED `not_after` on the default
+  forward - `sign_envelope(envelope, signing_key, key_id, not_after=now + DECISION_MAX_AGE)`,
+  where `DECISION_MAX_AGE_SECONDS` is read from `ELYON_DECISION_MAX_AGE_SECONDS`
+  (default 300). The verifier already enforces it at step 1.5b
+  (`current >= not_after -> REF_VERIFY_SIGNATURE_EXPIRED`); the proven key-expiry primitive
+  (VL-041) applied to the decision. `not_after` is inside the signature (tamper-proof: a
+  captured envelope's window cannot be extended) and in `_HASH_EXCLUDED_KEYS` (so
+  `decision_sha256` is byte-identical to the pre-cutover decision).
+- `TESTS/adversarial/test_decision_freshness.py` (NEW, 2): a fresh default decision is honored
+  (REASSERTED_AND_BOUND); the same decision presented far beyond its window is refused
+  (REF_VERIFY_SIGNATURE_EXPIRED).
+- `TESTS/test_pep.py`: `EXPECTED_ENVELOPE_TOP_KEYS` migrated to include `not_after` (the
+  default forward now always stamps it).
+
+#### Verification
+- The freshness tests pass; full suite 214 -> 216 + 0 xfailed.
+- Behavioral proof: driving the real default `/governed-call` path, the returned envelope now
+  carries `not_after`; verified at issue time -> REASSERTED_AND_BOUND; verified +10 years ->
+  REF_VERIFY_SIGNATURE_EXPIRED. Case flipped from honored to refused.
+
+#### Canon-safety / no hashed-file change
+No new canonical invariant; `reassert()`'s five rows are unchanged (time is not a repo-state
+hash, so it stays out of CCS). `not_after` is excluded from `decision_sha256`, so the wire
+decision hash is unchanged. `pep.py` is not a hashed source, so no `evaluator_sha256` roll and
+no published-record regen. CANON / MANIFEST / SPEC / `evaluator.py` / `published_*` /
+`readiness.json` unchanged.
+
+#### Honest scope - what is NOT closed
+- **Replay within the window.** Time-window is not exactly-once: a captured decision is
+  honorable for up to its max-age. Closing replay needs a nonce + a STATEFUL verifier (it must
+  remember spent nonces) - a deliberate, larger change, not taken here.
+- **Record freshness (A3b sub-case b).** A stale-but-anchor-matching published record can still
+  be honored cross-host; `reassert(record_source=...)` checks the record's hashes, not its
+  liveness. The next continuity increment.
+- **Cross-host clock skew.** Freshness assumes issuer/verifier clock agreement; a real
+  multi-host deployment needs a skew tolerance and an NTP assumption.
+- The 300s default is a policy placeholder, not a derived value.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-063 (multi-process + real-TLS chain); VL-064 was the relicense.
+This entry cites the test that pinned the gap and does not cite its own (STATE + ledger) hash.
+
+#### Next trajectory action
+Record freshness (A3b sub-case b): give the published record(s) a signed freshness bound and
+enforce it on the fetch/verify path, mirroring this cutover. Then optionally replay/exactly-once
+(nonce) and cross-host clock-skew tolerance. Standing: G5 transport step 5 + deploy artifacts;
+finish line (B) author-arranged.
