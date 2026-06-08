@@ -14053,3 +14053,99 @@ xfailed unchanged (no test touched).
 Prior substantive entry: VL-058 (T-G5-transport) - design 37f9ab7 -> build 7894c5d
 -> close 31da5ec. This follow-up cites that chain, not its own hash. G5 stays OPEN;
 next trajectory action unchanged (step 1b, wire the seam).
+
+### VL-060 - 2026-06-08 - T-G5-transport-wire: the VL-058 transport seam wired onto the default path (pep.py push + published_source.py fetch); byte-identical; step 1b done
+**Status:** RECORDED (trajectory / wiring; the build-then-wire seam gains its callers).
+NO follow-up evaluate (GR-3): the only validation is referent-bound - the unchanged
+pytest suite + the named regression runners, all green; nothing here is model-judged
+for soundness/value.
+**Author:** Claude (working session with the project author).
+**Classification:** wiring / trajectory move per VL-017a (the VL-058 seam, built with
+no caller, is now called on pep.py's default forward and published_source.py's fetch;
+no new module, no canon/SPEC change; STATE + ledger close). The byte-identical-default
+contract VL-058 designed is the load-bearing property: the wiring changed the code
+path, not the behavior.
+
+#### What landed
+- Content commit (build) b814ca0:
+  - `IMPLEMENTATION/pep.py`: the ELIGIBLE upstream forward (was a direct
+    `requests.post(target_url, json=..., headers={X-Elyon-Sol-Envelope: ...}, timeout=10)`)
+    now calls `post_to_target(target_url, normalized_interaction, {X-Elyon-Sol-Envelope: ...})`.
+    With no TLS args and no ELYON_TLS_* env, `post_to_target` issues exactly
+    `requests.post(url, json=..., headers=..., verify=True, cert=None, timeout=10)` -
+    byte-identical, since requests already defaults verify=True / cert=None. `import
+    requests` is KEPT in pep.py: the tests and proof runners monkeypatch
+    `IMPLEMENTATION.pep.requests.post` (the shared requests module), which the seam's
+    `requests.post` call honors; removing it would break that patch surface.
+  - `IMPLEMENTATION/published_source.py`: `fetch_published_record`'s
+    `requests.get(publisher_url, timeout=timeout)` now calls
+    `get_published(publisher_url, timeout=timeout)`, which by default issues
+    `requests.get(url, verify=True, timeout=timeout)` - byte-identical. No test or
+    runner patches `published_source.requests`, so the now-unused `import requests` is
+    dropped (replaced by `from IMPLEMENTATION.transport import get_published`).
+  - 17 `fake_post(url, json, timeout, headers=None)` stubs migrated to
+    `fake_post(url, json, timeout, headers=None, verify=None, cert=None)` so they accept
+    the seam's now-explicit kwargs: TESTS/test_pep.py (x7), TESTS/adversarial/test_enforcement.py,
+    TESTS/adversarial/test_findings_001.py (x2), TESTS/readiness/test_deployment_predicates.py (x3),
+    and the proof runners default_secure_cutover_001 / g4_refused_bypass_001 /
+    g5_signed_cross_host_001 / root_recovery_cross_host_001. This mirrors VL-038, which
+    migrated the same stubs when the forward gained the `headers` kwarg. The lone
+    `_fake_post(*args, **kwargs)` in TESTS/adversarial/test_request_schema.py already
+    absorbs any kwargs and was not touched.
+
+#### Byte-identity proven by no-change (the step-1b acceptance test)
+- pytest: 203 passed + 0 xfailed, UNCHANGED from VL-058 (no test added or removed -
+  only stub signatures gained two defaulted params the assertions never inspect).
+- The two named regression referents the VL-058 next-action specified -
+  `EVIDENCE/proofs/g5_signed_cross_host_001_runner.py` and
+  `EVIDENCE/proofs/root_recovery_cross_host_001_runner.py` - exit 0; the KILLER
+  PROPERTY (signed-honor-despite-divergent-disk while local-disk-would-refuse) holds.
+- `EVIDENCE/proofs/g5_transport_seam_001_runner.py` (the VL-058 seam runner) exits 0.
+- The halt condition ("halt if anything moves - the wiring is not then byte-identical")
+  was not triggered: nothing moved.
+
+#### G5 posture (unchanged; still OPEN)
+The seam is wired but the surface is still single-host: loopback HTTP / single-box TLS
+over OS processes. True cross-host transport + an EXTERNAL attacker on a real surface is
+finish line (B), artifact 12 steps 2-5, the author's to arrange. GR-3 bounds any in-loop
+attack to characterization, never certification; `external_verification_readiness.md`
+keeps the (B) gate as the G5 real-transport floor. `forgery-resistant` stays bounded and
+out of any deposit.
+
+#### Files affected
+- IMPLEMENTATION/pep.py, IMPLEMENTATION/published_source.py (wiring)
+- TESTS/test_pep.py, TESTS/adversarial/test_enforcement.py,
+  TESTS/adversarial/test_findings_001.py, TESTS/readiness/test_deployment_predicates.py
+  (stub-signature migration)
+- EVIDENCE/proofs/default_secure_cutover_001_runner.py,
+  EVIDENCE/proofs/g4_refused_bypass_001_runner.py,
+  EVIDENCE/proofs/g5_signed_cross_host_001_runner.py,
+  EVIDENCE/proofs/root_recovery_cross_host_001_runner.py (stub-signature migration)
+- STATE.md, EVIDENCE/verification_ledger.md (this close commit)
+
+#### Files NOT affected
+- IMPLEMENTATION/transport.py (the seam itself - unchanged; it only gains callers),
+  verifier.py, envelope.py, evaluator.py, request_validator.py, key_record_source.py,
+  root_record_source.py, readiness.py - byte-unchanged.
+- CANON, MANIFEST, all SPEC/, EVIDENCE/published_hashes.json, EVIDENCE/readiness.json -
+  unchanged; no hashed-file edit, so no evaluator_sha256 roll and no published-record
+  regen. No new invariant; canon section 14 holds (transport is verification I/O).
+- EVIDENCE/readiness.json: NO flag change. The seam is wired but no readiness predicate
+  claims cross-host transport (END_TO_END_NO_SHORTCUT's transport stays the loopback
+  model; G5 real-transport is the named-open floor). GR-2 honesty preserved: nothing is
+  claimed that is not test-proven.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-058 (T-G5-transport) - design 37f9ab7 -> build 7894c5d ->
+close 31da5ec, then the VL-058 follow-up (Lesson 11) at 2377695. This entry cites its
+build commit b814ca0, not its own (STATE + ledger close) hash. VL-059 stays
+reserved for the deposit-readiness audit under GR-3.
+
+#### Next trajectory action
+Artifact 12 step 4 (the reference enforcing target, superseding the target.py stub),
+then steps 2 (multi-process + TLS in-env; docker-compose as deploy-target), 3 (TLS/cert
++ trust bootstrap), 5 (attack harness mapped to external_verification_readiness.md gate
+2). Finish line (B) - external attacker on a real surface - closes G5, author-arranged.
+Standing, none blocking: VL-059 deposit-readiness audit (GR-3); A1 target-side policy;
+caller-carry / proxy-removal (section-14 forks); T-bookkeeping (G1/G8/G9/G11/G14 +
+server.py retirement) and the T-prose-drift on the stale numbered Next-open-action list.
