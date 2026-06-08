@@ -14604,3 +14604,48 @@ cites VL-065 and the runner that demonstrates the property; it does not cite its
 Toward a production wedge: a shared replay cache for multi-instance executors; record freshness
 (A3b sub-case b); a real MCP-server integration + latency budget; and the G5 real-transport
 finish line (artifact 12 step 5 + deploy artifacts; finish line B author-arranged).
+
+### VL-067 - 2026-06-08 - directive: road to external readiness (docs/restructure/13) - the ordered local backlog to the external-start line, with a clean code/ledger base
+**Status:** RECORDED (planning / directive). No code/canon/test change; a committed plan that
+a fresh session executes top-down. Referent-bound only in that each listed item carries an
+acceptance criterion to be met by its own future VL.
+**Author:** Justin LaPorte (direction); Claude (drafting), working session.
+**Classification:** planning / governance per VL-017a. Doc-only; suite 218 unchanged.
+
+#### Why
+The VL-066 evaluation made the two-axis state explicit: the build axis (the wedge primitive)
+is ~demonstrated in-process; the external-validation axis is at zero and can only move once an
+attackable real surface exists (GR-3; external_verification_readiness gate 1). This directive
+captures every LOCAL item that must precede external work, plus the clean-base hygiene, so the
+remaining path is a single ordered backlog rather than scattered ledger mentions.
+
+#### What landed
+- `docs/restructure/13_road_to_external_readiness.md` (NEW): the directive. Three phases with
+  per-item acceptance criteria and a validation locus (SANDBOX = greenable in the build
+  sandbox; AUTHOR = produced in-house, validated on real hosts/CI/hardware):
+  - Phase A (clean base): A1 retire target.py, A2 retire server.py, A3 gap-tracker refresh,
+    A4 prose-drift cleanup, A5 CI, A6 deposit-readiness audit (VL-059).
+  - Phase B (harden the wedge): B1 record freshness (A3b-b; B-prime-1 -> signed-record),
+    B2 clock-skew tolerance, B3 shared-replay-cache seam, B4 real MCP server, B5 latency budget.
+  - Phase C (external scaffolding): C1 deploy packaging, C2 real TLS/cert + trust bootstrap,
+    C3 attack harness + falsifiable claim sheet, C4 real-transport readiness predicate.
+- A live task list mirrors these items for execution tracking.
+
+#### Out of scope (explicitly named, not local code)
+- G12 / G13 canon-layer halves: blocked on a canon-version event under GR-1.
+- The section-14 caller-carry / proxy-removal fork: an optional architecture, deferred.
+- Finish line (B): the EXTERNAL attacker on a real surface - the author's to arrange; the only
+  thing that certifies G5 rather than characterizes it (GR-3).
+
+#### Definition of done for the push
+(A) clean base (no dead modules; gap tracker + STATE prose accurate; CI enforcing green;
+deposit-readiness recorded); (B) wedge hardened as far as in-house allows; (C) an attackable
+real-transport surface exists as deployable artifacts + an attack harness + a claim sheet.
+After that the next move is not in-house.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-066 (replay/exactly-once + wedge demo). This entry introduces a
+directive doc and does not cite its own (STATE + ledger) hash.
+
+#### Next trajectory action
+Execute artifact 13 top-down, starting A1 (retire target.py).
