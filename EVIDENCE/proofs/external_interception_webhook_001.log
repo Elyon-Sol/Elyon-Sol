@@ -1,0 +1,31 @@
+==========================================================================
+EXTERNAL-INTERCEPTION EVIDENCE (webhook.site, third-party receiver)
+==========================================================================
+snapshot_commit  : c756f8fb773dcc9f64f1e99c0c7d8bc815ae2920
+manifest_sha256  : a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8
+gate             : http://127.0.0.1:8000/governed-call (self-started)
+receiver         : https://webhook.site/4da50ca0-9824-4654-8394-848e3b355e38
+inbox baseline   : 155 (BASELINE_INBOX offset; API not reached)
+--------------------------------------------------------------------------
+sanity   : call1 REFUSE -> 403 ; call2 ELIGIBLE -> 200
+block2   : 50 REFUSE + 50 ELIGIBLE   2026-06-08T18:10:19.045151+00:00 -> 2026-06-08T18:11:04.128444+00:00
+block3   : 51/51 alternating         2026-06-08T18:11:04.128449+00:00 -> 2026-06-08T18:11:47.916820+00:00
+--------------------------------------------------------------------------
+Total HTTP calls (sanity + Blocks 2 and 3) : 204
+REFUSE calls (expected 403)                : 102
+REFUSE returning 403                       : 102
+ELIGIBLE calls (expected 200)              : 102
+ELIGIBLE returning 200                     : 102
+Unexpected HTTP outcomes                   : 0
+Webhook inbox before                       : 155
+Webhook inbox after                        : 257 (expected; API not reached)
+External POSTs observed                    : 102
+External POSTs from REFUSE calls           : 0 (REFUSE never forwards)
+External POSTs from ELIGIBLE calls         : 102
+--------------------------------------------------------------------------
+External-delta NOT auto-verified (webhook.site API not reached). Confirm manually: inbox should read 257 (= 155 baseline + 102 ELIGIBLE).
+==========================================================================
+RESULT: ALL EXPECTED
+
+# Third-party confirmation: the webhook.site control-panel inbox was observed at 257
+# after the run (155 baseline + 102 ELIGIBLE forwards), corroborating the gate-side count.
