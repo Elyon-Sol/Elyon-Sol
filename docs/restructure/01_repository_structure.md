@@ -63,7 +63,8 @@ Elyon-Sol/
 +-- IMPLEMENTATION/
 |   +-- evaluator.py                   # three-condition gate
 |   +-- pep.py                         # PEP / admission logic
-|   +-- target.py                      # downstream target stub
+|   +-- reference_target.py            # reference enforcing target (VL-061)
+|   +-- publisher.py                   # published-record publisher (VL-063)
 |   \-- replay/
 |       \-- receipt.py                 # replay-receipt subsystem
 |
@@ -169,8 +170,12 @@ G0 build track**, except for `request_schema.md` which is honest-base work.
   Retired post-3-of-3: `pep.py` is the sole gate, and a second weaker gate
   beside it is exactly the ambiguity the readiness gate's premise argues
   against. See VL-051.
-- `IMPLEMENTATION/target.py` - **PRESENT (not in original proposal).** The
-  downstream target stub used by tests.
+- `IMPLEMENTATION/target.py` - **RETIRED (VL-068).** The non-verifying downstream
+  stub was superseded by `IMPLEMENTATION/reference_target.py` (the reference
+  enforcing target, VL-061) and removed.
+- `IMPLEMENTATION/reference_target.py`, `IMPLEMENTATION/publisher.py` - **PRESENT
+  (not in original proposal).** The reference enforcing target (VL-061) and the
+  published-record publisher (VL-063) - the deployable target / publisher services.
 - `IMPLEMENTATION/replay/receipt.py` - **PRESENT (not in original proposal).**
   The replay-receipt subsystem - an entire concern the original proposal did
   not contemplate. Tested by `TESTS/test_replay_receipts.py` and proved by

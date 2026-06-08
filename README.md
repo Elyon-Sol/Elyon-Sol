@@ -475,7 +475,8 @@ Elyon-Sol/
 |   +-- evaluator.py             AC^3, T^26, manifest_integrity_valid
 |   +-- pep.py                   HTTP boundary; envelope emission on ELIGIBLE (VL-019, VL-029)
 |   +-- request_validator.py     schema validator (VL-018)
-|   +-- target.py                downstream target stub (for tests)
+|   +-- reference_target.py      reference enforcing target (VL-061)
+|   +-- publisher.py             published-record publisher (VL-063)
 |   \-- replay/
 |       \-- receipt.py           replay-receipt subsystem
 |
