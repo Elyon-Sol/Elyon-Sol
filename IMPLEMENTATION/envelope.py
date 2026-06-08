@@ -136,6 +136,7 @@ _HASH_EXCLUDED_KEYS = (
     "issuer_key_id",
     "issuer_signature",
     "not_after",
+    "decision_id",
 )
 
 # Keys excluded from the issuer-signature region (VL-040). The signature
@@ -455,6 +456,7 @@ def sign_envelope(
     signing_key: Any,
     key_id: str,
     not_after: Optional[datetime] = None,
+    decision_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Sign an envelope with the gate's issuer key (VL-040; opt-in).
@@ -498,6 +500,12 @@ def sign_envelope(
         if not_after.tzinfo is None:
             raise ValueError("not_after must be timezone-aware (UTC)")
         signed["not_after"] = not_after.isoformat()
+    # decision_id (VL-066): a unique per-issuance id, signed (tamper-proof) and
+    # excluded from decision_sha256 (in _HASH_EXCLUDED_KEYS, like not_after) so the
+    # wire decision hash is unchanged. It is the key an executor de-dups on to deny
+    # replay within the freshness window (exactly-once); absence = no replay id.
+    if decision_id is not None:
+        signed["decision_id"] = decision_id
     region = {k: v for k, v in signed.items() if k not in _SIGNATURE_EXCLUDED_KEYS}
     signature = signing_key.sign(canonical_json(region).encode("utf-8"))
     signed["issuer_signature"] = signature.hex()

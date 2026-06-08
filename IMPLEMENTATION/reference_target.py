@@ -106,10 +106,12 @@ import os
 from typing import Any, Callable, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
+from datetime import datetime, timezone
+
 from fastapi.concurrency import run_in_threadpool
 
 from IMPLEMENTATION.published_source import fetch_published_record
-from IMPLEMENTATION.verifier import verify_envelope
+from IMPLEMENTATION.verifier import verify_envelope, REF_VERIFY_REPLAY
 
 
 # Target-layer reason vocabulary (REF_TARGET_*; parallels the REF_VERIFY_* layer
@@ -198,6 +200,7 @@ def build_reference_target_app(
     """
     app = FastAPI(title="Elyon-Sol reference enforcing target")
     app.state.received = []
+    app.state.seen = {}  # decision_id -> not_after (TTL-bounded replay cache)
 
     @app.post("/target")
     async def target(request: Request):
@@ -245,6 +248,30 @@ def build_reference_target_app(
         )
         if not result["accepted"]:
             raise _refuse(result["reason"])
+
+        # Replay defense (exactly-once over the freshness window): refuse a
+        # decision_id already honored. The window bounds the seen-set - entries
+        # are pruned once their not_after passes (past which freshness refuses
+        # them anyway). decision_id is in the signed region (tamper-proof) and is
+        # stamped by the default gate forward. NOTE: a single in-memory set is
+        # per-instance; a horizontally-scaled executor needs a SHARED cache
+        # (e.g. Redis, TTL = max-age) or a replay can cross instances.
+        decision_id = envelope.get("decision_id")
+        if decision_id is not None:
+            seen = app.state.seen
+            now = datetime.now(timezone.utc)
+            for k in [k for k, exp in seen.items() if exp is not None and exp <= now]:
+                del seen[k]
+            if decision_id in seen:
+                raise _refuse(REF_VERIFY_REPLAY)
+            exp = None
+            na = envelope.get("not_after")
+            if isinstance(na, str):
+                try:
+                    exp = datetime.fromisoformat(na)
+                except ValueError:
+                    exp = None
+            seen[decision_id] = exp
 
         app.state.received.append(interaction)  # the target acts only here
         return {"honored": True, "reason": result["reason"]}

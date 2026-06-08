@@ -239,6 +239,7 @@ EXPECTED_ENVELOPE_TOP_KEYS = {
     "issuer_key_id",
     "issuer_signature",
     "not_after",
+    "decision_id",
 }
 
 

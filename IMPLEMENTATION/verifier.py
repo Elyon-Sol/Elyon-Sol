@@ -124,6 +124,10 @@ REF_VERIFY_BINDING_MISMATCH = "REF_VERIFY_BINDING_MISMATCH"
 REF_VERIFY_SIGNATURE_INVALID = "REF_VERIFY_SIGNATURE_INVALID"
 REF_VERIFY_SIGNATURE_UNKNOWN_KEY = "REF_VERIFY_SIGNATURE_UNKNOWN_KEY"
 REF_VERIFY_SIGNATURE_EXPIRED = "REF_VERIFY_SIGNATURE_EXPIRED"
+# Executor-layer replay defense (VL-066): emitted by an enforcing target that
+# de-dups decision_id over the freshness window. verify_envelope stays pure and
+# does NOT emit this; anti-replay is the acting party's stateful concern.
+REF_VERIFY_REPLAY = "REF_VERIFY_REPLAY"
 
 # B-prime-2 key-record codes (VL-042). verifier.py is the canonical REF_VERIFY_*
 # home (mirroring request_validator.py owning REF_SCHEMA_* even for codes other

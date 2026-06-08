@@ -58,6 +58,7 @@ demonstrations). DEFAULT_SECURE goes green (EVIDENCE/readiness.json).
 
 import json
 import os
+import uuid
 from datetime import datetime, timezone, timedelta
 
 import requests
@@ -264,7 +265,10 @@ async def governed_call(request: Request):
         not_after = datetime.now(timezone.utc) + timedelta(
             seconds=DECISION_MAX_AGE_SECONDS
         )
-        envelope = sign_envelope(envelope, signing_key, key_id, not_after=not_after)
+        envelope = sign_envelope(
+            envelope, signing_key, key_id,
+            not_after=not_after, decision_id=uuid.uuid4().hex,
+        )
     except Exception as e:
         raise HTTPException(
             status_code=403,

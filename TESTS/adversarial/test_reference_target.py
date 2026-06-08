@@ -27,6 +27,7 @@ Ledger: VL-061 (T-G5-transport; artifact 12 step 4 reference enforcing target).
 """
 
 import json
+import uuid
 
 from fastapi import FastAPI, Response
 from fastapi.testclient import TestClient
@@ -44,6 +45,7 @@ from IMPLEMENTATION.verifier import (
     REF_VERIFY_BINDING_MISMATCH,
     REF_VERIFY_ENVELOPE_ABSENT,
     REF_VERIFY_SIGNATURE_INVALID,
+    REF_VERIFY_REPLAY,
 )
 
 
@@ -92,7 +94,8 @@ def _signed_envelope(gate_signing, interaction=None, target_url=TARGET_URL,
         manifest_integrity=True,
         timestamp_utc=timestamp_utc,
     )
-    return sign_envelope(env, gate_signing["private_key"], gate_signing["key_id"])
+    return sign_envelope(env, gate_signing["private_key"], gate_signing["key_id"],
+                         decision_id=uuid.uuid4().hex)
 
 
 def _publisher_client(serve_bytes):
@@ -259,3 +262,29 @@ def test_reference_target_received_endpoint_reflects_acted_count(gate_signing):
     env = _signed_envelope(gate_signing, interaction=interaction)
     assert _post(client, interaction, env).status_code == 200
     assert client.get("/received").json()["count"] == 1
+
+
+def test_reference_target_refuses_replay(gate_signing):
+    """Exactly-once over the freshness window: the SAME admitted envelope (same
+    decision_id) honored once, then refused on replay; acted exactly once."""
+    app, client = _make_target(gate_signing)
+    interaction = _normalized_interaction()
+    env = _signed_envelope(gate_signing, interaction=interaction)
+    first = _post(client, interaction, env)
+    assert first.status_code == 200
+    second = _post(client, interaction, env)  # exact replay -> same decision_id
+    assert second.status_code == 403
+    assert second.json()["detail"]["reason"] == REF_VERIFY_REPLAY
+    assert len(app.state.received) == 1
+
+
+def test_reference_target_decision_id_is_signed(gate_signing):
+    """decision_id is inside the signed region: mutating it breaks the signature."""
+    app, client = _make_target(gate_signing)
+    interaction = _normalized_interaction()
+    env = _signed_envelope(gate_signing, interaction=interaction)
+    env["decision_id"] = "tampered-id"
+    resp = _post(client, interaction, env)
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["reason"] == REF_VERIFY_SIGNATURE_INVALID
+    assert app.state.received == []
