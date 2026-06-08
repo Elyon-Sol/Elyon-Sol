@@ -50,7 +50,7 @@ def test_default_forward_is_signed_and_verified(gate_signing, monkeypatch):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         captured["headers"] = headers or {}
         return _Resp()
 
@@ -161,7 +161,7 @@ def test_end_to_end_no_shortcut(monkeypatch):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         captured["headers"] = headers or {}
         return _Resp()
 
@@ -278,7 +278,7 @@ def test_root_recovery_wired(monkeypatch):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         captured["headers"] = headers or {}
         return _Resp()
 

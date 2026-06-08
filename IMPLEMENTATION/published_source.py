@@ -69,7 +69,7 @@ import hashlib
 import json
 from typing import Any, Dict, Optional
 
-import requests
+from IMPLEMENTATION.transport import get_published
 
 
 # The three pin keys the record carries (parity with
@@ -149,7 +149,7 @@ def fetch_published_record(
     out-of-band.
     """
     try:
-        response = requests.get(publisher_url, timeout=timeout)
+        response = get_published(publisher_url, timeout=timeout)
     except Exception:
         return None
     if response.status_code != 200:

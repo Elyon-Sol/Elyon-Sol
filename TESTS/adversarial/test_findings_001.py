@@ -160,7 +160,7 @@ def test_finding_gate_forwards_to_arbitrary_target_url(monkeypatch):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         captured["url"] = url
         captured["headers"] = headers or {}
         return _Resp()
@@ -202,7 +202,7 @@ def test_finding_eligible_attestation_independent_of_upstream_outcome(monkeypatc
         status_code = 500
         text = "upstream internal error"
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         return _Resp()
 
     monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)

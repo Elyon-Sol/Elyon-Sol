@@ -250,7 +250,7 @@ def test_routed_valid_call_honored_end_to_end(monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         captured["url"] = url
         captured["json"] = json
         captured["headers"] = headers or {}

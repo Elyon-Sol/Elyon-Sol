@@ -62,7 +62,7 @@ def main():
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
         captured["headers"] = headers or {}
         return _Resp()
 

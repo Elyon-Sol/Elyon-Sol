@@ -75,6 +75,7 @@ from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
 )
+from IMPLEMENTATION.transport import post_to_target
 
 
 app = FastAPI(title="Elyon-Sol PEP")
@@ -273,11 +274,10 @@ async def governed_call(request: Request):
     # the section-14-faithful later architecture (artifact 08 sections
     # 4.3 / 5; recorded in artifact 04 G4 + artifact 06 section 14).
     try:
-        upstream = requests.post(
+        upstream = post_to_target(
             body["target_url"],
-            json=normalized_interaction,
-            headers={"X-Elyon-Sol-Envelope": canonical_json(envelope)},
-            timeout=10,
+            normalized_interaction,
+            {"X-Elyon-Sol-Envelope": canonical_json(envelope)},
         )
     except Exception as e:
         raise HTTPException(
