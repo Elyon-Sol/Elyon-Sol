@@ -14414,3 +14414,56 @@ Step 5 - the attack harness mapped to `external_verification_readiness.md` gate 
 in-loop buildable) - and the deploy-target artifacts (docker-compose, two-real-VM note,
 real-CA certs). Finish line (B), external attacker on a real surface, closes G5,
 author-arranged.
+
+### VL-064 - 2026-06-08 - governance / relicense: repository LICENSE changed from MIT to proprietary (all rights reserved); README rights section updated
+**Status:** RECORDED (governance). Not a verification or capability move; an IP-posture change
+to the repository's licensing. Referent: the relicense commit 47926cf and the file contents.
+**Author:** Justin LaPorte (decision); Claude (drafting), working session.
+**Classification:** governance per VL-017a (no canon / SPEC / MANIFEST / evaluator /
+published_* / readiness / test change; no new invariant). Trajectory is unchanged - the G5
+build track's next action remains artifact 12 step 5.
+
+#### What changed (commit 47926cf)
+- `LICENSE`: replaced the MIT License with a PROPRIETARY, all-rights-reserved license. No
+  license is granted to use/copy/modify/distribute/sublicense/sell except under a separate
+  written agreement; `Elyon-Sol` named as a trademark (application pending); the canonical
+  specification is noted as published separately for citation and granting no rights to the
+  implementation.
+- `README.md`: the "License" section updated from "See LICENSE" / MIT to a proprietary,
+  all-rights-reserved statement matching the LICENSE.
+
+#### Rationale
+The prior MIT license expressly authorized anyone to "use, copy, modify, merge, publish,
+distribute, sublicense, and/or SELL" the software - the exact outcome the productization goal
+needs to prevent. The repository (private) and all future releases are now proprietary.
+
+#### Honest-history clause (no rewriting of the past)
+Prior PUBLIC releases of portions of the software were distributed under MIT; that grant,
+where it applied, remains effective for those specific released copies and cannot be
+retroactively revoked. The new LICENSE governs this repository and subsequent releases only.
+It does not, and does not claim to, alter the Zenodo Rev. 2 record or the historical public
+repository's already-published commits. (Disclosed-surface detail: see the IP-exposure audit
+prepared this session, kept outside the repo.)
+
+#### Why no per-file copyright headers
+A blanket source-header sweep was deliberately avoided. `IMPLEMENTATION/evaluator.py` is
+hashed into `EVIDENCE/published_hashes.json` (`evaluator_sha256`) and into every envelope's
+`reassert()` integrity check; adding even a comment line would change its sha256, break the
+published-record anchor, and fail the suite and the cross-host runners. A root `LICENSE`
+governs the entire repository without modifying any hashed file, so the proprietary terms
+apply repo-wide at zero risk to the verification chain. Per-file headers, if ever wanted,
+must exclude `evaluator.py` or be paired with a full published-record re-pin.
+
+#### Verification
+- pytest 214 + 0 xfailed, UNCHANGED (no code or hashed file touched).
+- No `evaluator_sha256` roll; no published-record regen; no readiness change.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-063 (multi-process + real-TLS chain). This entry cites the
+relicense commit 47926cf and does not cite its own (STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: artifact 12 step 5 (the attack harness mapped to the claim sheet), then the
+deploy-target artifacts; finish line (B) author-arranged. Governance follow-ups noted outside
+the trajectory: finish the trademark; (if pursued) a US patent conversation within the
+disclosure grace window; a forward-looking NOTICE on the historical public repository.
