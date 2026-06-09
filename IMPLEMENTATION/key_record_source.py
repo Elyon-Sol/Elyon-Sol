@@ -40,7 +40,7 @@ not here.
 
 import base64
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import requests
@@ -123,6 +123,7 @@ def load_key_record_from_bytes(
     now: Optional[datetime] = None,
     last_seen_serial: Optional[int] = None,
     root_status_view: Optional[Dict[str, Any]] = None,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     The pure, network-free trust check. Returns
@@ -133,10 +134,17 @@ def load_key_record_from_bytes(
       1. parse JSON + structural validation        -> RECORD_INVALID
       2. select pinned root by root_key_id          -> RECORD_INVALID (unknown)
       3. verify publisher_signature vs pinned root  -> RECORD_INVALID
-      4. freshness: now < not_after (strict);
+      4. freshness: now < not_after + clock_skew;
          serial monotonic if last_seen given        -> RECORD_STALE
       5. build per-key trust view (reconstruct keys) -> RECORD_INVALID on bad
          key material / naive or unparseable window
+
+    clock_skew (VL-075, B2; spec 15_clock_skew_tolerance_spec.md): a non-negative
+    tolerance for cross-host clock divergence. The RECORD-level freshness check
+    becomes now < not_after + clock_skew (default timedelta(0) -> the strict
+    pre-VL-075 check). The per-key validity windows in the trust view are stored
+    raw and time-checked (skew-adjusted) at the verifier consume side. A negative
+    value narrows the window (a config error) and raises ValueError.
 
     When root_status_view (VL-044) is supplied, step 2 also gates the SIGNING
     root's status: a revoked root refuses (REF_VERIFY_ROOT_REVOKED), a retired
@@ -149,6 +157,8 @@ def load_key_record_from_bytes(
         {key_id: {"public_key": <obj>, "revoked": <bool>,
                   "not_before": <aware dt>, "not_after": <aware dt>}}
     """
+    if clock_skew < timedelta(0):
+        raise ValueError("clock_skew must be non-negative")
     if now is None:
         now = datetime.now(timezone.utc)
     if not isinstance(pinned_root_keys, dict) or not pinned_root_keys:
@@ -216,7 +226,7 @@ def load_key_record_from_bytes(
         # a non-parseable not_after is structural -> but treated here uniformly
         # as STALE per spec section 5 freshness ownership of the field.
         return _reject(REF_VERIFY_KEY_RECORD_STALE)
-    if not (now < record_not_after):
+    if not (now < record_not_after + clock_skew):
         return _reject(REF_VERIFY_KEY_RECORD_STALE)
     if last_seen_serial is not None and record["serial"] < last_seen_serial:
         return _reject(REF_VERIFY_KEY_RECORD_STALE)
@@ -259,6 +269,7 @@ def fetch_key_record(
     last_seen_serial: Optional[int] = None,
     root_status_view: Optional[Dict[str, Any]] = None,
     timeout: int = 10,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     Fetch the key record over HTTP, then run the pure trust check.
@@ -288,4 +299,5 @@ def fetch_key_record(
         response.content, pinned_root_keys, now=now,
         last_seen_serial=last_seen_serial,
         root_status_view=root_status_view,
+        clock_skew=clock_skew,
     )

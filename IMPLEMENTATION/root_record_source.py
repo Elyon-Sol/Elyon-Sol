@@ -47,7 +47,7 @@ envelope, not this module. INTEGRATION ORDER: apply the verifier.py VL-044 edits
 
 import base64
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import requests
@@ -124,6 +124,7 @@ def load_root_record_from_bytes(
     pinned_root_keys: Dict[str, Any],
     now: Optional[datetime] = None,
     last_seen_root_serial: Optional[int] = None,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     The pure, network-free trust check. Returns
@@ -134,7 +135,7 @@ def load_root_record_from_bytes(
       1. parse JSON + structural validation         -> RECORD_INVALID
       2. select pinned signing root by signing_root_key_id -> RECORD_INVALID
       3. verify publisher_signature vs pinned root   -> RECORD_INVALID
-      4. freshness: now < not_after (strict);
+      4. freshness: now < not_after + clock_skew;
          serial monotonic if last_seen given         -> RECORD_STALE
       5. bootstrap downgrade: a self-`revoked` assertion on the signing root is
          treated as at-most `retired` (spec section 6.2); the self-revocation
@@ -148,7 +149,15 @@ def load_root_record_from_bytes(
         {root_key_id: {"public_key": <obj>, "status": <str>,
                        "not_before": <aware dt>, "not_after": <aware dt>,
                        "retired_at": <aware dt|None>, "revoked_at": <aware dt|None>}}
+
+    clock_skew (VL-075, B2; spec 15_clock_skew_tolerance_spec.md): a non-negative
+    tolerance for cross-host clock divergence. The RECORD-level freshness check
+    becomes now < not_after + clock_skew (default timedelta(0) -> the strict
+    pre-VL-075 check). The per-root validity windows in the status view are stored
+    raw. A negative value narrows the window (a config error) and raises ValueError.
     """
+    if clock_skew < timedelta(0):
+        raise ValueError("clock_skew must be non-negative")
     if now is None:
         now = datetime.now(timezone.utc)
     if not isinstance(pinned_root_keys, dict) or not pinned_root_keys:
@@ -189,7 +198,7 @@ def load_root_record_from_bytes(
         # tz-naive / unparseable not_after fails closed to STALE (spec section 5
         # freshness ownership of the field; cannot safely compare).
         return _reject(REF_VERIFY_ROOT_RECORD_STALE)
-    if not (now < record_not_after):
+    if not (now < record_not_after + clock_skew):
         return _reject(REF_VERIFY_ROOT_RECORD_STALE)
     if last_seen_root_serial is not None and record["serial"] < last_seen_root_serial:
         return _reject(REF_VERIFY_ROOT_RECORD_STALE)
@@ -263,6 +272,7 @@ def fetch_root_record(
     now: Optional[datetime] = None,
     last_seen_root_serial: Optional[int] = None,
     timeout: int = 10,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     Fetch the root record over HTTP, then run the pure trust check.
@@ -283,4 +293,5 @@ def fetch_root_record(
     return load_root_record_from_bytes(
         response.content, pinned_root_keys, now=now,
         last_seen_root_serial=last_seen_root_serial,
+        clock_skew=clock_skew,
     )

@@ -98,7 +98,7 @@ canonicalization. A later spec edit may pin this explicitly.
 """
 
 from typing import Any, Dict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from IMPLEMENTATION.envelope import (
     INVALIDATED,
@@ -215,6 +215,7 @@ def verify_envelope(
     pinned_public_keys: Dict[str, Any] = None,
     now: datetime = None,
     key_record_view: Dict[str, Any] = None,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     Decide whether a target should honor an admissibility envelope for
@@ -247,6 +248,16 @@ def verify_envelope(
             (REF_VERIFY_KEY_UNKNOWN / _REVOKED / _OUT_OF_WINDOW) before the
             signature is verified against the record-sourced key. Appended last
             to preserve positional-call compatibility.
+        clock_skew: Optional non-negative tolerance (timedelta, default
+            timedelta(0)) for cross-host clock divergence (VL-075, B2; spec
+            15_clock_skew_tolerance_spec.md). Widens BOTH time windows this
+            verifier enforces, symmetrically: the issuer-key validity window
+            (step 1.5) becomes not_before - clock_skew <= now < not_after +
+            clock_skew, and the decision not_after (step 1.5b) becomes
+            now < not_after + clock_skew. Default 0 is byte-behavior-identical
+            to the strict pre-VL-075 checks. A negative value would narrow the
+            window (a config error) and raises ValueError. Appended last to
+            preserve positional-call compatibility.
 
     Returns:
         {"accepted": bool, "reason": str}. On accept, reason is
@@ -265,6 +276,14 @@ def verify_envelope(
            mismatch -> REF_VERIFY_BINDING_MISMATCH.
         4. Accept.
     """
+    # ----- Step 0: clock-skew config guard (VL-075) -----
+    # A negative skew would narrow the honored window (stricter than the issuer
+    # intended) - a configuration error, not an adversary path. Fail loud at the
+    # boundary (parity with sign_envelope's naive-not_after refusal). Default
+    # timedelta(0) leaves every time check byte-behavior-identical.
+    if clock_skew < timedelta(0):
+        raise ValueError("clock_skew must be non-negative")
+
     # ----- Step 1: structural presence guard -----
     if not isinstance(envelope, dict):
         return _reject(REF_VERIFY_ENVELOPE_ABSENT)
@@ -309,8 +328,11 @@ def verify_envelope(
             current = now if now is not None else datetime.now(timezone.utc)
             key_not_before = entry.get("not_before")
             key_not_after = entry.get("not_after")
+            # VL-075: widen the validity window symmetrically by clock_skew
+            # (default 0 -> the strict pre-VL-075 window).
             if (key_not_before is None or key_not_after is None
-                    or not (key_not_before <= current < key_not_after)):
+                    or not (key_not_before - clock_skew <= current
+                            < key_not_after + clock_skew)):
                 return _reject(REF_VERIFY_KEY_OUT_OF_WINDOW)
             public_key = entry.get("public_key")
             if public_key is None:
@@ -352,7 +374,8 @@ def verify_envelope(
             if not_after.tzinfo is None:
                 return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
             current = now if now is not None else datetime.now(timezone.utc)
-            if current >= not_after:
+            # VL-075: tolerate clock_skew past not_after (default 0 -> strict).
+            if current >= not_after + clock_skew:
                 return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
 
     # ----- Step 2: currency + integrity via reassert() -----

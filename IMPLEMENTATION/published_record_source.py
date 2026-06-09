@@ -39,7 +39,7 @@ once a caller chooses to use it (the wiring step, a later increment).
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import requests
@@ -115,6 +115,7 @@ def load_signed_record_from_bytes(
     pinned_publisher_keys: Dict[str, Any],
     now: Optional[datetime] = None,
     last_seen_serial: Optional[int] = None,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     The pure, network-free trust check (mirror of
@@ -123,14 +124,22 @@ def load_signed_record_from_bytes(
       1. parse JSON + structural validation        -> PUBLISHED_RECORD_INVALID
       2. select pinned publisher key by id          -> PUBLISHED_RECORD_INVALID
       3. verify publisher_signature vs pinned key    -> PUBLISHED_RECORD_INVALID
-      4. freshness: now < not_after (strict);
+      4. freshness: now < not_after + clock_skew;
          serial monotonic if last_seen given         -> PUBLISHED_RECORD_STALE
       5. return the validated record dict (carries the three currency pins).
 
     A tz-naive / unparseable not_after fails closed to STALE (it cannot be
     safely compared and the freshness field owns the field, parity with the
     key reader). now defaults to datetime.now(timezone.utc).
+
+    clock_skew (VL-075, B2; spec 15_clock_skew_tolerance_spec.md): a non-negative
+    tolerance for cross-host clock divergence. The record-level freshness check
+    becomes now < not_after + clock_skew (default timedelta(0) -> the strict
+    pre-VL-075 check, byte-behavior-identical). A negative value narrows the
+    window (a config error) and raises ValueError.
     """
+    if clock_skew < timedelta(0):
+        raise ValueError("clock_skew must be non-negative")
     if now is None:
         now = datetime.now(timezone.utc)
     if not isinstance(pinned_publisher_keys, dict) or not pinned_publisher_keys:
@@ -168,7 +177,7 @@ def load_signed_record_from_bytes(
         record_not_after = _parse_aware(record["not_after"])
     except ValueError:
         return _reject(REF_VERIFY_PUBLISHED_RECORD_STALE)
-    if not (now < record_not_after):
+    if not (now < record_not_after + clock_skew):
         return _reject(REF_VERIFY_PUBLISHED_RECORD_STALE)
     if last_seen_serial is not None and record["serial"] < last_seen_serial:
         return _reject(REF_VERIFY_PUBLISHED_RECORD_STALE)
@@ -183,6 +192,7 @@ def fetch_signed_record(
     now: Optional[datetime] = None,
     last_seen_serial: Optional[int] = None,
     timeout: int = 10,
+    clock_skew: timedelta = timedelta(0),
 ) -> Dict[str, Any]:
     """
     Fetch the signed published record over HTTP, then run the pure trust check.
@@ -199,5 +209,5 @@ def fetch_signed_record(
         return _reject(REF_VERIFY_PUBLISHED_RECORD_INVALID)
     return load_signed_record_from_bytes(
         response.content, pinned_publisher_keys, now=now,
-        last_seen_serial=last_seen_serial,
+        last_seen_serial=last_seen_serial, clock_skew=clock_skew,
     )
