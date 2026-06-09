@@ -15124,3 +15124,35 @@ Prior substantive entry: VL-075 (the clock-skew tolerance window). This entry ci
 
 #### Next trajectory action
 B4 - real MCP server (locus SANDBOX): stand the gate up as a real MCP server surface (beyond the in-process / TestClient harness), per artifact 13 Phase B. Then B5 (latency budget), then Phase C (C1 deploy packaging, C2 real TLS/cert + trust bootstrap, C3 attack harness + falsifiable claim sheet, C4 real-transport readiness predicate).
+
+
+### VL-077 - 2026-06-09 - B4 (artifact 13, Phase B): real MCP server with the admissibility gate on tool execution
+**Status:** RECORDED (capability / build-then-wire, unwired). Referent-bound: the acceptance suite is executed (14/14), the real-stdio subprocess proof is executed (11/11, exit 0), the full suite is re-run live in-sandbox (260 -> 274, 0 xfailed), and the default path is proven byte-unchanged by `git diff`. No canon / SPEC-of-record(canon) / evaluator / MANIFEST / published_* / pep.py / verifier.py / envelope.py / reference_target.py / replay_cache.py change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** capability / trajectory move per VL-017a. Fourth Phase-B item (B4) of the artifact-13 directive; advances Next-open-action to B5.
+
+#### The gap closed
+The wedge demo `EVIDENCE/proofs/wedge_agent_toolcall_001_runner.py` (VL-066) proved the executor-side wedge property on an agent tool-call surface but stated its own fidelity gap: "it does NOT implement the full MCP protocol (no initialize handshake, capability negotiation, or stdio transport)." B4 closes it - a real MCP server speaking JSON-RPC 2.0 over real stdio with the production admissibility gate on `tools/call`.
+
+#### What landed (spec then build, build-then-wire)
+- SPEC `docs/restructure/17_mcp_server_spec.md`: the executor-side gate on `tools/call`, the envelope-in-`_meta` wire convention (`elyon-sol/envelope`, the MCP-idiomatic parallel of the HTTP `X-Elyon-Sol-Envelope` header), the protocol + refusal mapping (refusal = an `isError` tool result, not a protocol error; pre-handshake tools/call = JSON-RPC -32002), the fail-closed posture, the canon-section-14 (no-new-invariant) basis, the build-then-wire boundary, and the honest ceiling (stdio is real but local; cross-host TLS / a real attacker remain G5 / Phase C).
+- BUILD: `IMPLEMENTATION/mcp_server.py` (NEW, no default-path caller): `handle_message` (JSON-RPC dispatch for initialize / notifications/initialized / ping / tools/list / tools/call / the read-only `elyon-sol/executed_count` observability method), `gate_tool_call` (reconstructs the expected interaction from the actual call via the demo-identical `interaction_for`, runs the production `verify_envelope`, then the VL-076 `InMemoryReplayCache` for exactly-once - the seam's FIRST real consumer), `config_from_env` (out-of-band pinned key + record path, fail-closed to `REF_TARGET_NOT_CONFIGURED`), and `serve_stdio` (the newline-delimited JSON-RPC stdio loop; `python -m IMPLEMENTATION.mcp_server`). The tool side effect fires only on a positive verify verdict followed by a fresh replay claim; every undecidable path fails closed. No gate logic re-implemented; no new reason code on the verify path.
+- TEST `TESTS/adversarial/test_mcp_server.py` (14): the initialize handshake (protocolVersion / capabilities / serverInfo), the initialized notification (no response), pre-handshake tools/call = -32002, tools/list; the admitted call fires the tool once; un-attested / rebound-tool / rebound-args / drifted / stale / replayed refused with the named `REF_VERIFY_*` reason and the tool unfired; unconfigured -> `REF_TARGET_NOT_CONFIGURED`; the tool fires exactly once across the whole matrix; the executed-count observability.
+- PROOF `EVIDENCE/proofs/mcp_server_001_runner.py`: spawns `IMPLEMENTATION/mcp_server.py` as a REAL SUBPROCESS and speaks JSON-RPC over its real stdin/stdout pipes - the handshake, then admitted-fires / replay / un-attested / rebind-tool / rebind-args against a live server process, plus drifted (a re-published evaluator state under a moved anchor, fresh process) and stale (a short-window admission, fresh process); exactly-once confirmed across the process boundary by `elyon-sol/executed_count` (count == 1 on the primary, 0 on the drift/stale servers). 11/11, exit 0.
+
+#### Build-then-wire scope (honest)
+This BUILDS the MCP server; it does NOT WIRE it onto the default `pep.py` gate path (the server is the EXECUTOR, not the gate; admission stays in pep.py). evaluator.py / pep.py / verifier.py / envelope.py / reference_target.py / replay_cache.py / published_hashes.json are byte-unchanged (empty `git diff`), so no `evaluator_sha256` roll and the existing suites / runners are unaffected. The claim earned: "the wedge property holds on a real MCP `tools/call` server over real stdio, with the real handshake," NOT "the gate is certified against a real external attacker on a network."
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): import check passes; `TESTS/adversarial/test_mcp_server.py` 14/14; `EVIDENCE/proofs/mcp_server_001_runner.py` 11/11 exit 0; full suite `python -m pytest TESTS/` 274 passed + 0 xfailed (was 260).
+- `git diff` over the default-path / hashed files (evaluator.py, pep.py, verifier.py, envelope.py, reference_target.py, replay_cache.py, published_hashes.json) is empty.
+- All four new files ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Honest ceiling
+stdio is a real transport and a real process boundary, but LOCAL: this does not establish cross-host TLS, real certificates, or trust bootstrap (the G5 floor / Phase C). It demonstrates the wedge property on a genuine MCP surface with the real handshake; it does not certify the property against a real external attacker on a real network. That remains the author-arranged finish line.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-076 (the shared-replay-cache seam). This entry cites VL-066 (the wedge property + the in-process demo it promotes), VL-076 (the replay seam it is the first real consumer of), and VL-061 (the reference enforcing target whose config / observability shape it parallels); it does not cite its own (spec + build + STATE + ledger) hash.
+
+#### Next trajectory action
+B5 - latency / throughput budget + SDK (locus AUTHOR for the numbers, SANDBOX for the SDK): measure the added p50/p99 verify latency on representative hardware and package the integration as a thin middleware / SDK with a few-line example. Then Phase C (C1 deploy packaging, C2 real TLS/cert + trust bootstrap, C3 attack harness + falsifiable claim sheet, C4 real-transport readiness predicate).
