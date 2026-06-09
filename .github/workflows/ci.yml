@@ -36,7 +36,9 @@ jobs:
 
       - name: Run the exit-coded EVIDENCE proof runners
         run: |
-          set -e
+          # Run every hermetic runner; collect failures and report them all in one
+          # run (do not stop at the first), then fail the job if any failed.
+          failed=""
           for r in EVIDENCE/proofs/*_runner.py; do
             case "$r" in
               *external_interception_webhook*)
@@ -44,5 +46,16 @@ jobs:
                 continue ;;
             esac
             echo "===== $r ====="
-            python "$r"
+            if python "$r"; then
+              echo "PASS: $r"
+            else
+              code=$?
+              echo "::error::FAIL ($code): $r"
+              failed="$failed $r"
+            fi
           done
+          if [ -n "$failed" ]; then
+            echo "Failed runners:$failed"
+            exit 1
+          fi
+          echo "All hermetic runners passed."

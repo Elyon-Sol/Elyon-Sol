@@ -67,7 +67,7 @@ def free_port():
 
 
 def _now():
-    return datetime.datetime.utcnow()
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def gen_certs(tmp):
@@ -115,12 +115,13 @@ def gen_certs(tmp):
     return ca_path, cert_path, key_path
 
 
-def uvicorn_proc(app, port, cert, key, env):
+def uvicorn_proc(app, port, cert, key, env, log_path):
+    logf = open(log_path, "wb")
     return subprocess.Popen(
         [sys.executable, "-m", "uvicorn", app, "--host", "127.0.0.1",
          "--port", str(port), "--ssl-certfile", cert, "--ssl-keyfile", key,
          "--log-level", "warning"],
-        cwd=REPO, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        cwd=REPO, env=env, stdout=logf, stderr=subprocess.STDOUT,
     )
 
 
@@ -162,13 +163,25 @@ def main():
 
     procs = []
     try:
-        procs.append(uvicorn_proc("IMPLEMENTATION.publisher:app", p_port, cert, key, pub_env))
-        procs.append(uvicorn_proc("IMPLEMENTATION.reference_target:app", t_port, cert, key, tgt_env))
-        procs.append(uvicorn_proc("IMPLEMENTATION.pep:app", g_port, cert, key, gate_env))
+        services = [
+            ("publisher", "IMPLEMENTATION.publisher:app", p_port, pub_env),
+            ("reference_target", "IMPLEMENTATION.reference_target:app", t_port, tgt_env),
+            ("gate", "IMPLEMENTATION.pep:app", g_port, gate_env),
+        ]
+        logpaths = []
+        for _nm, _app, _port, _env in services:
+            _lp = os.path.join(tmp, _nm + ".log")
+            logpaths.append((_nm, _lp))
+            procs.append(uvicorn_proc(_app, _port, cert, key, _env, _lp))
 
         def ready():
             ok = {"p": False, "t": False, "g": False}
-            for _ in range(80):
+            deadline = time.time() + 150  # generous: 3 uvicorn+TLS cold starts on a loaded CI runner
+            while time.time() < deadline:
+                for _nm, _pr in zip([n for n, _ in logpaths], procs):
+                    if _pr.poll() is not None:
+                        print("SERVICE PROCESS DIED EARLY: %s (exit %s)" % (_nm, _pr.returncode))
+                        return False
                 try:
                     if not ok["p"]:
                         ok["p"] = requests.get(PUB_URL, verify=ca, timeout=2).status_code == 200
@@ -186,7 +199,14 @@ def main():
             return False
 
         if not ready():
-            print("SERVICES NOT READY"); return 2
+            print("SERVICES NOT READY")
+            for _nm, _lp in logpaths:
+                try:
+                    _tail = open(_lp, "r", errors="replace").read()[-2000:]
+                except Exception as _e:
+                    _tail = "<no log: %s>" % _e
+                print("----- %s service log (tail) -----\n%s" % (_nm, _tail))
+            return 2
 
         def received():
             return requests.get(RECEIVED_URL, verify=ca, timeout=5).json()["count"]
