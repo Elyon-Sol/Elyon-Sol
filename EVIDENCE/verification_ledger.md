@@ -15421,3 +15421,32 @@ Prior substantive entry: VL-084 (the prose-drift reconciliation). This entry cit
 
 #### Next trajectory action
 Unchanged: the author's real-host execution (stand up C1+C2, run the live attack suite over real TLS, flip REAL_TRANSPORT green, face a real external attacker - G5/GR-3). No in-house authoring remains; the repo is now internally consistent and its docs match its artifacts.
+
+
+### VL-084 follow-up 2 - 2026-06-09 - comprehensive read-every-file audit: four HIGH findings found and fixed
+**Status:** RECORDED (audit + four doc fixes). Referent-bound: every mechanical fact is a live check (py_compile all tracked .py OK; `pytest` 298/0; `validate_manifest` 0 errors + 0 missing proofs; `sha256(canon.md)` == `canon.lock`; 16/16 IMPLEMENTATION modules import); each prose finding was verified against the actual file before fixing. Four docs fixed; no code/canon/test change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** audit / prose-drift reconciliation per VL-017a (VL-045/050/072/084 family); not a trajectory move. Run in response to a "read every file, confirm no stale references / drift / overclaims" request - and deliberately NOT pre-confirmed (a model's "it is all clean" is non-evidential per GR-3; the checks are the referent).
+
+#### Method
+A mechanical pass (compile / suite / imports / hash-match / file-reference cross-check / stale-deleted-module grep) plus two subagents that read EVERY file in docs/restructure (00-22), docs/methodology, SPEC, README, docs/zenodo, and the protocols, each given the current ground truth and the project's overclaim discipline (GR-3; bounded claims; snapshot-doc immunity). Subagent findings were treated as leads and verified against the files before any edit.
+
+#### The four HIGH findings (all fixed)
+1. `docs/methodology/deposit_readiness_audit.md` Section A item 1 referent still read "the pytest suite (218/0)" - a self-contradiction with the same file's reconciled "298 passed" (VL-084 fixed the referent-class list at lines 39-44 but missed this body line). Fixed -> (298/0).
+2. `docs/restructure/04_current_vs_claimed.md` (the living gap tracker) presented G2 as PARTIALLY-closed with "proposed VL-017 / VL-018 / VL-019" in BOTH the G2 section (which carried no RESOLVED status) and priority-order item 4 - while STATE.md, the deposit audit, and the file's own G14 entry treat G2 as RESOLVED and the validator as live. The gap tracker contradicted STATE on a closed gap. Fixed: G2 marked RESOLVED (VL-014 + VL-015 + VL-016 schema track + VL-017 failing tests + VL-018 validator + VL-019 PEP wiring) in both spots; only the G12/G13 canon-layer halves remain OPEN.
+3. `docs/zenodo/enforcement_evidence_addendum_rev3.md` - an UNPUBLISHED draft (no DOI anywhere in docs/zenodo) - ended mid-table at "| Supersede" (the Provenance table's last row truncated). Completed the "Supersedes" row (Revision 2, DOI 10.5281/zenodo.20387278, snapshot 89ff2f9). Same EOF-truncation-repair family as VL-072 / the artifact-13 repair. (The doc's "three deployment predicates" / 211-test figures are correctly snapshot-scoped to pinned commit c756f8f and were NOT touched.)
+4. `docs/restructure/01_repository_structure.md` was last reconciled to HEAD 2db1807 (after VL-010) and omits the entire Phase A/B/C tree (reference_target / publisher / the record sources / replay_cache / mcp_server / executor_sdk / the deploy tree / specs 12-22 / many runners). A "STALE NOTICE (added VL-084 follow-up)" banner was added pointing to `git ls-files` + STATE + the ledger for the current tree; a full artifact-01 re-reconciliation is recorded as a standing non-blocking item.
+
+#### Verified NON-findings (checked, deliberately not changed)
+- `IMPLEMENTATION/target.py` shows on the sandbox disk but is NOT in HEAD (`git cat-file -e HEAD:IMPLEMENTATION/target.py` fails) and git does not see it as untracked - a mount ghost from the VL-068 `git rm`, not in the committed repo a reviewer clones. The repo is clean.
+- `EVIDENCE/published_keys.json` / `published_roots.json` are intentionally runtime-generated, never committed (artifact 09 / 11); docs referencing them are correct.
+- LOW staleness in `00_README.md` ("CCS has drifted" / "0 of 3 predicates"), `12_g5_transport_design.md` ("the three predicates are green" / target.py stub), and `README.md:566` ("convergent confirmation") lives in explicitly pinned snapshot / build-time-descriptor docs; per the snapshot-immunity rule, editing them to reflect later state would be the error. Left as-is, noted.
+
+#### Honest ceiling
+This is a referent-bound MECHANICAL + prose audit (existence, parse, import, hash-match, count, internal-consistency). It is NOT an evaluative seal on the system's soundness (non-evidential per GR-3) and not the blind-reviewer read (external_verification_readiness gate 4). A clean audit means the repo is internally consistent and its live docs match its artifacts; it does not certify the gate against an external attacker, which remains the G5/GR-3 finish line.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-084 follow-up (the first audit fix, REAL_TRANSPORT in the readiness spec). This entry cites VL-084 (the reconciliation whose missed line 68 it completes), VL-019 (the G2 closure the gap tracker had not recorded), and VL-057 (GR-3, why the audit is checks not a verdict); it does not cite its own (4-doc + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: no in-house authoring remains. The author's real-host execution (stand up C1+C2, run the live attack suite over real TLS, flip REAL_TRANSPORT green, face a real external attacker - G5/GR-3). The repo is now internally consistent and its live docs match its artifacts.
