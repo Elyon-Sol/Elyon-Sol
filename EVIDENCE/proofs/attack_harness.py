@@ -136,25 +136,32 @@ class HttpSurface:
 
 
 class RequestsClient:
-    """Minimal `.post` shim over `requests` for a real host (AUTHOR). Not exercised in-sandbox."""
+    """Minimal `.post` shim over `requests` for a real host (AUTHOR). Not exercised in-sandbox.
+    `verify` is the requests TLS-verification argument: a CA bundle path (real TLS, the C2 case),
+    True (system store / a public CA), or False (NEVER for a real run - verification off defeats
+    the point). Defaults to True (fail-closed: an unverifiable peer raises)."""
 
-    def __init__(self, base_url):
+    def __init__(self, base_url, verify=True):
         self.base_url = base_url.rstrip("/")
+        self.verify = verify
 
     def post(self, path, json=None, headers=None):
         import requests
 
-        return requests.post(self.base_url + path, json=json, headers=headers or {}, timeout=10)
+        return requests.post(self.base_url + path, json=json, headers=headers or {},
+                             verify=self.verify, timeout=10)
 
 
 # --------------------------------------------------------------------------
 # The attack suite (gate-2 break-it challenges)
 # --------------------------------------------------------------------------
 
-def run_suite(surface, drifted_surface=None) -> List[AttackResult]:
+def run_suite(surface, drifted_surface=None, include_stale=True) -> List[AttackResult]:
     """Run the attack suite against `surface`. `drifted_surface` (a surface whose executor sees a
-    re-published / drifted state) drives the drift attack; if None it is skipped. Returns one
-    AttackResult per attack."""
+    re-published / drifted state) drives the drift attack; if None it is skipped. `include_stale`
+    drives the stale attack, which needs control of the gate's decision window (admit max_age) -
+    set it False for a surface that cannot control that (the live HTTP adapter, where the gate's
+    window is fixed deploy config). Returns one AttackResult per attack."""
     results: List[AttackResult] = []
 
     def record(id_, challenge, got, expect_honored, expect_reason):
@@ -208,10 +215,11 @@ def run_suite(surface, drifted_surface=None) -> List[AttackResult]:
                drifted_surface.attempt(TOOL, ARGS, env_d), False,
                REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED)
 
-    # Stale: an admission presented past its freshness window.
-    env_s = surface.admit(TOOL, ARGS, max_age=1)
-    time.sleep(2)
-    record("stale", "replay an admission past its decision-freshness window",
-           surface.attempt(TOOL, ARGS, env_s), False, REF_VERIFY_SIGNATURE_EXPIRED)
+    # Stale: an admission presented past its freshness window (needs admit-window control).
+    if include_stale:
+        env_s = surface.admit(TOOL, ARGS, max_age=1)
+        time.sleep(2)
+        record("stale", "replay an admission past its decision-freshness window",
+               surface.attempt(TOOL, ARGS, env_s), False, REF_VERIFY_SIGNATURE_EXPIRED)
 
     return results

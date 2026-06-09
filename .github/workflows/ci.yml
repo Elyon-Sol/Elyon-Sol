@@ -4,7 +4,9 @@ name: CI
 # residual). Every push and pull request runs the full pytest suite plus every
 # exit-coded EVIDENCE/proofs runner; any non-zero exit fails the build.
 #
-# One runner is deliberately excluded: external_interception_webhook_001_runner.py
+# Some runners are deliberately excluded (see the skip cases below): the external
+# webhook runner, the multi-process-TLS runner, and the AUTHOR-executed live attack
+# runner. external_interception_webhook_001_runner.py
 # is NON-HERMETIC (it posts to the third-party webhook.site receiver) and is not
 # reproducible in CI. Every other runner is loopback / in-process and self-contained.
 
@@ -43,6 +45,14 @@ jobs:
             case "$r" in
               *external_interception_webhook*)
                 echo "::notice::SKIP non-hermetic (external webhook.site): $r"
+                continue ;;
+              *attack_suite_live*)
+                # AUTHOR-executed against a REAL deployed surface (C3-live); there
+                # is no live gate/target in CI, so it exits 2 (unconfigured) by
+                # design. The in-process attack suite (attack_suite_001_runner) is
+                # the CI-gated equivalent; the live run is the gate-1 referent and
+                # is the author's, on real hosts.
+                echo "::notice::SKIP AUTHOR-executed live attack runner (needs a real surface): $r"
                 continue ;;
               *g5_multiprocess_tls*)
                 # Stands up three long-lived uvicorn+TLS OS-process servers and

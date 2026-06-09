@@ -100,3 +100,37 @@ def test_http_surface_drives_real_reference_target(gate_signing, monkeypatch):
     # Rebind over real HTTP.
     h3, r3 = surface.attempt("delete_database", {"db": "prod"}, env)
     assert h3 is False and r3 == REF_VERIFY_BINDING_MISMATCH
+
+
+def test_live_suite_subset_defeated_over_http(gate_signing, monkeypatch):
+    # The exact suite call the live runner makes (include_stale=False, no drifted
+    # surface), validated over an in-process HttpSurface. Proves the live runner's
+    # suite logic; the real-transport run is the author's (gate 1).
+    class _R:
+        status_code = 200
+        text = "{}"
+
+    monkeypatch.setattr(pep.requests, "post", lambda *a, **k: _R())
+    surface = HttpSurface(
+        gate_client=TestClient(pep.app),
+        target_client=_reference_target_client(gate_signing),
+        target_url=HTTP_TARGET_URL,
+    )
+    results = run_suite(surface, drifted_surface=None, include_stale=False)
+    failed = [r for r in results if not r.passed]
+    assert not failed, failed
+    ids = {r.id for r in results}
+    assert "stale" not in ids and "drifted_state" not in ids
+    assert "positive_control" in ids and "target_url_swap" in ids
+    assert len([r for r in results if r.id != "positive_control"]) == 6
+
+
+def test_live_runner_unconfigured_exits_2(monkeypatch):
+    for var in ("ELYON_LIVE_GATE_URL", "ELYON_LIVE_TARGET_URL", "ELYON_LIVE_TARGET_ID"):
+        monkeypatch.delenv(var, raising=False)
+    import importlib
+    runner = importlib.import_module("EVIDENCE.proofs.attack_suite_live_runner")
+    import pytest
+    with pytest.raises(SystemExit) as exc:
+        runner.main()
+    assert exc.value.code == 2

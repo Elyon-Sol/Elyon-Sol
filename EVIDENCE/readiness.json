@@ -78,6 +78,11 @@
       "green": true,
       "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py",
       "blocked_by": "GREEN at VL-049 (planned root rotation consulted target-side over the signed cross-host chain). Scope: a planned in-band R1->R2 rotation runs over real loopback transport via the production fetch path with NO test-only shortcut (target pinning only R1 fetches the root record + key record over real sockets, builds the root-status + key-record views, and honors a gate-signed envelope whose issuer key is vouched by a key record signed by the designated-active R2; revoked/retired root and fetch failure / stale record fail closed). Enumerated dependency set: root_rotation, issuer_key_revocation (10_readiness_spec.md section 4 item 3). Proof of record: EVIDENCE/proofs/root_recovery_cross_host_001_runner.py. Does NOT close root-key COMPROMISE recovery (irreducibly out-of-band, artifact 11 section 2, the named non-goal). Does NOT assert true multi-machine / TLS (the G5 floor; deployment)."
+    },
+    "REAL_TRANSPORT": {
+      "green": false,
+      "proof": null,
+      "blocked_by": "C4 (VL-083), RED by design: awaiting the author's real-transport run. The VL-079 attack suite must be DEFEATED over real cross-host TLS via EVIDENCE/proofs/attack_suite_live_runner.py against the C1/C2 deployment stood up on real hosts - the gate-1 referent (external_verification_readiness.md). No real surface exists in the build sandbox (no docker / no real CA / single host), so this predicate cannot be greened in CI. The in-process equivalent (attack_suite_001_runner.py, 8/8 defeated) is the SIMULATION; this tier is the real-attack referent. On a green live run, flip this to green naming that run's log as the proof (and, if a counted tier is wanted, add REAL_TRANSPORT to IMPLEMENTATION/readiness.py PREDICATE_NAMES). Not counted in the canonical 3-predicate summary until then. This is also the binding NOT-READY reason: the G5 floor + a real external attacker remain the author's to arrange (GR-3)."
     }
   }
 }
