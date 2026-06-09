@@ -1,0 +1,16 @@
+==========================================================================================
+ATTACK SUITE (gate-2 falsifiable claims) vs the IN-PROCESS surface - VL-079 (C3)
+==========================================================================================
+[PASS] positive_control a valid admitted call is honored                         -> HONORED
+[PASS] unattested       reach the target with no admissibility envelope (A1)     -> REFUSED:REF_VERIFY_ENVELOPE_ABSENT
+[PASS] forged_signature tamper a signed field; pass off a forged envelope        -> REFUSED:REF_VERIFY_SIGNATURE_INVALID
+[PASS] replay           present the same admitted envelope twice (exactly-once)  -> REFUSED:REF_VERIFY_REPLAY
+[PASS] rebind_tool      use a transfer envelope to authorize delete_database     -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] rebind_args      use the envelope with different (larger) args            -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] target_url_swap  present an envelope bound to another target              -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] drifted_state    mint acceptance against a byte-divergent / re-published state -> REFUSED:REF_VERIFY_REASSERT_RE_EVALUATE_REQUIRED
+[PASS] stale            replay an admission past its decision-freshness window   -> REFUSED:REF_VERIFY_SIGNATURE_EXPIRED
+------------------------------------------------------------------------------------------
+positive control honored: True | adversarial attacks defeated: 8/8
+==========================================================================================
+RESULT: ALL ATTACKS DEFEATED on the in-process surface (referent-incomplete until real transport - gate 1)
