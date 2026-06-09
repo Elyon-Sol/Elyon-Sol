@@ -14679,3 +14679,58 @@ Prior substantive entry: VL-067 (the artifact-13 directive). This entry does not
 
 #### Next trajectory action
 A2 - retire `server.py` (the next Phase-A clean-base item).
+
+### VL-069 - 2026-06-08 - A2 (artifact 13, Phase A): server.py retirement - NO ACTION (already retired at VL-051); directive + Next-open-action drift corrected
+**Status:** RECORDED (bookkeeping / hygiene; prose-drift correction). Referent-bound: the claim
+"A2 needs no action" is verified against primary sources (git HEAD tree, importer grep, git
+history), not against prior prose. No code / canon / SPEC / evaluator / published_* / hashed-file
+/ test change; suite 218 unchanged.
+**Author:** Claude (working session with the project author).
+**Classification:** bookkeeping / hygiene per VL-017a (the A4 prose-drift class, surfaced early
+while executing A2). Second Phase-A item of the artifact-13 directive; closes as a no-op.
+
+#### The finding
+Executing artifact 13's A2 ("Retire `server.py`") top-down, the primary source shows the work was
+already complete. `IMPLEMENTATION/server.py` was retired by `git rm` at VL-051 (`10e5078`,
+2026-06-05) - "T-server-retire: retire IMPLEMENTATION/server.py; pep.py is the sole gate" - which
+was BEFORE the artifact-13 directive was written (VL-067, 2026-06-08). A2 was listed in the
+directive in error, carried from the long-standing "T-bookkeeping (... + server.py retirement)"
+note that VL-051 had already discharged. A top-down session would otherwise re-attempt completed
+work (the exact risk this entry forecloses).
+
+#### Verification (primary sources, not prose)
+- `git ls-tree -r HEAD --name-only | grep server.py` -> not in HEAD tree (already removed).
+- `git log --oneline --all -- IMPLEMENTATION/server.py` -> `10e5078` (VL-051 retire) is the last
+  touch; the file has not existed in the tree since.
+- Importer grep (`^\s*(import|from) ... \bserver\b`, excluding stdlib http.server/socketserver)
+  -> none. grep-clean.
+- Doc tree references already reconciled at VL-051: artifact-01 carries the RETIRED(VL-051)
+  annotation; the `README.md` tree line was removed at VL-051. Only residue is a gitignored stale
+  `IMPLEMENTATION/__pycache__/server.cpython-313.pyc` (untracked build artifact).
+- Suite 218 + 0 xfailed, UNCHANGED (no code touched).
+
+#### What landed (this entry)
+- `docs/restructure/13_road_to_external_readiness.md`: A2 annotated "ALREADY DONE at VL-051
+  (`10e5078`), before this directive" with the no-action rationale, so a future top-down pass
+  skips it.
+- `STATE.md`: Last-updated -> VL-069; a Current-verified-state bullet recording the no-op;
+  Next-open-action advanced from A2 to A3 (gap-tracker refresh), and the prior line's duplicate
+  "server.py retirement" listing (it appeared as both A2 and inside "A3-A6") removed.
+
+#### Resume-protocol note (this session)
+The session opened with a dirty tree from a prior session's interrupted git operation: a stale
+`.git/index.lock` plus a corrupt index (phantom staged deletions of `scripts/` + `docs/zenodo/`
+and a mangled rename to `docs/restructur`), while the working tree itself was intact. Resolved by
+rebuilding the index from HEAD (`d2e80a6`) at a sandbox-local path and swapping it in; the stale
+lock and prior-session lock debris (`_swept_*`, `*.stale`, `*.5`) were cleared once file-delete
+was enabled. Tree verified clean (`git diff HEAD` empty, HEAD == origin/main) before any edit.
+Recorded per the SESSION_PROTOCOL invariant (a dirty resume = prior close incomplete; fix first).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-068 (A1, target.py retirement). This entry cites VL-051 (the
+retirement of record) and VL-067 (the directive that mislisted A2); it does not cite its own
+(doc + STATE + ledger) hash.
+
+#### Next trajectory action
+A3 - refresh the gap tracker (`docs/restructure/04_current_vs_claimed.md`): G4 + G5 / the A3b
+sub-cases to reflect VL-061/063/065/066 (the next Phase-A clean-base item).
