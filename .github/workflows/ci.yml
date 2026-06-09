@@ -1,0 +1,48 @@
+name: CI
+
+# Artifact 13 A5 - the green gate, enforced automatically (closes the G8 CI
+# residual). Every push and pull request runs the full pytest suite plus every
+# exit-coded EVIDENCE/proofs runner; any non-zero exit fails the build.
+#
+# One runner is deliberately excluded: external_interception_webhook_001_runner.py
+# is NON-HERMETIC (it posts to the third-party webhook.site receiver) and is not
+# reproducible in CI. Every other runner is loopback / in-process and self-contained.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  suite-and-proofs:
+    runs-on: ubuntu-latest
+    env:
+      # The tests and runners import the IMPLEMENTATION package from the repo root.
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # cryptography is pinned (VL-040); the rest are the gate's runtime + test deps.
+          pip install pytest "cryptography==44.0.0" fastapi httpx requests uvicorn
+
+      - name: Run the pytest suite
+        run: python -m pytest TESTS/ -q
+
+      - name: Run the exit-coded EVIDENCE proof runners
+        run: |
+          set -e
+          for r in EVIDENCE/proofs/*_runner.py; do
+            case "$r" in
+              *external_interception_webhook*)
+                echo "::notice::SKIP non-hermetic (external webhook.site): $r"
+                continue ;;
+            esac
+            echo "===== $r ====="
+            python "$r"
+          done

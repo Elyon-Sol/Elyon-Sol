@@ -22,6 +22,7 @@ import json
 
 import IMPLEMENTATION.pep as pep_module
 from fastapi.testclient import TestClient
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from IMPLEMENTATION.envelope import canonical_json
 from IMPLEMENTATION.evaluator import manifest_sha256
@@ -72,6 +73,13 @@ def _deliver(target_client, interaction, envelope_header=None):
 
 def main():
     published = load_published_hashes()
+
+    # The gate has required a signing key since the VL-047 mandatory signing
+    # cutover (no key -> REF_PEP_FAIL_CLOSED before the forward). Standalone
+    # runners do not load TESTS/conftest.py's autouse key fixture, so inject an
+    # ephemeral gate key here (mirrors default_secure_cutover_001_runner). Fixes
+    # the post-VL-047 standalone-run breakage surfaced while wiring CI (A5).
+    pep_module._INJECTED_SIGNING_KEY = (Ed25519PrivateKey.generate(), "g4-runner-key")
 
     print("=" * 70)
     print("Elyon-Sol G4 refused-bypass evidence run (VL-038)")
