@@ -15305,3 +15305,37 @@ Prior substantive entry: VL-080 follow-up (the CI-red hermeticity repair). This 
 
 #### Next trajectory action
 C2 - real TLS/cert + trust bootstrap (locus AUTHOR for validation; artifacts authorable in-sandbox): cert-generation scripts + an out-of-band anchor/key distribution runbook, layering the `transport.py` `ELYON_TLS_*` hooks onto the C1 compose. Then C3's LIVE run (the VL-079 attack suite over real cross-host TLS via HttpSurface), then C4 (a real-transport readiness predicate in `EVIDENCE/readiness.json`). The container/TLS/attack validation needs real hosts and a real external attacker - the G5 / GR-3 finish line, the author's to arrange.
+
+
+### VL-082 - 2026-06-09 - C2 (artifact 13, Phase C): real TLS/cert + trust bootstrap (artifacts authored; cert material validated, real cross-host TLS AUTHOR)
+**Status:** RECORDED (artifacts + a partial green referent). Referent-bound: the cert material is validated in-sandbox by an executed REAL TLS handshake and chain checks (`TESTS/deploy/test_tls_certs.py` 6/6 - verified handshake over ssl.MemoryBIO; wrong-CA refused; CA self-signed/CA:TRUE; leaf CA-signed/in-window/SAN; overlay structural), the full suite is re-run live (290 -> 296, 0 xfailed), and the default path is proven byte-unchanged by `git diff`. The container/TLS stand-up is UNVALIDATED (no docker). No canon / SPEC-of-record(canon) / evaluator / MANIFEST / published_* / IMPLEMENTATION change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** packaging / trajectory move per VL-017a. Second Phase-C deliverable; completes the in-house-authorable Phase-C artifacts (C1 packaging + C2 TLS).
+
+#### The locus split (stated honestly)
+Artifact 13 C2 is locus AUTHOR ("validated on real hosts"). This increment authors the cert tooling + TLS overlay + trust-bootstrap runbook in-house, and is precise about what it can validate: the container/TLS STAND-UP is unvalidated (no docker, no real hosts, no real CA) and earns no referent; what IS validated, and is, is that the generated cert MATERIAL is correct and actually establishes a VERIFIED TLS session (a real handshake over an in-memory BIO).
+
+#### What landed
+- SPEC `docs/restructure/21_real_tls_and_trust_bootstrap_spec.md`: how TLS wires onto the existing services by CONFIGURATION (the transport.py ELYON_TLS_* hooks + uvicorn --ssl-*; no code change), the out-of-band trust-bootstrap discipline, the fail-closed/no-new-invariant basis, and the honest ceiling (a private dev CA over a closed network is still not the public, externally-attacked surface).
+- `deploy/tls/gen_certs.py` (VALIDATED): generates a self-signed EC P-256 CA and per-service leaf certs (SERVER_AUTH + CLIENT_AUTH EKU; SANs for the compose service name + localhost + 127.0.0.1 + operator-supplied real hostnames), using the `cryptography` library only - no openssl-binary dependency, so it runs anywhere the gate's pinned crypto stack runs. Importable (`gen_ca`, `gen_leaf`, `write_deployment_certs`) for the test.
+- `deploy/docker-compose.tls.yml`: a compose OVERLAY (`-f docker-compose.yml -f docker-compose.tls.yml`) serving each service under `uvicorn --ssl-certfile/--ssl-keyfile`, mounting `tls/certs` read-only, flipping ELYON_TARGET_URL / ELYON_PUBLISHER_URL to https, and setting ELYON_TLS_CA_BUNDLE on the gate/target clients. UNVALIDATED (no docker).
+- `deploy/tls/trust_bootstrap.md`: the out-of-band distribution runbook - the CA bundle, the pinned-root anchor, and the gate public key + key_id, each on a channel SEPARATE from the served record; the private-dev-CA path (gen_certs) and the real / Let's Encrypt path; optional mutual TLS; and the honest ceiling.
+- TEST `TESTS/deploy/test_tls_certs.py` (6): the CA is self-signed + CA:TRUE; a leaf is CA-signed, in-window, with the expected SAN, non-CA; a REAL TLS handshake over `ssl.MemoryBIO` between a server holding the leaf and a CA-trusting client SUCCEEDS and returns a verified peer cert; a client trusting a DIFFERENT CA is REFUSED with `ssl.SSLCertVerificationError` (fail-closed); `write_deployment_certs` emits all files; the TLS overlay structurally wires --ssl-* + the CA bundle + https (dependency-free check, no pyyaml).
+- `.gitignore`: `deploy/tls/certs/` (the certs + private keys are out-of-band material, never committed).
+
+#### Build-then-wire / honest scope
+New `deploy/tls/` + the overlay + spec + test only; `IMPLEMENTATION/`, canon, MANIFEST, and `published_hashes.json` are byte-unchanged (empty `git diff`), so no `evaluator_sha256` roll. TLS is configuration over the C1 services (the transport.py seam already resolves it fail-closed). The claim earned: "the generated certs establish a verified TLS session in-sandbox, and the TLS packaging artifacts exist," NOT "the chain is verified over real TLS between two hosts" (UNVALIDATED, no docker / real CA - the author's) and NOT "the surface is externally attack-tested" (the G5 floor + a real attacker remain the binding NOT-READY reason).
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10; cryptography 46 locally, APIs 44-compatible for CI): `TESTS/deploy/test_tls_certs.py` 6/6 incl. the real MemoryBIO handshake; full suite `python -m pytest TESTS/` 296 passed + 0 xfailed (was 290).
+- `git diff` over `IMPLEMENTATION/` + canon + MANIFEST + `published_hashes.json` is empty; `deploy/tls/certs/` is git-ignored (`git check-ignore` confirms).
+- All committed files ASCII-only (VL-006) and LF-only (Lesson 11); the cert tooling avoids the openssl binary and the overlay test avoids pyyaml (CI dep-set discipline, the VL-080-follow-up lesson).
+
+#### Honest ceiling
+The cert tooling + the in-memory handshake are validated in-sandbox; a real two-host TLS run, a real / Let's Encrypt CA, and a real external attacker on that surface are NOT (AUTHOR / the G5 floor). A private dev CA over a closed network is the transport layer the attack suite (C3 live) then runs over - it is not itself the public-network, externally-attacked referent external readiness needs. TLS hardens the transport; it moves the external-validation axis no further than the author's real run does. With C1 + C2 authored, every in-house-authorable Phase-C artifact is done; the remainder (stand up on real hosts; C3 live; C4) is pure AUTHOR execution.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-081 (C1 deploy packaging). This entry cites VL-039 (the transport seam whose ELYON_TLS_* hooks it configures), VL-063 (the multi-process real-TLS precedent), and VL-081 (the C1 packaging it overlays); it does not cite its own (deploy + spec + STATE + ledger) hash.
+
+#### Next trajectory action
+C3 LIVE run + C4 (locus AUTHOR - real hosts): stand up C1 + C2 on two real hosts (or cloud), run the VL-079 attack suite over real cross-host TLS via the HttpSurface adapter (the gate-1 referent), then record a real-transport readiness predicate in `EVIDENCE/readiness.json` (C4). All in-house-authorable Phase-C artifacts are now committed; what remains needs real hosts and a real external attacker - the G5 / GR-3 finish line, the author's to arrange.
