@@ -15090,3 +15090,37 @@ Prior substantive entry: VL-074 (the signed published-record reader). This entry
 
 #### Next trajectory action
 B3 - shared-replay-cache seam (locus SANDBOX): a cross-instance replay cache so the in-window exactly-once property (VL-066) survives beyond a single process (today the decision_id de-dup is per-instance / in-process). Then Phase B continues (B4 real MCP server, B5 latency budget), then Phase C (C1 deploy packaging, C2 real TLS/cert + trust bootstrap, C3 attack harness + falsifiable claim sheet, C4 real-transport readiness predicate).
+
+
+### VL-076 - 2026-06-09 - B3 (artifact 13, Phase B): shared-replay-cache seam (cross-instance exactly-once)
+**Status:** RECORDED (capability / build-then-wire, unwired). Referent-bound: the acceptance suite is executed (11/11), the full suite is re-run live in-sandbox (249 -> 260, 0 xfailed), and the default path is proven byte-unchanged by `git diff` (no hashed file, and reference_target.py itself, touched). No canon / SPEC-of-record(canon) / evaluator / MANIFEST / published_* / pep.py / envelope.py / verifier.py / reference_target.py change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** capability / trajectory move per VL-017a. Third Phase-B item (B3) of the artifact-13 directive; advances Next-open-action to B4.
+
+#### The gap closed (in the seam)
+The replay defense (VL-066) is the inline `app.state.seen` dict in `IMPLEMENTATION/reference_target.py`: on each honored call the target prunes expired `decision_id` entries, refuses a `decision_id` already honored (`REF_VERIFY_REPLAY`), and records the new `decision_id -> not_after`. The window bounds the set (an entry is pruned once its `not_after` passes, past which freshness refuses it anyway), so exactly-once holds over the freshness window - but the dict is PER-INSTANCE / PER-PROCESS, as that code's own NOTE says. A horizontally-scaled deployment of N target processes keeps N independent seen-sets, so the same `decision_id` can be honored once on each instance: replay survives across instances. B3 gives the de-dup step a seam so it can be backed by a SHARED store, making cross-instance exactly-once reachable.
+
+#### What landed (spec then build, build-then-wire)
+- SPEC `docs/restructure/16_shared_replay_cache_spec.md`: the seam contract (`check_and_claim(decision_id, not_after, *, now=None) -> bool`; True=fresh/honor, False=already-claimed/refuse), the two implementations, the cross-process store primitive (`claim`, mapping onto Redis `SET key 1 NX EX <ttl>` / Memcached `add` / a unique-key INSERT), the fail-closed posture, the canon-section-14 (no-new-invariant) basis, the build-then-wire boundary, and the honest ceiling (unwired this increment; the shared store is deployment config; a store outage fails closed). Structural sibling of `12_g5_transport_design.md` (the transport seam).
+- BUILD: `IMPLEMENTATION/replay_cache.py` (NEW, no caller): the `ReplayCache` / `ReplayStore` Protocols, `InMemoryReplayCache` (prune entries with non-None expiry `<= now` -> refuse a still-present `decision_id` -> claim `decision_id -> not_after`; behavior-identical to the VL-066 inline dict, retaining None-expiry entries across prunes), and `ExternalStoreReplayCache` (delegates the atomic claim to an injected shared `ReplayStore`; holds no state; a store that raises propagates, fail-closed). Parsing the wire `not_after` string into a datetime stays at the call site (the target), mirroring VL-066; the cache stores only the parsed expiry.
+- TEST `TESTS/adversarial/test_shared_replay_cache.py` (11): in-memory honor-once / refuse-exact-replay / distinct-ids / prune-expired-then-fresh / within-window-replay-refused / retain-none-expiry-across-prune; the gap-and-seam pair (two SEPARATE `InMemoryReplayCache` MISS a cross-instance replay; one SHARED cache CATCHES it - the contrast that pins the gap, cf. VL-074 `test_byte_anchor_model_has_no_freshness`); `ExternalStoreReplayCache` over one shared fake store catches a cross-instance replay, honor-once/refuse-replay, and propagates a raising store (fail-closed); a structural check that both concrete caches satisfy the `ReplayCache` Protocol.
+
+#### Build-then-wire scope (honest)
+This BUILDS the seam; it does NOT WIRE it. `reference_target.py` is byte-unchanged (verified by empty `git diff`), so the inline VL-066 dict, the g4/g5 runners, `test_reference_target.py::test_reference_target_refuses_replay`, and the default path are unaffected; evaluator.py / pep.py / envelope.py / verifier.py / published_hashes.json are byte-unchanged too (no `evaluator_sha256` roll). Wiring the target to take an injected `replay_cache` - defaulting to a fresh `InMemoryReplayCache`, which reproduces today's behavior exactly - is a later increment with its own VL (parity with the VL-039 transport seam wired at VL-060). The claim earned: "the replay de-dup can be backed by a shared, cross-instance cache via the seam," NOT "the gate enforces cross-instance exactly-once on the default path."
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): import check `python -c "import IMPLEMENTATION.replay_cache"` passes (VL-027 unseen-import discipline); the new test 11/11; full suite `python -m pytest TESTS/` 260 passed + 0 xfailed (was 249).
+- `git diff` over the default-path / hashed files (reference_target.py, evaluator.py, pep.py, envelope.py, verifier.py, published_hashes.json) is empty.
+- All three new files ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Honest ceiling
+The seam makes cross-instance exactly-once REACHABLE; it does not deliver it on the default path (unwired) and does not provide the shared store (deployment config). A shared cache is only as available as its backend: a store outage fails closed (refuse), trading availability for the guarantee - the correct trade for an admission gate, named so a deployment chooses it knowingly. Exactly-once remains bounded by the freshness window in either implementation; the window, not the cache, keeps the set finite.
+
+#### Sandbox note (ghost index.lock; VL-069/075 family)
+A stale `.git/index.lock` ghost from a prior session wedged the normal index (`ls` reports it absent, `git` reports "File exists" on lock creation, `rm` returns "Operation not permitted" - protocol section 6 rule 4). Commits were built with plumbing through a tmpfs-local index per the protocol's "Committing around a wedged lock" recipe (read-tree HEAD -> add -> write-tree -> commit-tree chained -p -> update-ref). Files were authored directly from the sandbox (not host-tool-edited then round-tripped) to avoid the VL-075 mount-read-truncation class. The push is the author's (sandbox has no GitHub credentials).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-075 (the clock-skew tolerance window). This entry cites VL-066 (the in-process exactly-once / replay defense this seams), VL-074 (the gap-pinning-contrast test pattern it mirrors), and VL-039 / VL-060 (the seam-then-wire precedent the deferred wiring follows); it does not cite its own (spec + build + STATE + ledger) hash.
+
+#### Next trajectory action
+B4 - real MCP server (locus SANDBOX): stand the gate up as a real MCP server surface (beyond the in-process / TestClient harness), per artifact 13 Phase B. Then B5 (latency budget), then Phase C (C1 deploy packaging, C2 real TLS/cert + trust bootstrap, C3 attack harness + falsifiable claim sheet, C4 real-transport readiness predicate).
