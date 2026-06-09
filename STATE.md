@@ -6,9 +6,9 @@ session, Grok, or any collaborator - should read this file first.**
 **Session start/end:** see `docs/SESSION_PROTOCOL.md` for the resume and close protocols.
 **Governance rules:** see `docs/MAINTENANCE_PROTOCOL.md` for the rules under which the repository is allowed to change (GR-N entries).
 
-Last updated: 2026-06-08 (VL-069 A2 (artifact 13, Phase A): `server.py` retirement - NO ACTION, already done at VL-051. The directive (VL-067) and the prior Next-open-action listed A2 "retire `server.py`" as open, but `IMPLEMENTATION/server.py` was retired by `git rm` at VL-051 (`10e5078`) - before the directive was written - leaving `pep.py` the sole gate. Confirmed against primary sources: absent from HEAD, no importer (grep-clean), `README.md` + artifact-01 tree references already reconciled at VL-051; only residue a gitignored stale `.pyc`. Artifact 13 A2 annotated ALREADY DONE so a future top-down session does not re-attempt it; Next-open-action advanced to A3 (gap-tracker refresh). A prose-drift correction (the A4 class), surfaced and fixed early. No code/canon/test change; suite 218 unchanged. Classification: bookkeeping / hygiene per VL-017a. Does not cite its own hash (VL-012).)
+Last updated: 2026-06-08 (VL-070 directive: the Cowork sandbox mount/git recovery rules are folded into `docs/SESSION_PROTOCOL.md` as a new "Environment / sandbox recovery" section (8 rules), with a pointer from resume step 1. It codifies the recovery used in VL-069's resume - host-vs-sandbox truth, the no-unlink file-delete grant, ghost `index.lock`/ref entries, committing around a wedged lock via a sandbox-local index + git plumbing, the stat-cache `touch`, the no-push-from-sandbox handoff, and restart-to-remount as prevention - so a fresh session boots cleanly without re-deriving them. Tool-specific appendix (native checkouts skip it); the tool-agnostic protocol body is unchanged. Doc-only; no code/canon/test change; suite 218 unchanged. Next open action unchanged (A3 gap-tracker refresh). Classification: governance / methodology per VL-017a. Does not cite its own hash (VL-012).)
 
-PREVIOUS: 2026-06-08 (VL-068 A1 (artifact 13, Phase A): retire the `target.py` stub. The non-verifying downstream stub - superseded by `IMPLEMENTATION/reference_target.py` (VL-061) - is removed (no code importer; grep-clean). `README.md` and `docs/restructure/01_repository_structure.md` tree references updated to show `reference_target.py` + `publisher.py` (the real services) instead, and artifact 01's prose entry marked RETIRED. Suite 218 unchanged (target.py was never imported). First Phase-A clean-base item done. No canon/hashed-file change. Classification: bookkeeping / hygiene per VL-017a. Does not cite its own hash (VL-012).)
+PREVIOUS: 2026-06-08 (VL-069 A2 (artifact 13, Phase A): `server.py` retirement - NO ACTION, already done at VL-051. The directive (VL-067) and the prior Next-open-action listed A2 "retire `server.py`" as open, but `IMPLEMENTATION/server.py` was retired by `git rm` at VL-051 (`10e5078`) - before the directive was written - leaving `pep.py` the sole gate. Confirmed against primary sources: absent from HEAD, no importer (grep-clean), `README.md` + artifact-01 tree references already reconciled at VL-051; only residue a gitignored stale `.pyc`. Artifact 13 A2 annotated ALREADY DONE so a future top-down session does not re-attempt it; Next-open-action advanced to A3 (gap-tracker refresh). A prose-drift correction (the A4 class), surfaced and fixed early. No code/canon/test change; suite 218 unchanged. Classification: bookkeeping / hygiene per VL-017a. Does not cite its own hash (VL-012).)
 
 
 ---
@@ -930,6 +930,7 @@ manifest layer. CCS has drifted - see G0 below.
 - **VL-067 directive: road to external readiness committed (this entry).** `docs/restructure/13_road_to_external_readiness.md` orders all remaining LOCAL work to the external-start line: Phase A clean-base (target.py + server.py retirement, gap-tracker refresh, prose-drift, CI, deposit-readiness audit), Phase B wedge-hardening (record freshness A3b-b, clock-skew, shared-replay-cache seam, real MCP server, latency budget), Phase C external scaffolding (deploy packaging, real TLS/cert + bootstrap, attack harness + claim sheet, real-transport readiness predicate) - each with acceptance criteria + validation locus. Canon-blocked G12/G13 and the section-14 fork explicitly out of scope. Doc-only; suite 218 unchanged. Each item lands as its own VL increment.
 - **VL-068 A1 (artifact 13): `target.py` stub retired (this entry).** The non-verifying downstream stub (superseded by `reference_target.py`, VL-061) is removed; no code importer (grep-clean). `README.md` + artifact-01 tree refs updated to `reference_target.py` + `publisher.py`; artifact-01 entry marked RETIRED. Suite 218 unchanged. First Phase-A item done.
 - **VL-069 A2 (artifact 13): `server.py` retirement was already done at VL-051 - no action (this entry).** The directive (VL-067) and the prior Next-open-action listed A2 "retire `server.py`" as open, but `IMPLEMENTATION/server.py` has been absent since VL-051 (`10e5078`, `git rm`; `pep.py` the sole gate) - retired before the directive named it, carried in error from the stale "server.py retirement" T-bookkeeping note. Confirmed: absent from HEAD, no importer (grep-clean), `README.md` + artifact-01 references already reconciled at VL-051 (only residue a gitignored stale `.pyc`). Artifact 13 A2 annotated ALREADY DONE so a top-down session does not re-attempt it; Next-open-action advanced to A3. Suite 218 unchanged. A prose-drift correction (A4 class), surfaced early.
+- **VL-070 directive: Cowork sandbox recovery folded into `docs/SESSION_PROTOCOL.md` (this entry).** A new "Environment / sandbox recovery" appendix (8 rules) codifies the VL-069 resume recovery so future sessions boot cleanly without re-deriving it: host-vs-sandbox truth, the file-delete grant for the no-unlink mount, ghost `index.lock`/ref handling, plumbing-commit around a wedged lock via a sandbox-local index, the stat-cache `touch`, the no-push-from-sandbox handoff, and restart-to-remount as prevention; a pointer is added to resume step 1. Tool-specific appendix; the protocol body stays tool-agnostic (native checkouts skip it). Doc-only; suite 218 unchanged; Next open action unchanged (A3).
 
 ## What is locked vs. open
 
@@ -1523,20 +1524,4 @@ See `docs/restructure/04_current_vs_claimed.md` for the full list. Summary:
   `manifest_integrity_valid()` fails closed when its passed manifest
   diverges from that source. See
   `docs/restructure/04_current_vs_claimed.md`.
-- **G12** - canon section 11.1 under-specifies wire-origins of
-  `I`'s components. **PARTIALLY ADDRESSED** (VL-016): schema-
-  layer interpretive choices for `C` and `t` made explicit with
-  rationale. Canon-layer half open; resolution would require a
-  canon-version event under GR-1.
-- **G13** - manifest-pinning field provenance is mixed canon +
-  envelope, not pure canon. **PARTIALLY ADDRESSED** (VL-016):
-  schema attribution corrected to make layered provenance
-  explicit. Canon-layer half open; section 11.9 specifies
-  manifest properties but does not specify wire operationalization.
-- **G14** - unknown-key refusal code under-determination inside
-  `interaction`. **RESOLVED** (VL-054, Option A): an unknown
-  non-CCS key directly inside `interaction` is refused with the
-  cause-naming code `REF_SCHEMA_UNKNOWN_KEY`, replacing the
-  provisional `REF_SCHEMA_TYPE_MISMATCH` mapping VL-018 used as
-  the closest extant code. Spec `a2c5d41` adds the "Unknown key
-  inside `interac
+- **G12** - canon section 11.1 u

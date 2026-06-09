@@ -14734,3 +14734,47 @@ retirement of record) and VL-067 (the directive that mislisted A2); it does not 
 #### Next trajectory action
 A3 - refresh the gap tracker (`docs/restructure/04_current_vs_claimed.md`): G4 + G5 / the A3b
 sub-cases to reflect VL-061/063/065/066 (the next Phase-A clean-base item).
+
+### VL-070 - 2026-06-08 - directive: Cowork sandbox recovery folded into SESSION_PROTOCOL.md (a session boots cleanly without re-deriving it)
+**Status:** RECORDED (governance / methodology). Doc-only; no code/canon/test change; suite 218
+unchanged. Referent-bound only in that the rules transcribe the recovery actually used in
+VL-069's resume (this session's record).
+**Author:** Justin LaPorte (direction); Claude (drafting), working session.
+**Classification:** governance / methodology per VL-017a. Tool-specific appendix; the
+tool-agnostic protocol body is unchanged.
+
+#### Why
+VL-069's resume burned real time recovering from a prior session's interrupted git operation: a
+stale `.git/index.lock`, a corrupt index (phantom staged deletions + a mangled rename), the
+mount's no-unlink default, ghost dentry/ref entries, a stat cache that hid host-tool edits, and
+the sandbox's inability to push. The repository is the continuity layer; leaving that recovery
+knowledge in chat means every future session re-derives it. This entry moves it into the protocol
+so the opening directive can stay short.
+
+#### What landed
+- `docs/SESSION_PROTOCOL.md`: a new "## Environment / sandbox recovery (Cowork)" section
+  (8 numbered rules) appended after "## The invariant", plus a one-line pointer added to RESUME
+  PROTOCOL step 1 (rule out a mount/index artifact before assuming real corruption). The eight
+  rules: (1) git from the sandbox shell only; (2) host-vs-sandbox truth + rebuild-index-from-HEAD;
+  (3) file-delete grant for the no-unlink mount + safe lock-debris removal; (4) ghost
+  `index.lock`/ref entries are not to be trusted; (5) commit around a wedged lock via a
+  sandbox-local `GIT_INDEX_FILE` + plumbing (read-tree / add / write-tree / commit-tree /
+  update-ref), incl. the fresh-ref rewrite when `refs/heads/main` wedges; (6) `touch` before
+  `git add` to defeat the stat cache; (7) no push from the sandbox - commit local, hand the push
+  to the author; (8) restart Cowork to re-mount as prevention.
+- The tool-agnostic body (resume / close protocols, the invariant) is unchanged except the
+  step-1 pointer; a native checkout skips the appendix.
+
+#### Verification
+- Doc-only; pytest 218 + 0 xfailed unchanged (no code/test touched).
+- The rules transcribe the VL-069 resume actually performed this session (corrupt-index rebuild
+  from HEAD `d2e80a6`; lock-debris clear after the delete grant; plumbing build+close commits;
+  fresh-ref rewrite when `refs/heads/main` wedged); see the VL-069 entry's resume-protocol note.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-069 (A2 no-action + the resume-recovery note this section
+generalizes). This entry does not cite its own (doc + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: A3 - refresh the gap tracker (`docs/restructure/04_current_vs_claimed.md`): G4 + G5 /
+the A3b sub-cases to reflect VL-061/063/065/066 (the next Phase-A clean-base item).
