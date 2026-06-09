@@ -152,6 +152,16 @@ REF_VERIFY_ROOT_RECORD_STALE = "REF_VERIFY_ROOT_RECORD_STALE"
 REF_VERIFY_ROOT_RETIRED = "REF_VERIFY_ROOT_RETIRED"
 REF_VERIFY_ROOT_REVOKED = "REF_VERIFY_ROOT_REVOKED"
 
+# B-prime-1 signed published-record codes (VL-074, B1; A3b sub-case b). Same
+# canonical home. PUBLISHED_RECORD_INVALID / PUBLISHED_RECORD_STALE are EMITTED
+# by published_record_source.py (the signed published-hashes reader) and imported
+# there from here. Build-then-wire: the byte-anchor reader published_source.py
+# (B-prime-1 original) and the default reassert() / verify_envelope() path are
+# byte-unchanged; record-freshness enforcement (now < not_after + monotonic
+# serial) lives in the new signed reader, mirroring key_record_source.py.
+REF_VERIFY_PUBLISHED_RECORD_INVALID = "REF_VERIFY_PUBLISHED_RECORD_INVALID"
+REF_VERIFY_PUBLISHED_RECORD_STALE = "REF_VERIFY_PUBLISHED_RECORD_STALE"
+
 # Accept reason (not a refusal code).
 ACCEPT_REASSERTED_AND_BOUND = "REASSERTED_AND_BOUND"
 
