@@ -15270,3 +15270,38 @@ Prior substantive entry: VL-080 (the readiness enrollment + artifact-13 repair).
 
 #### Next trajectory action
 Unchanged: Phase C is AUTHOR-locus (C1 deploy packaging, C2 real TLS/cert, C3's live run via HttpSurface over real transport, C4 real-transport readiness predicate). The in-house / sandbox-greenable trajectory work is exhausted; what remains needs real hosts and a real external attacker (the G5 / GR-3 finish line).
+
+
+### VL-081 - 2026-06-09 - C1 (artifact 13, Phase C): deploy packaging (artifacts authored; container stand-up AUTHOR-locus)
+**Status:** RECORDED (artifacts + a partial green referent). Referent-bound: the config bootstrap is validated in-sandbox by an executed round-trip (`TESTS/deploy/test_bootstrap_config.py` 4/4 - signed-with-bootstrap-key envelope honored by verify_envelope against the bootstrap pinned key + the committed record; tampered refused), the full suite is re-run live (286 -> 290, 0 xfailed), and the default path is proven byte-unchanged by `git diff`. The container layer (Dockerfile + compose) is UNVALIDATED (no docker in-sandbox) and earns no referent. No canon / SPEC-of-record(canon) / evaluator / MANIFEST / published_* / IMPLEMENTATION change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** packaging / trajectory move per VL-017a. First Phase-C deliverable; artifacts authored in-house, validated only where the sandbox allows.
+
+#### The locus split (stated honestly)
+Artifact 13 C1 is locus AUTHOR ("docker absent from the sandbox; validated on real hosts"). This increment authors the deployable artifacts in-house but is scrupulous about what it can and cannot validate: the docker image and the compose stand-up are UNVALIDATED drafts (no docker), so they earn no green referent and their stand-up is the "documented stand-up" half of C1's acceptance - the author's. What CAN be validated in-sandbox, and is, is the out-of-band CONFIG bootstrap: that the generated trust material is internally consistent and actually admits+verifies.
+
+#### What landed
+- SPEC `docs/restructure/20_deploy_packaging_spec.md`: the three-service topology, the `ELYON_*` env contract (no code change - the services are the existing apps configured by env), the explicit locus split (container UNVALIDATED / config VALIDATED), the fail-closed posture, and the honest ceiling (plain HTTP is the loopback model, not the G5 floor; real TLS is C2).
+- `deploy/Dockerfile`: one `python:3.13-slim` image (pinned deps; COPY IMPLEMENTATION + the committed record + canon.lock + MANIFEST; trust material NOT baked in), serving any entrypoint by command override. UNVALIDATED (no docker).
+- `deploy/docker-compose.yml`: `publisher` (`IMPLEMENTATION.publisher:app` :9100), `target` (`IMPLEMENTATION.reference_target:app` :9000), `gate` (`IMPLEMENTATION.pep:app` :8000), wired by the `ELYON_*` env contract, secrets from a git-ignored `.env`. Structurally checked (the service commands name real module apps), NOT run.
+- `deploy/bootstrap_config.py` (VALIDATED): generates a gate Ed25519 keypair, computes the pinned-root anchor from the committed record (`anchor_sha256`), and writes `deploy/.env` (git-ignored). `build_config()` is importable so the test round-trips it without writing a file.
+- `deploy/runbook.md`: single-box (compose), two-real-host, and cloud stand-up, plus the C2 real-TLS preview (names the `transport.py` `ELYON_TLS_*` hooks; real certs are C2, not built).
+- TEST `TESTS/deploy/test_bootstrap_config.py` (4): the config is internally consistent (signing id == pinned id; pinned public key corresponds to the signing private key); it round-trips (a bootstrap-signed envelope for the bootstrap target_url is HONORED `REASSERTED_AND_BOUND` against the bootstrap pinned key + the committed record at the bootstrap anchor); a tampered interaction is `REF_VERIFY_BINDING_MISMATCH`; the compose services name real `IMPLEMENTATION.<mod>:app` entrypoints (dependency-free check - no pyyaml in the CI deps, applying the VL-080-follow-up hermeticity lesson).
+- `.gitignore`: `deploy/.env` (the out-of-band trust material is never committed).
+
+#### Build-then-wire / honest scope
+New `deploy/` + `TESTS/deploy/` + spec only; `IMPLEMENTATION/`, canon, MANIFEST, and `published_hashes.json` are byte-unchanged (empty `git diff`), so no `evaluator_sha256` roll. The services are the existing apps configured by environment - no deployment code change. The claim earned: "the deployment config bootstrap round-trips admit->verify in-sandbox, and the packaging artifacts exist," NOT "the gate is deployed" or "the compose stack runs" (UNVALIDATED, no docker) and NOT "over real transport" (plain HTTP; TLS is C2; the G5 floor + a real attacker remain the binding NOT-READY reason).
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): `deploy/bootstrap_config.py` runs and writes a `.env` whose anchor equals `anchor_sha256(published_hashes.json)` and whose public key matches the signing key; `TESTS/deploy/test_bootstrap_config.py` 4/4; full suite `python -m pytest TESTS/` 290 passed + 0 xfailed (was 286).
+- `git diff` over `IMPLEMENTATION/` + canon + MANIFEST + `published_hashes.json` is empty; `deploy/.env` is git-ignored (`git check-ignore` confirms).
+- All new files ASCII-only (VL-006) and LF-only (Lesson 11); the compose structural test is dependency-free (CI has no pyyaml).
+
+#### Honest ceiling
+The container orchestration is UNVALIDATED here (no docker, no real hosts), and over plain HTTP it is the loopback model, not the G5 real-transport floor. Real TLS + certs (C2) and a real external attacker (the binding NOT-READY reason) are not provided. The only sandbox-green referent C1 earns is the config bootstrap's admit->verify round-trip; standing up the stack, layering real TLS, and running the VL-079 attack suite over that real surface (C3 live) are the author's - the gate-1 referent external readiness actually needs.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-080 follow-up (the CI-red hermeticity repair). This entry cites VL-061 (the reference target it packages), VL-063 (the publisher / multi-process transport precedent), and VL-079 (the attack suite that will run against this surface once stood up); it does not cite its own (deploy + spec + STATE + ledger) hash.
+
+#### Next trajectory action
+C2 - real TLS/cert + trust bootstrap (locus AUTHOR for validation; artifacts authorable in-sandbox): cert-generation scripts + an out-of-band anchor/key distribution runbook, layering the `transport.py` `ELYON_TLS_*` hooks onto the C1 compose. Then C3's LIVE run (the VL-079 attack suite over real cross-host TLS via HttpSurface), then C4 (a real-transport readiness predicate in `EVIDENCE/readiness.json`). The container/TLS/attack validation needs real hosts and a real external attacker - the G5 / GR-3 finish line, the author's to arrange.
