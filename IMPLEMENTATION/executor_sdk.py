@@ -1,0 +1,132 @@
+"""
+Executor-side integration SDK (docs/restructure/18_latency_budget_and_sdk_spec.md,
+increment VL-078, artifact 13 Phase B step B5).
+
+Every Elyon-Sol-gated surface - the reference enforcing target (VL-061), the MCP server
+(VL-077), the wedge demo (VL-066) - repeats the same executor sequence by hand: load +
+anchor-verify the published record, call `verify_envelope`, then de-dup `decision_id` against a
+replay cache. This module factors that sequence into one thin component so an integrator wires
+admission in a few lines:
+
+    from IMPLEMENTATION.executor_sdk import ExecutorGate
+
+    gate = ExecutorGate(
+        pinned_public_keys=PINNED_KEYS,                # {key_id: Ed25519PublicKey}
+        target_id=TARGET_ID,                           # the identity envelopes bind to
+        record_bytes=open(RECORD_PATH, "rb").read(),   # the published record
+    )
+
+    decision = gate.check(envelope, interaction)
+    if decision.honored:
+        do_the_side_effect()                           # act
+    else:
+        refuse(decision.reason)                        # REF_VERIFY_* / REF_TARGET_*
+
+No gate logic is re-implemented: `check` composes the production `verify_envelope` (signature ->
+reassert/currency -> binding -> freshness) and the VL-076 `ReplayCache` seam. The SDK never
+performs the side effect; it only decides. Fail-closed (canon section 9): every undecidable path
+returns `honored=False`. No new canonical invariant (canon section 14); the SDK changes WHERE the
+sequence is packaged, not WHAT the gate decides.
+
+Build-then-wire: no caller on the default pep.py path this increment; the existing surfaces keep
+their inline sequences until a later adopt-the-SDK refactor.
+"""
+
+from datetime import datetime, timedelta
+from typing import Any, Dict, NamedTuple, Optional
+
+from IMPLEMENTATION.published_source import anchor_sha256, load_record_from_bytes
+from IMPLEMENTATION.replay_cache import InMemoryReplayCache
+from IMPLEMENTATION.reference_target import REF_TARGET_ANCHOR_MISMATCH
+from IMPLEMENTATION.verifier import verify_envelope, REF_VERIFY_REPLAY
+
+
+class Decision(NamedTuple):
+    honored: bool
+    reason: str
+
+
+def _parse_not_after(envelope: Dict[str, Any]) -> Optional[datetime]:
+    na = envelope.get("not_after")
+    if isinstance(na, str):
+        try:
+            return datetime.fromisoformat(na)
+        except ValueError:
+            return None
+    return None
+
+
+class ExecutorGate:
+    """Holds the executor's trust material and replay cache; decides admission for one
+    interaction at a time. Supply the published record either as a fetched dict
+    (`record_source=`) or as raw bytes (`record_bytes=`, anchored on its own bytes unless a
+    `pinned_root` is given). A `ReplayCache` is created per gate unless one is injected - inject a
+    single shared cache across gates/instances for cross-instance exactly-once (the VL-076 seam)."""
+
+    def __init__(
+        self,
+        *,
+        pinned_public_keys: Dict[str, Any],
+        target_id: str,
+        record_source: Optional[Dict[str, Any]] = None,
+        record_bytes: Optional[bytes] = None,
+        pinned_root: Optional[str] = None,
+        replay_cache=None,
+        clock_skew: timedelta = timedelta(0),
+    ) -> None:
+        if record_source is None and record_bytes is None:
+            raise ValueError("supply record_source (a fetched record) or record_bytes")
+        self.pinned_public_keys = pinned_public_keys
+        self.target_id = target_id
+        self._record_source = record_source
+        self._record_bytes = record_bytes
+        self._pinned_root = (
+            pinned_root
+            if pinned_root is not None or record_bytes is None
+            else anchor_sha256(record_bytes)
+        )
+        self.replay_cache = replay_cache if replay_cache is not None else InMemoryReplayCache()
+        self.clock_skew = clock_skew
+
+    def _record(self) -> Optional[Dict[str, Any]]:
+        if self._record_source is not None:
+            return self._record_source
+        return load_record_from_bytes(self._record_bytes, self._pinned_root)
+
+    def check(
+        self,
+        envelope: Any,
+        interaction: Dict[str, Any],
+        *,
+        now: Optional[datetime] = None,
+    ) -> Decision:
+        """Decide whether to honor `envelope` for `interaction`. Returns Decision(honored,
+        reason). Fail-closed on every undecidable path; the caller performs the side effect only
+        when honored is True."""
+        if not isinstance(envelope, dict):
+            envelope = None  # absent / non-object -> verify_envelope refuses (A1)
+
+        record = self._record()
+        if record is None:
+            return Decision(False, REF_TARGET_ANCHOR_MISMATCH)
+
+        result = verify_envelope(
+            envelope,
+            interaction,
+            self.target_id,
+            record_source=record,
+            pinned_public_keys=self.pinned_public_keys,
+            now=now,
+            clock_skew=self.clock_skew,
+        )
+        if not result["accepted"]:
+            return Decision(False, result["reason"])
+
+        decision_id = envelope.get("decision_id")
+        if decision_id is not None:
+            if not self.replay_cache.check_and_claim(
+                decision_id, _parse_not_after(envelope), now=now
+            ):
+                return Decision(False, REF_VERIFY_REPLAY)
+
+        return Decision(True, result["reason"])

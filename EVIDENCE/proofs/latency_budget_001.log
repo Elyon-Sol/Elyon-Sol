@@ -1,0 +1,12 @@
+================================================================================================
+LATENCY BUDGET: Elyon-Sol per-call cost (VL-078, B5) - INDICATIVE sandbox figures
+================================================================================================
+(milliseconds per call)
+ADMIT    n=2000   p50=  7.834  p95=  8.871  p99=  9.643  mean=  7.878  min=  6.184  max=  17.611  tput=     126.9/s
+VERIFY   n=2000   p50=  0.137  p95=  0.181  p99=  0.290  mean=  0.146  min=  0.128  max=   2.038  tput=    6835.5/s
+------------------------------------------------------------------------------------------------
+VERIFY is the executor's added per-call latency (the integrator-relevant tail).
+Sanity ceiling (loose, not a budget): p50 VERIFY < 50.0 ms -> OK (0.137 ms)
+NOTE: indicative sandbox figures; author re-runs on representative hardware for the budget of record. Network / TLS cost is NOT included (Phase C).
+================================================================================================
+RESULT: MEASURED
