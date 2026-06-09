@@ -44,7 +44,7 @@ Rejected alternative (do not revisit): scanning STATE/ledger prose for readiness
 claims. Rejected for fragility - prose-parsing is non-deterministic and would
 itself become false confidence. Readiness lives ONLY in the structured manifest.
 
-## 4. The three deployment predicates
+## 4. The deployment predicates (three canonical + the REAL_TRANSPORT tier)
 
 1. DEFAULT_SECURE - `pep.py`'s DEFAULT forward (no opt-in flags) emits an envelope
    that carries a valid `issuer_signature` which `verify_envelope` accepts. The
@@ -119,6 +119,20 @@ itself become false confidence. Readiness lives ONLY in the structured manifest.
    rotation + per-root status ONLY; root-key COMPROMISE recovery is irreducibly
    out-of-band (artifact 11 section 2, the named non-goal), and green does NOT
    assert true multi-machine / TLS (the G5 floor; deployment).
+4. REAL_TRANSPORT - the deployment tier added at VL-083 (artifact 13 C4; foreseen
+   as option (b) in 12_g5_transport_design.md). GREEN only when the VL-079 attack
+   suite is DEFEATED over real cross-host TLS by
+   EVIDENCE/proofs/attack_suite_live_runner.py against a real C1/C2 stand-up (the
+   gate-1 referent, external_verification_readiness.md) - NOT the loopback model
+   the other three run on. RED by design today: no real surface exists in-sandbox,
+   and its blocked_by names the runner + the real-host requirement. It is NOT in
+   PREDICATE_NAMES and is therefore NOT counted in the canonical summary (which
+   stays 3-of-3) until the author greens it naming the live run's log - this keeps
+   the three canonical predicates' green count honest while the new tier is still
+   tracked and honesty-checked by validate_manifest like any predicate (a false
+   green requires a named blocked_by, which it carries). Honest bound: even a green
+   REAL_TRANSPORT is the author's OWN scripted attack over real transport; a real
+   EXTERNAL attacker remains the G5 / GR-3 finish line.
 
 ## 5. Allowed vs forbidden states
 
