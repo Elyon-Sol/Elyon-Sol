@@ -14778,3 +14778,63 @@ generalizes). This entry does not cite its own (doc + STATE + ledger) hash.
 #### Next trajectory action
 Unchanged: A3 - refresh the gap tracker (`docs/restructure/04_current_vs_claimed.md`): G4 + G5 /
 the A3b sub-cases to reflect VL-061/063/065/066 (the next Phase-A clean-base item).
+
+### VL-071 - 2026-06-09 - A3 (artifact 13, Phase A): gap-tracker refresh - artifact 04 G4/G5/A3b brought current to VL-061/063/065/066
+**Status:** RECORDED (bookkeeping / hygiene). Referent-bound: the statuses written into the
+gap tracker are transcribed from the primary-source ledger entries VL-061/063/065/066 (read
+from disk, not from prior prose), and "suite 218 unchanged" is verified by running the suite.
+No code / canon / SPEC / evaluator / MANIFEST / published_* / hashed-file / test change.
+**Author:** Claude (working session with the project author).
+**Classification:** bookkeeping / hygiene per VL-017a (the A4 gap-document-maintenance class).
+Third Phase-A item of the artifact-13 directive (A1 done VL-068, A2 no-action VL-069); closes
+A3, advancing Next-open-action to A4 (prose-drift cleanup).
+
+#### The work (artifact 13 A3)
+`docs/restructure/04_current_vs_claimed.md` had been current only through VL-044 for both G4 and
+G5, and carried no A3b-sub-case tracking; four intervening trajectory entries
+(VL-061/063/065/066) were unreflected. Per the directive's acceptance criterion ("statuses match
+the ledger"), the tracker is brought current:
+- **G4** gains a VL-061 / VL-063 increment: the deployable reference enforcing target
+  (`reference_target.py`, VL-061) is a real target-side admission policy that fails closed on A1
+  (`REF_VERIFY_ENVELOPE_ABSENT`), A2 (pinned-key-required signature), A3 binding
+  (`REF_VERIFY_BINDING_MISMATCH`) and config/anchor failure  -  so A1, named in every prior G4
+  increment as closeable ONLY by a target-side policy, is closed for any adopting target (the
+  stub it supersedes was removed at VL-068); VL-063 builds the real-TLS multi-process cross-host
+  transport precondition. Both at single-host fidelity with no external attacker, so G4 does NOT
+  flip to blanket RESOLVED  -  finish line (B) certifies it (GR-3).
+- **G5** gains VL-061 (reference target = finish line A for step 4, over current loopback
+  transport) and VL-063 (multi-process + real-TLS chain, steps 2-3, single-host fidelity)
+  increments; both record G5 still OPEN ((B) needs an external attacker on a real surface).
+- **A3b continuity sub-cases** added as a new tracked block (the temporal half of
+  replay-resistance; A3 same-state binding was closed under G4 at VL-037/038): sub-case (a)
+  decision freshness CLOSED (VL-065, signed `not_after` on the default forward +
+  `REF_VERIFY_SIGNATURE_EXPIRED`); replay/exactly-once CLOSED (VL-066, signed `decision_id` +
+  TTL seen-set + `REF_VERIFY_REPLAY`; wedge property holds in-process end-to-end), honest-open
+  per-instance seen-set -> shared cache named-not-built (Phase-B B3); sub-case (b) record
+  freshness OPEN (the next continuity increment, Phase-B B1: byte-anchor -> signed-record
+  migration).
+
+#### Verification (referent-bound)
+- Each status above was transcribed from the named ledger entry read from disk (VL-061 lines,
+  VL-063 lines, VL-065 lines, VL-066 lines), not from STATE.md summary prose.
+- ASCII-safe (VL-006): no non-ASCII bytes in the edited file.
+- Suite 218 + 0 xfailed, UNCHANGED (doc-only; no code/test touched).
+
+#### Resume / sandbox note (this session)
+A stale `.git/index.lock` (dated the prior session, 2026-06-08) wedged normal `git commit` with
+"File exists"; the mount's no-unlink default plus a ghost dentry (stat reports it present, unlink
+reports it gone even after the file-delete grant) matched SESSION_PROTOCOL rules 3-4. Both the
+build and this close commit were landed around the lock via a sandbox-local `GIT_INDEX_FILE`
+(`/tmp/ix`) + plumbing (read-tree / add / write-tree / commit-tree / update-ref) per rule 5;
+`refs/heads/main` did not wedge. The real `.git/index` was rebuilt from the new HEAD per rule 2.
+The push is the author's (rule 7): this entry leaves HEAD ahead of origin/main by the build +
+close pair until the author pushes from a native terminal.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-070 (sandbox recovery folded into SESSION_PROTOCOL.md). This entry
+cites VL-061/063/065/066 (the entries it transcribes) and VL-068 (the stub removal); it does not
+cite its own (doc + STATE + ledger) hash.
+
+#### Next trajectory action
+A4 - clear the prose-drift: fix STATE.md's stale numbered "Next open action" list and the stale
+"T-bookkeeping (G1/G8/G9/G11/G14 ...)" label (G1/G11/G14 are RESOLVED), per artifact-13 A4.
