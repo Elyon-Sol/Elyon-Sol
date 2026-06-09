@@ -31,6 +31,36 @@
       "wired_to_default": {"value": false, "proof": null, "blocked_by": "consulting the root record / status view is target-side posture; not on pep.py default path"},
       "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py", "blocked_by": null},
       "transported": {"value": true, "proof": "EVIDENCE/proofs/root_recovery_cross_host_001_runner.py", "blocked_by": null}
+    },
+    "published_record_freshness": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_published_record_freshness.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "the byte-anchor reader (published_source.py) is on the default reassert consult path; the signed-record reader (published_record_source.py, VL-074/B1) is built, not wired - the wiring is a later increment (A3b default-path; parity VL-039 seam -> VL-060 wire)"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "not on the default consult path; no end-to-end run consults the signed reader"},
+      "transported": {"value": false, "proof": null, "blocked_by": "G5 real-transport floor not built; not on the cross-host signed chain"}
+    },
+    "clock_skew_tolerance": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_clock_skew_tolerance.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "the clock_skew parameter is present on the live freshness checks but defaults to 0 (byte-identical to strict, VL-075/B2); a non-zero tolerance is a deployment-config choice, not wired as a default"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "default skew=0; no end-to-end run exercises a non-zero window on the default chain"},
+      "transported": {"value": false, "proof": null, "blocked_by": "G5 real-transport floor not built; cross-host skew not exercised over real transport"}
+    },
+    "shared_replay_cache": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_shared_replay_cache.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "reference_target.py keeps its inline per-instance seen-dict; the ReplayCache seam (VL-076/B3) is consumed by the MCP server / executor SDK only as the in-memory per-instance form, not as a shared cross-instance cache on the default path"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "a shared cross-instance store is not stood up; cross-instance exactly-once not exercised end-to-end"},
+      "transported": {"value": false, "proof": null, "blocked_by": "a real shared store (e.g. Redis) is deployment config, not built; G5"}
+    },
+    "mcp_server_surface": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_mcp_server.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "the MCP server (VL-077/B4) is an alternate executor surface; admission stays in pep.py and the default forward path is unchanged"},
+      "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/mcp_server_001_runner.py", "blocked_by": null},
+      "transported": {"value": false, "proof": null, "blocked_by": "stdio is a real transport + process boundary but LOCAL; cross-host TLS (G5 / Phase C) not built"}
+    },
+    "executor_sdk": {
+      "built": {"value": true, "proof": "TESTS/adversarial/test_executor_sdk.py", "blocked_by": null},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "the reference target / MCP server keep their inline executor sequences; the SDK (VL-078/B5) has no default-path caller (adopt-the-SDK is a later refactor). NOTE: the B5 latency budget is tracked by EVIDENCE/proofs/latency_budget_001.log + its runner, not as a wiring flag (it is measurement, not a default-path capability)"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "not on a deployed end-to-end path"},
+      "transported": {"value": false, "proof": null, "blocked_by": "G5 real-transport floor not built"}
     }
   },
   "deployment_predicates": {

@@ -103,4 +103,4 @@ architecture, deferred.
 
 A -> B -> C is the default order (clean base, then harden, then deploy/scaffold). Strict
 prerequisites for an external ATTACK are the Phase-C items plus standing up real hosts;
-Phase B maximizes preparedness but most of it is not a hard bl
+Phase B maximizes preparedness but most of it is not a hard blocker for the attack line itself: the wedge property and the gate's refusals are demonstrated in-process (VL-066), and the Phase-B items harden specific edges (record freshness, clock-skew tolerance, a shared-replay-cache seam, a real MCP server, a latency budget), but none of them gates standing up a real surface to attack. The single load-bearing prerequisite is Phase C plus standing up real hosts (`docs/methodology/external_verification_readiness.md` gate 1). The external attacker on that real surface is the author's to arrange and is the only thing that certifies G5 (GR-3); no in-house item substitutes for it.
