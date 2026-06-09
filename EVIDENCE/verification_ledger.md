@@ -14964,3 +14964,33 @@ Prior substantive entry: VL-073 follow-up 2 (suite de-flake). This entry cites V
 
 #### Next trajectory action
 Unchanged: A6 - deposit-readiness audit (VL-059, reserved; locus SANDBOX). Once the author confirms a green CI run, the G8 CI residual closes.
+
+### VL-073 follow-up 4 - 2026-06-09 - A5: the green CI run recorded; G8 CI-half closed
+**Status:** RECORDED (bookkeeping / referent-recording). Referent-bound: the recorded fact is the author's confirmation that the GitHub Actions run is green at commit `c519f34` - the locus-AUTHOR referent A5's acceptance required. No code / canon / SPEC / evaluator / IMPLEMENTATION / test / MANIFEST / published_* change; the gap tracker and STATE only.
+**Author:** Justin LaPorte (the green CI confirmation); Claude (recording), working session.
+**Classification:** bookkeeping / referent-recording per VL-017a. Fourth and final follow-up to VL-073 (A5); closes A5; Next-open-action unchanged (A6).
+
+#### What this records
+A5 (wire CI) is the one Phase-A item whose locus is AUTHOR: the CI config is the sandbox deliverable, but the referent that certifies it is a green run in the real CI. That run is now in: the author confirmed GitHub Actions is green at `c519f34` (the head after VL-073 follow-up 3). The run executed `python -m pytest TESTS/ -q` (218 passed) and the runner loop over every hermetic `EVIDENCE/proofs/` runner (12 gated, all green on Python 3.13), with two documented skips: `external_interception_webhook_001_runner.py` (non-hermetic, posts to webhook.site) and `g5_multiprocess_tls_001_runner.py` (three long-lived uvicorn+TLS OS-process servers, unreachable over loopback TLS on GitHub hosted runners; verified locally; cross-host coverage retained in CI by g5_cross_host / g5_signed_cross_host / root_recovery_cross_host).
+
+#### The road to green (VL-073 + the four follow-ups), for the record
+- VL-073: CI wired; g4_refused_bypass repaired (missing post-VL-047 signing key) + its stale log regenerated.
+- follow-up 1: g5_multiprocess_tls hardened (150s budget, dead-process detection, per-service stderr captured); CI loop changed to run all runners and report all failures.
+- follow-up 2: test_manifest_mutation_during_concurrent_evaluation de-flaked (threading.Event ordering replacing a time.sleep race that flaked 48/50 under CI scheduling).
+- follow-up 3: g5_multiprocess_tls excluded from the CI gate (hosted-runner networking incompatibility; not a logic bug).
+- follow-up 4 (this): the green run recorded; G8 CI-half closed.
+
+#### What landed
+- `docs/restructure/04_current_vs_claimed.md` G8: a VL-073 note - the CI harness exists and is confirmed green at `c519f34`, meeting the "Add CI" half of G8's Action; the residual narrows to `STATE.md` auto-regenerability. Still NEAR-CLOSED, not RESOLVED (a green CI does not make STATE.md self-regenerating).
+- `STATE.md`: the Known-open-gaps G8 summary mirrored; the "Next open action" A5 line updated from "closes on the author's first green CI run" to "CONFIRMED GREEN at `c519f34`"; Last-updated + a current-state bullet.
+
+#### Verification (referent-bound)
+- The green run is the author's report (the locus-AUTHOR referent; not reproducible in the sandbox, which has only Python 3.10 and cannot run GitHub Actions).
+- In-sandbox cross-check: suite 218 + 0 xfailed; the CI loop with both documented skips runs all 12 gated runners green.
+- No hashed-file or test change, so no evaluator_sha256 roll and no suite-count change.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-073 follow-up 3 (the multiprocess-runner exclusion). This entry records the green run on `c519f34` (the commit it certifies) and does not cite its own (doc + STATE + ledger) hash.
+
+#### Next trajectory action
+A6 - deposit-readiness audit (VL-059, reserved; locus SANDBOX): the GR-3-bound audit of what is deposit-ready vs bounded / named-open, so no overclaim enters any deposit. Then Phase B (B1 record freshness A3b-b, ...). The standing non-blocking item from follow-up 3 - making the multi-process-TLS runner gate in CI (needs a self-hosted / containerized runner) - is carried, not scheduled.
