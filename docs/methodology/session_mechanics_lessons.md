@@ -1046,6 +1046,54 @@ was it written from the Linux side (LF) or the desktop tools (CRLF)? If CRLF,
 normalize to LF before the commit. Before running any git write over the mount,
 ask: can this be run from the native terminal instead? Default to yes.
 
+## Lesson 12: Environment-hermeticity - "passes here" is not "is hermetic"
+
+### Surface events
+
+- VL-080 follow-up: `test_http_surface_drives_real_reference_target` passed locally (the build
+  sandbox, Python 3.10) but FAILED on GitHub Actions (Python 3.13) with `KeyError: 'envelope'`.
+  Root cause: the test drove the gate's ELIGIBLE path, which FORWARDS upstream via `requests.post`
+  before returning the envelope; the target URL (`http://tool-server.test/target`, a reserved
+  `.test` TLD) does not exist. The build sandbox's network let it resolve (the forward
+  "succeeded," the envelope returned, the test passed); the hosted CI runner refused it, so the
+  gate fail-closed and there was no envelope. The test depended on an environment-specific network
+  behavior.
+- VL-081 / VL-082 (the discipline applied proactively after the lesson): the compose structural
+  test was written WITHOUT `pyyaml` (a dependency-free string check), and the TLS cert tooling was
+  written with the `cryptography` library rather than the `openssl` BINARY - because the CI
+  installs only a fixed pip set (`pytest cryptography fastapi httpx requests uvicorn`) and assumes
+  no extra binaries.
+
+### Failure mode
+
+A test or runner depends on something the BUILD SANDBOX happens to provide but the CI environment
+does not: a host that resolves (a reserved-TLD or service-name), a real socket that is reachable,
+a binary on PATH, or a pip package outside the CI install list. The local suite goes green, which
+FEELS like evidence of correctness but is not evidence of HERMETICITY. The divergence surfaces
+only on a different OS / Python / network - i.e. in CI, after a push, as a red build. Closely
+related to Lesson 5 (set-exhaustiveness): "the suite passes" is a membership claim about an
+environment set that was never enumerated.
+
+### Corrective rule
+
+- Any test that drives the gate's ELIGIBLE / forwarding path MUST mock the upstream
+  (`pep.requests.post`, which `pep` and `transport` share) or run against an injected target -
+  never rely on the environment to swallow a real network call.
+- A test or runner may import only the CI dependency set; no `pyyaml`, no `openssl` binary, no
+  ambient tool. Prefer hermetic constructs: `ssl.MemoryBIO` over a real socket; the `cryptography`
+  library over the `openssl` CLI; an injected fake over a live call; a string check over a YAML
+  parser.
+- A runner that genuinely needs a live surface (a real deployment, a webhook, a multi-process TLS
+  stand-up) is EXCLUDED from the CI runner loop with a documented skip, and fails LOUD (a nonzero
+  exit) when unconfigured, so it can never be a silent false-green.
+
+### Self-check
+
+Before committing a test or runner: does it touch the network, a binary, the filesystem outside
+the repo, or a pip package not in the CI list? If yes - is that dependency present in CI, mocked,
+or is the runner CI-excluded? If none of those, it is an environment leak; fix it before the push,
+not after the red.
+
 Changes to this file are recorded in the ledger as
 methodology-artifact updates, classified as efficiency moves rather
 than trajectory moves per VL-017a's distinction.

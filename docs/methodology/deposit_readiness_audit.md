@@ -36,12 +36,16 @@ only if a referent in this repository defends it, and it must be phrased no stro
 than that referent reaches.
 
 Referent classes that COUNT for this audit:
-- the pytest suite (218 passed, 0 xfailed) - confirmed live in-sandbox at HEAD and on
-  the author-confirmed green GitHub Actions run at commit `c519f34` (VL-073 follow-up 4);
-- the 12 hermetic `EVIDENCE/proofs/` runners gated in CI, each exiting 0;
-- the three deployment predicates in `EVIDENCE/readiness.json`
-  (`IMPLEMENTATION/readiness.py` engine; `TESTS/readiness/` gate), each TRUE flag
-  naming a passing proof;
+- the pytest suite (298 passed, 0 xfailed) - confirmed live in-sandbox at HEAD; CI on
+  GitHub Actions stays green per push (originally recorded green at `c519f34`, VL-073;
+  the suite grew 218 -> 298 across Phase B/C, VL-074..VL-083);
+- the hermetic `EVIDENCE/proofs/` runners gated in CI, each exiting 0 (the external-webhook,
+  the multi-process-TLS, and the AUTHOR-executed live-attack runners are documented CI skips,
+  not gated);
+- the deployment predicates in `EVIDENCE/readiness.json`
+  (`IMPLEMENTATION/readiness.py` engine; `TESTS/readiness/` gate): DEFAULT_SECURE /
+  END_TO_END_NO_SHORTCUT / ROOT_RECOVERY green, each TRUE flag naming a passing proof;
+  REAL_TRANSPORT red (the C4 tier, VL-083, awaiting the author's real-transport run);
 - the gap-tracker rows in `docs/restructure/04_current_vs_claimed.md`, which close only
   on a code/test/structure change, never on prose.
 
@@ -201,6 +205,26 @@ future / out-of-scope, but must never be asserted as done.
 
 3. "Non-bypassable" without the routed-and-attested qualifier (see Section A item 5 and
    Section C item 1).
+
+## Phase B/C additions (VL-074..VL-083) - where the new work falls
+
+The Phase-B/C build (the artifact-13 road) added capability and packaging WITHOUT moving the
+external-validation axis; each new item is classified by the same rule:
+- DEPOSIT-READY (with the in-process / local bound): the wedge property holds on a real MCP
+  `tools/call` server over real stdio (VL-077, `mcp_server_001_runner.py`); the executor
+  sequence is packaged as a thin SDK (VL-078); the gate-2 attacks are runnable and defeated
+  in-process (VL-079, `attack_suite_001_runner.py`) with the falsifiable claim sheet committed.
+  Carry the "in-process / single-host / local-stdio" bound; none is a real-transport result.
+- BOUNDED (built, not wired to the default path): the signed published-record freshness reader
+  (VL-074) and the configurable clock-skew window (VL-075, default 0) and the shared-replay-cache
+  seam (VL-076) are CAPABILITIES present and default-off (readiness.json shows them built /
+  unwired with named blockers). A deposit may say "built," not "enforced on the default path."
+- NAMED-OPEN (no referent yet): the deploy packaging (VL-081) and real-TLS tooling (VL-082) are
+  authored but the container/TLS STAND-UP is UNVALIDATED (no docker / real CA in-sandbox); the
+  live attack run + the REAL_TRANSPORT predicate (VL-083) are RED, awaiting the author's real-host
+  run. The latency figure (VL-078) is INDICATIVE (sandbox hardware), not a budget of record.
+The single binding NOT-READY reason is unchanged: the G5 real-transport floor + a real external
+attacker (external_verification_readiness gate 1).
 
 ## Deposit gate (the operational test)
 
