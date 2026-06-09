@@ -15156,3 +15156,35 @@ Prior substantive entry: VL-076 (the shared-replay-cache seam). This entry cites
 
 #### Next trajectory action
 B5 - latency / throughput budget + SDK (locus AUTHOR for the numbers, SANDBOX for the SDK): measure the added p50/p99 verify latency on representative hardware and package the integration as a thin middleware / SDK with a few-line example. Then Phase C (C1 deploy packaging, C2 real TLS/cert + trust bootstrap, C3 attack harness + falsifiable claim sheet, C4 real-transport readiness predicate).
+
+
+### VL-078 - 2026-06-09 - B5 (artifact 13, Phase B FINAL): latency budget + executor SDK
+**Status:** RECORDED (capability / ergonomics + measurement; build-then-wire, unwired). Referent-bound: the acceptance suite is executed (10/10), the latency harness is executed (exit 0, figures captured to a committed log), the full suite is re-run live in-sandbox (274 -> 284, 0 xfailed), and the default path is proven byte-unchanged by `git diff`. No canon / SPEC-of-record(canon) / evaluator / MANIFEST / published_* / pep.py / verifier.py / envelope.py / reference_target.py / mcp_server.py / replay_cache.py change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** capability / trajectory move per VL-017a. Fifth and final Phase-B item (B5); **closes Phase B (harden the wedge), B1-B5.** Advances Next-open-action to Phase C (C1).
+
+#### What this records
+B5 of `docs/restructure/13_road_to_external_readiness.md`: measure the latency the gate adds, and package the executor-side integration as a thin SDK with a few-line example. Acceptance (artifact 13 B5): a recorded latency proof + a few-line integration example.
+
+#### What landed (spec then build, build-then-wire)
+- SPEC `docs/restructure/18_latency_budget_and_sdk_spec.md`: the `ExecutorGate` / `Decision` contract, the few-line integration, the latency-budget method, the build-then-wire boundary, the canon-section-14 (no-new-invariant) basis, and the honest ceiling (sandbox figures indicative; numbers of record are AUTHOR-hardware; network/TLS cost excluded).
+- BUILD: `IMPLEMENTATION/executor_sdk.py` (NEW, no default-path caller): `ExecutorGate` holds the trust material (pinned gate keys, the published record as a fetched dict or raw bytes+anchor, the target identity, a `ReplayCache`, an optional `clock_skew`) and exposes `check(envelope, interaction) -> Decision(honored, reason)`, composing the production `verify_envelope` (signature -> reassert/currency -> binding -> freshness) and the VL-076 replay seam. Fail-closed on every undecidable path (missing/anchor-mismatched record -> `REF_TARGET_ANCHOR_MISMATCH`; verify non-accept -> its `REF_VERIFY_*` surfaced unchanged; replay -> `REF_VERIFY_REPLAY`). No gate logic re-implemented; no new reason code; the SDK never performs the side effect, it only decides. Second consumer pattern for the VL-076 seam (a shared cache injected across gates gives cross-instance exactly-once).
+- TEST `TESTS/adversarial/test_executor_sdk.py` (10): the few-line construction + honor; un-attested / rebound-tool / rebound-args / drifted / stale / replayed refused with the named reason; anchor-mismatch fail-closed; a shared `ReplayCache` across two gates catches a cross-instance replay; the missing-record guard (`ValueError`). Envelopes signed by the autouse `gate_signing` conftest key.
+- PROOF `EVIDENCE/proofs/latency_budget_001_runner.py` (+ committed `latency_budget_001.log`): measures p50/p95/p99/mean (ms) and throughput for the ADMIT (pep sign) and VERIFY (`ExecutorGate.check`) paths over N=2000 warm iterations, with a loose p50-verify<50ms regression sanity bound. Indicative sandbox figures: VERIFY p50 ~0.14 ms / p99 ~0.29 ms / ~6800 calls/s (the executor's added per-call cost). ADMIT is measured through the FastAPI TestClient HTTP boundary and is harness-inflated (~7.9 ms p50), not a pure gate-cost number; the author's representative-hardware re-run is the budget of record.
+
+#### Build-then-wire scope (honest)
+This BUILDS the SDK + harness; it does NOT WIRE the SDK into the reference target / MCP server (those keep their inline executor sequences; adopting the SDK is a later refactor). evaluator.py / pep.py / verifier.py / envelope.py / reference_target.py / mcp_server.py / replay_cache.py / published_hashes.json are byte-unchanged (empty `git diff`), so no `evaluator_sha256` roll. The claim earned: "the executor sequence is packaged as a thin SDK, and the added in-process verify cost is measured (indicative)," NOT "the gate's production latency budget is certified" (that awaits the AUTHOR hardware run) and NOT "network cost is measured" (Phase C).
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): import check passes; `TESTS/adversarial/test_executor_sdk.py` 10/10; the harness exits 0 with figures captured to `EVIDENCE/proofs/latency_budget_001.log`; full suite `python -m pytest TESTS/` 284 passed + 0 xfailed (was 274).
+- `git diff` over the default-path / hashed files is empty.
+- All five new/changed files (4 new + the captured log) ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Honest ceiling
+The figures are in-process verify cost on shared sandbox hardware - indicative, not the budget of record, and not network/TLS cost (Phase C). The SDK packages ergonomics; it changes no decision and moves no axis. Phase B is now fully walked, but the load-bearing external-validation axis remains at zero: the binding NOT-READY reason is unchanged (the G5 real-transport floor + a real external attacker, the author-arranged finish line).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-077 (the real MCP server). This entry cites VL-076 (the replay seam the SDK composes), VL-041/VL-065 (the freshness checks whose cost the verify path includes), and VL-061/VL-077 (the inline-sequence surfaces the SDK factors); it does not cite its own (spec + build + STATE + ledger) hash.
+
+#### Next trajectory action
+Phase C - C1 (deploy packaging; locus AUTHOR): a docker-compose standing the gate / reference target / publisher up as networked services + a two-real-host / cloud runbook. The sandbox has no docker, so C1 is produced in-house but validated on real hosts. Then C2 (real TLS/cert + trust bootstrap), C3 (attack harness + falsifiable claim sheet), C4 (real-transport readiness predicate). Phase C plus standing up real hosts is the strict prerequisite for the external attack line - the finish line that certifies G5 (GR-3), which remains the author's to arrange.
