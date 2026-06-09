@@ -14917,3 +14917,25 @@ Prior substantive entry: VL-073 (CI wired + g4 repair). This entry cites VL-063 
 
 #### Next trajectory action
 Unchanged: A6 - deposit-readiness audit (VL-059, reserved; locus SANDBOX). Once the author confirms a green CI run, the G8 CI residual closes (artifact 04 G8 may then flip from NEAR-CLOSED toward RESOLVED on the CI half, referent = the green run).
+
+### VL-073 follow-up 2 - 2026-06-09 - A5: de-flake test_manifest_mutation_during_concurrent_evaluation (the second CI run's suite-step failure)
+**Status:** RECORDED (test hardening / de-flake). Referent-bound: the failure is an actual CI run's output (`assert 48 == 50`), and the fix is verified by the test passing 60/60 standalone and the full suite 218 passing 8/8 consecutive runs in-sandbox. No canon / SPEC / evaluator / IMPLEMENTATION / MANIFEST / published_* change; one test's thread-synchronisation only, assertions unchanged.
+**Author:** Claude (working session with the project author).
+**Classification:** test hardening per VL-017a. Second follow-up to VL-073 (A5); Next-open-action unchanged (A6).
+
+#### What the second CI run showed
+After VL-073 enabled CI, a run failed in the FIRST step (`python -m pytest TESTS/ -q`): `test_manifest_mutation_during_concurrent_evaluation` raised `assert 48 == 50`. The test submits 50 authorized tasks (each deep-copies `MUTABLE_MANIFEST` then evaluates) plus one mutation task that slept 0.001s and shrank `MUTABLE_MANIFEST["AR"]`; it asserted all 50 snapshot pre-mutation and evaluate ELIGIBLE. Under the CI runner's thread scheduling, 2 of the 50 deep-copied AFTER the mutation, so their snapshot diverged from the on-disk manifest and the VL-053 divergence guard correctly fail-closed them to REFUSE -> 48 ELIGIBLE / 2 REFUSE. That 48/2 split is CORRECT system behaviour; the assertion `eligible==50` encoded a timing assumption (the test docstring already flagged it "a VL-053 finding"). The first CI run had passed this test by winning the race; this run lost it. A genuine pre-existing flaky test, surfaced by CI - independent of the VL-073-follow-up multiprocess-runner fix.
+
+#### What landed
+`TESTS/test_concurrency.py`: the `time.sleep(0.001)` race is replaced by a `threading.Event`. Each authorized task increments a counter under a lock and sets the event once all 50 have taken their pre-mutation snapshot; `mutate_manifest_during_execution` waits on the event (30s timeout safety net) before mutating. The intended property - every pre-mutation snapshot evaluates ELIGIBLE under concurrency - now holds deterministically, and the assertions are unchanged (`eligible==50`, `refuse==0`, `len==50`). No deadlock: the mutation task occupies at most one of the 20 pool workers and the authorized tasks never block, so the 50 snapshots always complete and set the event. The guard's REFUSE-on-post-mutation-snapshot path (the counterfactual the old test relied on timing to avoid) is covered for real by `test_manifest_integrity_rejects_divergent_manifest` (VL-053), so no coverage is lost.
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): the test passes 60/60 standalone (was intermittently 48/50 under load); the full suite passes 218 + 0 xfailed on 8/8 consecutive runs.
+- Suite size unchanged at 218 (one test's body edited; none added/removed).
+- The 3.13 CI run is the author's referent; this removes the only suite-step flake the runs surfaced.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-073 follow-up (multiprocess-runner hardening + CI report-all). This entry cites VL-053 (the divergence guard whose correct firing the old assertion mistook for a failure); it does not cite its own (test + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: A6 - deposit-readiness audit (VL-059, reserved; locus SANDBOX). With the multiprocess-runner timing (follow-up) and this suite flake (follow-up 2) both addressed, the next CI run is expected green; the author's green run is what closes the G8 CI residual.
