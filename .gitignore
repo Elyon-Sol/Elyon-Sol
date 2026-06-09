@@ -242,3 +242,4 @@ __marimo__/
 # VL-042: shortform scratch + key-record root-duplicate guards (earned VL-037/VL-041)
 /vl*_msg.txt
 /published_keys*.json
+deploy/.env
