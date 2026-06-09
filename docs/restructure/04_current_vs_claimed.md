@@ -161,6 +161,16 @@ tests, or structure change such that the delta no longer exists  -  never by edi
   and siblings), each exiting 0, superseding the narrated prose proofs (VL-050 finding 4).
   Residual: no CI harness and `STATE.md` is not auto-regenerable. Not a RESOLVED flip;
   status recorded, no proof rewrite.
+- **VL-073 (CI half closed):** the CI harness now exists. `.github/workflows/ci.yml`
+  (GitHub Actions) runs the full pytest suite + every hermetic `EVIDENCE/proofs/` runner on
+  push and pull_request and fails the build on any non-zero exit. Confirmed GREEN on GitHub
+  Actions at commit `c519f34` (VL-073 build + follow-ups 1-3: the g4 signing-key repair, the
+  multiprocess-runner hardening, a concurrent-test de-flake, and the documented exclusion of
+  the two CI-incompatible runners - external webhook (non-hermetic) and multi-process-TLS
+  (hosted-runner networking); the cross-host evidence class stays CI-gated by g5_cross_host /
+  g5_signed_cross_host / root_recovery_cross_host). The Action's "Add CI" half is met; the
+  residual narrows to the one remaining item, `STATE.md` auto-regenerability. Still
+  NEAR-CLOSED, not RESOLVED.
 
 ### G9  -  `stability_proof_001.md` is truncated
 - **Claimed:** Sets up a 50-iteration stability test, ends mid-JSON with no results.
