@@ -14994,3 +14994,38 @@ Prior substantive entry: VL-073 follow-up 3 (the multiprocess-runner exclusion).
 
 #### Next trajectory action
 A6 - deposit-readiness audit (VL-059, reserved; locus SANDBOX): the GR-3-bound audit of what is deposit-ready vs bounded / named-open, so no overclaim enters any deposit. Then Phase B (B1 record freshness A3b-b, ...). The standing non-blocking item from follow-up 3 - making the multi-process-TLS runner gate in CI (needs a self-hosted / containerized runner) - is carried, not scheduled.
+
+### VL-059 - 2026-06-09 - A6 (artifact 13, Phase A): deposit-readiness audit recorded; the long-reserved VL-059 slot resolved
+**Status:** RECORDED (analysis / Phase-A close). Referent-bound: the suite is re-run live in-sandbox at HEAD (218 passed, 0 xfailed) and matches the author-confirmed green CI run at `c519f34`; no claim in the audit moves on anything but a named referent (suite, hermetic runners, readiness predicates, gap-tracker rows). No code / canon / SPEC / evaluator / IMPLEMENTATION / MANIFEST / published_* / readiness / test change; one new analysis document only.
+**Author:** Claude (working session with the project author).
+**Classification:** analysis / trajectory move per VL-017a (the A6 item the artifact-13 directive names; closes Phase A "clean the base").
+
+#### What this records
+A6 of `docs/restructure/13_road_to_external_readiness.md` (Phase A): the GR-3-bound audit of what is deposit-ready vs bounded / named-open. Acceptance criterion (artifact 13 A6): "a recorded audit; no overclaim enters any deposit." Locus SANDBOX (analysis). New file `docs/methodology/deposit_readiness_audit.md`, the deposit-side companion to `docs/methodology/external_verification_readiness.md`. "Deposit" = a public archival (Zenodo) deposit, where a caveat that protects a claim inside the repo does not travel with the words once published - so the deposit is exactly where an overclaim does the most damage.
+
+#### Method (GR-3-bound)
+A sentence is deposit-ready only if a referent in this repository defends it AND it is phrased no stronger than that referent reaches. Referent classes that COUNT: the pytest suite (218/0, live + CI-green c519f34); the 12 hermetic `EVIDENCE/proofs/` runners gated in CI; the 3 `EVIDENCE/readiness.json` deployment predicates (each TRUE flag naming a passing proof); the gap-tracker rows in artifact 04 (which close only on code/test/structure change). Referent classes that DO NOT count and may never carry a deposit claim: any cross-model "evaluate" verdict (SOUND / convergent / N-0, demoted at VL-057); any model-sourced cost/value estimate; document polish itself.
+
+#### The four sections
+- Section A - deposit-ready: the core gate behavior (det. fail-closed admission; AC^3 / T^26 / manifest-integrity canon-derived-tested; envelope-layer CCS); signed-envelope emission + target verification (DEFAULT_SECURE green); defensible non-bypass for routed-and-attested traffic (g4 runner); expiry / revocation / planned root rotation (exercised cross-host); decision freshness + in-window exactly-once (wedge runner); CI green; hash-anchored re-derivability. Each tied to its named referent.
+- Section B - bounded (admissible only WITH the bound): "forgery-resistant" (signed path only; the bare adjective stays OUT of any deposit per artifact 04/05/09); the single root/publisher trust floor (compromise is total, out-of-band); "cross-host" = single-host real-TLS between OS processes (VL-063), not multi-machine; exactly-once = per-instance/in-process; "externally verified" only as "observable at the PEP / re-derivable from the committed record."
+- Section C - named-open (NO referent; may be described as open, never as done): A1 declining-caller (closeable only by target-side policy); the G5 real-transport floor + external attacker (the binding NOT-READY reason); A3b record freshness (Phase-B B1); G12/G13 canon-layer halves (GR-1 canon-version event); the G8 STATE.md auto-regen residual + the two documented CI skips; the rebuild-cost ratio (no referent; model estimate non-evidential per GR-3).
+- Section D - forbidden framings: cross-model convergence verdicts (VL-057-demoted, non-evidential, and not shown to a blind reviewer); "the whole canon is realized" (the section 4/15 failure constructs are deliberately not in the admission path - use the artifact-06 FULL/PARTIAL/UNIMPLEMENTED picture); "non-bypassable" without the routed-and-attested qualifier.
+The file closes with an operational deposit gate (the three admissibility conditions) and an honest-ceiling note.
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): `python -m pytest TESTS/` -> 218 passed, 0 xfailed at HEAD; matches the author-confirmed green CI run at `c519f34` (VL-073 follow-up 4).
+- `EVIDENCE/readiness.json` read directly: DEFAULT_SECURE / END_TO_END_NO_SHORTCUT / ROOT_RECOVERY all green, each with its scope caveat carried verbatim into Section B/C.
+- The new file is ASCII-only (VL-006 standard) and LF-only; it is analysis (no hashed-file edit), so no `evaluator_sha256` roll and no suite-count change.
+
+#### Honest ceiling
+This audit constrains what may COUNT as deposit-ready; it produces no new referent. The single fact that most limits the deposit surface is unchanged: the G5 real-transport floor and the absence of an external attacker keep the project NOT READY for a real-transport / production claim (external_verification_readiness.md). A deposit made today can honestly publish the in-process / single-host-TLS gate, its canon derivation, its hash-anchored evidence, and its named-open edges - but not an externally-attacked production claim. That claim awaits the referent, not better wording.
+
+#### Numbering note (Order-B reserved slot)
+This entry carries the reserved number VL-059, not the next-integer VL-074. VL-059 was never a written entry - it was a pure reservation marker created at VL-058 (where VL-058's bullet records "the reserved deposit-readiness audit renumbers VL-058 -> VL-059"), and every prior "VL-059, reserved" pointer (in STATE, artifact 13, and the VL-058..VL-073 ledger tail) is a forward reference to exactly this audit. Honoring the reservation resolves all of those pointers with no edit elsewhere and orphans nothing; the entry simply appends at the chronological tail (after VL-073 follow-up 4) while carrying its long-reserved number. This is the cross-session analog of the VL-026 Order-B reserved-slot handling.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-073 follow-up 4 (the green CI run recorded). This entry cites VL-057 (GR-3, the governing rule), VL-058 (the reservation of this slot), and `docs/methodology/external_verification_readiness.md` (the human-verification companion); it does not cite its own (doc + STATE + ledger) hash.
+
+#### Next trajectory action
+B1 - record freshness (A3b sub-case b; locus SANDBOX): migrate the published-hashes record from the byte-anchor model (B-prime-1) to a signed-record model mirroring `key_record_source.py` (publisher signature + `not_after` + monotonic serial; reader enforces `REF_VERIFY_*_STALE`). Then Phase B continues (B2 clock-skew tolerance, B3 shared-replay-cache seam, B4 real MCP server, B5 latency budget), then Phase C.
