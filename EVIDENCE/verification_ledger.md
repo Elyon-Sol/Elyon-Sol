@@ -15371,3 +15371,28 @@ Prior substantive entry: VL-082 (C2 real TLS + trust bootstrap). This entry cite
 
 #### Next trajectory action
 AUTHOR execution on real hardware - no further in-house authoring remains: (1) stand up C1 + C2 on two real hosts / cloud (real or dev CA); (2) run `EVIDENCE/proofs/attack_suite_live_runner.py` over that real TLS surface (set the ELYON_LIVE_* env); (3) on a green run, flip the `REAL_TRANSPORT` predicate to green naming the run log (C4 met); (4) arrange a real EXTERNAL attacker on the surface - the only thing that certifies G5 (GR-3). Until step 4 lands, the project stays NOT READY for an external-validation / production claim, by its own referent discipline; what changes that is the referent, not more code.
+
+
+### VL-084 - 2026-06-09 - prose-drift reconciliation: the narrative docs brought current to the Phase-B/C build (VL-074..VL-083)
+**Status:** RECORDED (process / bookkeeping; NO trajectory or capability advance). Referent-bound: every count restated is re-derived live (suite 298/0; 18 runner files, 3 CI-skipped, 15 gated; 4 predicates, 3 green + REAL_TRANSPORT red), and the full suite is unchanged (298 passed, 0 xfailed). No code / canon / SPEC / evaluator / IMPLEMENTATION / test change; no `evaluator_sha256` roll. Four documentation files only.
+**Author:** Claude (working session with the project author).
+**Classification:** process / prose-drift reconciliation per VL-017a (kin to VL-045 / VL-050 / VL-072); not a trajectory move. Clears the documentation drift the rapid Phase-B/C build left behind, before any external reviewer reads the repo (external_verification_readiness gate 4).
+
+#### Why this was owed
+The artifact-13 build (B1 through C4 scaffolding, VL-074..VL-083) advanced capability + packaging faster than the narrative docs were updated. Three of those docs had drifted to stale referent counts or pending-status prose, and two STATE prose artifacts of the C1/C2 edits were left in place. Stale referent counts in the deposit-readiness audit are exactly what undermines a blind reviewer's read (gate 4), so the reconciliation matters specifically for external validation.
+
+#### What landed (four docs; no code)
+- `docs/methodology/deposit_readiness_audit.md`: the COUNT-of-record fixes - pytest suite `218 -> 298, 0 xfailed`; "the 12 hermetic runners gated in CI" -> "the hermetic runners gated in CI, with the external-webhook / multi-process-TLS / AUTHOR-live-attack runners as documented skips"; "the three deployment predicates ... each TRUE flag naming a proof" -> the three green predicates named + "REAL_TRANSPORT red (the C4 tier, VL-083)". Added a "Phase B/C additions (VL-074..VL-083)" section classifying the new work (deposit-ready-with-in-process-bound: B4/B5/C3-in-process; bounded-built-not-wired: B1/B2/B3; named-open: C1/C2 stand-up, C3-live, C4, the indicative latency).
+- `docs/restructure/04_current_vs_claimed.md`: the A3b sub-cases brought current - sub-case (a) "shared cache named-not-built (B3)" -> "SEAM BUILT (VL-076), unwired, consumed in-memory by VL-077/078"; sub-case (b) "record freshness: OPEN" -> "READER BUILT (VL-074), default-path WIRING OPEN" + B2 skew built. Added a "Phase B/C build (VL-074..VL-083)" continuity block under G5 enumerating B1-B5 / C1-C4 and stating G5 NOT CLOSED (needs the author's real-host run + a real external attacker, GR-3).
+- `docs/methodology/session_mechanics_lessons.md`: Lesson 12 (environment-hermeticity - "passes here is not is hermetic") promoting the VL-080-follow-up finding (a non-hermetic test that depended on the sandbox network resolving a reserved-TLD host, green local / red CI) plus the proactive CI-dependency-set discipline applied at VL-081/082 (no pyyaml, no openssl binary, mock the gate forward, CI-exclude live runners).
+- `STATE.md`: the Next-open-action duplicated "C2 (real TLS/cert + trust bootstrap)," (an artifact of the sequential VL-081 then VL-082 string edits) removed, and the trailing sentence that re-listed C1-C4 as pending ("the in-house ... trajectory work is now exhausted ... (C1 ..., C2 ..., C3 ..., C4 ...). Each item lands as its own VL increment") removed as contradictory with the now-complete status; the "Known items open but not scheduled" header de-staled (it still said "do not block the G0 build track," long done) with a pointer to Lessons 1-12; the VL-017b verbosity-as-deflection item pruned (closed - it is now Lesson 1).
+
+#### Verification (referent-bound)
+- Counts re-derived live: `python -m pytest TESTS/` 298 passed + 0 xfailed; `ls EVIDENCE/proofs/*_runner.py` = 18, minus 3 CI-skips = 15 gated; `readiness.json` predicates = 4 (3 green, REAL_TRANSPORT red); `validate_manifest` 0 errors, `TESTS/readiness/` 6/6.
+- All four edited files ASCII-only (VL-006) and LF-only (Lesson 11); each edit applied with a uniqueness check (apply-script discipline). No code/canon/test change, so the suite is unchanged.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-083 (C3-live + C4 staging). This entry cites VL-074..VL-083 (the build it reconciles the docs to), VL-072 / VL-050 / VL-045 (the prose-drift-reconciliation precedents), and VL-080 follow-up (the source of Lesson 12); it does not cite its own (4-doc + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: no in-house authoring remains. The author's execution on real hardware - stand up C1+C2, run `attack_suite_live_runner.py` over real TLS, flip REAL_TRANSPORT green (C4), face a real external attacker (G5/GR-3). Until then the project stays NOT READY for an external-validation / production claim, by its own referent discipline - now with the narrative docs matching the repo that exists.
