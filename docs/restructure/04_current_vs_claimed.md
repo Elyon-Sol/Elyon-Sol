@@ -72,6 +72,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Action:** Rewrite both against the nested schema or move to `EVIDENCE/archive/` marked
   NON-CURRENT. `SPEC/request_schema.md` becomes the single source of truth. Per G10, the
   schema must also document the `version` field's caller-assertion semantics.
+- **Status: RESOLVED** (VL-014 + VL-015 + VL-016 schema track + VL-017 failing schema-shape tests + VL-018 `IMPLEMENTATION/request_validator.py` + VL-019 PEP wiring). `SPEC/request_schema.md` is the single source of truth and the validator is wired into `pep.py` (the interception proofs were archived NON-CURRENT). The G12/G13 canon-layer halves remain OPEN (see below). STATE.md and the priority order agree.
 
 ### G3  -  Framing vs. mechanism  *(re-grounded against canon)*
 - **Canon:** The whitepaper is a legitimate formal specification  -  formal interaction model,
@@ -345,7 +346,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 1. **G0**  -  the anchor. **RESOLVED** (VL-012 rename half + VL-029 build half). The substantive finding is now closed.
 2. **G7**  -  without canon-derived tests, the next G0 is invisible. **RESOLVED** (VL-028 closed envelope domain; VL-034 closed evaluator domain).
 3. **G0 rename + G6 + G10**  -  RESOLVED (VL-012). See Resolved gaps.
-4. **G2 + G12 + G13**  -  schema-layer work. PARTIALLY closed (VL-014 + VL-015 + VL-016: schema drafted, cross-model-verified, corrected). Full G2 closure pairs with proposed VL-017 (failing schema-shape tests), VL-018 (validator), VL-019 (PEP wiring). G12 and G13 canon-layer halves remain open pending canon-version event under GR-1.
+4. **G2**  -  request schema drift. **RESOLVED** (VL-014 + VL-015 + VL-016 schema track + VL-017 failing tests + VL-018 validator + VL-019 PEP wiring; `SPEC/request_schema.md` is the single source of truth, `IMPLEMENTATION/request_validator.py` wired into `pep.py`). **G12 + G13** (canon-layer halves)  -  OPEN, pending a canon-version event under GR-1.
 5. **G3**  -  reframe public materials once 06 makes the FULL/PARTIAL/DRIFTED picture concrete. **RESOLVED at VL-030** (README rewrite + Zenodo Revision 2).
 6. **G1**  -  RESOLVED (VL-052; README count-discipline on disk). **G8, G9**  -  NEAR-CLOSED (VL-052 status notes: executable runners supersede narration; the stability proof is archived non-current). **G11**  -  bookkeeping; owes its own spec-then-build increment. (G11 added VL-012; G2 removed from bookkeeping by VL-016 since it now has its own active track at item 4.)
 7. **G4, G5**  -  build-outward scope, after the base is honest.

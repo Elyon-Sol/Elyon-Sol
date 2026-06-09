@@ -321,4 +321,4 @@ the named commit, superseding Revision 2's snapshot (`89ff2f9`, 2026-05-25).
 |---|---|
 | Canonical model | v0.9.8.4 (locked) |
 | Implementation snapshot commit | `c756f8fb773dcc9f64f1e99c0c7d8bc815ae2920` |
-| Supersede
+| Supersedes | Revision 2 (DOI `10.5281/zenodo.20387278`, snapshot `89ff2f9`, published 2026-05-25) |

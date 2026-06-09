@@ -65,7 +65,7 @@ Each of these may enter a deposit AS STATED, because a named referent carries it
    returns ELIGIBLE only if the authority set and operation set each satisfy the
    manifest's required sets and the manifest hash and version match, else REFUSE; on
    REFUSE or any exception the target is not called."
-   Referent: the pytest suite (218/0), specifically `TESTS/test_pep.py` and the
+   Referent: the pytest suite (298/0), specifically `TESTS/test_pep.py` and the
    canon-derived `TESTS/adversarial/test_evaluator_canonical.py` (AC^3, T^26,
    manifest-integrity).
 

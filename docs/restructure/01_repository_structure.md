@@ -1,6 +1,7 @@
 # Elyon-Sol - Repository Structure: Proposed vs. Actual
 
 **Status:** Revised. Reconciled against HEAD = 2db1807 (after VL-010).
+**STALE NOTICE (added VL-084 follow-up):** this artifact's tree was last reconciled to HEAD `2db1807` (after VL-010) and does NOT reflect the Phase A/B/C build (VL-011..VL-084). Components added since and NOT listed below include `IMPLEMENTATION/{reference_target,publisher,transport,verifier,key_record_source,root_record_source,published_source,published_record_source,replay_cache,mcp_server,executor_sdk,readiness}.py`, the `deploy/` tree (Dockerfile + compose + TLS overlay + cert tooling), `docs/restructure/12_*..22_*`, and many `EVIDENCE/proofs/*_runner.py`. For the CURRENT committed tree use `git ls-files`; for current status use `STATE.md` + `EVIDENCE/verification_ledger.md`. A full artifact-01 re-reconciliation is a standing (non-blocking) bookkeeping item.
 **Supersedes:** the greenfield proposal previously occupying this file
 (see "Original proposal" below, retained for record).
 **Note on HEAD:** the tree below reflects the state as of commit 2db1807,
