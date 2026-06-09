@@ -73,7 +73,18 @@ def _reference_target_client(gate_signing):
     return TestClient(app)
 
 
-def test_http_surface_drives_real_reference_target(gate_signing):
+def test_http_surface_drives_real_reference_target(gate_signing, monkeypatch):
+    # The gate forwards upstream via requests.post on ELIGIBLE; in this test the
+    # target is a TestClient (not reachable over real HTTP at HTTP_TARGET_URL), so
+    # neutralize the forward to keep the test hermetic. pep and transport share the
+    # one requests module object, so patching requests.post here covers both. The
+    # attack harness presents the returned envelope to target_client directly.
+    class _R:
+        status_code = 200
+        text = "{}"
+
+    monkeypatch.setattr(pep.requests, "post",
+                        lambda *a, **k: _R())
     surface = HttpSurface(
         gate_client=TestClient(pep.app),
         target_client=_reference_target_client(gate_signing),
