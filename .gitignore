@@ -243,3 +243,4 @@ __marimo__/
 /vl*_msg.txt
 /published_keys*.json
 deploy/.env
+deploy/tls/certs/

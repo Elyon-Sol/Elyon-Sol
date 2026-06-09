@@ -1,0 +1,36 @@
+# TLS overlay for the Elyon-Sol deploy (C2 / VL-082). Use WITH the base compose:
+#   cd deploy
+#   python bootstrap_config.py            # .env (gate key + anchor)
+#   python tls/gen_certs.py               # tls/certs/ (CA + service certs)
+#   docker compose -f docker-compose.yml -f docker-compose.tls.yml up --build
+#
+# Each service now serves under TLS (uvicorn --ssl-*) and the gate/target clients
+# verify their peers via the transport.py ELYON_TLS_CA_BUNDLE hook. UNVALIDATED in
+# the build sandbox (no docker); the cert MATERIAL is validated by
+# TESTS/deploy/test_tls_certs.py. Real cross-host TLS + a real CA are the author's.
+services:
+  publisher:
+    command: ["uvicorn", "IMPLEMENTATION.publisher:app", "--host", "0.0.0.0", "--port", "9100",
+              "--ssl-certfile", "/certs/publisher.crt", "--ssl-keyfile", "/certs/publisher.key"]
+    volumes:
+      - ./tls/certs:/certs:ro
+
+  target:
+    command: ["uvicorn", "IMPLEMENTATION.reference_target:app", "--host", "0.0.0.0", "--port", "9000",
+              "--ssl-certfile", "/certs/target.crt", "--ssl-keyfile", "/certs/target.key"]
+    environment:
+      # https now; the target's record fetch trusts the publisher via the CA bundle.
+      ELYON_TARGET_URL: https://target:9000/target
+      ELYON_PUBLISHER_URL: https://publisher:9100/published_hashes.json
+      ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+    volumes:
+      - ./tls/certs:/certs:ro
+
+  gate:
+    command: ["uvicorn", "IMPLEMENTATION.pep:app", "--host", "0.0.0.0", "--port", "8000",
+              "--ssl-certfile", "/certs/gate.crt", "--ssl-keyfile", "/certs/gate.key"]
+    environment:
+      # The gate's ELIGIBLE forward to the target trusts the target via the CA bundle.
+      ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+    volumes:
+      - ./tls/certs:/certs:ro
