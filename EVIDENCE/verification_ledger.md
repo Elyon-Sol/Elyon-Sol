@@ -15029,3 +15029,33 @@ Prior substantive entry: VL-073 follow-up 4 (the green CI run recorded). This en
 
 #### Next trajectory action
 B1 - record freshness (A3b sub-case b; locus SANDBOX): migrate the published-hashes record from the byte-anchor model (B-prime-1) to a signed-record model mirroring `key_record_source.py` (publisher signature + `not_after` + monotonic serial; reader enforces `REF_VERIFY_*_STALE`). Then Phase B continues (B2 clock-skew tolerance, B3 shared-replay-cache seam, B4 real MCP server, B5 latency budget), then Phase C.
+
+### VL-074 - 2026-06-09 - B1 (artifact 13, Phase B): record freshness - the signed published-record reader (A3b sub-case b)
+**Status:** RECORDED (capability / build-then-wire). Referent-bound: the acceptance test is an executed referent (10/10), the full suite is re-run live in-sandbox (218 -> 228, 0 xfailed), and the byte-anchor default is proven byte-unchanged by a no-op git diff. No canon / SPEC-of-record(canon) / evaluator / MANIFEST / published_hashes.json / readiness change; no `evaluator_sha256` roll (no hashed-file edit).
+**Author:** Claude (working session with the project author).
+**Classification:** capability / trajectory move per VL-017a. First Phase-B item (B1) of the artifact-13 directive; advances Next-open-action to B2.
+
+#### The gap closed (in the reader)
+A3b sub-case (b) - record freshness (artifact 04 G5 / A3b): the byte-anchor published record (`IMPLEMENTATION/published_source.py`) has no temporal dimension, so a stale-but-anchor-matching record is honored arbitrarily later (`reassert(record_source=...)` checks the record's hashes, not its liveness). Sub-case (a) decision freshness closed at VL-065 and in-window exactly-once at VL-066; this is the record-freshness half.
+
+#### What landed (spec then build, build-then-wire)
+- SPEC `docs/restructure/14_published_record_freshness_spec.md`: the signed published-record format (publisher signature under a stable pinned publisher key + monotonic `serial` + `not_after`, wrapping the three live currency pins), the reader's fail-closed order, the two reject codes, the build-then-wire boundary, the canon-section-14 (no-new-invariant) basis, and the honest ceiling (clock-skew unmodeled; unwired on the default path). Sibling to `09_key_record_spec.md` (B-prime-2) and `11` (B-prime-3).
+- BUILD: `IMPLEMENTATION/verifier.py` gains `REF_VERIFY_PUBLISHED_RECORD_INVALID` / `REF_VERIFY_PUBLISHED_RECORD_STALE` (constants only, mirroring the KEY_RECORD / ROOT_RECORD blocks; the canonical REF_VERIFY home). `IMPLEMENTATION/published_record_source.py` (NEW, sibling of `key_record_source.py`): `load_signed_record_from_bytes` (parse + structure -> select pinned publisher key -> verify publisher signature -> freshness `now < not_after` strict + monotonic serial -> return the validated record) and `fetch_signed_record` (loopback transport, fail-closed to INVALID). Returns `{"record": <dict>, "reason": None|<code>}`; the validated record carries the three currency pins so it is a drop-in `record_source` for `reassert()` once wired. `EVIDENCE/published_hashes_signed_gen.py` (NEW, parallel to `published_keys_gen.py`): signs the LIVE `published_hashes_gen.build_record` pins (constraint i) under a duck-typed publisher key; the signed record is a RUNTIME artifact, never committed; the private key is never persisted.
+- TEST `TESTS/adversarial/test_published_record_freshness.py` (10): the acceptance flip (`test_stale_record_is_refused`: a past `not_after` -> `REF_VERIFY_PUBLISHED_RECORD_STALE`), strict-boundary, serial-rollback STALE, serial-advance accepted, unknown-key / tampered-pin / wrong-format / empty-bytes INVALID, fresh-record accepted carrying the pins, and `test_byte_anchor_model_has_no_freshness` (the contrast that pins the gap: the byte-anchor reader honors the record with no temporal field to fail on).
+
+#### Build-then-wire scope (honest)
+This increment BUILDS the signed reader + signer; it does NOT WIRE them. `published_source.py`, the committed `EVIDENCE/published_hashes.json`, `reassert()` / `verify_envelope()`, `reference_target.py`, and `pep.py` are byte-unchanged (verified by no-op git diff), so the g4/g5 runners and pinned-anchor tests are unaffected. The capability is present and unwired; making a target consult `fetch_signed_record` and fail on STALE on the live chain is a later increment with its own VL (parity with the VL-039 transport seam wired at VL-060). The claim earned: "a stale signed published record is refused by the new reader," NOT "the gate refuses stale records end-to-end."
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): import check `python -c "import EVIDENCE.published_hashes_signed_gen, IMPLEMENTATION.published_record_source"` passes (VL-027 unseen-import discipline); the new test 10/10; full suite `python -m pytest TESTS/` 228 passed + 0 xfailed (was 218).
+- `git diff --stat EVIDENCE/published_hashes.json IMPLEMENTATION/published_source.py` empty (byte-anchor default intact).
+- All five touched files ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Honest ceiling
+Freshness bounds how LONG a captured record is usable; it does not make cross-host currency trustless - the pinned publisher key is now the single load-bearing anchor for the hash record (root-compromise-is-total, the B-prime-2 floor). Publisher/target clock-skew is unmodeled and is the next item (B2). Until the wiring step, this reader defends nothing on the default path.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-059 (deposit-readiness audit). This entry cites VL-042 (`key_record_source.py`, the mirrored model), VL-065 / VL-066 (the A3b sub-case (a) / replay closures this completes), and VL-039 / VL-060 (the seam-then-wire precedent the deferred wiring follows); it does not cite its own (spec + build + STATE + ledger) hash.
+
+#### Next trajectory action
+B2 - cross-host clock-skew tolerance (locus SANDBOX): a configurable skew window on the decision and record freshness checks (`now < not_after` becomes `now < not_after + skew` on the consume side, symmetric `not_before` consideration where relevant) with an explicit NTP / max-skew assumption documented; tests for in-window / out-of-window with skew; suite green. Then B3 (shared-replay-cache seam), B4 (real MCP server), B5 (latency budget), then Phase C.
