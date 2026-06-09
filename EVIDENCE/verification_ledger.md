@@ -15450,3 +15450,21 @@ Prior substantive entry: VL-084 follow-up (the first audit fix, REAL_TRANSPORT i
 
 #### Next trajectory action
 Unchanged: no in-house authoring remains. The author's real-host execution (stand up C1+C2, run the live attack suite over real TLS, flip REAL_TRANSPORT green, face a real external attacker - G5/GR-3). The repo is now internally consistent and its live docs match its artifacts.
+
+
+### VL-085 - 2026-06-09 - deploy runbook: Hyper-V two-host provisioning checklist (operational; the author's cross-host stand-up)
+**Status:** RECORDED (operational runbook; no code / canon / test / claim change). One new deploy doc. Suite unchanged (298/0). UNVALIDATED in the build sandbox (no Hyper-V / docker / VMs); this is author-executed.
+**Author:** Claude (working session with the project author).
+**Classification:** deploy artifact / operational doc per VL-017a; not a trajectory move (it asserts nothing about the system). Companion to the C1/C2 deploy artifacts (VL-081/082), realizing the runbook's "two real hosts" note for a concrete local hypervisor.
+
+#### What landed
+`deploy/host_setup_hyperv.md`: a copy-paste provisioning checklist for the author's first cross-host TLS run on two local Hyper-V Linux VMs - VM-A = gate (:8000), VM-B = target (:9000) + publisher (:9100), gate forwards across the network to VM-B. Sections: Windows-host prereqs (Hyper-V enable, Default-Switch NAT for DHCP+internet, the External/static alternative), New-VM PowerShell for both VMs (Gen2 + the Linux Secure-Boot template), per-VM base setup (docker.io + docker-compose-v2 + git + NTP, record IPs), bootstrap_config + gen_certs (SANs = both VM IPs, edit .env URLs to the VM-B TLS endpoints, copy only the public key/anchor/certs to VM-B), a small `docker-compose.hosts.yml` override (the committed compose uses single-box service names; the override points the gate forward + the target identity at the real VM-B IP), the per-host `docker compose -f ... -f docker-compose.tls.yml -f docker-compose.hosts.yml up` split, the `attack_suite_live_runner.py` invocation with the ELYON_LIVE_* env, the C4 step (flip REAL_TRANSPORT green naming the run log; optionally add it to PREDICATE_NAMES), a curl smoke test, and a troubleshooting list (SAN/IP mismatch, fail-closed causes, clock-skew expiry, binding-mismatch on the target_id).
+
+#### Honest scope
+Two Hyper-V VMs are distinct OS hosts with real network + real TLS between them, so a green run GREENS REAL_TRANSPORT (the cross-host referent the C4 predicate names). It is NOT the public-internet / external-attacker referent: one physical machine, a private virtual network, both ends author-controlled. A real EXTERNAL attacker on a public surface remains the G5 / GR-3 finish line and the binding NOT-READY reason. The doc surfaces a real C1 limitation it works around: the committed compose is single-box (service-name URLs), so the two-host split needs the IP override overlay - a candidate C1 refinement (a committed two-host compose profile) is noted, not built here.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-084 follow-up 2 (the full-repo audit). This entry cites VL-081 / VL-082 (the C1/C2 deploy artifacts it provisions) and VL-083 (the live runner + REAL_TRANSPORT predicate the run targets); it does not cite its own (doc + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged and now fully on-ramped: the author stands up the two VMs per this checklist, runs the live attack suite over real cross-host TLS, flips REAL_TRANSPORT green (C4), and recruits a real external attacker (G5/GR-3). No in-house authoring remains.
