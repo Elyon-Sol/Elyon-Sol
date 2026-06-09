@@ -15396,3 +15396,28 @@ Prior substantive entry: VL-083 (C3-live + C4 staging). This entry cites VL-074.
 
 #### Next trajectory action
 Unchanged: no in-house authoring remains. The author's execution on real hardware - stand up C1+C2, run `attack_suite_live_runner.py` over real TLS, flip REAL_TRANSPORT green (C4), face a real external attacker (G5/GR-3). Until then the project stays NOT READY for an external-validation / production claim, by its own referent discipline - now with the narrative docs matching the repo that exists.
+
+
+### VL-084 follow-up - 2026-06-09 - full-repo audit: one spec-vs-manifest drift found and fixed
+**Status:** RECORDED (audit + a one-file fix). Referent-bound: every audited fact is a live check (git clean / HEAD `e878b67`; `pytest` 298 passed, 0 xfailed; `validate_manifest` 0 errors, `assert_proof_files_exist` 0 missing; `sha256(CANON/canon.md)` == `CANON/canon.lock`; all 16 `IMPLEMENTATION/*` modules import; all VL-074..083 ledger-named files + `docs/restructure/14..22` specs present). One doc fixed; no code/canon/test change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** audit / process-bookkeeping per VL-017a; not a trajectory move. Run in response to a "confirm the whole repo" request - and deliberately NOT pre-confirmed: a model's "it's all sound" is non-evidential by GR-3, so the audit's checks are the referent, not the assurance.
+
+#### The one finding (and why the audit was worth running)
+The mechanical audit was clean except for a single spec-vs-manifest drift THIS build introduced: VL-083 added the `REAL_TRANSPORT` deployment predicate to `EVIDENCE/readiness.json` (and STATE / artifact 04) but did NOT update the predicates' SPEC-of-record, `docs/restructure/10_readiness_spec.md`, whose section 4 was titled "The three deployment predicates" and made zero mention of REAL_TRANSPORT. The manifest carried a predicate its own spec did not document. (This is exactly the class the VL-084 reconciliation targeted; it slipped because VL-083 touched readiness.json + STATE + artifact 04 but not the readiness spec.)
+
+#### The fix
+`docs/restructure/10_readiness_spec.md`: section 4 retitled "The deployment predicates (three canonical + the REAL_TRANSPORT tier)"; a REAL_TRANSPORT item 4 added documenting it as the C4 tier - green only when the VL-079 attack suite is defeated over real cross-host TLS by `attack_suite_live_runner.py` against a real C1/C2 stand-up; RED by design; NOT in `PREDICATE_NAMES` and uncounted in the canonical 3-of-3 summary until the author greens it (keeping the canonical green count honest while the tier is still validate_manifest-honesty-checked); foreseen as option (b) in `12_g5_transport_design.md`; honest bound that even a green REAL_TRANSPORT is the author's own scripted attack, not a real external attacker (G5/GR-3).
+
+#### Two items deliberately NOT changed (and why)
+- `docs/zenodo/enforcement_evidence_addendum_rev3.md` says "three deployment predicates" - it is a SNAPSHOT publication pinned to a specific commit ("at the snapshot commit," "pinned to the snapshot commit"), accurate as-of that commit; a pinned publication is not retro-edited to reflect later state (the same immutability discipline as canon). Left as-is.
+- `docs/restructure/12_g5_transport_design.md` lines 33/281 "the three deployment predicates are green" - accurate (the three canonical predicates ARE green), and line 289 already names REAL_TRANSPORT as the planned predicate option (b). Internally consistent; left as-is.
+
+#### Honest ceiling
+This is a mechanical / referent-bound audit (existence, parse, import, hash-match, count). It is NOT an "evaluation" of the system's soundness - by GR-3 a model verdict is non-evidential, and it is not the blind-reviewer read (external_verification_readiness gate 4). A clean mechanical audit means the repo is internally consistent and its docs match its artifacts; it does not certify the gate against an external attacker, which remains the G5/GR-3 finish line.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-084 (the prose-drift reconciliation). This entry cites VL-083 (the increment whose readiness-spec update it completes) and VL-057 (GR-3, why the audit is referent-bound checks not an evaluative seal); it does not cite its own (spec + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: the author's real-host execution (stand up C1+C2, run the live attack suite over real TLS, flip REAL_TRANSPORT green, face a real external attacker - G5/GR-3). No in-house authoring remains; the repo is now internally consistent and its docs match its artifacts.
