@@ -14864,3 +14864,34 @@ Prior substantive entry: VL-071 (gap-tracker refresh). This entry cites VL-052/0
 
 #### Next trajectory action
 A5 - wire CI: run the pytest suite and the exit-coded EVIDENCE/proofs runners on push, closing the G8 residual (machine-checkable proofs exist; CI is the missing automation). Locus AUTHOR (runs in the real CI). Then A6 (deposit-readiness audit VL-059), then Phase B (B1 record freshness A3b-b, ...).
+
+### VL-073 - 2026-06-09 - A5 (artifact 13, Phase A): CI wired (.github/workflows/ci.yml) + the g4 runner the gate surfaced repaired
+**Status:** RECORDED (trajectory / infra + an evidence-runner repair). Referent-bound: the workflow's exact commands (the pytest suite + every hermetic EVIDENCE runner) were run in-sandbox and are green; the g4 fix was driven by a failing standalone run flipped to exit 0; the regenerated g4 log's evaluator_sha256 is verified equal to the live evaluator hash. No code / canon / SPEC / evaluator / MANIFEST / published_* / hashed-file / pytest-logic change (the only edits are an EVIDENCE runner + its log + a new CI config).
+**Author:** Claude (working session with the project author; the author chose "fix the rot, then ship green CI").
+**Classification:** trajectory / infra move per VL-017a, carrying an incidental evidence-runner repair. Fifth Phase-A item of the artifact-13 directive (A1 VL-068, A2 no-action VL-069, A3 VL-071, A4 VL-072); advances Next-open-action to A6 (deposit-readiness audit VL-059; locus SANDBOX).
+
+#### The work (artifact 13 A5)
+A5 directed a CI config that runs "the pytest suite + the exit-coded EVIDENCE runners on push" to close the G8 CI residual (machine-checkable proofs exist; CI was the missing automation). Delivered `.github/workflows/ci.yml` (GitHub Actions, the repo's host): on push and pull_request it installs the deps (`pytest`, `cryptography==44.0.0` pinned per VL-040, `fastapi`, `httpx`, `requests`, `uvicorn`), runs `python -m pytest TESTS/ -q`, then loops every `EVIDENCE/proofs/*_runner.py` and fails on any non-zero exit, with `PYTHONPATH` set to the repo root (the runners and tests import the `IMPLEMENTATION` package from root). One runner is excluded with a documented reason: `external_interception_webhook_001_runner.py` is NON-HERMETIC (it posts to the third-party webhook.site receiver) and is not reproducible in CI; every other runner is loopback / in-process and self-contained.
+
+#### The defect CI surfaced (the prerequisite, fixed here)
+Running the runners as CI would revealed `g4_refused_bypass_001_runner.py` crashes standalone with `KeyError: 'json'`. Root cause (established by probe, not inference): since the VL-047 mandatory signing cutover the gate's default forward signs and FAILS CLOSED (`REF_PEP_FAIL_CLOSED`) when no signing key is configured; the gate never reaches the forward, so the runner's capture dict stays empty and the unguarded `captured["json"]` access raises. The pytest suite does not catch this because `TESTS/conftest.py` has an autouse ephemeral-key fixture (VL-047) - but standalone runner scripts do not load conftest. The other pep-patching runners already self-configure a key (`pep._INJECTED_SIGNING_KEY` in `default_secure_cutover`, or `ELYON_SIGNING_KEY_*` env in the g5/root runners); g4 alone was never updated for the cutover. Fix: inject an ephemeral gate key in g4's `main()` via `pep._INJECTED_SIGNING_KEY`, mirroring `default_secure_cutover`. The runner then exits 0 standalone with its invariants intact (1 honored+acted, 5 refused with 0 target actions).
+
+A probe also DISPROVED an earlier working hypothesis (that the runners patch a dead `pep.requests.post` target since VL-060's transport seam and may pass vacuously): `pep.requests` and `transport.requests` are the same shared `requests` module object, so `pep.requests.post = fake` mutates the attribute `transport.post_to_target` resolves - the patch is effective, and the green runners genuinely exercise the forward (their exit-0 depends on honor/refuse assertions). The only defect was g4's missing key.
+
+#### Evidence-log hygiene (bundled)
+g4's committed `EVIDENCE/proofs/g4_refused_bypass_001.log` was additionally stale: its `evaluator_sha256` was a pre-roll value (`cf311cb7...`) while the current published record and live evaluator are `89a30ffe...`. Regenerated the log against the current published record (stdout of the now-passing run; the single differing line is the evaluator hash). Other runners' committed `.logs` are not audited here (named, not chased - a separate hygiene pass; CI runs the runners live, so log staleness does not affect the gate).
+
+#### Verification (referent-bound)
+- In-sandbox, Python 3.10: `python -m pytest TESTS/` -> 218 passed + 0 xfailed; the workflow's runner loop -> all 13 hermetic runners exit 0, the webhook runner skipped.
+- `.github/workflows/ci.yml` parses as valid YAML and is not gitignored.
+- g4 regenerated log evaluator_sha256 == sha256(IMPLEMENTATION/evaluator.py) == published_hashes.json evaluator_sha256 (89a30ffe...).
+- The workflow pins Python 3.13 to match the author's local environment (cpython-313 in the tree); the suite + runners are verified here on 3.10. Per the directive, A5's locus is AUTHOR: the first real CI run (after the author enables Actions) is the referent that closes the G8 CI residual. Until then G8 stays NEAR-CLOSED (the CI config has landed; the green CI run is pending) - not flipped to RESOLVED, per referent-bound discipline.
+
+#### Sandbox note
+All STATE.md and runner/YAML edits were authored in-sandbox from the committed git blob (Python string replacement under uniqueness assertions) and committed via plumbing from blobs hashed out of the working tree, avoiding the mount-read truncation recorded at VL-071/VL-072. Disk == HEAD blob verified by sha after each commit.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-072 (STATE prose-drift). This entry cites VL-047 (the mandatory signing cutover that the g4 runner predated) and VL-060 (the transport seam, re the disproved hypothesis); it does not cite its own (STATE + ledger) hash.
+
+#### Next trajectory action
+A6 - deposit-readiness audit (VL-059, reserved): the GR-3-bound audit of what is deposit-ready vs bounded / named-open, so no overclaim enters any deposit. Locus SANDBOX (analysis). Then Phase B (B1 record freshness A3b-b, B2 clock-skew, B3 shared-replay-cache seam, B4 real MCP server, B5 latency budget).
