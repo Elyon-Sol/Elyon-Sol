@@ -14838,3 +14838,29 @@ cite its own (doc + STATE + ledger) hash.
 #### Next trajectory action
 A4 - clear the prose-drift: fix STATE.md's stale numbered "Next open action" list and the stale
 "T-bookkeeping (G1/G8/G9/G11/G14 ...)" label (G1/G11/G14 are RESOLVED), per artifact-13 A4.
+
+### VL-072 - 2026-06-09 - A4 (artifact 13, Phase A): STATE.md prose-drift cleared - historical numbered Next-open-action list retired to a provenance pointer; stale gap labels fixed; a pre-existing EOF truncation repaired
+**Status:** RECORDED (bookkeeping / hygiene). Referent-bound: the gap statuses written are transcribed from artifact 04 read on disk (G1/G8/G9/G11/G12/G13/G14), the truncation is verified identical across the HEAD git blob and the mount (204192 bytes, both ending "- **G12** - canon section 11.1 u"), and "suite 218 unchanged" is verified by running the suite. No code / canon / SPEC / evaluator / MANIFEST / published_* / hashed-file / test change.
+**Author:** Claude (working session with the project author; the author chose the list-handling option).
+**Classification:** bookkeeping / hygiene per VL-017a (the A4 prose-drift class). Fourth Phase-A item of the artifact-13 directive (A1 done VL-068, A2 no-action VL-069, A3 done VL-071); closes A4, advancing Next-open-action to A5 (CI; locus AUTHOR).
+
+#### The work (artifact 13 A4)
+A4 directed: "fix STATE.md's stale numbered 'Next open action' list and the stale 'T-bookkeeping (G1/G8/G9/G11/G14 ...)' label (G1/G11/G14 are RESOLVED). Acceptance: no stale gap labels in STATE prose." Three edits:
+- **Numbered list retired (build commit).** The "Next open action" section carried a ~45-item historical build-track log (items 1-45, ~374 lines), every item long-since-done and each trailing a stale forward-looking "Next:" clause that repeated the now-false "T-bookkeeping (G1/G8/G9/G11/G14)" open-debt label. Per the author's chosen option, the whole numbered log (and its "retained for provenance" intro) is replaced by a short pointer to the repository's stated continuity layers - `git log --oneline` (what happened, in order) and `EVIDENCE/verification_ledger.md` (how each claim became trusted, VL-001..VL-071). The standing process-finding backlog ("Known items open but not scheduled") and the opening paragraph (the real current next action) are preserved. This removes every stale gap label that lived in the numbered list's "Next:" trailers in one contiguous deletion.
+- **Stale bookkeeping-batch bullet fixed.** "What is locked vs. open" still listed "G11 ... queued with G1, G8, G9 in the bookkeeping batch"; corrected to record G1 (VL-052), G11 (VL-053), G14 (VL-054) RESOLVED and G8/G9 NEAR-CLOSED (VL-052), with the CI residual named as the A5 item.
+- **Pre-existing EOF truncation repaired.** The committed STATE.md ended mid-sentence at "- **G12** - canon section 11.1 u", losing the rest of the G12 bullet and the entire G13 bullet from the "Known open gaps" summary (G14 also absent). Confirmed not a read artifact: the HEAD git blob and the mount file are byte-identical at 204192 bytes, both ending at that point; it predates this session (VL-071 preserved the tail byte-identically). The full G12 and G13 summary bullets are restored and the missing G14 bullet added, each transcribed from the complete artifact-04 entries (G12 lines 224-253, G13 255-291, G14 293) and matching the section's existing summary style.
+
+#### Verification (referent-bound)
+- No stale gap label remains in current STATE prose: the only post-edit occurrences of "T-bookkeeping (G1..." are historical VL entry titles/records (VL-045/046 in Current-verified-state, accurate as record); the opening-paragraph A4 description now reads "A4 ... is DONE".
+- G12/G13 PARTIALLY ADDRESSED (schema-layer half VL-016; canon-layer half open under GR-1) and G14 RESOLVED (VL-054) - statuses match artifact 04.
+- ASCII-safe (VL-006): no non-ASCII bytes. STATE.md 1527 -> 1153 lines at the build commit (numbered list removed, tail restored), 1154 after the close-commit VL-072 bullet.
+- Suite 218 + 0 xfailed, UNCHANGED (doc-only; no code/test touched).
+
+#### Sandbox note (this session)
+Given the VL-071 finding that host-tool edits to STATE.md round-tripped through a mount that served a truncated read to `git add` (silently dropping file tails), every STATE.md edit this session was performed in-sandbox: the content was read from the committed git blob (`git cat-file -p`), edited with Python string replacement under uniqueness assertions, written to disk, and committed via plumbing from a blob hashed directly out of `/tmp` (`git hash-object -w` + `update-index --cacheinfo` on a sandbox-local `GIT_INDEX_FILE`), never relying on a mount read of the working-tree file for the commit. Disk == HEAD blob verified by sha after each commit. This is the prevention that VL-070 rule 6 / Lesson 11 point at, applied end-to-end; the EOF truncation repaired here is itself the kind of damage that hazard produces (an earlier session's residue), motivating the discipline.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-071 (gap-tracker refresh). This entry cites VL-052/053/054 (the G1/G11/G14 resolutions), VL-016 (the G12/G13 schema-layer halves), and VL-071 (the prior entry whose mount-truncation finding motivates the sandbox discipline); it does not cite its own (STATE + ledger) hash.
+
+#### Next trajectory action
+A5 - wire CI: run the pytest suite and the exit-coded EVIDENCE/proofs runners on push, closing the G8 residual (machine-checkable proofs exist; CI is the missing automation). Locus AUTHOR (runs in the real CI). Then A6 (deposit-readiness audit VL-059), then Phase B (B1 record freshness A3b-b, ...).
