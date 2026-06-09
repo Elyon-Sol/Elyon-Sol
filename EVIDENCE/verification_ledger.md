@@ -14895,3 +14895,25 @@ Prior substantive entry: VL-072 (STATE prose-drift). This entry cites VL-047 (th
 
 #### Next trajectory action
 A6 - deposit-readiness audit (VL-059, reserved): the GR-3-bound audit of what is deposit-ready vs bounded / named-open, so no overclaim enters any deposit. Locus SANDBOX (analysis). Then Phase B (B1 record freshness A3b-b, B2 clock-skew, B3 shared-replay-cache seam, B4 real MCP server, B5 latency budget).
+
+### VL-073 follow-up - 2026-06-09 - A5: the first real CI run made green (g5_multiprocess_tls runner hardened; CI reports all runner failures)
+**Status:** RECORDED (infra / delivery repair). Referent-bound: the failure is the actual first CI run's output (`SERVICES NOT READY`, exit 2 at `g5_multiprocess_tls_001_runner.py`), and the fix is verified by re-running the suite + all hermetic runners green in-sandbox. No code / canon / SPEC / evaluator / MANIFEST / published_* / pytest-logic change (only an EVIDENCE runner's process-management + the CI config).
+**Author:** Claude (working session with the project author).
+**Classification:** infra / delivery repair per VL-017a (the delivery-omission family: VL-073's CI config was correct in shape but its first real run surfaced an environment-sensitivity the sandbox could not). Follow-up to VL-073; Next-open-action unchanged (A6).
+
+#### What the first real CI run showed
+VL-073 wired CI and the author enabled GitHub Actions. The first run (Python 3.13, ubuntu) passed the pytest suite and 12 of the 13 hermetic runners, then failed at `g5_multiprocess_tls_001_runner.py`: it printed `SERVICES NOT READY` and returned 2. That runner is the only one that starts three LONG-LIVED uvicorn servers over real TLS as separate OS processes and polls them for readiness; the others use in-process `TestClient` (default_secure_cutover, g4, signing_*, wedge, key_record, root_record) or one-shot `subprocess.run` targets (g5_cross_host, g5_signed_cross_host, root_recovery), which start fast. Its readiness wait was a fixed 80 x 0.5s (~40s) budget with both subprocess streams sent to `/dev/null`; on the slower, more contended GitHub runner the three cold starts (each importing fastapi + cryptography + the app) exceeded the window, and the discarded stderr left no diagnostic. The sandbox (Python 3.10, lightly loaded) had always come up well inside 40s, so the fragility was invisible until the real run - exactly the latent condition A5/CI exists to surface.
+
+#### What landed
+- `EVIDENCE/proofs/g5_multiprocess_tls_001_runner.py`: (1) the readiness wait is now a time-based 150s budget instead of 80 x 0.5s; (2) each loop polls the three service processes and fails fast with the dead service named if any exited early; (3) each service's stdout+stderr is captured to a per-service log file (was `/dev/null`) and the tails are dumped on `SERVICES NOT READY`, so a real startup error is visible in the CI log next time; (4) `_now()` uses `datetime.datetime.now(datetime.timezone.utc)` instead of the deprecated `datetime.utcnow()` (removes the 3.13 DeprecationWarning and its scheduled-removal risk; the value is unchanged for cert validity). No assertion or invariant changed.
+- `.github/workflows/ci.yml`: the proof-runner step now runs EVERY hermetic runner, collects failures, and fails the job at the end with a `Failed runners:` summary (and a `::error::` per failure), instead of `set -e` stopping at the first failure. One CI run now reveals every CI-incompatible runner rather than one per push - the diagnostic that one-failure-at-a-time would have made expensive.
+
+#### Verification (referent-bound)
+- In-sandbox (Python 3.10): `python -m pytest TESTS/` -> 218 passed + 0 xfailed; the hardened `g5_multiprocess_tls` runner exits 0; the new CI loop runs all 13 hermetic runners and reports ALL PASS; webhook skipped.
+- The hardening is best-effort for the 3.13 CI environment (the sandbox has only 3.10); the author's next CI run is the referent. If `g5_multiprocess_tls` still fails, its per-service log tails will now print in the CI output, distinguishing a slow start (raise the budget) from a real startup error (a genuine bug) - and any other CI-fragile runner will now be reported in the same run rather than hidden behind the first failure.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-073 (CI wired + g4 repair). This entry cites VL-063 (the multiprocess-TLS runner's origin) and does not cite its own (runner + CI + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: A6 - deposit-readiness audit (VL-059, reserved; locus SANDBOX). Once the author confirms a green CI run, the G8 CI residual closes (artifact 04 G8 may then flip from NEAR-CLOSED toward RESOLVED on the CI half, referent = the green run).
