@@ -36,8 +36,12 @@ architecture, deferred.
 - **A1. Retire the `target.py` stub.** Remove `IMPLEMENTATION/target.py`; the VL-061
   reference enforcing target supersedes it (no code importer). Update README/artifact-01 tree
   references. Acceptance: file gone, grep-clean, suite green. Locus: SANDBOX.
-- **A2. Retire `server.py`.** The named dead-module cleanup. Confirm no importer, remove,
-  update doc tree references. Acceptance: gone, grep-clean, suite green. Locus: SANDBOX.
+- **A2. Retire `server.py`. ALREADY DONE at VL-051 (`10e5078`), before this directive.**
+  The parallel un-enveloped gate was retired by `git rm` (`pep.py` is the sole gate); it was
+  listed here in error, carried from the stale "server.py retirement" T-bookkeeping note.
+  Confirmed at VL-069: absent from HEAD, no importer (grep-clean), `README.md` + artifact-01
+  tree references already reconciled at VL-051 (only residue a gitignored stale `.pyc`). No
+  action required. Acceptance (met): gone, grep-clean, suite green (218). Locus: SANDBOX.
 - **A3. Refresh the gap tracker.** Update `04_current_vs_claimed.md` G4 (defensibly
   non-bypassable for routed-and-attested; A1 closed by the reference target) and G5 / the A3b
   sub-cases to reflect VL-061/063/065/066. Acceptance: statuses match the ledger. Locus: SANDBOX.
@@ -99,8 +103,4 @@ architecture, deferred.
 
 A -> B -> C is the default order (clean base, then harden, then deploy/scaffold). Strict
 prerequisites for an external ATTACK are the Phase-C items plus standing up real hosts;
-Phase B maximizes preparedness but most of it is not a hard blocker (record freshness becomes
-a claim-sheet line; the shared cache only matters multi-instance; MCP/latency gate the
-customer axis). Each item lands as its own VL increment (build-then-wire, referent-bound,
-no canon/hashed-file change unless explicitly scoped), so a fresh session can take the top
-unfinished item from this directive without reconstructing context.
+Phase B maximizes preparedness but most of it is not a hard bl
