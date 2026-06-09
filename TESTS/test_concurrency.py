@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from threading import Lock
+from threading import Event, Lock
 
 from IMPLEMENTATION.evaluator import evaluate, load_manifest, manifest_sha256
 
@@ -153,9 +153,29 @@ import time
 # VL-053: repointed to the on-disk manifest (see the fixture note above).
 MUTABLE_MANIFEST = load_manifest()
 
+# VL-073 follow-up 2: deterministic snapshot/mutation ordering (was a
+# time.sleep(0.001) race that the first real CI run flaked at 48/50).
+_snapshot_lock = Lock()
+_snapshot_count = [0]
+_all_snapshotted = Event()
+
 
 def run_mutating_authorized():
     local_manifest = copy.deepcopy(MUTABLE_MANIFEST)
+
+    # Signal that this task has taken its pre-mutation snapshot, so the mutation
+    # fires only AFTER all 50 snapshots (VL-073 follow-up 2). The prior version
+    # relied on mutate_manifest_during_execution sleeping 0.001s; under the CI
+    # runner's thread scheduling 2 of 50 tasks snapshotted AFTER the mutation and
+    # were (correctly) guard-refused -> 48 ELIGIBLE, failing the over-strict
+    # eligible==50 assertion. Ordering the mutation after all snapshots makes the
+    # intended property (pre-mutation snapshots all evaluate ELIGIBLE) hold
+    # deterministically; the guard's REFUSE-on-post-mutation-snapshot path is
+    # covered for real by test_manifest_integrity_rejects_divergent_manifest.
+    with _snapshot_lock:
+        _snapshot_count[0] += 1
+        if _snapshot_count[0] >= 50:
+            _all_snapshotted.set()
 
     result = evaluate(AUTHORIZED_CTX, local_manifest)
 
@@ -164,13 +184,19 @@ def run_mutating_authorized():
 
 
 def mutate_manifest_during_execution():
-    time.sleep(0.001)
+    # Deterministic replacement for time.sleep(0.001): wait until all 50
+    # authorized tasks have snapshotted, then mutate. No deadlock - the mutation
+    # occupies at most one of the 20 pool workers and the authorized tasks never
+    # block; the timeout is a safety net only.
+    _all_snapshotted.wait(timeout=30)
 
     MUTABLE_MANIFEST["AR"] = ["identity"]
 
 
 def test_manifest_mutation_during_concurrent_evaluation():
     results.clear()
+    _snapshot_count[0] = 0
+    _all_snapshotted.clear()
 
     # VL-053: a deep-copied snapshot taken BEFORE the concurrent mutation
     # is on-disk-consistent and evaluates ELIGIBLE; the VL-053 divergence
