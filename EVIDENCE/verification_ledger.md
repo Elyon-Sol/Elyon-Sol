@@ -15244,3 +15244,29 @@ Prior substantive entry: VL-079 (the attack harness + claim sheet). This entry c
 
 #### Next trajectory action
 Unchanged: the in-house / sandbox-greenable trajectory work is exhausted. Phase C is AUTHOR-locus - C1 (deploy packaging), C2 (real TLS/cert + trust bootstrap), then C3's LIVE run (the VL-079 attack suite over real cross-host transport via the HttpSurface adapter), then C4 (a real-transport readiness predicate in `EVIDENCE/readiness.json`). What remains needs real hosts and a real external attacker - the finish line that certifies G5 (GR-3).
+
+
+### VL-080 follow-up - 2026-06-09 - CI-red repair: a non-hermetic attack-harness test (local-pass / CI-fail)
+**Status:** RECORDED (CI-red repair; process finding). Referent-bound: the full suite is re-run live in-sandbox (286 passed, 0 xfailed) and the three new EVIDENCE runners are re-run hermetically (attack_suite_001 / mcp_server_001 / latency_budget_001, each exit 0). One test file changed; no production / harness / canon / evaluator change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** process / CI-red repair per VL-017a (kin to VL-073's de-flake follow-ups); not a trajectory move.
+
+#### What broke
+The VL-079 test `TESTS/adversarial/test_attack_harness.py::test_http_surface_drives_real_reference_target` passed locally (Python 3.10, build sandbox) but FAILED on GitHub Actions (Python 3.13) with `KeyError: 'envelope'`. Root cause: `HttpSurface.admit` posts to the gate's `/governed-call`, and on ELIGIBLE the gate FORWARDS upstream via `requests.post(target_url=...)` before returning. The test's target is a `TestClient` (not reachable over real HTTP at `HTTP_TARGET_URL`), so the forward goes to a non-existent host. The build sandbox's network let `tool-server.test` resolve (the forward "succeeded", the gate returned the envelope, the test passed); the hosted CI runner refused it, so the gate fail-closed (HTTPException, no `envelope` key) and the test KeyError'd. The test was NON-HERMETIC - it depended on an environment-specific network behavior.
+
+#### The fix
+The test now `monkeypatch`es `pep.requests.post` to a no-op 200 (pep and transport `import requests` bind the SAME module object, so one patch neutralizes the forward in both), mirroring exactly what the in-process admit (`InProcessSurface.admit`, the wedge runner, the latency runner) already does. The gate's forward never touches the network; the harness presents the returned envelope to the target `TestClient` directly. Nothing in production or in `attack_harness.py` changed - `HttpSurface`'s real forward is correct for a real deployment (where the gate genuinely forwards to the real target); the defect was the test's missing mock.
+
+#### Verification (referent-bound)
+- `TESTS/adversarial/test_attack_harness.py` 2/2; full suite `python -m pytest TESTS/` 286 passed + 0 xfailed (unchanged).
+- The three VL-077/078/079 runners CI now also executes are confirmed hermetic and exit 0: `EVIDENCE/proofs/attack_suite_001_runner.py`, `mcp_server_001_runner.py`, `latency_budget_001_runner.py` (each mocks the gate forward or uses a subprocess + on-disk record; no network).
+- The CI failure was at the pytest step (before the runner loop), so it had not yet reached the new runners; with the suite green CI proceeds to them.
+
+#### Process finding (session-mechanics)
+A sandbox-network leak (a reserved-TLD `.test` host resolving instead of refusing) masked a non-hermetic test locally; only CI on a different Python + a stricter network caught it. This is the hermeticity / set-exhaustiveness family (session_mechanics_lessons Lesson 5): "the suite passes here" is not "the suite is hermetic." Standing guard for future runners/tests: any test that drives the gate's ELIGIBLE path must mock the upstream forward (or run against a real target), never rely on the environment to swallow it. Candidate addition to `docs/methodology/session_mechanics_lessons.md`; recorded here, not yet promoted (strict scope).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-080 (the readiness enrollment + artifact-13 repair). This entry cites VL-079 (the test it repairs) and VL-073 (the CI-green / de-flake follow-up precedent); it does not cite its own (test + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: Phase C is AUTHOR-locus (C1 deploy packaging, C2 real TLS/cert, C3's live run via HttpSurface over real transport, C4 real-transport readiness predicate). The in-house / sandbox-greenable trajectory work is exhausted; what remains needs real hosts and a real external attacker (the G5 / GR-3 finish line).
