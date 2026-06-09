@@ -15220,3 +15220,27 @@ Prior substantive entry: VL-078 (latency budget + executor SDK). This entry cite
 
 #### Next trajectory action
 The remaining Phase-C work is AUTHOR-locus - the sandbox has no docker, no real CA, no second host. C1 (deploy packaging: a docker-compose of gate / reference target / publisher as networked services + a two-real-host / cloud runbook), then C2 (real TLS/cert + trust bootstrap), then C3's LIVE run (the attack suite over real cross-host transport via the HttpSurface adapter - the gate-1 referent), then C4 (a real-transport readiness predicate in `EVIDENCE/readiness.json`). The in-house / sandbox-greenable trajectory work is now exhausted; what remains needs real hosts and a real external attacker, the author-arranged finish line that certifies G5 (GR-3).
+
+
+### VL-080 - 2026-06-09 - process/bookkeeping: readiness.json B1-B5 enrollment + artifact-13 EOF-truncation repair
+**Status:** RECORDED (process / bookkeeping; NO trajectory or capability advance). Referent-bound: the readiness validator is re-run live (`validate_manifest` 0 errors, `assert_proof_files_exist` 0 missing), the readiness tests pass (6/6), and the full suite is unchanged (286 passed, 0 xfailed). No code / canon / SPEC / evaluator / IMPLEMENTATION / test change; no `evaluator_sha256` roll. Two data/doc files only.
+**Author:** Claude (working session with the project author).
+**Classification:** process/bookkeeping per VL-017a (kin to VL-045 / VL-072); not a trajectory move. Clears two deferred cleanups named at the close of the VL-079 session.
+
+#### What landed
+- `EVIDENCE/readiness.json`: the five Phase-B capabilities the WIRING-axis manifest had omitted are enrolled, closing the gap that the honesty instrument (VL-043) did not yet cover the newest work: `published_record_freshness` (B1/VL-074), `clock_skew_tolerance` (B2/VL-075), `shared_replay_cache` (B3/VL-076), `mcp_server_surface` (B4/VL-077), `executor_sdk` (B5/VL-078). Each is `built=true` naming an existing test as proof, with honest `wired_to_default` / `exercised_e2e` / `transported` flags and named `blocked_by` reasons - all false (build-then-wire / unwired on the default path) except `mcp_server_surface.exercised_e2e=true`, backed by `EVIDENCE/proofs/mcp_server_001_runner.py` (the real-stdio subprocess; transported stays false - stdio is local, cross-host TLS is G5). The B5 row notes the latency budget is tracked by its runner+log, not as a wiring flag (it is measurement, not a default-path capability). The three deployment predicates are untouched (the new capabilities feed none of them; `_consistency` holds), so DEFAULT_SECURE / END_TO_END_NO_SHORTCUT / ROOT_RECOVERY stay 3/3 green.
+- `docs/restructure/13_road_to_external_readiness.md`: the EOF truncation in the "Sequencing and gating" section (the file ended mid-word at "...most of it is not a hard bl") is repaired. Completed faithfully to the doc's established logic and `docs/methodology/external_verification_readiness.md` gate 1: Phase B is preparedness, not a hard blocker for the attack line; the single load-bearing prerequisite is Phase C plus standing up real hosts; the external attacker on that real surface is the author's to arrange and is the only thing that certifies G5 (GR-3). Same EOF-truncation-repair family as VL-072 (the G12/G13 bullets).
+
+#### Why this is honest housekeeping, not a claim move
+Enrolling the capabilities makes the WIRING-axis manifest tell the truth about the newest work; it asserts nothing new about the system (every new flag is a red except the one e2e flag, which names an executed runner). The artifact-13 repair restores a sentence that was already the project's position elsewhere (STATE / the deposit audit / ext-readiness); it invents no new policy. Neither touches the admission path.
+
+#### Verification (referent-bound)
+- `python -c "import IMPLEMENTATION.readiness as r; ..."`: `validate_manifest` -> [] (0 errors); `assert_proof_files_exist` -> 0 missing; `summary_line` -> "3 of 3 deployment predicates green".
+- `TESTS/readiness/` 6/6; full suite `python -m pytest TESTS/` 286 passed + 0 xfailed (unchanged from VL-079).
+- `readiness.json` is valid JSON and ASCII (the file is read with `encoding="ascii"` by `load_manifest`); the artifact-13 doc is ASCII + LF and now ends with a newline.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-079 (the attack harness + claim sheet). This entry cites VL-043 (the readiness instrument it extends), VL-074/075/076/077/078 (the capabilities enrolled), and VL-072 (the EOF-truncation-repair precedent); it does not cite its own (readiness + doc + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged: the in-house / sandbox-greenable trajectory work is exhausted. Phase C is AUTHOR-locus - C1 (deploy packaging), C2 (real TLS/cert + trust bootstrap), then C3's LIVE run (the VL-079 attack suite over real cross-host transport via the HttpSurface adapter), then C4 (a real-transport readiness predicate in `EVIDENCE/readiness.json`). What remains needs real hosts and a real external attacker - the finish line that certifies G5 (GR-3).
