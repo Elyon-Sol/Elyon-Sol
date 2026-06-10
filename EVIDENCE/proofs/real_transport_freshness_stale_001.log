@@ -1,0 +1,46 @@
+Elyon-Sol REAL_TRANSPORT freshness (A3b-b) proof of record - VL-093
+Captured output of the author's live signed-mode run + the stale-record attack.
+
+Provenance:
+  Run by:    the project author, on real hosts (locus AUTHOR; not reproducible in CI).
+  Date:      2026-06-10
+  Topology:  two Oracle VirtualBox Ubuntu VMs over a host-only network, real TLS (dev CA):
+               VM-A gate     https://192.168.56.101:8000
+               VM-B target   https://192.168.56.102:9000   (+ publisher :9100, SIGNED mode)
+             client = the author's Windows laptop (Git Bash), a distinct box.
+  Mode:      SIGNED published-record consult (VL-091): the target pins a publisher key and
+             fetches the signed, freshness-checked record over real cross-host TLS.
+
+Idea origin: the author proposed an "approved then the underlying state changes" (TOCTOU)
+attack. The specific sub-case it lands on - a stale-but-otherwise-valid published record - was
+the one named-open A3b gap, wired closed at VL-091 and proven here on the real surface.
+
+============================================================================================
+(1) SIGNED MODE, fresh record - the wedge property STILL holds over real transport:
+============================================================================================
+[PASS] positive_control a valid admitted call is delivered and acted on (push)   -> HONORED
+[PASS] unattested       reach the target with no admissibility envelope (A1)     -> REFUSED:REF_VERIFY_ENVELOPE_ABSENT
+[PASS] forged_signature tamper a signed field; pass off a forged envelope        -> REFUSED:REF_VERIFY_SIGNATURE_INVALID
+[PASS] replay           present the same admitted envelope twice (exactly-once)  -> REFUSED:REF_VERIFY_REPLAY
+[PASS] rebind_tool      use a transfer envelope to authorize delete_database     -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] rebind_args      use the envelope with different (larger) args            -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] target_url_swap  present an envelope bound to another (different-path) target -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+positive control honored: True | adversarial attacks defeated over real transport: 6/6
+RESULT: ALL ATTACKS DEFEATED over real transport (the gate-1 referent)
+
+============================================================================================
+(2) THE STALE-RECORD ATTACK - the publisher made to serve an already-expired record:
+============================================================================================
+Served record (note not_after is BEFORE issued_at - born stale):
+  "issued_at":  "2026-06-10T18:41:26.519575+00:00"
+  "not_after":  "2026-06-10T18:40:26.519562+00:00"
+  "publisher_signature": "9474e2ca...370d8002"  (valid)
+
+A valid, freshly-admitted call presented against that stale state:
+  honored: False  reason: REF_VERIFY_PUBLISHED_RECORD_STALE
+
+CONCLUSION: an otherwise-valid approved call is REFUSED when the published record it would be
+checked against has gone stale, over real cross-host TLS. A3b sub-case (b) closed and proven on
+the real surface. (The publisher's signature was valid - it is the FRESHNESS, not the signature,
+that refused it.) Honest bound unchanged: two VMs on one host, private network, dev CA, author
+run; the publisher key is the load-bearing floor. G5 (a real EXTERNAL attacker) remains open.

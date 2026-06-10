@@ -35,8 +35,8 @@
     "published_record_freshness": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_published_record_freshness.py", "blocked_by": null},
       "wired_to_default": {"value": false, "proof": null, "blocked_by": "WIRED as a configurable signed-consult MODE on reference_target.py (VL-091): a target configured with a pinned publisher key (ELYON_PUBLISHER_KEY_*) fetches the signed record and refuses a stale one (REF_VERIFY_PUBLISHED_RECORD_STALE), closing A3b sub-case (b) for that deployment - proof TESTS/adversarial/test_record_freshness_wiring.py. wired_to_default stays false because the BARE default (no publisher key) remains byte-anchor by choice; making signed the bare default is a deployment posture (it relocates trust to a publisher-key floor)"},
-      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "the signed consult is exercised in-process (test_record_freshness_wiring); a real cross-host run of the signed-mode target + a stale-publisher attack is the author's (the live stale-record procedure, deploy/runbook)"},
-      "transported": {"value": false, "proof": null, "blocked_by": "G5 real-transport floor not built; not on the cross-host signed chain"}
+      "exercised_e2e": {"value": true, "proof": "EVIDENCE/proofs/real_transport_freshness_stale_001.log", "blocked_by": null},
+      "transported": {"value": true, "proof": "EVIDENCE/proofs/real_transport_freshness_stale_001.log", "blocked_by": null}
     },
     "clock_skew_tolerance": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_clock_skew_tolerance.py", "blocked_by": null},
