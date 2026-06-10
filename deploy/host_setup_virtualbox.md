@@ -218,3 +218,52 @@ counted (3-of-4 -> 4-of-4). Commit with a ledger entry naming the run. That clos
   on both, or set a non-zero clock_skew.
 - Binding mismatch on the positive control: ELYON_LIVE_TARGET_ID must EXACTLY equal the target's
   ELYON_TARGET_URL (scheme, IP, port, /target).
+
+---
+
+## Appendix - signed-record freshness (A3b-b, VL-091) + the stale-record attack
+
+By default the target uses the byte-anchor record: a stale-but-anchor-matching published record is
+honored. VL-091 wires the SIGNED-record freshness reader as an opt-in mode - a target configured
+with a pinned publisher key refuses a stale record (`REF_VERIFY_PUBLISHED_RECORD_STALE`). Enable it
+to demonstrate the "approved then the underlying record goes stale" defense over real transport.
+
+1. Generate a publisher keypair (once):
+       ~/elyon-venv/bin/python - <<'PY'
+       from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+       from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+       k = Ed25519PrivateKey.generate()
+       print("PRIV", k.private_bytes_raw().hex())
+       print("PUB ", k.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw).hex())
+       PY
+
+2. Publisher (VM-B) signs records - add to its environment, restart:
+       ELYON_PUBLISHER_SIGNING_KEY_HEX=<PRIV>
+       ELYON_PUBLISHER_KEY_ID=pub-1
+       ELYON_RECORD_MAX_AGE_SECONDS=300
+
+3. Target (VM-B) consults the signed record - add (the PUBLIC half), restart:
+       ELYON_PUBLISHER_KEY_HEX=<PUB>
+       ELYON_PUBLISHER_KEY_ID=pub-1
+       ELYON_SIGNED_RECORD_URL=https://192.168.56.102:9100/published_hashes_signed.json
+   A valid call is now honored against the freshness-checked signed record (the live attack suite
+   stays green - re-run it to confirm).
+
+4. Stale-record attack (the freshness refusal): make the target consult an EXPIRED record.
+       # capture a record under a short window, let it expire:
+       # (publisher temporarily with ELYON_RECORD_MAX_AGE_SECONDS=2)
+       mkdir -p /tmp/stalepub
+       curl --cacert deploy/tls/certs/ca.crt \
+         https://192.168.56.102:9100/published_hashes_signed.json \
+         -o /tmp/stalepub/published_hashes_signed.json
+       sleep 3
+       cd /tmp/stalepub && python3 -m http.server 9200 &     # a 'stale publisher' (plain http ok)
+       # point the target at the stale publisher and restart it:
+       #   ELYON_SIGNED_RECORD_URL=http://192.168.56.102:9200/published_hashes_signed.json
+       # then present a valid call (the live runner, or a single admitted envelope)
+   -> the target refuses REF_VERIFY_PUBLISHED_RECORD_STALE: it cannot obtain a fresh record, so the
+   approved call is NOT honored against a stale published state. That is A3b sub-case (b) closed for
+   a configured deployment.
+
+Honest bound: the publisher key is now the load-bearing trust floor (out-of-band, parity with the
+key/root records); making signed mode the BARE default is a deployment posture, not the default.

@@ -112,6 +112,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from IMPLEMENTATION.published_source import fetch_published_record
 from IMPLEMENTATION.verifier import verify_envelope, REF_VERIFY_REPLAY
+from IMPLEMENTATION.published_record_source import fetch_signed_record
 
 
 # Target-layer reason vocabulary (REF_TARGET_*; parallels the REF_VERIFY_* layer
@@ -134,6 +135,12 @@ ENV_PUBLISHER_URL = "ELYON_PUBLISHER_URL"
 ENV_PINNED_ROOT = "ELYON_PINNED_ROOT_SHA256"
 ENV_GATE_KEY_ID = "ELYON_GATE_KEY_ID"
 ENV_GATE_PUBLIC_KEY_HEX = "ELYON_GATE_PUBLIC_KEY_HEX"
+# Optional signed-record (freshness) mode (VL-091, wiring B1). When a pinned publisher
+# key is present the target consults the SIGNED record (freshness-checked) instead of
+# the byte-anchor record. Absent, the byte-anchor path is unchanged.
+ENV_PUBLISHER_KEY_ID = "ELYON_PUBLISHER_KEY_ID"
+ENV_PUBLISHER_KEY_HEX = "ELYON_PUBLISHER_KEY_HEX"
+ENV_SIGNED_RECORD_URL = "ELYON_SIGNED_RECORD_URL"
 
 
 def config_from_env() -> Optional[Dict[str, Any]]:
@@ -163,12 +170,24 @@ def config_from_env() -> Optional[Dict[str, Any]]:
         public_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(key_hex))
     except Exception:
         return None
-    return {
+    config = {
         "target_url": target_url,
         "publisher_url": publisher_url,
         "pinned_root_sha256": pinned_root,
         "pinned_public_keys": {key_id: public_key},
     }
+    # Optional signed-record (freshness) mode: pin a publisher key + a signed-record URL.
+    pub_key_id = os.environ.get(ENV_PUBLISHER_KEY_ID)
+    pub_key_hex = os.environ.get(ENV_PUBLISHER_KEY_HEX)
+    if pub_key_id and pub_key_hex:
+        try:
+            publisher_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(pub_key_hex))
+        except Exception:
+            return None
+        config["pinned_publisher_keys"] = {pub_key_id: publisher_key}
+        config["signed_record_url"] = os.environ.get(ENV_SIGNED_RECORD_URL) or \
+            publisher_url.replace("published_hashes.json", "published_hashes_signed.json")
+    return config
 
 
 def _refuse(reason: str) -> HTTPException:
@@ -181,6 +200,7 @@ def _refuse(reason: str) -> HTTPException:
 def build_reference_target_app(
     config_provider: Callable[[], Optional[Dict[str, Any]]] = config_from_env,
     fetch: Callable[..., Optional[Dict[str, Any]]] = fetch_published_record,
+    signed_fetch: Callable[..., Dict[str, Any]] = fetch_signed_record,
 ) -> FastAPI:
     """
     Build the reference enforcing-target ASGI app.
@@ -225,15 +245,29 @@ def build_reference_target_app(
             except (json.JSONDecodeError, ValueError):
                 envelope = None  # unparseable header -> treated as absent (A1)
 
-        # Published-record fetch + anchor verification, off the event loop
-        # (fetch_published_record is a blocking requests.get). None means a
-        # transport failure / non-200 / anchor mismatch -> fail closed before
-        # trusting any currency claim.
-        record = await run_in_threadpool(
-            fetch, config["publisher_url"], config["pinned_root_sha256"]
-        )
-        if record is None:
-            raise _refuse(REF_TARGET_ANCHOR_MISMATCH)
+        # Published-record fetch, off the event loop (blocking requests.get).
+        # SIGNED mode (VL-091, wiring B1): a pinned publisher key is configured, so
+        # fetch the SIGNED record and validate publisher signature + FRESHNESS +
+        # serial; a stale/invalid record fails closed with the reader's reason
+        # (REF_VERIFY_PUBLISHED_RECORD_STALE / _INVALID) - this closes A3b sub-case
+        # (b). BYTE-ANCHOR mode (no publisher key, every existing runner/test): the
+        # unchanged anchor-verified fetch (no temporal dimension). The validated
+        # signed record carries the three currency pins, so it is a drop-in
+        # record_source for verify_envelope either way.
+        if config.get("pinned_publisher_keys"):
+            res = await run_in_threadpool(
+                signed_fetch, config["signed_record_url"],
+                config["pinned_publisher_keys"],
+            )
+            if res["reason"] is not None:
+                raise _refuse(res["reason"])
+            record = res["record"]
+        else:
+            record = await run_in_threadpool(
+                fetch, config["publisher_url"], config["pinned_root_sha256"]
+            )
+            if record is None:
+                raise _refuse(REF_TARGET_ANCHOR_MISMATCH)
 
         # The production verifier is the SOLE acceptance authority. A pinned
         # gate key is supplied, so the issuer signature is required and checked

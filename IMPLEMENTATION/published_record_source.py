@@ -42,9 +42,9 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-import requests
-
 from cryptography.exceptions import InvalidSignature
+
+from IMPLEMENTATION.transport import get_published
 
 from IMPLEMENTATION.verifier import (
     REF_VERIFY_PUBLISHED_RECORD_INVALID,
@@ -202,7 +202,10 @@ def fetch_signed_record(
     refuses rather than proceeding without a validated record (canon section 9).
     """
     try:
-        response = requests.get(publisher_url, timeout=timeout)
+        # TLS-aware transport seam (VL-039): resolves ELYON_TLS_CA_BUNDLE fail-closed, so
+        # signed mode works over the real cross-host TLS deployment (parity with the
+        # byte-anchor fetch_published_record).
+        response = get_published(publisher_url, timeout=timeout)
     except Exception:
         return _reject(REF_VERIFY_PUBLISHED_RECORD_INVALID)
     if response.status_code != 200:

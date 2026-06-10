@@ -56,3 +56,48 @@ def published_hashes():
     except OSError:
         raise HTTPException(status_code=503, detail="published record unavailable")
     return Response(content=data, media_type="application/json")
+
+
+# Optional SIGNED published-record endpoint (VL-091, wiring B1). When a publisher
+# signing key is configured, serve a freshly-signed record (live currency pins +
+# a not_after window), re-signed per request so the served record is always
+# fresh. A configured target in signed mode fetches THIS endpoint and refuses a
+# stale record. Absent the signing key the endpoint 503s; the byte-anchor
+# endpoint above is unchanged. The publisher PRIVATE key arrives by environment,
+# never the repo.
+ENV_PUBLISHER_SIGNING_KEY_HEX = "ELYON_PUBLISHER_SIGNING_KEY_HEX"
+ENV_PUBLISHER_KEY_ID = "ELYON_PUBLISHER_KEY_ID"
+ENV_RECORD_MAX_AGE = "ELYON_RECORD_MAX_AGE_SECONDS"
+
+
+@app.get("/published_hashes_signed.json")
+def published_hashes_signed():
+    """Serve a freshly publisher-signed record (the live currency pins under a
+    not_after window). 503 if no signing key is configured (the byte-anchor
+    deployment). Fail-closed: any signing error is a 503, never a bad body."""
+    import json as _json
+    from datetime import datetime, timedelta, timezone
+
+    key_hex = os.environ.get(ENV_PUBLISHER_SIGNING_KEY_HEX)
+    key_id = os.environ.get(ENV_PUBLISHER_KEY_ID)
+    if not (key_hex and key_id):
+        raise HTTPException(status_code=503, detail="signed record not configured")
+    try:
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from EVIDENCE.published_hashes_signed_gen import build_signed_record
+
+        priv = Ed25519PrivateKey.from_private_bytes(bytes.fromhex(key_hex))
+        max_age = int(os.environ.get(ENV_RECORD_MAX_AGE, "300"))
+        now = datetime.now(timezone.utc)
+        record = build_signed_record(
+            publisher_key_id=key_id,
+            publisher_private_key=priv,
+            serial=int(now.timestamp()),
+            not_after=now + timedelta(seconds=max_age),
+        )
+    except Exception:
+        raise HTTPException(status_code=503, detail="signed record unavailable")
+    return Response(
+        content=_json.dumps(record, ensure_ascii=True, sort_keys=True),
+        media_type="application/json",
+    )
