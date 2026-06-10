@@ -15791,3 +15791,35 @@ Prior substantive entry: VL-096 (the in-process POC build + close). This entry c
 
 #### Next trajectory action
 Unchanged: G5, the author's to arrange. Optional cleanup: restore `MANIFEST/manifest.json` to the canonical default on both VMs (`git checkout -- MANIFEST/manifest.json` + rebuild) so the deployment returns to its at-rest state.
+
+
+### VL-097 - 2026-06-10 - Envelope inspector / reconciler (local audit tooling; build-then-wire)
+**Status:** RECORDED (a build increment; 33 new tests pass, full suite 310 -> 343 green in-container). Referent-bound: the artifact is `IMPLEMENTATION/envelope_inspector.py` + `docs/restructure/26_envelope_inspector_spec.md` + `TESTS/adversarial/test_envelope_inspector.py`; the spec is SINGLE-SOURCE (drafted this session, not yet cross-model-verified). GR-3: audit / red-team ergonomics, NOT a G5 closer.
+**Author:** Claude (build + in-container verification), session resumed per SESSION_PROTOCOL from STATE.md's Next-open-action directive (chosen 2026-06-10).
+**Classification:** trajectory-adjacent enabling infrastructure per VL-017a (it builds the audit surface the VL-096 follow-on discussion named; it does not move a gap).
+
+#### What it is
+A LOCAL, read-only audit tool over signed admissibility envelopes - the four capabilities named in the Next-open-action directive:
+1. `inspect_envelope`: decode the exact scope an envelope binds (AP / OP / context / target_url + manifest version+sha pins) plus issuance metadata (issuer_key_id, decision_id, not_after, decision, the canon/evaluator/manifest pins). Decode only; fail-closed on shape (the verifier's own structural-guard key tuples, imported).
+2. `verify_issuer`: the issuer signature + validity-window check ALONE (verifier steps 1.5 + 1.5b semantics, identical REF_VERIFY_SIGNATURE_* codes, VL-075 clock_skew parity), so an envelope can be attributed to an issuer without asserting currency or binding. The signed region is imported from envelope.py (`_SIGNATURE_EXCLUDED_KEYS`) - one canonical definition, no divergence possible.
+3. Currency: NOT wrapped - `envelope.reassert(envelope, record_source=...)` is called directly (the CLI runs it; the module re-exports nothing).
+4. `reconcile`: classify every EXECUTED action against the ISSUED envelopes. Verdicts (closed set): MATCHED (an unconsumed ELIGIBLE envelope binds the action - the same five comparisons verify_envelope step 3 applies - and decision_id matches when the action carries one; the envelope is consumed, single-use per VL-066), DUPLICATE_CONSUMPTION (every matching envelope already consumed - replay evidence at audit time), OUT_OF_SCOPE (no match - the A1-shaped event, visible only in audit). Envelope-side: UNUSED (informational) / INVALID_ENVELOPE (structural failure, non-ELIGIBLE decision, or - with pinned keys - issuer-verification failure; a forged issuance-log entry cannot legitimize an executed action).
+Plus a CLI (`inspect` / `reconcile` subcommands over JSON/JSONL) whose exit code is the audit verdict; `cryptography` imported lazily only for `--keys` (envelope.py's no-hard-dependency rule).
+
+#### Deliberate non-checks (spec section 3.4, recorded honestly)
+(a) reassert() currency is NOT in the matching predicate - the repository may have legitimately transitioned since issuance; a then-current envelope must not be retro-invalidated at audit time (currency is capability 3, run separately). (b) not_after vs execution time is not checked - the minimal action shape carries no timestamp (a named future knob). (c) Matching is greedy in log order - exact under single-use decision_ids, deterministic without them.
+
+#### What was verified (in-container)
+33/33 new tests (`TESTS/adversarial/test_envelope_inspector.py`): inspect decode + per-key structural fail-closed; verify_issuer genuine / tamper / unknown-key / missing-signature / expired / skew-window / negative-skew-raises / no-currency-assertion; reconcile positive control / no-envelope OUT_OF_SCOPE / per-field binding discrimination (all five bound fields) / AP-OP set semantics / DUPLICATE_CONSUMPTION / UNUSED / forged-entry-cannot-legitimize / REFUSE-decision-never-matches / decision_id-priority / currency-not-in-predicate / malformed-action fail-closed; CLI exit codes over tmp files. Full suite 343 passed (310 unchanged + 33 new), 0 failures. ASCII-safe (VL-009), LF endings. No production module touched; no default-path caller (build-then-wire, parity VL-074/076/078).
+
+#### Honest ceiling (GR-3)
+The reconciler audits a LOG. A target that acts without logging, or logs falsely, is outside what any log audit can establish - the trustworthy-log assumption is explicit in the module docstring and the spec. The gate does not yet persist an issuance log (named as the next open action). Nothing here touches G5: a real EXTERNAL attacker on a real PUBLIC surface remains the only open road item.
+
+#### Session-mechanics note (Cowork sandbox resume)
+The resume hit the VL-069-class mount artifact again: corrupt `.git/index` + stale `index.lock` + the stat cache serving tail-truncated file content (7 files appeared modified; the host files were intact and byte-identical to HEAD - verified via the host-tools view before any restore, per SESSION_PROTOCOL "Environment / sandbox recovery" rule 2). Recovered by rebuilding the index from HEAD through a tmpfs index, clearing the lock (delete permission granted), and `git checkout --` of the cache-stale paths (writing HEAD bytes identical to the host's). No work was lost; no history rewritten.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-096 live (the three-domain POC over real TLS). This entry cites VL-040/VL-041/VL-066/VL-075 (the signature, expiry, decision_id, and clock-skew semantics it reuses verbatim), VL-076/VL-078 (the build-then-wire parity), VL-037 (the verifier whose binding predicate and structural guard it imports), and the VL-096 follow-on discussion (the auditability property it operationalizes); it does not cite its own (spec + impl + tests + STATE + ledger) hash.
+
+#### Next trajectory action
+The gate-side issuance-log seam (so live deployments produce the issued.jsonl the reconciler audits), or cross-model verification of spec 26; G5 unchanged and the author's.
