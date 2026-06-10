@@ -313,13 +313,19 @@ Demonstrate (from the laptop) - admit once, present to BOTH instances; the secon
             target_client=RequestsClient("https://192.168.56.102:%d" % port, verify=ca),
             target_url="https://192.168.56.102:9000/target")
     a, b = surface(9000), surface(9001)
+    a0, b0 = a.acted_count(), b.acted_count()
+    # admit: the gate signs + PUSHES to instance A (:9000), which honors and claims the
+    # decision_id in the SHARED Redis.
     env = a.admit("transfer_funds", {"amount": 100, "to": "acct-42"})
-    print("instance A (9000):", a.attempt("transfer_funds", {"amount": 100, "to": "acct-42"}, env))
-    print("instance B (9001):", b.attempt("transfer_funds", {"amount": 100, "to": "acct-42"}, env))
+    a1 = a.acted_count()
+    # present the SAME decision directly to instance B (:9001) - a different process:
+    hb, rb = b.attempt("transfer_funds", {"amount": 100, "to": "acct-42"}, env)
+    print("instance A acted (push honored):", a1 - a0)        # 1
+    print("instance B verdict (same decision):", (hb, rb))    # (False, REF_VERIFY_REPLAY)
+    print("instance B acted:", b.acted_count() - b0)          # 0
     PY
-Expect instance A -> (True, REASSERTED_AND_BOUND) and instance B -> (False, REF_VERIFY_REPLAY):
-the shared Redis made the decision_id global, so the second instance refuses the replay.
-
-(Note: the gate's PUSH to :9000 on admit already claims the decision_id, so over the live push the
-A presentation may itself be a replay of the push - present via caller-carry as above, or scale to
-N instances behind a balancer. The point proven: the claim is SHARED across instances.)
+Expect: A acted = 1 (it honored the gate's push and claimed the decision_id in Redis), B verdict =
+(False, REF_VERIFY_REPLAY), B acted = 0. Instance B refused a decision it never saw, because the
+SHARED Redis made the claim global - cross-instance exactly-once. (With a per-instance in-memory
+cache, B would have honored it - that is the gap this closes.) Ensure the publisher is in a healthy
+state (300s window, not the stale-demo negative window) so A's signed-mode fetch honors.

@@ -1,0 +1,36 @@
+# Cross-instance replay overlay (B3 / VL-094): adds Redis + a SECOND target instance (:9001)
+# sharing it, so a decision_id honored on one instance is refused REF_VERIFY_REPLAY on the other.
+# Use WITH the base + tls (+ hosts) overlays:
+#   docker compose -f docker-compose.yml -f docker-compose.tls.yml -f docker-compose.hosts.yml \
+#       -f docker-compose.replay.yml up -d --build redis target target2
+# target2 runs in byte-anchor mode (no publisher key) - the replay defense is the same in either
+# record mode; both fetch a valid record and the only cross-instance difference is the shared claim.
+services:
+  redis:
+    image: redis:7-alpine
+
+  target:
+    environment:
+      ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+
+  target2:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["uvicorn", "IMPLEMENTATION.reference_target:app", "--host", "0.0.0.0", "--port", "9001",
+              "--ssl-certfile", "/certs/target.crt", "--ssl-keyfile", "/certs/target.key"]
+    environment:
+      ELYON_TARGET_URL: https://192.168.56.102:9000/target
+      ELYON_PUBLISHER_URL: https://publisher:9100/published_hashes.json
+      ELYON_PINNED_ROOT_SHA256: ${ELYON_PINNED_ROOT_SHA256}
+      ELYON_GATE_KEY_ID: ${ELYON_GATE_KEY_ID}
+      ELYON_GATE_PUBLIC_KEY_HEX: ${ELYON_GATE_PUBLIC_KEY_HEX}
+      ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+      ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - publisher
+      - redis
+    volumes:
+      - ./tls/certs:/certs:ro
+    ports:
+      - "9001:9001"
