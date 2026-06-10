@@ -65,6 +65,11 @@ def _handshake(server_cert_pem, server_key_pem, client_trust_pem, server_hostnam
         client_ctx.load_verify_locations(cadata=client_trust_pem.decode("ascii"))
         client_ctx.check_hostname = True
         client_ctx.verify_mode = ssl.CERT_REQUIRED
+        # Strict X.509 (matches OpenSSL 3.x on a real client, e.g. Python 3.13 on
+        # Windows): requires the CA's Subject Key Identifier + the leaf's Authority
+        # Key Identifier. The live cross-host run surfaced their absence (Lesson 12).
+        if hasattr(ssl, "VERIFY_X509_STRICT"):
+            client_ctx.verify_flags |= ssl.VERIFY_X509_STRICT
 
         s_in, s_out = ssl.MemoryBIO(), ssl.MemoryBIO()
         c_in, c_out = ssl.MemoryBIO(), ssl.MemoryBIO()
@@ -99,6 +104,9 @@ def test_leaf_is_ca_signed_in_window_with_san():
     san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
     assert "target" in san.get_values_for_type(x509.DNSName)
     assert not cert.extensions.get_extension_for_class(x509.BasicConstraints).value.ca
+    # SKI + AKI are required by strict OpenSSL 3.x chain building (VL-087):
+    cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+    cert.extensions.get_extension_for_class(x509.AuthorityKeyIdentifier)
 
 
 def test_real_tls_handshake_verifies_with_trusted_ca():
