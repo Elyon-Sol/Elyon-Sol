@@ -15486,3 +15486,33 @@ Prior substantive entry: VL-085 (the Hyper-V checklist). This entry cites VL-081
 
 #### Next trajectory action
 Unchanged and fully on-ramped on the author's actual hypervisor: stand up the two VirtualBox VMs per this checklist, run the live attack suite over real cross-host TLS, flip REAL_TRANSPORT green (C4), and recruit a real external attacker (G5/GR-3). No in-house authoring remains.
+
+
+### VL-087 - 2026-06-09 - C2 cert-tooling bug fix: gen_certs missing SKI/AKI (surfaced by the first live cross-host run)
+**Status:** RECORDED (real bug fix). Referent-bound: the failure is an executed real-client error (Python 3.13 / OpenSSL 3.x on the Windows client, `CERTIFICATE_VERIFY_FAILED: Missing Authority Key Identifier`); the fix is verified by an executed strict-verification handshake that REJECTS the old cert with that exact error and ACCEPTS the fixed cert (proven inline); full suite re-run live (298/0). Two files changed (deploy/tls/gen_certs.py + its test); no canon / evaluator / IMPLEMENTATION / MANIFEST change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** capability / bug fix per VL-017a (a real defect in a C2 artifact), not a doc move. The FIRST finding from a real surface - exactly the referent the in-house build could not provide.
+
+#### The bug
+`deploy/tls/gen_certs.py` (VL-082) built the CA and the leaf certs without a `SubjectKeyIdentifier` (CA) or `AuthorityKeyIdentifier` (leaves). Lenient TLS stacks accept such a chain, so the in-sandbox `ssl.MemoryBIO` handshake test passed. But a STRICT OpenSSL 3.x client - here Python 3.13's `requests`/`ssl` on the Windows source machine - enforces RFC-5280 key-identifier chain building and rejects it: `CERTIFICATE_VERIFY_FAILED: Missing Authority Key Identifier`. On the first live cross-host attack run the client failed at the gate TLS handshake before any admission logic ran.
+
+#### The fix
+- `deploy/tls/gen_certs.py`: the CA now carries `x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key())`; each leaf now carries `x509.SubjectKeyIdentifier.from_public_key(leaf_key.public_key())` and `x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key())` (the AKI keyid matches the CA's SKI by construction).
+- `TESTS/deploy/test_tls_certs.py`: the handshake client context now sets `ssl.VERIFY_X509_STRICT` (when available), reproducing the real OpenSSL-3.x check that the lenient test missed; plus an assertion that the leaf has SKI + AKI. Verified inline that a pre-fix (no-AKI) cert is REJECTED under strict with the identical "Missing Authority Key Identifier" error, and the post-fix cert is accepted.
+
+#### Why the sandbox missed it (Lesson 12)
+Environment hermeticity again: the build sandbox's in-memory handshake was not strict, so it accepted a chain a real client rejects. "Passes here" was not "passes against a real OpenSSL 3.x client." The strict flag now closes that gap, so a future cert regression fails in CI, not on the author's VM. This is the first real-surface-found defect and the strongest argument yet for the gate-1 referent: the live run earned a fix the entire in-house build could not.
+
+#### Author action (to unblock the live run)
+On VM-A: `git pull`, re-run `python deploy/tls/gen_certs.py 192.168.56.101 192.168.56.102`, redistribute `ca.crt` + the leaf certs to VM-B and the client, restart the gate/target/publisher. (No `bootstrap_config.py` re-run needed - the keypair/anchor are unchanged; only the certs are regenerated.) The earlier `Could not connect` on .102:9000/9100 is a separate item: VM-B's services must be up (`docker compose ... up publisher target`) and reachable.
+
+#### Verification (referent-bound)
+- Inline strict-handshake check: old no-AKI cert -> `SSLCertVerificationError` ("Missing Authority Key Identifier"); fixed cert -> verified handshake, peer cert returned.
+- `TESTS/deploy/test_tls_certs.py` 6/6 under `VERIFY_X509_STRICT`; full suite `python -m pytest TESTS/` 298 passed + 0 xfailed.
+- Both changed files ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-086 (the VirtualBox runbook). This entry cites VL-082 (the gen_certs tooling it fixes) and VL-080 follow-up / Lesson 12 (the hermeticity class this is another instance of); it does not cite its own (2-file + STATE + ledger) hash.
+
+#### Next trajectory action
+The live cross-host run, resumed: with regenerated certs and VM-B up, run `attack_suite_live_runner.py` from the client over real TLS; a green run flips REAL_TRANSPORT (C4). Then the real external attacker (G5/GR-3). This entry is the proof that the real surface yields referents the sandbox cannot.
