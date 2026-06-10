@@ -1,0 +1,12 @@
+{
+  "version": "legal-1.0",
+  "interaction_type": "default",
+  "AR": [
+    "attorney_identity",
+    "bar_admission_active",
+    "matter_authorization"
+  ],
+  "R": [
+    "court_filing:submit"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "version": "med-1.0",
+  "interaction_type": "default",
+  "AR": [
+    "clinician_identity",
+    "active_license",
+    "prescriptive_authority"
+  ],
+  "R": [
+    "medication_order:create"
+  ]
+}

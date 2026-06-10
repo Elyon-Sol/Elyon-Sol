@@ -1,0 +1,12 @@
+{
+  "version": "fin-1.0",
+  "interaction_type": "default",
+  "AR": [
+    "trader_identity",
+    "desk_authorization",
+    "limit_check_cleared"
+  ],
+  "R": [
+    "trade:execute"
+  ]
+}
