@@ -15516,3 +15516,32 @@ Prior substantive entry: VL-086 (the VirtualBox runbook). This entry cites VL-08
 
 #### Next trajectory action
 The live cross-host run, resumed: with regenerated certs and VM-B up, run `attack_suite_live_runner.py` from the client over real TLS; a green run flips REAL_TRANSPORT (C4). Then the real external attacker (G5/GR-3). This entry is the proof that the real surface yields referents the sandbox cannot.
+
+
+### VL-088 - 2026-06-09 - attack-harness bug fix: target_url_swap admitted against an unreachable URL (second real-surface finding)
+**Status:** RECORDED (real bug fix). Referent-bound: the failure is an executed live-run error (`KeyError: 'envelope'` at `target_url_swap`, after six attacks ran cleanly over real cross-host TLS - confirming VL-087); the fix is verified by the in-process + HTTP-subset tests (4/4) and the full suite (298/0). One harness file changed; no canon / evaluator / IMPLEMENTATION / MANIFEST change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** capability / bug fix per VL-017a (a defect in the C3 attack harness), found by the real surface. The second real-surface-found defect (after VL-087's cert bug).
+
+#### The bug
+`run_suite`'s `target_url_swap` attack did `surface.admit(TOOL, ARGS, target_url="mcp://elyon-sol/OTHER-surface")` - admitting an envelope bound to a literal, unreachable URL, to then present it for a binding-mismatch refusal. In-process this passed because `InProcessSurface.admit` mocks the gate's upstream forward. But the PRODUCTION gate FORWARDS to `target_url` on every ELIGIBLE (push delivery), and `requests` cannot post to an `mcp://` scheme, so the gate failed closed and `/governed-call` returned no envelope -> the live runner `KeyError`'d at the admit. The first six attacks (positive control, un-attested, forged, replay, rebind-tool, rebind-args) ran cleanly over real TLS first, so this was the lone broken case.
+
+#### The fix
+`EVIDENCE/proofs/attack_harness.py`: the swap target is now DERIVED from the surface's real target - `real_target + "-SWAP"` (a different PATH on the same reachable host), via `getattr(surface, "target_url", None) or getattr(surface, "target_id", None)`, with the literal as a fallback. The gate can forward there (the host:port is reachable; the path 404s, which is a response, not an exception), so it mints the envelope bound to the swap URL; the executor then refuses it on the binding check (`REF_VERIFY_BINDING_MISMATCH`) because the bound target_url differs from its configured identity. In-process behaviour is unchanged (the forward is mocked; any differing URL works).
+
+#### Why the sandbox missed it (Lesson 12, again)
+The harness assumed `admit` does not forward - true only in-process, where the forward is mocked. Against a real gate, admit triggers the live push. This is the same environment-hermeticity class as the VL-080-follow-up test bug and VL-087's cert strictness: "passes in-process" was not "passes against a real gate." Both real-surface findings (VL-087, VL-088) are the gate-1 referent doing exactly what the in-house build could not.
+
+#### Author action
+The client (the laptop running the suite) is the mounted repo, so the fix is already on disk - just re-run `EVIDENCE/proofs/attack_suite_live_runner.py`. No cert regeneration and no service restart: this defect is entirely client-side (the gate/target/publisher and certs are unchanged). (`git push` to sync origin.) Note: the Windows `curl` smoke-test error `schannel: the revocation status is unknown` is a Windows-curl-vs-private-CA artifact, not a server fault - add `--ssl-no-revoke` to those curls; Python `requests` uses OpenSSL and is unaffected.
+
+#### Verification (referent-bound)
+- `TESTS/adversarial/test_attack_harness.py` 4/4 (in-process full matrix + the HTTP-subset run, both defeating target_url_swap with the derived URL); full suite `python -m pytest TESTS/` 298 passed + 0 xfailed.
+- Swap derivation checked for both surface types: HttpSurface -> `.../target-SWAP`; InProcessSurface -> `mcp://.../tool-server-SWAP`.
+- File ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-087 (the cert-tooling fix, the first real-surface finding). This entry cites VL-079 (the attack harness it fixes), VL-083 (the live runner that surfaced it), and Lesson 12 / VL-080 follow-up (the hermeticity class); it does not cite its own (harness + STATE + ledger) hash.
+
+#### Next trajectory action
+The live run, resumed once more: re-run the suite from the client; with both real-surface bugs fixed, expect the positive control honored and all attacks (including target_url_swap) defeated over real cross-host TLS, exit 0 -> flip REAL_TRANSPORT green (C4). Then the real external attacker (G5/GR-3).
