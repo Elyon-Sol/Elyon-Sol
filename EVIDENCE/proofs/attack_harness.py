@@ -203,9 +203,17 @@ def run_suite(surface, drifted_surface=None, include_stale=True) -> List[AttackR
            surface.attempt(TOOL, {"amount": 999999, "to": "acct-42"}, surface.admit(TOOL, ARGS)),
            False, REF_VERIFY_BINDING_MISMATCH)
 
-    # Target-URL swap: an envelope bound to target A presented to target B.
-    env_swap = surface.admit(TOOL, ARGS, target_url="mcp://elyon-sol/OTHER-surface")
-    record("target_url_swap", "present an envelope bound to another target",
+    # Target-URL swap: an envelope bound to a DIFFERENT target presented to this one.
+    # The bound target must be REACHABLE, because the production gate FORWARDS to it on
+    # ELIGIBLE (push delivery) before returning the envelope - admitting against an
+    # unreachable literal (e.g. an mcp:// scheme) makes the gate fail closed and the admit
+    # returns no envelope. So derive a different-IDENTITY but reachable URL from the real
+    # target (a different path on the same host); the executor still refuses it on the
+    # binding check. (In-process the forward is mocked, so any differing URL works.)
+    real_target = getattr(surface, "target_url", None) or getattr(surface, "target_id", None)
+    swap_target = (real_target + "-SWAP") if real_target else "mcp://elyon-sol/OTHER-surface"
+    env_swap = surface.admit(TOOL, ARGS, target_url=swap_target)
+    record("target_url_swap", "present an envelope bound to another (different-path) target",
            surface.attempt(TOOL, ARGS, env_swap), False, REF_VERIFY_BINDING_MISMATCH)
 
     # Drift: the executor's published/evaluator state moved.
