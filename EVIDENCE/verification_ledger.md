@@ -15735,36 +15735,3 @@ Prior substantive entry: VL-094 follow-up (the cross-instance overlay). This ent
 
 #### Next trajectory action
 Only G5 remains, and it is not in-house: stand up a public surface (real DNS + real CA + internet-reachable) and recruit a real external attacker who has not read the project's account of itself. Everything that leads to that line is now built, wired, deployed, and proven on real cross-host hardware for the cross-host tier; the public-attacker tier is the author's to arrange.
-
-
-### VL-096 - 2026-06-10 - Three-domain synthetic POC: the unchanged chain characterized across medical / legal / finance
-**Status:** RECORDED (a demonstration increment; 39/39 synthetic cases pass in-process against the production chain). Referent-bound: the proof is the runnable `EVIDENCE/proofs/three_domain_poc/poc_runner.py` + the 3 generated reviewer reports; the runner self-checks (exit non-zero on any actual!=expected). GR-3: in-loop = characterization, not certification.
-**Author:** Claude (build + in-process self-verify). The live run is the author's (RUNBOOK_live.md).
-**Classification:** demonstration per VL-017a. Adds breadth of domain CONTENT over the one decision chain; introduces no new invariant, no code change to the gate/evaluator/envelope/verifier/target, and does not move G5.
-
-#### What it is
-A synthetic POC across three unrelated decision domains, each its own pinned manifest run sequentially (the gate evaluates the single on-disk `MANIFEST/manifest.json`, so the domains cannot be live at once):
-- MEDICAL (e-prescribing): AR=[clinician_identity, active_license, prescriptive_authority], R=[medication_order:create].
-- LEGAL (court e-filing): AR=[attorney_identity, bar_admission_active, matter_authorization], R=[court_filing:submit].
-- FINANCE (trade execution): AR=[trader_identity, desk_authorization, limit_check_cleared], R=[trade:execute].
-Each domain runs the same 13-case taxonomy with domain-realistic, reviewer-legible AP/OP/context (all data fictional - synthetic MRN/NPI/bar/account/matter ids; `*.example` URLs): 3 admitted (incl. AP exactly == AR), 3 gate-refusals that report WHICH production condition failed (AC3 / T26 / manifest-integrity, via the same `ac3_valid`/`t26_valid`/`manifest_integrity_valid` functions `evaluate()` short-circuits on), and 7 executor-refusals (unattested A1, forged-signature, replay/exactly-once, rebind-operation, rebind-context, target-swap, stale/expired). forged (tamper the envelope -> signature) vs rebind-context (genuine envelope, altered live payload -> binding) are kept distinct on purpose: the two ways "the authorized thing changed", caught by two different defenses.
-
-#### What landed
-- `docs/restructure/25_three_domain_poc_spec.md` - the spec (purpose, the per-domain mechanics, the 13-case taxonomy, the two modes, the honest ceiling).
-- `EVIDENCE/proofs/three_domain_poc/domains.py` - the three manifests + the synthetic case vocabulary (pure data; fictional identifiers; no real PHI/PII/PCI).
-- `EVIDENCE/proofs/three_domain_poc/poc_runner.py` - dual-mode runner. inproc: pep.app TestClient (injected gate signing key, mocked push) admits; `verify_envelope(record_source=None, pinned gate key)` + `InMemoryReplayCache` is the executor; the domain manifest is copied onto `MANIFEST/manifest.json` under try/finally and restored. live: a real gate URL + reference-target URL over TLS (the `attack_harness.RequestsClient` shape), the author's per RUNBOOK. Same case set, same expected production reasons, both modes.
-- `EVIDENCE/proofs/three_domain_poc/manifests/{medical,legal,finance}.json` - byte-stable manifest files (the runner copies these bytes to pin, so the in-process sha == the operator-deployed sha).
-- `EVIDENCE/proofs/three_domain_poc/reports/{medical,legal,finance}_report.md` - the generated reviewer reports (policy header + per-case actor/operation/payload/gate-decision/envelope-trace/executor-verdict + a one-line domain gloss).
-- `EVIDENCE/proofs/three_domain_poc/RUNBOOK_live.md` - the per-domain live procedure (pin the manifest on both hosts, rebuild gate + republish, run the runner, collect the report; restore after).
-
-#### What was verified (in-process, hermetic)
-`PYTHONPATH=. python3 -m EVIDENCE.proofs.three_domain_poc.poc_runner` -> 39/39 (13 per domain x 3) cases match their expected production outcome, exit 0. Positive controls honored (REASSERTED_AND_BOUND); gate refusals show the correct single failing condition (AC3 / T26 / manifest-integrity respectively); executor refusals return the exact REF_VERIFY_* code. Post-run `MANIFEST/manifest.json` sha is the pristine canonical `a21dea8b...` (swapped-then-restored), the committed manifests equal the domains.py dicts, and the full suite is 310 unchanged. Only additive files (the proof dir + the spec); no production module touched.
-
-#### Honest ceiling (GR-3)
-Three domains do not add three validations - they add breadth of CONTENT over one decision chain whose security properties are exactly those already recorded and unchanged. In-loop runs are characterization. The live mode reproduces the reports over real cross-host TLS but stays inside the project's live tier (two VMs, one host, private net, dev CA, author's own calls). The only open road item remains G5: a real EXTERNAL attacker on a real PUBLIC surface. This increment does not touch it.
-
-#### Citation discipline (VL-012)
-Prior substantive entry: VL-095 (the live cross-host proof of the wired B1/B3 capabilities). This entry cites VL-079 (the attack-harness surface pattern this POC mirrors), VL-029/VL-037/VL-066 (the envelope/verifier/replay machinery it exercises unchanged), and VL-017a (the demonstration classification); it does not cite its own (spec + domains + runner + 3 manifests + 3 reports + RUNBOOK + STATE + ledger) hash.
-
-#### Next trajectory action
-Unchanged: G5 (a real external attacker on a public surface), the author's to arrange. Optional: the author runs `poc_runner.py --mode live` per the RUNBOOK to reproduce the three reviewer reports over real transport.

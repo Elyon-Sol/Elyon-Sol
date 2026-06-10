@@ -56,11 +56,22 @@ the image or volume-mounted.
         --mode live \
         --gate-url   https://<VM-A-ip>:8000 \
         --target-url https://<VM-B-ip>:9000 \
+        --target-id  https://<VM-B-ip>:9000/target \
         --domain     $DOMAIN \
         --ca-bundle  deploy/tls/certs/ca.crt \
         --decision-max-age <the gate's ELYON_DECISION_MAX_AGE_SECONDS>
 
 Notes:
+- `--target-url` is the reference-target client BASE (the runner POSTs to
+  `<base>/target`); `--target-id` is the BOUND identity envelopes carry, and it
+  MUST exactly equal the target's `ELYON_TARGET_URL` (scheme/ip/port/`/target`).
+  These mirror `ELYON_LIVE_TARGET_URL` vs `ELYON_LIVE_TARGET_ID` in
+  `attack_suite_live_runner.py`. A mismatch shows up as `REF_VERIFY_BINDING_MISMATCH`
+  on the positive controls.
+- The production gate uses PUSH delivery: a valid admit forwards the envelope to
+  the target, which acts then. The positive controls observe the target's
+  `/received` count incrementing (not re-presenting, which would replay) — so the
+  target's `/received` endpoint must be reachable from the client.
 - `--ca-bundle` is the dev CA so the client verifies the gate/target certs
   (fail-closed; never pass `verify=False`).
 - `--decision-max-age` must equal the gate's configured decision window so the

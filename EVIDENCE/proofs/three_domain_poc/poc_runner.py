@@ -166,23 +166,44 @@ class InProcSurface:
             "manifest_integrity": manifest_integrity_valid(interaction, m),
         }
 
+    def positive_control(self, target_url, interaction):
+        """A valid admitted call IS honored. In-process the push is mocked (no real target acts),
+        so present-then-honor as normal."""
+        dec, env = self.admit(target_url, interaction)
+        if dec != "ELIGIBLE":
+            return None, "admit-refused", env, dec
+        hon, reason = self.attempt(env, interaction, target_url)
+        return hon, reason, env, dec
+
 
 class LiveSurface:
     """A real gate URL + a real reference-target URL over HTTP/TLS (the author's adapter; not
-    exercised in-sandbox). The remote target serves ONE configured ELYON_TARGET_URL, so the
-    executor binding is against that URL; the illustrative *.example domain URLs are not used."""
+    exercised in-sandbox).
+
+    Two distinct target values (the live deployment separates them, matching
+    attack_suite_live_runner.py's ELYON_LIVE_TARGET_URL vs ELYON_LIVE_TARGET_ID):
+      - target_base: the reference-target client base URL (e.g. https://host:9000); requests POST
+        to base + "/target".
+      - target_id:   the BOUND identity (e.g. https://host:9000/target) == the target's
+        ELYON_TARGET_URL env. Envelopes bind to this; the gate is admitted against it and pushes
+        to it. The swap case admits against target_id + "-SWAP" (a reachable different path on the
+        same host, so the gate's push does not fail closed; the executor still refuses the binding).
+
+    The production gate uses PUSH delivery (VL-038): it forwards the admitted envelope to the
+    target on ELIGIBLE, so a valid admit ACTS at the target. The positive controls therefore
+    observe the target acting (its /received count) rather than re-presenting (which would replay)."""
 
     mode = "live"
 
-    def __init__(self, gate_url: str, target_url: str, ca_bundle: Optional[str]):
+    def __init__(self, gate_url: str, target_base: str, target_id: str, ca_bundle: Optional[str]):
         from EVIDENCE.proofs.attack_harness import RequestsClient
         verify = ca_bundle if ca_bundle else True
         self._gate = RequestsClient(gate_url, verify=verify)
-        self._target = RequestsClient(target_url, verify=verify)
-        self.target_url = target_url
+        self._target = RequestsClient(target_base, verify=verify)
+        self.target_id = target_id
 
     def pin_manifest(self, domain: str) -> None:
-        pass  # the operator pins + republishes + restarts out of band (RUNBOOK_live.md)
+        pass  # the operator pins + republishes + rebuilds out of band (RUNBOOK_live.md)
 
     def restore_manifest(self) -> None:
         pass
@@ -192,10 +213,13 @@ class LiveSurface:
 
     def domain_targets(self, domain: Dict[str, Any]) -> Tuple[str, str]:
         # the real deployed target is the bound identity; swap = a reachable different path
-        return self.target_url, self.target_url.rstrip("/") + "-SWAP"
+        return self.target_id, self.target_id + "-SWAP"
+
+    def acted_count(self) -> int:
+        r = self._target.get("/received")
+        return r.json()["count"]
 
     def admit(self, target_url: str, interaction: Dict[str, Any], max_age: int = 300):
-        from IMPLEMENTATION.envelope import canonical_json  # noqa: F401 (kept for parity)
         r = self._gate.post(
             "/governed-call",
             json={"target_url": target_url, "interaction": interaction},
@@ -218,6 +242,25 @@ class LiveSurface:
             body = r.json()
             return body["honored"], body["reason"]
         return False, r.json()["detail"]["reason"]
+
+    def positive_control(self, target_url, interaction):
+        """Under PUSH delivery the gate forwards the admitted envelope to the target on ELIGIBLE,
+        so the honor happens AT ADMIT. Observe the target acting (its /received count) rather than
+        re-presenting (which would be a replay)."""
+        before = self.acted_count()
+        dec, env = self.admit(target_url, interaction)
+        if dec != "ELIGIBLE":
+            return None, "admit-refused", env, dec
+        acted = self.acted_count() == before + 1
+        return acted, (EXPECT_HONORED if acted else "NOT_ACTED"), env, dec
+
+    def condition_diagnosis(self, interaction: Dict[str, Any]) -> Dict[str, bool]:
+        # if the operator pinned the same manifest locally, the local condition functions
+        # diagnose faithfully; otherwise fall back to no diagnosis.
+        try:
+            return InProcSurface.condition_diagnosis(self, interaction)  # type: ignore[arg-type]
+        except Exception:
+            return {}
 
     def condition_diagnosis(self, interaction: Dict[str, Any]) -> Dict[str, bool]:
         # if the operator pinned the same manifest locally, the local condition functions
@@ -308,10 +351,7 @@ def run_domain(spec: Dict[str, Any], surface, decision_max_age: Optional[int]) -
         ("admit_minimal_authority", spec["ap_minimal"], spec["op_required"], spec["ctx_primary"]),
     ]:
         i = interaction(ap, op, ctx)
-        dec, env = surface.admit(primary_target, i)
-        hon, reason = (None, "n/a")
-        if dec == "ELIGIBLE":
-            hon, reason = surface.attempt(env, i, primary_target)
+        hon, reason, env, dec = surface.positive_control(primary_target, i)
         cases.append(Case(cname, "executor", ap, op, ctx, dec, {},
                           env_or_none(dec, env), hon, reason, True, EXPECT_HONORED, g[cname]))
 
@@ -524,8 +564,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     p = argparse.ArgumentParser(description="Three-domain synthetic POC runner")
     p.add_argument("--mode", choices=["inproc", "live"], default="inproc")
     p.add_argument("--domain", choices=DOMAIN_ORDER + ["all"], default="all")
-    p.add_argument("--gate-url", help="live mode: gate base URL")
-    p.add_argument("--target-url", help="live mode: reference-target base URL")
+    p.add_argument("--gate-url", help="live mode: gate base URL (e.g. https://host-a:8000)")
+    p.add_argument("--target-url", help="live mode: reference-target client base URL "
+                                        "(e.g. https://host-b:9000) == ELYON_LIVE_TARGET_URL")
+    p.add_argument("--target-id", help="live mode: the BOUND target identity "
+                                       "(e.g. https://host-b:9000/target) == the target's "
+                                       "ELYON_TARGET_URL / ELYON_LIVE_TARGET_ID")
     p.add_argument("--ca-bundle", help="live mode: CA bundle path for TLS verification")
     p.add_argument("--decision-max-age", type=int, default=None,
                    help="live mode: the gate's decision window (s) for the stale case")
@@ -542,10 +586,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.mode == "inproc":
         surface = InProcSurface()
     else:
-        if not (args.gate_url and args.target_url):
-            print("ERROR: live mode requires --gate-url and --target-url.", file=sys.stderr)
+        if not (args.gate_url and args.target_url and args.target_id):
+            print("ERROR: live mode requires --gate-url, --target-url (client base), and "
+                  "--target-id (the bound /target identity).", file=sys.stderr)
             return 2
-        surface = LiveSurface(args.gate_url, args.target_url, args.ca_bundle)
+        surface = LiveSurface(args.gate_url, args.target_url, args.target_id, args.ca_bundle)
 
     total_pass = total = 0
     try:
