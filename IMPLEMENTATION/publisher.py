@@ -95,8 +95,11 @@ def published_hashes_signed():
             serial=int(now.timestamp()),
             not_after=now + timedelta(seconds=max_age),
         )
-    except Exception:
-        raise HTTPException(status_code=503, detail="signed record unavailable")
+    except Exception as exc:
+        # The publisher is NOT a trust surface (the target signature- + freshness-verifies the
+        # record regardless), so surfacing the cause here aids deployment debugging without
+        # weakening the gate. Fail-closed 503.
+        raise HTTPException(status_code=503, detail="signed record unavailable: %r" % exc)
     return Response(
         content=_json.dumps(record, ensure_ascii=True, sort_keys=True),
         media_type="application/json",
