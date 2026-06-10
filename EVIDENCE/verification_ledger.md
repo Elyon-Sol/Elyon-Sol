@@ -15468,3 +15468,21 @@ Prior substantive entry: VL-084 follow-up 2 (the full-repo audit). This entry ci
 
 #### Next trajectory action
 Unchanged and now fully on-ramped: the author stands up the two VMs per this checklist, runs the live attack suite over real cross-host TLS, flips REAL_TRANSPORT green (C4), and recruits a real external attacker (G5/GR-3). No in-house authoring remains.
+
+
+### VL-086 - 2026-06-09 - deploy runbook: VirtualBox two-host provisioning checklist (operational; the author's chosen hypervisor)
+**Status:** RECORDED (operational runbook; no code / canon / test / claim change). One new deploy doc. Suite unchanged (298/0). UNVALIDATED in the build sandbox (no VirtualBox / docker / VMs); author-executed.
+**Author:** Claude (working session with the project author).
+**Classification:** deploy artifact / operational doc per VL-017a; not a trajectory move. Sibling of VL-085 (Hyper-V) for Oracle VirtualBox, the hypervisor the author is actually using.
+
+#### What landed
+`deploy/host_setup_virtualbox.md`: a full self-contained checklist for the cross-host TLS run on two VirtualBox Ubuntu VMs - VM-A = gate (:8000, 192.168.56.101); VM-B = target (:9000) + publisher (:9100, 192.168.56.102). The VirtualBox-specific section is networking: each VM gets TWO adapters - Adapter 1 NAT (internet for apt + git clone), Adapter 2 Host-only (vboxnet0, 192.168.56.0/24 for VM<->VM<->host on stable IPs) - the standard robust VirtualBox pattern, with a Host Network Manager / `VBoxManage hostonlyif` setup and a netplan `99-hostonly.yaml` static-IP snippet for the second NIC (the NAT NIC keeps DHCP for internet). The remaining sections mirror VL-085: docker.io + docker-compose-v2 + git + NTP base setup; bootstrap_config + gen_certs with both IPs in the SAN; the `docker-compose.hosts.yml` IP override (the committed compose is single-box, service-name URLs); the per-host `docker compose ... up` split (publisher+target on VM-B, gate on VM-A); the `attack_suite_live_runner.py` invocation with the ELYON_LIVE_* env (runnable from the host on 192.168.56.1 or from a VM); the C4 step (flip REAL_TRANSPORT green naming the run log); a curl smoke test; and a VirtualBox-aware troubleshooting list (host-only IP / adapter, NAT internet, SAN/IP, fail-closed causes, clock-skew, binding).
+
+#### Honest scope
+Two VirtualBox VMs are distinct OS hosts with real network + real TLS, so a green run GREENS REAL_TRANSPORT (the cross-host referent the C4 predicate names). It is NOT the public-internet / external-attacker referent: one physical machine, a private host-only network, both ends author-controlled. A real EXTERNAL attacker on a public surface remains the G5 / GR-3 finish line and the binding NOT-READY reason. As in VL-085, the doc works around the committed compose's single-box assumption with the IP-override overlay; a committed two-host compose profile remains a candidate C1 refinement (named, not built).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-085 (the Hyper-V checklist). This entry cites VL-081 / VL-082 (the C1/C2 deploy artifacts it provisions) and VL-083 (the live runner + REAL_TRANSPORT predicate the run targets); it does not cite its own (doc + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged and fully on-ramped on the author's actual hypervisor: stand up the two VirtualBox VMs per this checklist, run the live attack suite over real cross-host TLS, flip REAL_TRANSPORT green (C4), and recruit a real external attacker (G5/GR-3). No in-house authoring remains.
