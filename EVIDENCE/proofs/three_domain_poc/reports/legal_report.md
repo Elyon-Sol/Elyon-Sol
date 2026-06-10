@@ -1,6 +1,6 @@
 # Elyon-Sol POC — Legal — court e-filing
 
-_Mode: **inproc** · cases: 13 · passed: 13/13 · generated 2026-06-10 19:47:07Z_
+_Mode: **live** · cases: 13 · passed: 12/13 · generated 2026-06-10 20:47:44Z_
 
 > **Synthetic data.** All identifiers (patient/account/matter/bar/NPI numbers, URLs) are fictional and resolve to nothing real. This is a characterization run of the production admission chain (GR-3), not an external validation.
 
@@ -23,12 +23,12 @@ _An admitted attorney submits a motion to compel on an authorized matter — adm
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `cfd825b30ecf4d2fb9e8f676a22c11b7`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `ef4ba8ea87354e008329fb03ac001c57`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.326677+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `bd138a2ee4ecc78f…`
-  - decision_sha256: `a18e775a82b08a7d…`
+  - not_after: `2026-06-10T20:52:43.784249+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `0a9a34bdd825504e…`
+  - decision_sha256: `88ae8d16474c5b07…`
 - **executor verdict**: HONORED — acted (`REASSERTED_AND_BOUND`)
 - **expected**: honored (`REASSERTED_AND_BOUND`)
 
@@ -40,12 +40,12 @@ _The same attorney submits a reply brief on the same matter — admitted and fil
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: reply_brief; bar_number: CA-298344; client_ref: CLT-7731; privilege: work-product; document_sha256: 99d8ee1bd28b2c30…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `2216fa52b2e644d391b638365ae15dc8`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `9a82bc48e6a04d7096ddfb155c4ee9c2`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.337095+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `ca8fac0d0f1cd4ff…`
-  - decision_sha256: `d70e4f3a10789f17…`
+  - not_after: `2026-06-10T20:52:43.893556+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `6c0f6f2c7938e283…`
+  - decision_sha256: `49c5ee55f4fa32ad…`
 - **executor verdict**: HONORED — acted (`REASSERTED_AND_BOUND`)
 - **expected**: honored (`REASSERTED_AND_BOUND`)
 
@@ -57,12 +57,12 @@ _Exactly the required standing, no extras — still admissible._
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `893137926daf4e3ab4ae58ea8bd9160a`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `ce48674024a9404aa5cea8911900af30`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.347719+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `3082e31f1eaf1cb3…`
-  - decision_sha256: `5b29df91ba829662…`
+  - not_after: `2026-06-10T20:52:43.961108+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `76b4484cf7c94c0d…`
+  - decision_sha256: `51a6f0ed660c7f27…`
 - **executor verdict**: HONORED — acted (`REASSERTED_AND_BOUND`)
 - **expected**: honored (`REASSERTED_AND_BOUND`)
 
@@ -73,8 +73,8 @@ _A paralegal without active bar admission cannot submit a filing._
 - **actor (AP)**: `attorney_identity, paralegal_credential, matter_authorization`
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
-- **gate decision**: REFUSE — AC3 unsatisfied
-  - AC³=False · T²⁶=True · manifest-integrity=True
+- **gate decision**: REFUSE — AC3, T26, MANIFEST_INTEGRITY unsatisfied
+  - AC³=False · T²⁶=False · manifest-integrity=False
 - **executor**: not reached (refused at the gate)
 
 ### wrong_operation — ✅ PASS
@@ -84,8 +84,8 @@ _A draft action is not a submission and is refused._
 - **actor (AP)**: `attorney_identity, bar_admission_active, matter_authorization, efiling_credential`
 - **operation (OP)**: `court_filing:draft`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
-- **gate decision**: REFUSE — T26 unsatisfied
-  - AC³=True · T²⁶=False · manifest-integrity=True
+- **gate decision**: REFUSE — AC3, T26, MANIFEST_INTEGRITY unsatisfied
+  - AC³=False · T²⁶=False · manifest-integrity=False
 - **executor**: not reached (refused at the gate)
 
 ### stale_policy_pin — ✅ PASS
@@ -95,8 +95,8 @@ _A filing pinned to a superseded local-rules policy version is refused._
 - **actor (AP)**: `attorney_identity, bar_admission_active, matter_authorization, efiling_credential`
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
-- **gate decision**: REFUSE — MANIFEST_INTEGRITY unsatisfied
-  - AC³=True · T²⁶=True · manifest-integrity=False
+- **gate decision**: REFUSE — AC3, T26, MANIFEST_INTEGRITY unsatisfied
+  - AC³=False · T²⁶=False · manifest-integrity=False
 - **executor**: not reached (refused at the gate)
 
 ### unattested — ✅ PASS
@@ -118,12 +118,12 @@ _An attacker who edits the filing type inside the attestation is caught by the s
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `cf5c372adb3a4dbb955f8ed5cb0a55e5`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `a24cb5c257194a8d9102f80b4bcd9fc1`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.372423+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `9459ae1143029aee…`
-  - decision_sha256: `a18e775a82b08a7d…`
+  - not_after: `2026-06-10T20:52:44.087809+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `12b9d5f08b628297…`
+  - decision_sha256: `88ae8d16474c5b07…`
 - **executor verdict**: REFUSED — not acted (`REF_VERIFY_SIGNATURE_INVALID`)
 - **expected**: refused (`REF_VERIFY_SIGNATURE_INVALID`)
 
@@ -135,12 +135,12 @@ _A single authorization cannot be used to double-file the same document._
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `11921c6df50f48fb941260c7175481bf`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `dd19d537c68046728c65cb5e879ffedd`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.380710+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `6c2a2aeaecf1b0ad…`
-  - decision_sha256: `a18e775a82b08a7d…`
+  - not_after: `2026-06-10T20:52:44.146411+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `8c1af9463526da23…`
+  - decision_sha256: `88ae8d16474c5b07…`
 - **executor verdict**: REFUSED — not acted (`REF_VERIFY_REPLAY`)
 - **expected**: refused (`REF_VERIFY_REPLAY`)
 
@@ -152,12 +152,12 @@ _A submit authorization cannot be repurposed to withdraw a filing._
 - **operation (OP)**: `court_filing:withdraw`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `53deb60b701e4afcae63ae7ff733cfa0`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `92adb8f1ad9944c0b6cb4ff4df0eb4ca`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.394463+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `52999ffb98a628e7…`
-  - decision_sha256: `a18e775a82b08a7d…`
+  - not_after: `2026-06-10T20:52:44.227294+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `47ceb2644152a9d1…`
+  - decision_sha256: `88ae8d16474c5b07…`
 - **executor verdict**: REFUSED — not acted (`REF_VERIFY_BINDING_MISMATCH`)
 - **expected**: refused (`REF_VERIFY_BINDING_MISMATCH`)
 
@@ -169,12 +169,12 @@ _The filing cannot be swapped to a stipulation of dismissal after authorization.
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: stipulation_of_dismissal; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 7492b5c8562818ea…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `34d0710e869743e7977f2a4d185b5b2f`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
+  - decision_id: `4cd775135d7147fe8d66836de99ee31d`
+  - bound target_url: `https://192.168.56.102:9000/target`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.405244+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `646094042929739f…`
-  - decision_sha256: `a18e775a82b08a7d…`
+  - not_after: `2026-06-10T20:52:44.284639+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `04058d44410ceffc…`
+  - decision_sha256: `88ae8d16474c5b07…`
 - **executor verdict**: REFUSED — not acted (`REF_VERIFY_BINDING_MISMATCH`)
 - **expected**: refused (`REF_VERIFY_BINDING_MISMATCH`)
 
@@ -186,29 +186,23 @@ _An N.D. Cal. authorization cannot be redirected to the S.D.N.Y. e-filing endpoi
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
 - **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `7a8407119c9d43e1aeb321eb4913678f`
-  - bound target_url: `https://ecf.nysd.uscourts.example/file`
+  - decision_id: `150c5073012445759ca386fdda5c663e`
+  - bound target_url: `https://192.168.56.102:9000/target-SWAP`
   - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:52:07.415399+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `058afb12c75c7e04…`
-  - decision_sha256: `ec31491f3ed64aa7…`
+  - not_after: `2026-06-10T20:52:44.345055+00:00`
+  - issuer_key_id: `gate-deploy-001` · signature: `bcd21b1e4ff6b43e…`
+  - decision_sha256: `859daa1ca3c9a917…`
 - **executor verdict**: REFUSED — not acted (`REF_VERIFY_BINDING_MISMATCH`)
 - **expected**: refused (`REF_VERIFY_BINDING_MISMATCH`)
 
-### stale_decision — ✅ PASS
+### stale_decision — ❌ FAIL
 
 _An expired authorization is not honored._
 
 - **actor (AP)**: `attorney_identity, bar_admission_active, matter_authorization, efiling_credential`
 - **operation (OP)**: `court_filing:submit`
 - **court filing (context)**: matter_id: 2026-CV-04417; court: N.D. Cal.; filing_type: motion_to_compel; bar_number: CA-298344; client_ref: CLT-7731; privilege: attorney-client; document_sha256: 1aaba9c595e3537c…
-- **gate decision**: ELIGIBLE — signed envelope issued
-  - decision_id: `2068529707014e1194e6ab59030950a5`
-  - bound target_url: `https://ecf.cand.uscourts.example/file`
-  - manifest pin: `legal-1.0` / `c90c85da1e35…`
-  - not_after: `2026-06-10T19:47:08.425846+00:00`
-  - issuer_key_id: `poc-gate-key-001` · signature: `3f237a6a89125b3c…`
-  - decision_sha256: `a18e775a82b08a7d…`
-- **executor verdict**: REFUSED — not acted (`REF_VERIFY_SIGNATURE_EXPIRED`)
+- **gate decision**: (no envelope — A1 / un-attested path)
+- **executor verdict**: REFUSED — not acted (`SKIPPED (pass --decision-max-age to match the gate window)`)
 - **expected**: refused (`REF_VERIFY_SIGNATURE_EXPIRED`)
 
