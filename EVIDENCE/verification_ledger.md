@@ -15545,3 +15545,32 @@ Prior substantive entry: VL-087 (the cert-tooling fix, the first real-surface fi
 
 #### Next trajectory action
 The live run, resumed once more: re-run the suite from the client; with both real-surface bugs fixed, expect the positive control honored and all attacks (including target_url_swap) defeated over real cross-host TLS, exit 0 -> flip REAL_TRANSPORT green (C4). Then the real external attacker (G5/GR-3).
+
+
+### VL-089 - 2026-06-09 - attack-harness fix: push-delivery positive control (the third, deepest real-surface finding)
+**Status:** RECORDED (real bug fix; surfaced an architecture mismatch). Referent-bound: the live run defeated all 6 adversarial attacks over real cross-host TLS and FAILED only the positive control (`REF_VERIFY_REPLAY`); the fix is verified by the harness tests (5/5, incl. an acted_count plumbing test) and the full suite (298 -> 299). One harness file + the live runner + a test changed; no canon / evaluator / IMPLEMENTATION / MANIFEST change; no `evaluator_sha256` roll.
+**Author:** Claude (working session with the project author).
+**Classification:** capability / bug fix per VL-017a; the third real-surface-found defect, and the one that exposes a real architecture property rather than a cert/URL detail.
+
+#### The finding (push vs caller-carry)
+On the live run the six adversarial attacks (un-attested, forged, replay, rebind-tool, rebind-args, target_url-swap) were ALL DEFEATED over real cross-host TLS - the gate signs, the target verifies, the binding/replay/forge defenses hold on a real surface. The lone failure was the POSITIVE control, refused `REF_VERIFY_REPLAY`. Root cause: the production gate uses PUSH delivery (VL-038) - on ELIGIBLE `pep.py` FORWARDS the signed envelope to the target itself. So the honor happens AT `admit`: the gate delivers the envelope, the target verifies it (first sight of the decision_id) and acts. The harness then RE-PRESENTED the same envelope (a caller-carry assumption: "the client carries the envelope to the target"), and the target correctly refused the duplicate decision_id as a replay - its exactly-once defense working as designed. In-process this was invisible because the gate's forward is mocked (no push). This is exactly the caller-carry / push fork the docs name as the section-14 architecture tension (artifact 08 / 04 G4) - latent until a real pushing gate exercised it.
+
+#### The fix
+`EVIDENCE/proofs/attack_harness.py`: `run_suite` gains a `push_delivery` flag. Under push, the positive control OBSERVES the honor (the target acted) rather than re-presenting: it reads the reference target's read-only `/received` count before and after `admit` and asserts it incremented by one. New plumbing: `HttpSurface.acted_count()` (GET `/received`) and `RequestsClient.get`. `EVIDENCE/proofs/attack_suite_live_runner.py` passes `push_delivery=True` (the real gate pushes). In-process / mocked-forward callers default to `push_delivery=False` and keep the present-then-honor model, so the existing tests are unchanged. The adversarial attacks are correct under both models (they present crafted envelopes directly to the target and are refused; the replay attack's decision_id is one the gate already pushed, so it is refused either way).
+
+#### Why the sandbox missed it (the hermeticity arc, VL-087/088/089)
+Three real-surface findings in a row, all the same class: the harness/tooling held only against the IN-PROCESS surface, where the gate's forward is mocked. VL-087 (cert SKI/AKI) needed a strict real TLS client; VL-088 (target_url_swap) needed the gate's real forward; VL-089 (push positive control) needed the gate's real PUSH. Each is a referent the in-house build, the audit, and the 298-test suite could not produce - the gate-1 surface earning exactly what external_verification_readiness predicted only a real surface could.
+
+#### Author action
+Client-side only: re-run `EVIDENCE/proofs/attack_suite_live_runner.py` (the laptop repo has the fix on disk; `git push` to sync origin). No cert regeneration, no service restart - the gate/target/publisher/certs are unchanged. Expect: positive control HONORED (target acted; /received +1) and all 6 attacks DEFEATED over real transport, exit 0.
+
+#### Verification (referent-bound)
+- `TESTS/adversarial/test_attack_harness.py` 5/5 (in-process matrix + HTTP subset + the acted_count plumbing test); full suite `python -m pytest TESTS/` 299 passed + 0 xfailed (was 298, +1 test).
+- Existing callers unaffected (push_delivery defaults False); the push positive control's full path is validated by the live run (the gate-1 referent), the read plumbing by the new test.
+- Files ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-088 (the target_url_swap fix). This entry cites VL-038 (push delivery, the architecture this exposes), VL-079/083 (the harness + live runner), and artifact 08 / 04 G4 (the named caller-carry/push fork); it does not cite its own (harness + runner + test + STATE + ledger) hash.
+
+#### Next trajectory action
+Re-run the live suite; with all three real-surface findings fixed, expect a clean green over real cross-host TLS -> flip REAL_TRANSPORT green (C4), naming the run log. Then the real EXTERNAL attacker (G5/GR-3). The three findings (VL-087/088/089) are themselves the strongest evidence on record that the real surface yields referents the sandbox cannot.
