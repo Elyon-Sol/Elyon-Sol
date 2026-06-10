@@ -15682,3 +15682,29 @@ Prior substantive entry: VL-092 follow-up (the publisher 503 surfacing). This en
 
 #### Next trajectory action
 Optional: wire B3 (shared replay cache) onto the default seen-set, the last build-then-wire shelf item with a default-path home; or move toward G5 (a public deployment + a real external attacker). The finish line is unchanged: a stranger attacking a public surface (G5/GR-3).
+
+
+### VL-094 - 2026-06-09 - WIRE B3: the shared-replay-cache seam onto the reference target (cross-instance exactly-once reachable)
+**Status:** RECORDED (capability WIRING - the second built-but-unwired capability drawn off the shelf, the last with a default-path home). Referent-bound: the wired target's same-instance replay defense + a new cross-instance integration test are executed (test_reference_target 12 incl. the cross-instance case), the RedisReplayStore + from_env are tested over a fake client, and the full suite is re-run (304 -> 310, 0 xfailed). No canon / evaluator / MANIFEST / envelope change; no `evaluator_sha256` roll. reference_target.py / replay_cache.py intentionally changed (this IS the wire).
+**Author:** Claude (working session with the project author).
+**Classification:** capability / trajectory move per VL-017a. The WIRE half of B3 (VL-076 built the seam; this wires it), parity with VL-039->VL-060 and VL-074->VL-091.
+
+#### The gap closed
+The reference target's replay defense (VL-066) was an inline per-process `app.state.seen` dict: a decision_id honored on instance A is unknown to instance B, so a horizontally-scaled executor can honor the same decision once per instance. VL-076 built the `ReplayCache` seam + an `ExternalStoreReplayCache` over an injected store but the target never consulted it. This wires it.
+
+#### What landed
+- SPEC `docs/restructure/24_shared_replay_cache_wiring_spec.md`.
+- `IMPLEMENTATION/reference_target.py`: the inline seen-dict (init + the prune/membership/claim block) is REPLACED by `app.state.replay_cache.check_and_claim(decision_id, not_after)`. `build_reference_target_app` gains a `replay_cache` param (default `InMemoryReplayCache`, byte-behaviour-identical so every existing runner/test is unchanged); the module app builds the cache from `replay_cache_from_env()`.
+- `IMPLEMENTATION/replay_cache.py`: `RedisReplayStore` (a `ReplayStore` whose `claim` is `SET <prefix><id> 1 NX EX <ttl>` - cross-process exactly-once when N instances share one Redis; ttl derived from `expiry-now`, bounded >=1; no EX for a None expiry; `redis` lazily imported via `from_url`, not a hard dependency) + `replay_cache_from_env()` (a shared `ExternalStoreReplayCache(RedisReplayStore)` when `ELYON_REPLAY_REDIS_URL` is set, else `InMemoryReplayCache`).
+- `deploy/Dockerfile`: `redis` added (only imported when `ELYON_REPLAY_REDIS_URL` is set). `deploy/host_setup_virtualbox.md`: an appendix with `docker-compose.replay.yml` (Redis + a second target on :9001 sharing it) and the live cross-instance demo (admit once, present to both instances; the second is `REF_VERIFY_REPLAY`).
+- `EVIDENCE/readiness.json`: `shared_replay_cache.wired_to_default.blocked_by` rewritten - WIRED as a configurable shared-store mode (proof the cross-instance test); stays false only because the bare default is per-instance InMemory by choice.
+- TESTS: `test_reference_target.py::test_shared_replay_cache_cross_instance` (two target apps sharing one cache: honored on A, `REF_VERIFY_REPLAY` on B) + `_make_target` gains a `replay_cache` param; `test_shared_replay_cache.py` adds RedisReplayStore honor-once / cross-instance-shared / TTL-from-expiry / no-TTL-on-None / `replay_cache_from_env`-default tests.
+
+#### Honest ceiling
+Wiring makes cross-instance exactly-once REACHABLE for a CONFIGURED deployment (one Redis behind N targets); the bare default stays per-instance in-memory (single-instance deployment unchanged). A shared cache is only as available as its backend (a store outage fails closed - refuse - trading availability for the guarantee, the correct trade for an admission gate). Exercised in-process (two target apps sharing one cache); a real 2-instance + Redis cross-host run is the author's (the runbook appendix). Does not move G5.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-093 (the live freshness proof). This entry cites VL-076 (the seam it wires), VL-066 (the replay defense it replaces), and VL-039/VL-060 + VL-091 (the seam-then-wire precedents); it does not cite its own (spec + 2 impl + 2 test + readiness + Dockerfile + runbook + STATE + ledger) hash.
+
+#### Next trajectory action
+The build-then-wire shelf is now drawn down for its default-path items (B1 freshness VL-091, B3 replay VL-094; B2 clock-skew is a config knob, correctly default-off; B4/B5 are surfaces/ergonomics). The remaining trajectory is G5: a real EXTERNAL attacker on a public surface (real DNS + real CA + internet-reachable + a stranger), the author's to arrange. Optional: run the live cross-instance + the live stale-record demos to flip the corresponding exercised_e2e/transported flags from a real run.
