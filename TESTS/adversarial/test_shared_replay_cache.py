@@ -26,6 +26,8 @@ from IMPLEMENTATION.replay_cache import (
     ExternalStoreReplayCache,
     ReplayCache,
     ReplayStore,
+    RedisReplayStore,
+    replay_cache_from_env,
 )
 
 
@@ -171,3 +173,69 @@ def test_implementations_satisfy_replay_cache_protocol():
     assert isinstance(InMemoryReplayCache(), ReplayCache)
     assert isinstance(ExternalStoreReplayCache(FakeSharedStore()), ReplayCache)
     assert isinstance(FakeSharedStore(), ReplayStore)
+
+
+# ---------------------------------------------------------------------------
+# RedisReplayStore (the concrete cross-process store, VL-094 wiring)
+# ---------------------------------------------------------------------------
+
+class _FakeRedis:
+    """Minimal in-memory stand-in for a Redis client (SET ... NX EX). One instance shared by N
+    RedisReplayStore instances models a single Redis behind N target processes."""
+
+    def __init__(self):
+        self._d = {}
+
+    def set(self, key, value, nx=False, ex=None):
+        if nx and key in self._d:
+            return None          # key exists -> not set (a replay)
+        self._d[key] = value
+        return True
+
+
+def test_redis_store_honor_once_then_refuse_replay():
+    cache = ExternalStoreReplayCache(RedisReplayStore(_FakeRedis()))
+    na = _future()
+    assert cache.check_and_claim("d1", na) is True
+    assert cache.check_and_claim("d1", na) is False
+
+
+def test_redis_store_shared_catches_cross_instance_replay():
+    shared = _FakeRedis()                                   # one Redis
+    inst_a = ExternalStoreReplayCache(RedisReplayStore(shared))   # target process A
+    inst_b = ExternalStoreReplayCache(RedisReplayStore(shared))   # target process B
+    na = _future()
+    assert inst_a.check_and_claim("d1", na) is True
+    assert inst_b.check_and_claim("d1", na) is False       # shared store -> caught
+
+
+def test_redis_store_none_expiry_sets_no_ttl():
+    captured = {}
+
+    class _R:
+        def set(self, key, value, nx=False, ex=None):
+            captured["ex"] = ex
+            return True
+
+    ExternalStoreReplayCache(RedisReplayStore(_R())).check_and_claim("d1", None)
+    assert captured["ex"] is None                           # no TTL when no not_after
+
+
+def test_redis_store_ttl_derived_from_expiry():
+    captured = {}
+    from datetime import datetime, timezone, timedelta
+
+    class _R:
+        def set(self, key, value, nx=False, ex=None):
+            captured["ex"] = ex
+            return True
+
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    ExternalStoreReplayCache(RedisReplayStore(_R())).check_and_claim(
+        "d1", now + timedelta(seconds=120), now=now)
+    assert captured["ex"] == 120
+
+
+def test_replay_cache_from_env_defaults_to_in_memory(monkeypatch):
+    monkeypatch.delenv("ELYON_REPLAY_REDIS_URL", raising=False)
+    assert isinstance(replay_cache_from_env(), InMemoryReplayCache)

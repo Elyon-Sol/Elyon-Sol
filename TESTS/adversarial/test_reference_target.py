@@ -117,7 +117,7 @@ def _fetch_via(pub_client):
     return fetch
 
 
-def _make_target(gate_signing, target_url=TARGET_URL, serve_bytes=None):
+def _make_target(gate_signing, target_url=TARGET_URL, serve_bytes=None, replay_cache=None):
     """Build the reference target with injected config + fetch. Returns (app, client)."""
     if serve_bytes is None:
         serve_bytes = _published_bytes()
@@ -132,6 +132,7 @@ def _make_target(gate_signing, target_url=TARGET_URL, serve_bytes=None):
     app = build_reference_target_app(
         config_provider=lambda: config,
         fetch=_fetch_via(_publisher_client(serve_bytes)),
+        replay_cache=replay_cache,
     )
     return app, TestClient(app)
 
@@ -288,3 +289,23 @@ def test_reference_target_decision_id_is_signed(gate_signing):
     assert resp.status_code == 403
     assert resp.json()["detail"]["reason"] == REF_VERIFY_SIGNATURE_INVALID
     assert app.state.received == []
+
+
+def test_shared_replay_cache_cross_instance(gate_signing):
+    """B3 wired (VL-094): two target instances sharing one ReplayCache enforce exactly-once across
+    them - a decision_id honored on instance A is refused REF_VERIFY_REPLAY on instance B. (One
+    shared InMemoryReplayCache object is the in-process analog of a shared Redis store.)"""
+    from IMPLEMENTATION.replay_cache import InMemoryReplayCache
+
+    shared = InMemoryReplayCache()
+    _, client_a = _make_target(gate_signing, replay_cache=shared)
+    _, client_b = _make_target(gate_signing, replay_cache=shared)
+    interaction = _normalized_interaction()
+    env = _signed_envelope(gate_signing, interaction)
+
+    r1 = _post(client_a, interaction, env)
+    assert r1.status_code == 200, r1.text                       # honored on instance A
+
+    r2 = _post(client_b, interaction, env)                      # SAME envelope, instance B
+    assert r2.status_code == 403
+    assert r2.json()["detail"]["reason"] == REF_VERIFY_REPLAY   # cross-instance replay caught

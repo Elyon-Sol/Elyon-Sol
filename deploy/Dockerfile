@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir \
     "cryptography==44.0.0" \
     "fastapi" \
     "uvicorn" \
-    "requests"
+    "requests" \
+    "redis"
 
 # The application code + the committed, hash-locked published record. Trust
 # material (keys, the pinned anchor) is NOT baked in - it arrives by environment

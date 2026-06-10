@@ -113,6 +113,7 @@ from fastapi.concurrency import run_in_threadpool
 from IMPLEMENTATION.published_source import fetch_published_record
 from IMPLEMENTATION.verifier import verify_envelope, REF_VERIFY_REPLAY
 from IMPLEMENTATION.published_record_source import fetch_signed_record
+from IMPLEMENTATION.replay_cache import InMemoryReplayCache, replay_cache_from_env
 
 
 # Target-layer reason vocabulary (REF_TARGET_*; parallels the REF_VERIFY_* layer
@@ -201,6 +202,7 @@ def build_reference_target_app(
     config_provider: Callable[[], Optional[Dict[str, Any]]] = config_from_env,
     fetch: Callable[..., Optional[Dict[str, Any]]] = fetch_published_record,
     signed_fetch: Callable[..., Dict[str, Any]] = fetch_signed_record,
+    replay_cache=None,
 ) -> FastAPI:
     """
     Build the reference enforcing-target ASGI app.
@@ -220,7 +222,10 @@ def build_reference_target_app(
     """
     app = FastAPI(title="Elyon-Sol reference enforcing target")
     app.state.received = []
-    app.state.seen = {}  # decision_id -> not_after (TTL-bounded replay cache)
+    # Replay defense via the VL-076 ReplayCache seam (wired VL-094): InMemoryReplayCache by
+    # default (per-instance, byte-behaviour-identical to the prior inline seen-dict), or an
+    # injected shared cache (e.g. Redis-backed) for cross-instance exactly-once.
+    app.state.replay_cache = replay_cache if replay_cache is not None else InMemoryReplayCache()
 
     @app.post("/target")
     async def target(request: Request):
@@ -283,21 +288,14 @@ def build_reference_target_app(
         if not result["accepted"]:
             raise _refuse(result["reason"])
 
-        # Replay defense (exactly-once over the freshness window): refuse a
-        # decision_id already honored. The window bounds the seen-set - entries
-        # are pruned once their not_after passes (past which freshness refuses
-        # them anyway). decision_id is in the signed region (tamper-proof) and is
-        # stamped by the default gate forward. NOTE: a single in-memory set is
-        # per-instance; a horizontally-scaled executor needs a SHARED cache
-        # (e.g. Redis, TTL = max-age) or a replay can cross instances.
+        # Replay defense (exactly-once over the freshness window): refuse a decision_id
+        # already honored. decision_id is in the signed region (tamper-proof) and is
+        # stamped by the default gate forward. The cache is the VL-076 seam (wired VL-094):
+        # InMemoryReplayCache per-instance by default, or a SHARED store (e.g. Redis) for
+        # cross-instance exactly-once on a horizontally-scaled executor. check_and_claim
+        # prunes expired entries, refuses an already-claimed id, and claims a fresh one.
         decision_id = envelope.get("decision_id")
         if decision_id is not None:
-            seen = app.state.seen
-            now = datetime.now(timezone.utc)
-            for k in [k for k, exp in seen.items() if exp is not None and exp <= now]:
-                del seen[k]
-            if decision_id in seen:
-                raise _refuse(REF_VERIFY_REPLAY)
             exp = None
             na = envelope.get("not_after")
             if isinstance(na, str):
@@ -305,7 +303,8 @@ def build_reference_target_app(
                     exp = datetime.fromisoformat(na)
                 except ValueError:
                     exp = None
-            seen[decision_id] = exp
+            if not app.state.replay_cache.check_and_claim(decision_id, exp):
+                raise _refuse(REF_VERIFY_REPLAY)
 
         app.state.received.append(interaction)  # the target acts only here
         return {"honored": True, "reason": result["reason"]}
@@ -325,4 +324,4 @@ def build_reference_target_app(
 
 # Module-level deployable app: resolves configuration from the environment per
 # request. `uvicorn IMPLEMENTATION.reference_target:app` serves it.
-app = build_reference_target_app()
+app = build_reference_target_app(replay_cache=replay_cache_from_env())

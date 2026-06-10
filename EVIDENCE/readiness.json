@@ -46,8 +46,8 @@
     },
     "shared_replay_cache": {
       "built": {"value": true, "proof": "TESTS/adversarial/test_shared_replay_cache.py", "blocked_by": null},
-      "wired_to_default": {"value": false, "proof": null, "blocked_by": "reference_target.py keeps its inline per-instance seen-dict; the ReplayCache seam (VL-076/B3) is consumed by the MCP server / executor SDK only as the in-memory per-instance form, not as a shared cross-instance cache on the default path"},
-      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "a shared cross-instance store is not stood up; cross-instance exactly-once not exercised end-to-end"},
+      "wired_to_default": {"value": false, "proof": null, "blocked_by": "WIRED onto reference_target's replay defense (VL-094): the inline seen-dict is replaced by the ReplayCache seam (default InMemoryReplayCache, byte-identical), configurable to a shared ExternalStoreReplayCache(RedisReplayStore) via ELYON_REPLAY_REDIS_URL for cross-instance exactly-once - proof TESTS/adversarial/test_reference_target.py::test_shared_replay_cache_cross_instance. wired_to_default stays false because the BARE default is per-instance InMemory by choice (single-instance deployment unchanged); a shared store is a deployment posture"},
+      "exercised_e2e": {"value": false, "proof": null, "blocked_by": "the shared-cache wire is exercised in-process (two target apps sharing one cache catch a cross-instance replay); a real 2-instance + Redis cross-host run is the author's (the live cross-instance procedure, deploy/host_setup_virtualbox.md)"},
       "transported": {"value": false, "proof": null, "blocked_by": "a real shared store (e.g. Redis) is deployment config, not built; G5"}
     },
     "mcp_server_surface": {

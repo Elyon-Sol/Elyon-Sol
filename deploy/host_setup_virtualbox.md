@@ -267,3 +267,59 @@ to demonstrate the "approved then the underlying record goes stale" defense over
 
 Honest bound: the publisher key is now the load-bearing trust floor (out-of-band, parity with the
 key/root records); making signed mode the BARE default is a deployment posture, not the default.
+
+---
+
+## Appendix - cross-instance exactly-once (B3, VL-094): shared replay cache
+
+By default each target instance keeps its own in-memory replay set, so a horizontally-scaled
+executor (N instances) could honor the same decision once PER instance. VL-094 wires the replay
+defense to the ReplayCache seam; point it at a shared store (Redis) and a decision_id honored on
+one instance is refused on every other.
+
+Create deploy/docker-compose.replay.yml (adds Redis + a SECOND target on :9001, both sharing it):
+    services:
+      redis:
+        image: redis:7-alpine
+      target:
+        environment:
+          ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+      target2:
+        build: { context: .., dockerfile: deploy/Dockerfile }
+        command: ["uvicorn","IMPLEMENTATION.reference_target:app","--host","0.0.0.0","--port","9001",
+                  "--ssl-certfile","/certs/target.crt","--ssl-keyfile","/certs/target.key"]
+        environment:
+          ELYON_TARGET_URL: https://192.168.56.102:9000/target
+          ELYON_PUBLISHER_URL: https://publisher:9100/published_hashes.json
+          ELYON_PINNED_ROOT_SHA256: ${ELYON_PINNED_ROOT_SHA256}
+          ELYON_GATE_KEY_ID: ${ELYON_GATE_KEY_ID}
+          ELYON_GATE_PUBLIC_KEY_HEX: ${ELYON_GATE_PUBLIC_KEY_HEX}
+          ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+          ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+        volumes: [ "./tls/certs:/certs:ro" ]
+        ports: [ "9001:9001" ]
+
+Bring it up (add the new -f):
+    docker compose -f docker-compose.yml -f docker-compose.tls.yml -f docker-compose.hosts.yml \
+        -f docker-compose.replay.yml up -d --build redis target target2
+
+Demonstrate (from the laptop) - admit once, present to BOTH instances; the second is a replay:
+    PYTHONPATH=. ~/elyon-venv/Scripts/python - <<'PY'
+    from EVIDENCE.proofs.attack_harness import HttpSurface, RequestsClient
+    ca = "deploy/tls/certs/ca.crt"
+    def surface(port):
+        return HttpSurface(
+            gate_client=RequestsClient("https://192.168.56.101:8000", verify=ca),
+            target_client=RequestsClient("https://192.168.56.102:%d" % port, verify=ca),
+            target_url="https://192.168.56.102:9000/target")
+    a, b = surface(9000), surface(9001)
+    env = a.admit("transfer_funds", {"amount": 100, "to": "acct-42"})
+    print("instance A (9000):", a.attempt("transfer_funds", {"amount": 100, "to": "acct-42"}, env))
+    print("instance B (9001):", b.attempt("transfer_funds", {"amount": 100, "to": "acct-42"}, env))
+    PY
+Expect instance A -> (True, REASSERTED_AND_BOUND) and instance B -> (False, REF_VERIFY_REPLAY):
+the shared Redis made the decision_id global, so the second instance refuses the replay.
+
+(Note: the gate's PUSH to :9000 on admit already claims the decision_id, so over the live push the
+A presentation may itself be a replay of the push - present via caller-carry as above, or scale to
+N instances behind a balancer. The point proven: the claim is SHARED across instances.)

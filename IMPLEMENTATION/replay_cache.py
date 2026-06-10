@@ -44,7 +44,7 @@ honored on an undecidable claim.
 """
 
 from datetime import datetime, timezone
-from typing import Dict, Optional, Protocol, runtime_checkable
+from typing import Any, Dict, Optional, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -143,3 +143,54 @@ class ExternalStoreReplayCache:
     ) -> bool:
         current = _utcnow(now)
         return self._store.claim(decision_id, not_after, current)
+
+
+class RedisReplayStore:
+    """A cross-process `ReplayStore` backed by Redis `SET key 1 NX EX <ttl>` (VL-094, wiring B3).
+
+    One Redis shared by N target instances makes the claim global: a decision_id claimed on any
+    instance is refused on every other. The redis client is INJECTED (build via `from_url`) so this
+    is testable against a fake without a real Redis, and `redis` is imported lazily so it is not a
+    hard dependency of the gate.
+
+    `claim` maps to `SET <prefix><decision_id> 1 NX EX <ttl>`: returns True iff the key was newly
+    set (a fresh claim), False if it already existed (a replay). The TTL is `expiry - now` (bounded
+    below by 1s; on the honor path the decision is already fresh, so expiry > now); a None expiry
+    sets no EX (the no-temporal-bound case, parity with InMemoryReplayCache retaining it)."""
+
+    def __init__(self, client: Any, key_prefix: str = "elyon:replay:") -> None:
+        self._client = client
+        self._prefix = key_prefix
+
+    @classmethod
+    def from_url(cls, url: str, key_prefix: str = "elyon:replay:") -> "RedisReplayStore":
+        import redis  # lazy: not a hard dependency
+
+        return cls(redis.Redis.from_url(url), key_prefix=key_prefix)
+
+    def claim(
+        self,
+        decision_id: str,
+        expiry: Optional[datetime],
+        now: datetime,
+    ) -> bool:
+        key = self._prefix + decision_id
+        if expiry is not None:
+            ttl = max(1, int((expiry - now).total_seconds()))
+            ok = self._client.set(key, b"1", nx=True, ex=ttl)
+        else:
+            ok = self._client.set(key, b"1", nx=True)
+        return bool(ok)
+
+
+def replay_cache_from_env():
+    """Build the replay cache a deployed executor uses, from the environment. With
+    `ELYON_REPLAY_REDIS_URL` set, a SHARED `ExternalStoreReplayCache(RedisReplayStore)` for
+    cross-instance exactly-once; otherwise a per-instance `InMemoryReplayCache` (the bare default,
+    so a single-instance deployment is unchanged)."""
+    import os
+
+    url = os.environ.get("ELYON_REPLAY_REDIS_URL")
+    if url:
+        return ExternalStoreReplayCache(RedisReplayStore.from_url(url))
+    return InMemoryReplayCache()
