@@ -15605,3 +15605,37 @@ Prior substantive entry: VL-089 (the push positive-control fix that enabled the 
 
 #### Next trajectory action
 Only the final step remains, and it is not code: a real EXTERNAL attacker on a real PUBLIC surface (real DNS + real CA + an internet-reachable deployment + a stranger), which alone certifies G5 (GR-3). Optional hardening toward it: a public-CA / real-host deployment profile, a committed two-host compose profile (the single-box-compose workaround noted at VL-085/086), and wiring the built-but-unwired capabilities (B1 signed-record reader, B3 shared replay cache) onto the default path. The project has now moved its load-bearing axis off zero for the cross-host tier; the public-attacker tier is the author's to arrange.
+
+
+### VL-091 - 2026-06-09 - WIRE B1: signed published-record freshness onto the reference target (A3b sub-case (b) closed for a configured deployment)
+**Status:** RECORDED (capability WIRING - the first built-but-unwired capability drawn off the shelf). Referent-bound: the acceptance suite is executed (5/5), the byte-anchor regression is proven (g4 runner exit 0; the existing reference-target tests 11/11), the full suite is re-run (299 -> 304, 0 xfailed). No canon / evaluator / MANIFEST / envelope change; no `evaluator_sha256` roll. reference_target.py / publisher.py / published_record_source.py are intentionally changed (this IS the wire).
+**Author:** Claude (working session with the project author). Prompted by the author's "approved then changes" attack idea, which is the A3b/continuity (TOCTOU) class.
+**Classification:** capability / trajectory move per VL-017a. The WIRE half of B1 (VL-074 built the reader unwired; this wires it), parity with the VL-039 seam wired at VL-060.
+
+#### The gap closed
+The reference target's default consult anchor-verified the record BYTES (no temporal dimension): a stale-but-anchor-matching published record was honored arbitrarily later (A3b sub-case (b), artifact 04 G5). VL-074 built the signed reader `published_record_source.py` (publisher signature + `not_after` + monotonic serial -> `REF_VERIFY_PUBLISHED_RECORD_STALE`) with no caller. This increment gives it a caller.
+
+#### What landed
+- SPEC `docs/restructure/23_published_record_freshness_wiring_spec.md`.
+- `IMPLEMENTATION/reference_target.py`: a SIGNED consult MODE. `config_from_env` optionally resolves a pinned publisher key (`ELYON_PUBLISHER_KEY_ID` + `ELYON_PUBLISHER_KEY_HEX`) and a `signed_record_url` (`ELYON_SIGNED_RECORD_URL`, default derived from publisher_url). When present, the handler fetches the signed record via an injectable `signed_fetch` (default `fetch_signed_record`), refuses a STALE/INVALID record with the reader's reason, and uses the validated record (a drop-in `record_source` carrying the three currency pins) for `verify_envelope`. Absent a publisher key the byte-anchor path is BYTE-BEHAVIOUR-UNCHANGED (every existing runner/test).
+- `IMPLEMENTATION/publisher.py`: `/published_hashes_signed.json` signs the LIVE currency pins (`build_signed_record`) under a `not_after` window (`ELYON_RECORD_MAX_AGE_SECONDS`, default 300) when `ELYON_PUBLISHER_SIGNING_KEY_HEX` + `ELYON_PUBLISHER_KEY_ID` are set, re-signed fresh per request; 503 otherwise. The byte-anchor `/published_hashes.json` is unchanged.
+- `IMPLEMENTATION/published_record_source.py::fetch_signed_record`: now uses the TLS-aware transport seam (`transport.get_published`, resolving `ELYON_TLS_CA_BUNDLE` fail-closed) instead of plain `requests.get`, so signed mode works over the real cross-host TLS deployment (parity with the byte-anchor fetch).
+- TEST `TESTS/adversarial/test_record_freshness_wiring.py` (5): signed mode honors a fresh record, refuses STALE (`REF_VERIFY_PUBLISHED_RECORD_STALE`) and INVALID; the byte-anchor mode is unchanged; the publisher serves a reader-valid record and 503s without a key.
+- `EVIDENCE/readiness.json`: `published_record_freshness.wired_to_default.blocked_by` rewritten - WIRED as a configurable signed-consult mode (proof the wiring test); stays false only because the BARE default remains byte-anchor by choice.
+- `deploy/host_setup_virtualbox.md`: an appendix - enabling signed mode + a live stale-record attack procedure (capture a record, let it expire, serve it stale, watch the target refuse STALE).
+
+#### Trust-model shift (honest)
+Byte-anchor mode pins the record BYTES; signed mode pins a publisher PUBLIC KEY (so the record can be reissued under a stable pin and a stale one fails closed). This relocates trust to a publisher-key FLOOR (the same load-bearing floor the key/root records introduced, VL-042/044, root-compromise-is-total, out-of-band). A deployment chooses by configuration. Signed mode is opt-in; the bare default stays byte-anchor, so the existing green (DEFAULT_SECURE / END_TO_END / ROOT_RECOVERY, the g4/g5 runners) is untouched.
+
+#### Verification (referent-bound)
+- `TESTS/adversarial/test_record_freshness_wiring.py` 5/5; the byte-anchor `test_reference_target.py` 11/11 and the g4 runner exit 0 (signed mode opt-in); full suite `python -m pytest TESTS/` 304 passed + 0 xfailed (was 299).
+- All changed/new files ASCII-only (VL-006) and LF-only (Lesson 11).
+
+#### Honest ceiling
+This closes A3b sub-case (b) for a CONFIGURED reference target (refuses a stale published record); the bare default stays byte-anchor, and the publisher key is the new load-bearing floor. It is exercised in-process here; a real cross-host signed-mode run + the live stale-record attack is the author's (the appendix procedure). It does NOT change the G5 line: a real EXTERNAL attacker on a public surface remains open. One named-open A3b edge is now defended-when-configured; the deposit audit's other named-open items are unchanged.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-090 (REAL_TRANSPORT green / C4). This entry cites VL-074 (the reader it wires), VL-039 / VL-060 (the seam-then-wire precedent), VL-042/044 (the publisher-key trust floor), and artifact 04 A3b (the gap it closes); it does not cite its own (spec + 3 impl + test + readiness + runbook + STATE + ledger) hash.
+
+#### Next trajectory action
+Optional continuation of the shelf-drawdown: wire B3 (the shared replay cache) onto the reference target's default seen-set for cross-instance exactly-once; run the live stale-record attack (the appendix) to confirm the freshness refusal over real transport. The finish line is unchanged: a real EXTERNAL attacker on a public surface (G5/GR-3).
