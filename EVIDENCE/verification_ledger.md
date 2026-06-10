@@ -15639,3 +15639,21 @@ Prior substantive entry: VL-090 (REAL_TRANSPORT green / C4). This entry cites VL
 
 #### Next trajectory action
 Optional continuation of the shelf-drawdown: wire B3 (the shared replay cache) onto the reference target's default seen-set for cross-instance exactly-once; run the live stale-record attack (the appendix) to confirm the freshness refusal over real transport. The finish line is unchanged: a real EXTERNAL attacker on a public surface (G5/GR-3).
+
+
+### VL-092 - 2026-06-09 - deploy-image fix: Dockerfile missing the signed-record generator modules (fourth real-surface finding)
+**Status:** RECORDED (deploy packaging fix, found by the live signed-mode run). Referent-bound: the failure is the live publisher's 503 ("signed record unavailable") on the VMs; the fix is a Dockerfile COPY of the two modules whose absence caused the in-container ModuleNotFoundError. No code/canon/test change; suite 304/0 unchanged (the issue is packaging, not logic - the modules are present in the sandbox, so test_record_freshness_wiring's publisher test passed).
+**Author:** the project author (the live run) + Claude (fix).
+**Classification:** deploy / bug fix per VL-017a. The fourth defect a real surface found that the in-house build, audit, and suite could not (after VL-087 cert, VL-088 swap-URL, VL-089 push) - here, only running the signed-mode publisher inside the actual container exposed the incomplete image.
+
+#### The bug + fix
+`deploy/Dockerfile` copied `EVIDENCE/published_hashes.json` (the static byte-anchor record) but not `EVIDENCE/published_hashes_gen.py` / `EVIDENCE/published_hashes_signed_gen.py`. The VL-091 signed endpoint `publisher.py::/published_hashes_signed.json` imports `published_hashes_signed_gen.build_signed_record` (which imports `published_hashes_gen`), so the import failed in the container and the endpoint's fail-closed `except` returned 503. The byte-anchor `/published_hashes.json` was unaffected (it serves the copied static file, importing nothing). Fix: COPY both generator modules into the image (their inputs - canon.lock, evaluator.py, manifest.json - were already copied).
+
+#### Author action
+On VM-B: `git pull`, then `docker compose -f docker-compose.yml -f docker-compose.tls.yml -f docker-compose.hosts.yml up --build publisher target` (the `--build` rebuilds the image with the generator modules). Then `curl .../published_hashes_signed.json` should return a signed record, and the signed-mode attack run + the stale-record demo proceed.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-091 (the B1 wiring whose signed endpoint this packages). This entry cites VL-081 (the Dockerfile it fixes) and VL-087/088/089 (the prior real-surface findings, same arc); it does not cite its own (Dockerfile + STATE + ledger) hash.
+
+#### Next trajectory action
+Resume the signed-mode live demo (Part A re-run green with fresh records, then Part B the stale-record refusal). The finish line is unchanged: a real EXTERNAL attacker on a public surface (G5/GR-3).

@@ -19,6 +19,12 @@ RUN pip install --no-cache-dir \
 # from the out-of-band .env (see deploy/bootstrap_config.py).
 COPY IMPLEMENTATION/ /app/IMPLEMENTATION/
 COPY EVIDENCE/published_hashes.json /app/EVIDENCE/published_hashes.json
+# The signed-record (freshness) publisher endpoint generates the live pins, so the
+# image needs the generator modules too (VL-092; the byte-anchor path serves only
+# the static record above and does not). These import canon.lock / evaluator.py /
+# manifest.json, all already copied.
+COPY EVIDENCE/published_hashes_gen.py /app/EVIDENCE/published_hashes_gen.py
+COPY EVIDENCE/published_hashes_signed_gen.py /app/EVIDENCE/published_hashes_signed_gen.py
 COPY CANON/canon.lock /app/CANON/canon.lock
 COPY MANIFEST/ /app/MANIFEST/
 
