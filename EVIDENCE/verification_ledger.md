@@ -15708,3 +15708,30 @@ Prior substantive entry: VL-093 (the live freshness proof). This entry cites VL-
 
 #### Next trajectory action
 The build-then-wire shelf is now drawn down for its default-path items (B1 freshness VL-091, B3 replay VL-094; B2 clock-skew is a config knob, correctly default-off; B4/B5 are surfaces/ergonomics). The remaining trajectory is G5: a real EXTERNAL attacker on a public surface (real DNS + real CA + internet-reachable + a stranger), the author's to arrange. Optional: run the live cross-instance + the live stale-record demos to flip the corresponding exercised_e2e/transported flags from a real run.
+
+
+### VL-095 - 2026-06-09 - LIVE: both wired capabilities (B1 freshness, B3 cross-instance replay) proven on real cross-host hardware
+**Status:** RECORDED (two real referents - the wired B3 replay and B1 freshness defenses exercised end-to-end over real cross-host TLS). Referent-bound: the proof is the author's executed two-demo run (`EVIDENCE/proofs/real_transport_replay_crossinstance_001.log`); in-sandbox the readiness gate is re-validated (0 errors, 0 missing proofs, 4/4 green, suite 310). One log + the readiness flags.
+**Author:** the project author (the live run) + Claude (recording).
+**Classification:** trajectory move per VL-017a. Completes the lifecycle of the SECOND shelf capability (B3) drawn down, on a real surface - matching B1 (VL-093). The build-then-wire shelf's default-path items are now built + wired + proven LIVE.
+
+#### What was proven
+On the author's VirtualBox deployment - gate on VM-A; on VM-B two target instances (A :9000 signed-mode, B :9001) behind ONE shared Redis, plus the publisher, over dev-CA TLS:
+- DEMO 1 (B3 cross-instance, wired VL-094): the gate PUSHED an admitted decision to instance A, which honored it (acted=1) and claimed the decision_id in the SHARED Redis; the SAME decision presented to instance B - a separate OS process - was refused `(False, REF_VERIFY_REPLAY)`, B acted=0. Cross-instance exactly-once over real cross-host TLS with a real Redis. A per-instance in-memory cache would have honored the decision twice; the shared store made the claim global.
+- DEMO 2 (B1 freshness, wired VL-091, first proven VL-093): the publisher made to serve an already-expired record; a valid freshly-admitted call refused `(False, REF_VERIFY_PUBLISHED_RECORD_STALE)`.
+
+#### What landed
+- `EVIDENCE/proofs/real_transport_replay_crossinstance_001.log`: the captured two-demo run with provenance and the honest bound.
+- `EVIDENCE/readiness.json`: `shared_replay_cache.exercised_e2e` and `.transported` flipped TRUE, naming the log. So B3's readiness now reads built / unwired-by-default-choice / exercised_e2e / transported - the same lifecycle B1 reached at VL-093. Readiness summary unchanged at 4/4 deployment predicates green.
+
+#### The state of the shelf
+Both build-then-wire capabilities with a default-path home are now built + wired + proven LIVE: B1 published-record freshness (VL-074 -> VL-091 -> VL-093) and B3 shared replay cache (VL-076 -> VL-094 -> VL-095). B2 clock-skew is a config knob (correctly default-off); B4 MCP server and B5 SDK are surfaces/ergonomics. There is no dormant gate capability left unwired and unexercised.
+
+#### Honest ceiling
+The bound is unchanged and carried in the log + manifest: two VMs on ONE physical host, a PRIVATE host-only network, a DEV CA, the author's OWN scripted calls. This greens the exercised-e2e/transported flags for the cross-host tier. The only open item on the entire road is G5 (GR-3): a real EXTERNAL attacker on a real PUBLIC surface (real DNS, real CA, internet-reachable, a stranger), and it is not code - it is a person and a public deployment to arrange.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-094 follow-up (the cross-instance overlay). This entry cites VL-094 (the B3 wire it exercises), VL-093 (the B1 live proof it parallels and re-confirms), and VL-090 (the REAL_TRANSPORT tier these extend); it does not cite its own (log + readiness + STATE + ledger) hash.
+
+#### Next trajectory action
+Only G5 remains, and it is not in-house: stand up a public surface (real DNS + real CA + internet-reachable) and recruit a real external attacker who has not read the project's account of itself. Everything that leads to that line is now built, wired, deployed, and proven on real cross-host hardware for the cross-host tier; the public-attacker tier is the author's to arrange.
