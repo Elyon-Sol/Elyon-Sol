@@ -1,0 +1,37 @@
+Elyon-Sol REAL_TRANSPORT cross-instance replay (B3) + freshness re-confirm (B1) proof - VL-095
+Captured output of the author's live two-demo run.
+
+Provenance:
+  Run by:    the project author, on real hosts (locus AUTHOR; not reproducible in CI).
+  Date:      2026-06-10
+  Topology:  Oracle VirtualBox VMs over a host-only network, real TLS (dev CA):
+               VM-A gate      https://192.168.56.101:8000
+               VM-B target    https://192.168.56.102:9000  (instance A, SIGNED mode)
+                    target2   https://192.168.56.102:9001  (instance B, sharing Redis)
+                    publisher :9100, redis :6379  (one shared Redis behind both targets)
+             client = the author's Windows laptop, a distinct box.
+
+============================================================================================
+DEMO 1 - cross-instance exactly-once (B3, wired VL-094):
+  the gate PUSHES an admitted decision to instance A, which honors it and claims the
+  decision_id in the SHARED Redis; the SAME decision presented to instance B (a separate
+  process) is refused as a replay it never saw.
+============================================================================================
+instance A acted (push honored): 1
+instance B verdict (same decision): (False, 'REF_VERIFY_REPLAY')
+instance B acted: 0
+
+CONCLUSION: cross-instance exactly-once holds over real cross-host TLS with a real shared Redis.
+With a per-instance in-memory cache, instance B would have honored the decision a second time;
+the shared store made the claim global. This is the gap VL-094 closes, proven live.
+
+============================================================================================
+DEMO 2 - record freshness re-confirm (B1, wired VL-091; first proven VL-093):
+  the publisher made to serve an already-expired record; a valid freshly-admitted call refused.
+============================================================================================
+(False, 'REF_VERIFY_PUBLISHED_RECORD_STALE')
+
+Honest bound (unchanged): two VMs on one physical host, a private host-only network, a dev CA,
+the author's own scripted calls; the publisher key is the load-bearing floor. This greens the
+exercised-e2e/transported flags for the cross-host tier. G5 (a real EXTERNAL attacker on a public
+surface) remains OPEN.
