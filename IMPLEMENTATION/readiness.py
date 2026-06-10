@@ -15,7 +15,7 @@ import json
 import os
 
 FLAG_KEYS = ("built", "wired_to_default", "exercised_e2e", "transported")
-PREDICATE_NAMES = ("DEFAULT_SECURE", "END_TO_END_NO_SHORTCUT", "ROOT_RECOVERY")
+PREDICATE_NAMES = ("DEFAULT_SECURE", "END_TO_END_NO_SHORTCUT", "ROOT_RECOVERY", "REAL_TRANSPORT")
 
 # The capabilities the END_TO_END_NO_SHORTCUT predicate depends on (the
 # enumerated dependency set, VL-048; 10_readiness_spec.md section 4.2). The

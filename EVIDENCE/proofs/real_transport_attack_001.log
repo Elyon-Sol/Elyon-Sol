@@ -1,0 +1,35 @@
+Elyon-Sol REAL_TRANSPORT proof of record (C4 / VL-090)
+Captured output of the author's live cross-host attack run.
+
+Provenance:
+  Run by:        the project author, on real hosts (not reproducible in CI - locus AUTHOR).
+  Date:          2026-06-09
+  Commit:        8d40171 (after the three real-surface fixes VL-087 / VL-088 / VL-089)
+  Topology:      two Oracle VirtualBox Ubuntu VMs over a host-only network, real TLS (dev CA):
+                   VM-A gate     https://192.168.56.101:8000
+                   VM-B target   https://192.168.56.102:9000   (+ publisher :9100)
+                 client = the author's Windows laptop (Git Bash), distinct box.
+  Runner:        EVIDENCE/proofs/attack_suite_live_runner.py  (push_delivery=True)
+  Transport:     real cross-host TLS, gate -> target push delivery, target -> publisher record fetch.
+
+HONEST SCOPE / BOUND (carried into readiness.json REAL_TRANSPORT):
+  This greens the CROSS-HOST referent: the VL-079 attack suite is defeated over real cross-host
+  TLS. It is NOT the public-surface / external-attacker referent: the two hosts are VMs on one
+  physical machine, a private host-only network, a dev CA, and the author's OWN scripted attack.
+  G5 (GR-3) - a real EXTERNAL attacker on a public deployment - remains OPEN.
+
+============================================================================================
+LIVE ATTACK SUITE vs a REAL surface over real transport - VL-083 (C3-live)
+  gate=https://192.168.56.101:8000  target=https://192.168.56.102:9000  target_id=https://192.168.56.102:9000/target  tls_ca=deploy/tls/certs/ca.crt
+============================================================================================
+[PASS] positive_control a valid admitted call is delivered and acted on (push)   -> HONORED
+[PASS] unattested       reach the target with no admissibility envelope (A1)     -> REFUSED:REF_VERIFY_ENVELOPE_ABSENT
+[PASS] forged_signature tamper a signed field; pass off a forged envelope        -> REFUSED:REF_VERIFY_SIGNATURE_INVALID
+[PASS] replay           present the same admitted envelope twice (exactly-once)  -> REFUSED:REF_VERIFY_REPLAY
+[PASS] rebind_tool      use a transfer envelope to authorize delete_database     -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] rebind_args      use the envelope with different (larger) args            -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] target_url_swap  present an envelope bound to another (different-path) target -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+--------------------------------------------------------------------------------------------
+positive control honored: True | adversarial attacks defeated over real transport: 6/6
+============================================================================================
+RESULT: ALL ATTACKS DEFEATED over real transport (the gate-1 referent)
