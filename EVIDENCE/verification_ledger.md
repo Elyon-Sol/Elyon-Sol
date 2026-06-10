@@ -15657,3 +15657,28 @@ Prior substantive entry: VL-091 (the B1 wiring whose signed endpoint this packag
 
 #### Next trajectory action
 Resume the signed-mode live demo (Part A re-run green with fresh records, then Part B the stale-record refusal). The finish line is unchanged: a real EXTERNAL attacker on a public surface (G5/GR-3).
+
+
+### VL-093 - 2026-06-09 - LIVE: the freshness/stale defense proven on the real surface (the author's TOCTOU attack, defeated cross-host)
+**Status:** RECORDED (a real referent obtained - the wired B1 freshness defense exercised end-to-end over real cross-host TLS). Referent-bound: the proof is the author's executed live run (`EVIDENCE/proofs/real_transport_freshness_stale_001.log`) - signed-mode suite all-green + the stale-record refusal `REF_VERIFY_PUBLISHED_RECORD_STALE`; in-sandbox the readiness gate is re-validated (0 errors, 0 missing proofs, 4/4 green). One log + the readiness flags.
+**Author:** the project author (the live run) + Claude (recording).
+**Classification:** trajectory move per VL-017a. Completes the lifecycle of the first shelf capability drawn down (B1): built (VL-074) -> wired (VL-091) -> exercised-e2e + transported on a real surface (VL-093).
+
+#### What was proven
+On the author's two-VM VirtualBox deployment in SIGNED mode (VL-091): the target pins a publisher key and fetches the signed, freshness-checked published record over real cross-host TLS. (1) The full VL-079 attack suite stays green in signed mode - positive control HONORED (the gate pushes the valid call; the target verifies the publisher signature + freshness + currency + binding and acts) and all 6 adversarial attacks defeated over real transport. (2) With the publisher reconfigured to issue an already-expired record (`ELYON_RECORD_MAX_AGE_SECONDS=-60`, so `not_after` precedes `issued_at`), a valid freshly-admitted call presented to the target returns `honored: False  reason: REF_VERIFY_PUBLISHED_RECORD_STALE`. The publisher signature was VALID - it is the FRESHNESS check that refused it. This is the author's own "approved then the underlying record goes stale" (TOCTOU / continuity) attack, proposed at the start of this exchange, defeated on the real surface.
+
+#### What landed
+- `EVIDENCE/proofs/real_transport_freshness_stale_001.log`: the captured run (signed-mode green suite + the stale record's timestamps + the STALE refusal) with provenance and the honest bound.
+- `EVIDENCE/readiness.json`: `published_record_freshness.exercised_e2e` and `.transported` flipped TRUE, naming the log. So B1's readiness now reads built / unwired-by-default-choice / exercised_e2e / transported - the freshness capability is exercised end-to-end over real transport, even though signed mode stays opt-in on the bare default. Readiness summary unchanged at 4/4 deployment predicates green (this is a capability flag, not a predicate).
+
+#### The arc this completes
+This is the seventh live exchange and it closes a loop: the author proposed an attack; the named-open gap it targeted (A3b sub-case (b)) was wired closed (VL-091); the wire surfaced a deploy-image gap (VL-092) and a config trap; and the defense was then PROVEN on the real surface (this entry). Combined with the four real-surface bug findings (VL-087 cert, VL-088 swap-URL, VL-089 push, VL-092 deploy image), the real deployment has now both FOUND defects the sandbox could not and PROVEN a defense the sandbox could only assert.
+
+#### Honest ceiling
+The bound is unchanged and carried in the log + manifest: two VMs on ONE physical host, a PRIVATE host-only network, a DEV CA, and the author's OWN scripted attack. This greens the freshness defense's exercised-e2e/transported flags for the cross-host tier; it is NOT a public surface or a real EXTERNAL attacker. The publisher key is now a load-bearing trust floor (out-of-band). G5 (GR-3) remains OPEN.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-092 follow-up (the publisher 503 surfacing). This entry cites VL-091 (the wire it exercises), VL-074 (the reader), VL-090 (the REAL_TRANSPORT tier this extends), and the author's attack proposal; it does not cite its own (log + readiness + STATE + ledger) hash.
+
+#### Next trajectory action
+Optional: wire B3 (shared replay cache) onto the default seen-set, the last build-then-wire shelf item with a default-path home; or move toward G5 (a public deployment + a real external attacker). The finish line is unchanged: a stranger attacking a public surface (G5/GR-3).
