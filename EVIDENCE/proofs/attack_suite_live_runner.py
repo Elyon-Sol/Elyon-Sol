@@ -62,7 +62,9 @@ def main():
 
     # include_stale=False / no drifted_surface: those are surface-state attacks the generic
     # adapter cannot drive over HTTP (see the module docstring).
-    results = run_suite(surface, drifted_surface=None, include_stale=False)
+    # The production gate uses PUSH delivery (VL-038): it forwards the admitted envelope to
+    # the target on ELIGIBLE, so the honor is observed via the target acting, not by re-presenting.
+    results = run_suite(surface, drifted_surface=None, include_stale=False, push_delivery=True)
     for r in results:
         verdict = "PASS" if r.passed else "FAIL"
         outcome = "HONORED" if r.honored else ("REFUSED:" + r.reason)

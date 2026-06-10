@@ -134,6 +134,13 @@ class HttpSurface:
             return body["honored"], body["reason"]
         return False, r.json()["detail"]["reason"]
 
+    def acted_count(self) -> int:
+        """The reference target's read-only /received count (how many calls it acted on). Used by
+        the PUSH-delivery positive control: the gate forwards the admitted envelope to the target
+        on ELIGIBLE, so the honor is observed as the target acting, not by re-presenting."""
+        r = self.target_client.get("/received")
+        return r.json()["count"]
+
 
 class RequestsClient:
     """Minimal `.post` shim over `requests` for a real host (AUTHOR). Not exercised in-sandbox.
@@ -151,12 +158,17 @@ class RequestsClient:
         return requests.post(self.base_url + path, json=json, headers=headers or {},
                              verify=self.verify, timeout=10)
 
+    def get(self, path):
+        import requests
+
+        return requests.get(self.base_url + path, verify=self.verify, timeout=10)
+
 
 # --------------------------------------------------------------------------
 # The attack suite (gate-2 break-it challenges)
 # --------------------------------------------------------------------------
 
-def run_suite(surface, drifted_surface=None, include_stale=True) -> List[AttackResult]:
+def run_suite(surface, drifted_surface=None, include_stale=True, push_delivery=False) -> List[AttackResult]:
     """Run the attack suite against `surface`. `drifted_surface` (a surface whose executor sees a
     re-published / drifted state) drives the drift attack; if None it is skipped. `include_stale`
     drives the stale attack, which needs control of the gate's decision window (admit max_age) -
@@ -173,9 +185,21 @@ def run_suite(surface, drifted_surface=None, include_stale=True) -> List[AttackR
                                     expect_honored, expect_reason, passed))
 
     # Positive control: a valid admitted call IS honored (else "all refused" is vacuous).
-    env = surface.admit(TOOL, ARGS)
-    record("positive_control", "a valid admitted call is honored",
-           surface.attempt(TOOL, ARGS, env), True, "REASSERTED_AND_BOUND")
+    # Under PUSH delivery (the production gate forwards the envelope to the target on ELIGIBLE),
+    # the honor happens AT ADMIT - re-presenting the same envelope would be a replay. So observe
+    # the target acting (its /received count) rather than re-presenting. In-process (mocked
+    # forward / caller-carry) there is no push, so present-then-honor as before.
+    if push_delivery and hasattr(surface, "acted_count"):
+        before = surface.acted_count()
+        surface.admit(TOOL, ARGS)  # the gate signs + PUSHES to the target, which acts
+        acted = surface.acted_count() == before + 1
+        record("positive_control", "a valid admitted call is delivered and acted on (push)",
+               (acted, "REASSERTED_AND_BOUND" if acted else "NOT_ACTED"),
+               True, "REASSERTED_AND_BOUND")
+    else:
+        env = surface.admit(TOOL, ARGS)
+        record("positive_control", "a valid admitted call is honored",
+               surface.attempt(TOOL, ARGS, env), True, "REASSERTED_AND_BOUND")
 
     # A1 / un-attested: reach the executor with no envelope.
     record("unattested", "reach the target with no admissibility envelope (A1)",

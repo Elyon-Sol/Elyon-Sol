@@ -134,3 +134,23 @@ def test_live_runner_unconfigured_exits_2(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         runner.main()
     assert exc.value.code == 2
+
+
+def test_http_surface_acted_count_reads_received(gate_signing, monkeypatch):
+    # The push positive control reads the target's /received count via acted_count(); validate the
+    # plumbing (the full push path - the gate actually forwarding - is validated by the live run).
+    class _R:
+        status_code = 200
+        text = "{}"
+
+    monkeypatch.setattr(pep.requests, "post", lambda *a, **k: _R())
+    surface = HttpSurface(
+        gate_client=TestClient(pep.app),
+        target_client=_reference_target_client(gate_signing),
+        target_url=HTTP_TARGET_URL,
+    )
+    assert surface.acted_count() == 0
+    env = surface.admit("transfer_funds", {"amount": 100, "to": "acct-42"})
+    honored, _ = surface.attempt("transfer_funds", {"amount": 100, "to": "acct-42"}, env)
+    assert honored is True
+    assert surface.acted_count() == 1   # the target acted -> /received incremented
