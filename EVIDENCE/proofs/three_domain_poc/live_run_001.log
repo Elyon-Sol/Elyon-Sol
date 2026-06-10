@@ -1,0 +1,86 @@
+Three-domain synthetic POC - LIVE run over real cross-host TLS (VL-096 live)
+============================================================================
+
+AUTHOR-EXECUTED on the real VirtualBox deployment. Recorded by Claude from the
+author's pasted runner output. Referent: the three generated reports
+EVIDENCE/proofs/three_domain_poc/reports/{medical,legal,finance}_report.md
+(Mode: live; generated 2026-06-10).
+
+Surface
+-------
+- gate:       VM-A  https://192.168.56.101:8000        (pep, signs every ELIGIBLE)
+- target:     VM-B  https://192.168.56.102:9000/target (reference enforcing target, SIGNED-mode)
+- publisher:  VM-B  https://192.168.56.102:9100        (signs the published record live)
+- client:     Windows laptop (host-only net), driving poc_runner.py --mode live
+- TLS:        dev CA (deploy/tls/certs/ca.crt), client verifies via requests(verify=ca)
+- gate decision window: 300s (default), so the timing-only stale_decision case was
+  SKIPPED (it is proven deterministically in the in-process report); every other
+  case ran over real transport.
+
+Per-domain: the domain manifest (med-1.0 / legal-1.0 / fin-1.0) was pinned onto
+MANIFEST/manifest.json on BOTH hosts and the gate + publisher rebuilt, so the gate's
+on-disk manifest, the publisher's signed-record manifest_sha256, and the client's
+interaction pins all matched (three-way) for that domain's run.
+
+Results
+-------
+
+$ poc_runner --mode live --domain medical  (gate=.101:8000 target=.102:9000/target)
+[medical] 12/13 passed
+    ok admit_primary            REASSERTED_AND_BOUND     (honored via real PUSH delivery; target acted)
+    ok admit_secondary          REASSERTED_AND_BOUND
+    ok admit_minimal_authority  REASSERTED_AND_BOUND     (AP == AR exactly)
+    ok insufficient_authority   REFUSE                   (AC3: nurse w/o prescriptive_authority)
+    ok wrong_operation          REFUSE                   (T26: medication_order:read != :create)
+    ok stale_policy_pin         REFUSE                   (manifest-integrity: superseded med-0.9)
+    ok unattested               REF_VERIFY_ENVELOPE_ABSENT
+    ok forged_envelope          REF_VERIFY_SIGNATURE_INVALID   (dose edited inside the attestation)
+    ok replay                   REF_VERIFY_REPLAY
+    ok rebind_operation         REF_VERIFY_BINDING_MISMATCH
+    ok rebind_context           REF_VERIFY_BINDING_MISMATCH    (dose -> 5000 mg post-authorization)
+    ok target_swap              REF_VERIFY_BINDING_MISMATCH
+    XX stale_decision           SKIPPED (gate window 300s; proven in-process)
+
+$ poc_runner --mode live --domain legal
+[legal] 12/13 passed
+    ok admit_primary            REASSERTED_AND_BOUND
+    ok admit_secondary          REASSERTED_AND_BOUND
+    ok admit_minimal_authority  REASSERTED_AND_BOUND
+    ok insufficient_authority   REFUSE                   (AC3: paralegal w/o bar_admission_active)
+    ok wrong_operation          REFUSE                   (T26: court_filing:draft != :submit)
+    ok stale_policy_pin         REFUSE                   (manifest-integrity: superseded legal-0.9)
+    ok unattested               REF_VERIFY_ENVELOPE_ABSENT
+    ok forged_envelope          REF_VERIFY_SIGNATURE_INVALID
+    ok replay                   REF_VERIFY_REPLAY
+    ok rebind_operation         REF_VERIFY_BINDING_MISMATCH
+    ok rebind_context           REF_VERIFY_BINDING_MISMATCH
+    ok target_swap              REF_VERIFY_BINDING_MISMATCH
+    XX stale_decision           SKIPPED
+
+$ poc_runner --mode live --domain finance
+[finance] 12/13 passed
+    ok admit_primary            REASSERTED_AND_BOUND
+    ok admit_secondary          REASSERTED_AND_BOUND
+    ok admit_minimal_authority  REASSERTED_AND_BOUND
+    ok insufficient_authority   REFUSE                   (AC3: limit_check_cleared absent)
+    ok wrong_operation          REFUSE                   (T26: trade:quote != :execute)
+    ok stale_policy_pin         REFUSE                   (manifest-integrity: superseded fin-0.9)
+    ok unattested               REF_VERIFY_ENVELOPE_ABSENT
+    ok forged_envelope          REF_VERIFY_SIGNATURE_INVALID
+    ok replay                   REF_VERIFY_REPLAY
+    ok rebind_operation         REF_VERIFY_BINDING_MISMATCH
+    ok rebind_context           REF_VERIFY_BINDING_MISMATCH    (qty -> 100000 post limit-check)
+    ok target_swap              REF_VERIFY_BINDING_MISMATCH
+    XX stale_decision           SKIPPED
+
+Totals: 36/36 substantive cases passed over real cross-host TLS (3 stale cases
+skipped by config; proven deterministically in-process). 0 failures.
+
+Honest ceiling (GR-3)
+---------------------
+This is CHARACTERIZATION over real transport, not certification. Two VMs on ONE
+physical host, a PRIVATE host-only network, a DEV CA, the author's OWN scripted
+calls. Three domains add breadth of CONTENT over one decision chain whose
+security properties are unchanged (the gate/envelope/verifier/target are
+byte-identical to every prior proof). The only open road item remains G5: a real
+EXTERNAL attacker on a real PUBLIC surface, which is not code.
