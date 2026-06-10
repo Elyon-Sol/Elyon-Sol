@@ -15574,3 +15574,34 @@ Prior substantive entry: VL-088 (the target_url_swap fix). This entry cites VL-0
 
 #### Next trajectory action
 Re-run the live suite; with all three real-surface findings fixed, expect a clean green over real cross-host TLS -> flip REAL_TRANSPORT green (C4), naming the run log. Then the real EXTERNAL attacker (G5/GR-3). The three findings (VL-087/088/089) are themselves the strongest evidence on record that the real surface yields referents the sandbox cannot.
+
+
+### VL-090 - 2026-06-09 - C4 MET: REAL_TRANSPORT green - the attack suite defeated over real cross-host TLS (the gate-1 referent achieved)
+**Status:** RECORDED (a real referent obtained - the first deployment predicate greened by a real cross-host attack run, not a sandbox simulation). Referent-bound: the proof is the author's executed live run (`EVIDENCE/proofs/real_transport_attack_001.log`), positive control HONORED + 6/6 attacks DEFEATED over real transport; in-sandbox the readiness gate is re-validated (0 errors, 0 missing proofs, 4/4 green, suite 299/0). Two artifacts + the run log changed.
+**Author:** the project author (the live run) + Claude (recording).
+**Classification:** trajectory move per VL-017a - the single most consequential entry since VL-066: an external (out-of-process, real-transport, cross-host) referent, the axis external_verification_readiness names as load-bearing, moves OFF zero for the first time.
+
+#### What was achieved
+The VL-079 attack suite, run by `EVIDENCE/proofs/attack_suite_live_runner.py` against a REAL two-host deployment (two VirtualBox Ubuntu VMs over a host-only network with real TLS; gate on VM-A 192.168.56.101:8000, reference target + publisher on VM-B 192.168.56.102; client = the author's separate Windows laptop), defeated every adversarial attack over real cross-host TLS and honored the valid call: positive control HONORED (the gate PUSHED the admitted envelope to the target, which acted - confirmed via /received), un-attested -> `REF_VERIFY_ENVELOPE_ABSENT`, forged -> `REF_VERIFY_SIGNATURE_INVALID`, replay -> `REF_VERIFY_REPLAY`, rebind-tool / rebind-args / target_url-swap -> `REF_VERIFY_BINDING_MISMATCH`. Exit 0. This is the gate-1 referent (`docs/methodology/external_verification_readiness.md` gate 1: a running thing attacked over real transport).
+
+#### What landed
+- `EVIDENCE/proofs/real_transport_attack_001.log`: the captured run with provenance (date, commit 8d40171, the two-VM topology, the runner, and the honest bound).
+- `EVIDENCE/readiness.json`: REAL_TRANSPORT flipped `green: true` naming the log as proof, the blocked_by rewritten to the GREEN scope + honest bound.
+- `IMPLEMENTATION/readiness.py`: REAL_TRANSPORT added to `PREDICATE_NAMES`, so it is counted - the readiness summary is now "4 of 4 deployment predicates green". validate_manifest stays clean (green names an existing proof file); the predicate has no capability-dependency consistency requirement, so the existing predicate tests are unaffected.
+
+#### What this got the project (the three real-surface findings)
+Reaching this green required fixing three defects the entire in-house build, the full audit, and the 298-test suite never caught, because each appears only against a real surface: VL-087 (the cert chain lacked Subject/Authority Key Identifiers; a strict real TLS client rejected it), VL-088 (an attack admitted against an unreachable URL; the gate's real upstream forward exposed it), VL-089 (the positive control assumed caller-carry; the gate's real PUSH delivery exposed it - the section-14 caller-carry/push fork made concrete). These are the strongest evidence on record for the project's own thesis that an in-process pass is not validation.
+
+#### Honest ceiling - what REAL_TRANSPORT green does NOT claim (G5 still OPEN)
+The bound is carried in the manifest and the log: two VMs on ONE physical host, a PRIVATE host-only network, a DEV CA, and the author's OWN scripted attack. REAL_TRANSPORT green = the attack suite is defeated over real cross-host TLS. It is NOT: a public-internet surface, a real / public CA, multi-machine across the internet, or a real EXTERNAL attacker who did not read the project's account of itself. **G5 (GR-3) remains OPEN** and is the residual binding NOT-READY reason for an external-validation / production claim. The deposit-readiness audit's Section C named-open items that need a real external attacker are unchanged; what moved is the cross-host-TLS referent only.
+
+#### Verification (referent-bound)
+- The live run (author, real hosts): positive control honored + 6/6 attacks defeated, exit 0; captured to the log.
+- In-sandbox: `validate_manifest` 0 errors, `assert_proof_files_exist` 0 missing (the log exists), `summary_line` "4 of 4 deployment predicates green"; `TESTS/readiness/` + full suite 299 passed + 0 xfailed.
+- The live runner stays CI-excluded; the new .log is not a runner; CI is unaffected.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-089 (the push positive-control fix that enabled the green run). This entry cites VL-083 (the REAL_TRANSPORT predicate + live runner it greens), VL-087/088/089 (the three fixes the green required), and external_verification_readiness gate 1 (the referent now met for the cross-host scope); it does not cite its own (readiness + readiness.py + log + STATE + ledger) hash.
+
+#### Next trajectory action
+Only the final step remains, and it is not code: a real EXTERNAL attacker on a real PUBLIC surface (real DNS + real CA + an internet-reachable deployment + a stranger), which alone certifies G5 (GR-3). Optional hardening toward it: a public-CA / real-host deployment profile, a committed two-host compose profile (the single-box-compose workaround noted at VL-085/086), and wiring the built-but-unwired capabilities (B1 signed-record reader, B3 shared replay cache) onto the default path. The project has now moved its load-bearing axis off zero for the cross-host tier; the public-attacker tier is the author's to arrange.
