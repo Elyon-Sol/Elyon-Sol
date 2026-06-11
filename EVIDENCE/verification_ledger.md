@@ -15823,3 +15823,31 @@ Prior substantive entry: VL-096 live (the three-domain POC over real TLS). This 
 
 #### Next trajectory action
 The gate-side issuance-log seam (so live deployments produce the issued.jsonl the reconciler audits), or cross-model verification of spec 26; G5 unchanged and the author's.
+
+
+### VL-098 - 2026-06-10 - Semantic re-evaluation: the inspector's missing rung (consistency + live re-run of the production evaluator)
+**Status:** RECORDED (a build increment; 19 new tests, full suite 343 -> 362 green in-container). Referent-bound: the artifact is reevaluate_envelope() in `IMPLEMENTATION/envelope_inspector.py` + `docs/restructure/27_envelope_reevaluation_spec.md` + the extended `TESTS/adversarial/test_envelope_inspector.py`. Spec 27 is SINGLE-SOURCE. GR-3: audit tooling, NOT a G5 closer.
+**Author:** Claude (build + in-container verification), continuing the VL-097 session per the user's re-order (re-evaluation ahead of the issuance-log seam; both this session).
+**Classification:** trajectory-adjacent enabling infrastructure per VL-017a (parity with VL-097).
+
+#### The gap closed
+The reassertion protocol named an outcome it did not perform: reassert() returns RE-EVALUATE-REQUIRED on an evaluator/manifest transition (artifact 05 rows 3-4; canon section 12.4), and no tool then performed the re-evaluation. Separately, a recorded decision could contradict its recorded condition_results (decision: ELIGIBLE with ac3: false) - the hash region protects those fields against TAMPER, not against an internally inconsistent issuance - and nothing flagged it.
+
+#### What landed
+- `reevaluate_envelope(envelope, manifest=None)`: (1) record consistency under evaluate()'s own short-circuit logic - ELIGIBLE iff all three recorded conditions True, REFUSE iff at least one False; missing/non-boolean condition_results or an unknown decision value is inconsistent (canon section 9 fail-closed); condition_results.ccs (None at issuance, VL-029 Decision A) is NOT consulted. (2) live re-evaluation - ctx rebuilt from the recorded request_context (AP, OP, expected_manifest_version, expected_manifest_sha256; context does not enter AC3/T26/integrity) and run through the PRODUCTION evaluate() plus the three condition functions individually, against the live load_manifest(). Live-state semantics are inherent: manifest_integrity_valid() fails closed unless the passed manifest equals the on-disk source (the G11 fix, VL-053); the manifest parameter exists for malformed-manifest test injection only. Returns consistency + live verdicts + reproduced; structural failure fail-closed via the verifier's guard.
+- CLI `reevaluate <envelope.json>`: exit 0 iff ok and consistent and reproduced.
+- Closed-set inconsistency vocabulary: CONDITIONS_MALFORMED / ELIGIBLE_WITH_FAILED_CONDITION / REFUSE_WITH_ALL_CONDITIONS_TRUE / UNKNOWN_DECISION.
+- The inspector's evaluation ladder is now complete and documented in the module docstring: shape (inspect) -> provenance (verify_issuer) -> currency (reassert) -> semantics (reevaluate) -> log completeness (reconcile); rungs orthogonal and composable.
+
+#### What was verified (in-container)
+19 new tests: reproduced-ELIGIBLE positive control; ELIGIBLE-with-each-failed-condition inconsistent (x3); REFUSE-with-all-True inconsistent; REFUSE-with-failed-condition consistent and reproduced; malformed condition_results fail-closed (x4); unknown decision; ccs-None-not-consulted; stale-manifest-pin DECISION-CHANGED (live REFUSE on integrity, ac3 still True - the RE-EVALUATE-REQUIRED answer, performed); malformed live manifest all-False fail-closed; structural fail-closed parity (x4); CLI exit codes. Full suite 362 green. ASCII-safe, LF.
+
+#### Process findings
+1. The live re-run caught a defect in the VL-097 test fixture on first use: the fixture's invented AP ("execution_authority"/"verified_identity") and OP ("compute:basic") do not satisfy the real manifest's AR ("identity"/"role") / R ("session"/"request") - invisible to VL-097's tests (none ran evaluate()), surfaced the moment the semantic rung existed. Fixture corrected to manifest-satisfying sets in the same commit; the binding/consistency tests are unaffected in meaning. This is the tool validating its own test bed - recorded as a small instance of the project's verification-pressure principle.
+2. The Cowork mount's stale-content cache (the VL-069-class artifact) recurred on host-tool EDITS of files the sandbox had already cached: the sandbox served pre-edit bytes (old size, old test collection) while the host was current. Recovery: write the merged content to NEW paths (never cached) and cp over the originals from the sandbox side; subsequent small edits made sandbox-side directly. Complements SESSION_PROTOCOL recovery rule 6; candidate protocol annotation if it recurs.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-097 (the inspector this extends). This entry cites VL-097 (the ladder it completes), VL-029 (Decision A ccs semantics), VL-053 (the G11 guard that makes live-state semantics inherent), VL-012 (the rename that disambiguated manifest-integrity from CCS), and artifact 05 / canon 12.4 (the RE-EVALUATE-REQUIRED outcome this operationalizes); it does not cite its own (spec + impl + tests + STATE + ledger) hash.
+
+#### Next trajectory action
+The gate-side issuance-log seam (VL-099, this session per the user's choice); then cross-model verification of specs 26+27 as a candidate; G5 unchanged and the author's.
