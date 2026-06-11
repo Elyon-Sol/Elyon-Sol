@@ -1,9 +1,9 @@
 # 28 - Gate-side issuance log spec (VL-099)
 
-Status: SINGLE-SOURCE (drafted in the VL-099 session from primary sources
+Status: CONFIRMED at VL-102 (drafted SINGLE-SOURCE in the VL-099 session from primary sources
 `IMPLEMENTATION/pep.py` and `docs/restructure/26_envelope_inspector_spec.md`,
 read in full this session per SESSION_PROTOCOL step 4 / VL-008
-task-to-source binding). Not yet cross-model-verified.
+task-to-source binding). Cross-model verified at VL-102: every claim for this spec was classified Supported by two procedurally-clean verifier runs (Grok, OpenAI) under the committed VL-100 request (a third run, Gemini, was discarded as a VL-008 rule-(b) procedure violation; its one Contradicted was examined on the merits in VL-102 and found not to hold). Status: SINGLE-SOURCE -> CONFIRMED.
 
 ---
 

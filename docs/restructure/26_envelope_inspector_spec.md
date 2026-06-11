@@ -1,9 +1,9 @@
 # 26 - Envelope inspector / reconciler spec (VL-097)
 
-Status: SINGLE-SOURCE (drafted in the VL-097 session from primary sources
+Status: CONFIRMED at VL-102 (drafted SINGLE-SOURCE in the VL-097 session from primary sources
 `IMPLEMENTATION/envelope.py` and `IMPLEMENTATION/verifier.py`, re-read in
 full this session per SESSION_PROTOCOL step 4 / VL-008 task-to-source
-binding). Not yet cross-model-verified.
+binding). Cross-model verified at VL-102: every claim for this spec was classified Supported by two procedurally-clean verifier runs (Grok, OpenAI) under the committed VL-100 request (a third run, Gemini, was discarded as a VL-008 rule-(b) procedure violation; its one Contradicted was examined on the merits in VL-102 and found not to hold). Status: SINGLE-SOURCE -> CONFIRMED.
 
 ---
 

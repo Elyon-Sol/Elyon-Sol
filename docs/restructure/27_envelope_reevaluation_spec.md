@@ -1,10 +1,9 @@
 # 27 - Envelope semantic re-evaluation spec (VL-098)
 
-Status: SINGLE-SOURCE (drafted in the VL-098 session from primary sources
+Status: CONFIRMED at VL-102 (drafted SINGLE-SOURCE in the VL-098 session from primary sources
 `IMPLEMENTATION/evaluator.py` and `IMPLEMENTATION/envelope.py` /
 `IMPLEMENTATION/envelope_inspector.py`, read in full this session per
-SESSION_PROTOCOL step 4 / VL-008 task-to-source binding). Not yet
-cross-model-verified.
+SESSION_PROTOCOL step 4 / VL-008 task-to-source binding). Cross-model verified at VL-102: every claim for this spec was classified Supported by two procedurally-clean verifier runs (Grok, OpenAI) under the committed VL-100 request (a third run, Gemini, was discarded as a VL-008 rule-(b) procedure violation; its one Contradicted was examined on the merits in VL-102 and found not to hold). Status: SINGLE-SOURCE -> CONFIRMED.
 
 ---
 
