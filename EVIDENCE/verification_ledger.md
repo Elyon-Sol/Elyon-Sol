@@ -15898,3 +15898,20 @@ Prior substantive entry: VL-099 (the issuance log; the last of the three artifac
 
 #### Next trajectory action
 In-session: the tooling inventory (docs/TOOLING.md, proposed VL-101). Author-parallel: execute the verification runs. G5 unchanged and the author's.
+
+
+### VL-101 - 2026-06-10 - Tooling inventory (docs/TOOLING.md) + README orientation pointer
+**Status:** RECORDED (a doc-only increment; no code, canon, manifest, or test change; suite unchanged). Referent-bound: the artifact is `docs/TOOLING.md` + the two README Orientation edits.
+**Author:** Claude, per the user's in-session order (cross-model staging first, then tooling).
+**Classification:** efficiency move per VL-017a (discoverability for the reviewer/attacker audience the road builds toward; no trajectory change).
+
+#### What landed
+- `docs/TOOLING.md`: the one-page functional-tool index - 7 sections, one row per tool (purpose, invocation, spec/ledger reference): gate chain, target-side executors, trust records (publisher, readers, generators, readiness), the audit layer (the envelope_inspector ladder + issuance_log), the attack harness + proof-runner family, the deploy stack, governance scripts. Deliberately an INDEX: no test counts (G1 discipline - STATE.md + the latest VL entry are the count of record), no behavior detail beyond one line, every row pointing at its spec/ledger home. A maintenance rule binds future increments: a new functional tool adds its row in the same increment that lands it.
+- README "Orientation for new readers": new item 5 pointing at docs/TOOLING.md (old item 5 renumbered to 6).
+- Incidental drift repair, same family as G1 (resolved VL-052): the Orientation section still asserted "The current most-recent entry is VL-029 (commit 79012d7)" - stale by 72 entries. Replaced with a non-decaying formulation (the ledger's tail; STATE.md's Last-updated line names it). Surfaced by the pointer insertion's source read (Lesson 3 source-first applied).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-100 (the staged verification round). This entry cites VL-052 (the G1 no-hardcoded-counts discipline the page and the drift repair follow), VL-017a (the classification), and VL-097/098/099 (the audit layer the index newly surfaces); it does not cite its own (TOOLING + README + STATE + ledger) hash.
+
+#### Next trajectory action
+The author's: (1) push this session's commits; (2) execute the VL-100 verification runs (Grok + OpenAI, the committed request + 9 attached files) - adjudication proposed VL-102; (3) optional live audit-chain run (ELYON_ISSUANCE_LOG_PATH on the deployed gate + reconcile). G5 unchanged and the author's.
