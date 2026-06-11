@@ -15951,3 +15951,27 @@ Prior substantive entry: VL-101. This entry cites VL-100 (the request and bar it
 
 #### Next trajectory action
 The author's: push, and optionally the live audit-chain run (ELYON_ISSUANCE_LOG_PATH + reconcile over real history). G5 (a real EXTERNAL attacker on a real PUBLIC surface) remains the only open road item.
+
+
+### VL-103 - 2026-06-10 - External validation execution plan (G5): the operational road from finished in-house work to the only open item
+**Status:** RECORDED (a planning/consolidation increment; no code, canon, manifest, or test change; suite unchanged). Referent-bound: the artifact is `docs/restructure/29_external_validation_execution_plan.md`. SINGLE-SOURCE; an operational plan, not a code spec.
+**Author:** Claude, at the user's request ("do we have an external implementation plan drafted yet?" -> G5 execution plan).
+**Classification:** efficiency / orientation move per VL-017a - it sequences existing, scattered artifacts; it does not move a gap or add a claim.
+
+#### The gap closed
+The external-readiness pieces existed in four separate documents (the 5-gate criterion in `docs/methodology/external_verification_readiness.md`; the break-it challenges in `falsifiable_claim_sheet.md`; the surface bring-up in `deploy/runbook.md` + `deploy/tls/trust_bootstrap.md`; the live attack run in artifact 22 / `attack_suite_live_runner.py`) but were never sequenced into one procedure. There was no document an operator could follow from "in-house road finished" to "G5 referent obtained". VL-103 is that document.
+
+#### What landed
+Artifact 29, five phases plus framing and sequencing: Phase 1 public surface bring-up (real hosts / DNS / CA, retiring the dev-CA bound; author self-test green and REAL_TRANSPORT flipped BEFORE any stranger arrives, so the attacker meets a working system - the VirtualBox tier's four-bug precedent cited as the expectation, not the exception); Phase 2 the decontaminated briefing pack (what the reviewer is handed - live URLs, the claim sheet, the named floors, the inspector CLI - and the explicit FORBIDDEN list carrying ext-readiness gate 4 / claim-sheet "Forbidden in any reviewer briefing" verbatim, including that the VL-102 cross-model CONFIRMED is in-house conformance evidence and must NOT be shown to a blind reviewer, exactly the VL-057 demotion); Phase 3 the two distinct people - the blind attacker (gate 4, prior exposure exclusionary since there is no task-to-source binding to rescue contamination as VL-008 (c) does for models) and the separate stake-free rebuild estimator (gate 3, a person not a model estimate); Phase 4 rules of engagement (scope in/out, the precise success definition - target ACTS or gate ADMITS against a DEFENDED row, with reproduction - named-open boundaries and DoS scoped out of "finding", the inspector CLI as the shared adjudicator); Phase 5 intake to the ledger (a break reproduced then recorded as a defeated-claim entry that becomes a fix or a new named-open boundary; a clean run recorded bounded by scope+window; the rebuild report recorded as-is including an unfavorable result; STATE + artifact-04 updated to G5's new status).
+
+#### What it deliberately does not do
+It does not promise the surface survives (the honest posture is that the public tier will likely surface defects, like the VirtualBox tier did); it does not let a clean run inflate to "unbreakable"; it does not resolve the named floors (A1, ROOT, COST); and it explicitly classifies the semantic-binding question (an admissible request need not be wise - canon section 14 scope) as out-of-scope-by-design so a reviewer's "I described a harmful action in admissible vocabulary and it passed" is correctly categorized, not mistaken for a break. (This last is the deepest open critique surfaced in the session's external-review discussion; naming it in the plan pre-empts its misclassification.)
+
+#### Honest status
+G5 is unchanged by this increment: still NOT-MET, the project still NOT-READY for an external-validation claim. A plan for obtaining a referent is not the referent. What VL-103 changes is that the path is now a single followable procedure rather than four documents an operator must assemble.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-102. This entry cites VL-057 (the referent-binding demotion the briefing-pack FORBIDDEN list enforces), VL-059/VL-079 (the deposit audit and claim sheet it sequences), VL-081/082/083 (the deploy + TLS + live-run artifacts Phase 1 executes), VL-087/088/089/092 (the defects-as-progress precedent Phase 5 invokes), and VL-102 (the in-house result Phase 2 forbids showing the reviewer); it does not cite its own (plan + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged in substance, now sequenced: execute artifact 29 Phase 1 (the author's - public surface bring-up). G5 remains the only open road item.
