@@ -54,6 +54,15 @@ object, never the repo). A gate with no configured key FAILS CLOSED
 downgrade to an unsigned forward. verify_envelope's unsigned mode is
 unaffected (it remains for target-side enforcement and A1-bypass
 demonstrations). DEFAULT_SECURE goes green (EVIDENCE/readiness.json).
+
+VL-099 issuance log: when configured (pep._INJECTED_ISSUANCE_LOG or
+ELYON_ISSUANCE_LOG_PATH), the ELIGIBLE branch appends each SIGNED
+envelope to a JSONL issuance log (IMPLEMENTATION/issuance_log.py) after
+sign_envelope and before the upstream push, inside the fail-closed
+catch: a configured gate that cannot record an issuance refuses
+(REF_PEP_FAIL_CLOSED) and never calls the target. Default None is
+byte-behavior-identical to pre-VL-099. The log is the gate-produced
+input to `envelope_inspector reconcile --issued` (spec 28).
 """
 
 import json
@@ -73,6 +82,7 @@ from IMPLEMENTATION.evaluator import (
     manifest_integrity_valid,
 )
 from IMPLEMENTATION.envelope import build_envelope, canonical_json, sign_envelope
+from IMPLEMENTATION.issuance_log import issuance_log_from_env
 from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
@@ -117,6 +127,17 @@ def _get_signing_key():
         )
         return Ed25519PrivateKey.from_private_bytes(bytes.fromhex(key_hex)), key_id
     return None
+
+
+# VL-099 issuance log: injected-then-env resolution, mirroring
+# _get_signing_key(). None (the default) disables logging entirely.
+_INJECTED_ISSUANCE_LOG = None  # set by a harness/deploy shim
+
+
+def _get_issuance_log():
+    if _INJECTED_ISSUANCE_LOG is not None:
+        return _INJECTED_ISSUANCE_LOG
+    return issuance_log_from_env()
 
 
 def _schema_refusal_exception(code: str) -> HTTPException:
@@ -269,6 +290,16 @@ async def governed_call(request: Request):
             envelope, signing_key, key_id,
             not_after=not_after, decision_id=uuid.uuid4().hex,
         )
+        # VL-099: record the issuance (spec 28). AFTER signing (the log
+        # records what was issued, signed and decision_id-bearing) and
+        # BEFORE the push (issuance is the signing, not the delivery; an
+        # issued-but-undelivered envelope must still be on the log).
+        # Inside this try: an append failure on a CONFIGURED log fails
+        # closed (REF_PEP_FAIL_CLOSED below) and the target is never
+        # called - do not issue what you cannot record (canon section 9).
+        issuance_log = _get_issuance_log()
+        if issuance_log is not None:
+            issuance_log.append(envelope)
     except Exception as e:
         raise HTTPException(
             status_code=403,
