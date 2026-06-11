@@ -15851,3 +15851,28 @@ Prior substantive entry: VL-097 (the inspector this extends). This entry cites V
 
 #### Next trajectory action
 The gate-side issuance-log seam (VL-099, this session per the user's choice); then cross-model verification of specs 26+27 as a candidate; G5 unchanged and the author's.
+
+
+### VL-099 - 2026-06-10 - Gate-side issuance log (built AND wired; the reconciler's gate-produced input)
+**Status:** RECORDED (a build+wire increment; 10 new tests, full suite 362 -> 372 green in-container). Referent-bound: the artifacts are `IMPLEMENTATION/issuance_log.py`, the pep.py wire, `docs/restructure/28_issuance_log_spec.md`, and `TESTS/adversarial/test_issuance_log.py`. Spec 28 is SINGLE-SOURCE. GR-3: audit infrastructure, NOT a G5 closer.
+**Author:** Claude (build + in-container verification), completing the user's both-this-session directive (VL-098 then VL-099).
+**Classification:** capability / trajectory-adjacent per VL-017a; the WIRE lands in the same increment but defaults off (pep.py intentionally changed - this IS the wire, VL-094 parity).
+
+#### The gap closed
+The VL-097 reconciler consumes "a log of ISSUED envelopes" and the gate persisted none: every signed ELIGIBLE envelope left pep.py in the push header and the response and was gone from the gate's own record, so the auditability property had no gate-produced left-hand side.
+
+#### What landed
+- `IMPLEMENTATION/issuance_log.py`: `JsonlIssuanceLog(path).append(envelope)` writes one `canonical_json` line (envelope.py's one canonical form) in append mode with flush+fsync per line (audit durability over throughput; latency headroom per artifact 18); `issuance_log_from_env()` returns the log when `ELYON_ISSUANCE_LOG_PATH` is set, else None (parity with `replay_cache_from_env`, VL-076/094). Concurrency bound recorded honestly: single-process-per-instance gate, O_APPEND atomic at envelope sizes; horizontally-scaled deployments use per-instance logs and concatenate (reconcile takes a list; decision_ids unique per VL-066, so concatenation order does not change verdicts).
+- pep.py wire: `_INJECTED_ISSUANCE_LOG` slot + `_get_issuance_log()` (injected-then-env, mirroring `_get_signing_key`); in the ELIGIBLE branch the signed envelope is appended AFTER `sign_envelope` (the log records what was issued: signed, decision_id-bearing) and BEFORE the push (issuance is the signing, not the delivery; issued-but-undelivered must be on the log - UNUSED is informational in reconcile), INSIDE the fail-closed catch: an append failure on a configured log is `REF_PEP_FAIL_CLOSED` and the target is never called. Default None: byte-behavior-identical to pre-VL-099 on every existing path.
+
+#### What was verified (in-container)
+10 new tests: one-canonical-line-per-append round-trip; from_env default-None / path-set; ELIGIBLE appends exactly the signed response envelope (issuer_signature + decision_id present); evaluator-REFUSE and schema-refusal append nothing; default-no-log path unchanged; append-failure fails closed AND blocks upstream; env-var seam wires without injection; END-TO-END - two admitted calls, executed actions reconstructed from the captured pushes (delivered interaction + target identity + the envelope's decision_id), reconcile against the gate's own log with the gate's pinned key -> clean 2/2 MATCHED, and a rogue unlogged action -> OUT_OF_SCOPE. Full suite 372 green (incl. the pre-existing pep/enforcement/readiness sets - the default path is unchanged). ASCII-safe, LF.
+
+#### Honest ceiling (GR-3)
+The trustworthy-log assumption (spec 26) now splits in two: the gate's issuance log is produced by the gate itself at issuance (this increment); the target's action log remains the target's to keep faithfully - a target that acts without logging stays outside any log audit. The fail-closed append trades availability for the audit guarantee on configured deployments (the VL-094 trade). In-container verification only; the live tier (a real deployment writing the log, reconciled over real transport) is the author's, runnable on the existing VirtualBox stack by setting one env var. G5 untouched and remains the only open road item.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-098 (the semantic rung). This entry cites VL-097 (the reconciler this feeds), VL-047/VL-065/VL-066 (the signing, decision-freshness, and decision_id machinery the logged envelope carries), VL-076/VL-094 (the from_env seam pattern and the build+wire-in-one precedent with the fail-closed availability trade), and spec 26's trustworthy-log bound (now honestly split); it does not cite its own (spec + 2 impl + tests + STATE + ledger) hash.
+
+#### Next trajectory action
+Cross-model verification of specs 26/27/28 (all SINGLE-SOURCE; VL-008/VL-015 procedure). Author-optional in parallel: the live audit-chain run (ELYON_ISSUANCE_LOG_PATH on the deployed gate + target-side action records + reconcile). G5 unchanged and the author's.
