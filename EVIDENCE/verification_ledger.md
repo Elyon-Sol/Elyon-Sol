@@ -15915,3 +15915,39 @@ Prior substantive entry: VL-100 (the staged verification round). This entry cite
 
 #### Next trajectory action
 The author's: (1) push this session's commits; (2) execute the VL-100 verification runs (Grok + OpenAI, the committed request + 9 attached files) - adjudication proposed VL-102; (3) optional live audit-chain run (ELYON_ISSUANCE_LOG_PATH on the deployed gate + reconcile). G5 unchanged and the author's.
+
+
+### VL-102 - 2026-06-10 - VL-100 round adjudicated: specs 26/27/28 CONFIRMED (two clean runs); third run discarded for fabricated citations, its objection refuted on the merits
+**Status:** RECORDED (adjudication of three verifier runs under the VL-008 procedure against the committed VL-100 request). Referent-bound: the verbatim responses are committed at `EVIDENCE/verification_runs/vl100_{grok,openai,gemini}_response.md` with provenance headers; the spot-check and merits analysis are reproducible from HEAD (commands quoted below).
+**Author:** the project author (executed all three verifier runs and pasted back the responses) + Claude (adjudication: procedure checks, citation spot-checks, merits analysis, status transitions).
+**Classification:** verification move per VL-017a; completes the VL-100 -> runs -> adjudication lifecycle (the VL-014 -> VL-015 -> VL-016 shape).
+
+#### Run 1 - Grok: PROCEDURALLY CLEAN; 22/22 Supported
+Submission format followed (classification table / divergence notes: none / scope check). Grounds carry file+line citations. Adjudicator due diligence: 7 of the 22 line citations spot-checked programmatically against HEAD (envelope_inspector.py:175/244/409, evaluator.py:93, verifier.py:199, issuance_log.py:55, pep.py:300) - 7/7 HIT. Procedure note, not a violation: the scope check is condensed ("e.g. ... etc.") rather than exhaustive; the per-claim file+line grounds carry the rule-(b) traceability, matching the VL-015 acceptance standard.
+
+#### Run 2 - OpenAI: PROCEDURALLY CLEAN; 22/22 Supported
+Submission format followed; grounds are function-level (no line numbers - the request did not require them); scope check is structured concept -> source with no untraceable items. All 22 grounds consistent with HEAD on adjudicator read.
+
+#### Run 3 - Gemini (unsolicited third run): PROCEDURE VIOLATION (VL-008 rule b); DISCARDED
+The response cites, as load-bearing grounds AND as scope-check entries, two symbols that do not exist in any attached file: a `_reconcile_binds` helper (the actual function is `_binding_holds`) and a `consumed_decision_ids` set (the actual mechanism is a `consumed` boolean list + `matchable` list). Verified at HEAD: `grep -c "_reconcile_binds|consumed_decision_ids" IMPLEMENTATION/envelope_inspector.py` -> 0. Under VL-008 rule (b), items that cannot be cited to the attached files must be named out-of-scope and removed; instead they are presented as citations. The response therefore carries NO verification weight - including its 21 Supported classifications. Discarding is symmetric: the run's agreements are discarded with its disagreement.
+
+#### The Gemini C26-1 "Contradicted", examined on the merits anyway
+Discarding a run that contains the round's only Contradicted creates an obvious integrity hazard (the inconvenient verdict exits with the dirty run). So the objection was adjudicated on the merits regardless, from primary sources at HEAD:
+- The claim (C26-1) binds `inspect_envelope`'s fail-closed set to "the shapes the verifier's STRUCTURAL GUARD rejects" - verify_envelope STEP 1 (verifier.py "Step 1: structural presence guard"). Gemini's divergence note instead compares against "structural checking against signatures/expiration steps" - verifier step 1.5/1.5b, which is NOT the structural guard and runs only when trust material is supplied. Category error.
+- The inspector's `_structurally_sound` is check-for-check identical to verify_envelope step 1: same isinstance-dict guard, same iteration over the IMPORTED `_REQUIRED_ENVELOPE_KEYS`, same request_context isinstance guard, same iteration over the IMPORTED `_REQUEST_CONTEXT_KEYS` (side-by-side quoted in the adjudication session; reproducible by reading the two functions).
+- Gemini's table-ground asserts the inspector "does not evaluate structural guard subsets or return REF_VERIFY_ENVELOPE_ABSENT for specific sub-shapes" - factually false (`_structurally_sound` iterates the request_context sub-keys; `test_inspect_missing_request_context_subkey_fails_closed` exercises exactly this and passes), and contradicted by Gemini's OWN divergence note, which concedes the function "does perform a structural decode-only pass via _structurally_sound(envelope) and returns {...} on failure".
+Merits verdict: the contradiction does not hold; C26-1 stands Supported by the two clean runs.
+
+#### Outcome
+The VL-100 bar - every claim Supported by TWO procedurally-clean independent runs - is met for all 22 claims by Grok + OpenAI. Status transitions applied: specs 26, 27, 28 each SINGLE-SOURCE -> CONFIRMED (status lines updated in the same commit as the committed responses). No Under-specified claims; no gap candidates promoted; no Reframing-required challenges to the claims list (the VL-100-noted authorship limitation produced no challenge from any of the three runs).
+
+#### Process findings
+1. Fourth-verifier-family data point for VL-008: the procedure's rule (b) caught a fabricated-citation failure mode (plausible-sounding symbol names that do not exist in the sources) that a verdict-shaped review would have sailed past. This is the strongest in-project demonstration to date that the Scope check section is load-bearing and not ceremony.
+2. The committed-request + committed-verbatim-responses pattern (new this round; VL-100 process choice 1) made the adjudication referent-bound: every quote above is in-repo, not in chat history. Candidate methodology promotion: a verification-response provenance-header template alongside the request template.
+3. The unsolicited third run was accepted into adjudication rather than rejected for exceeding the requested two: more independent runs can only strengthen or dispute, never weaken, under the unanimity bar. Recording this as the standing posture for surplus runs.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-101. This entry cites VL-100 (the request and bar it adjudicates), VL-008 (the procedure, incl. the discard rule and the failed-attempts-documented precedent), VL-015 (the acceptance standard for scope-check form), and VL-097/098/099 (the artifacts whose specs transition); it does not cite its own (3 responses + 3 spec edits + STATE + ledger) hash.
+
+#### Next trajectory action
+The author's: push, and optionally the live audit-chain run (ELYON_ISSUANCE_LOG_PATH + reconcile over real history). G5 (a real EXTERNAL attacker on a real PUBLIC surface) remains the only open road item.
