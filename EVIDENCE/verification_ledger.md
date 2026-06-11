@@ -15876,3 +15876,25 @@ Prior substantive entry: VL-098 (the semantic rung). This entry cites VL-097 (th
 
 #### Next trajectory action
 Cross-model verification of specs 26/27/28 (all SINGLE-SOURCE; VL-008/VL-015 procedure). Author-optional in parallel: the live audit-chain run (ELYON_ISSUANCE_LOG_PATH on the deployed gate + target-side action records + reconcile). G5 unchanged and the author's.
+
+
+### VL-100 - 2026-06-10 - Cross-model verification of specs 26/27/28 STAGED (request committed; execution is the author's)
+**Status:** RECORDED (a staging increment; no verifier has run yet, so no spec status changes). Referent-bound: the artifact is `docs/methodology/verification_request_vl100.md`, instantiating `docs/methodology/verification_request_template.md` (VL-017a) under the VL-008 procedure. ASCII check clean.
+**Author:** Claude (request preparation), per the user's in-session re-order (cross-model staging, then tooling inventory).
+**Classification:** verification-infrastructure move per VL-017a; parity with the VL-014 -> VL-015 request-then-runs lifecycle.
+
+#### What was staged
+A premise-classification verification round over the three SINGLE-SOURCE audit-layer specs. 22 claims enumerated (8 for spec 26, 7 for spec 27, 7 for spec 28), each citing its spec section and classifiable from a fixed 9-file bundle: the 3 specs, the 3 implementation files they describe (envelope_inspector.py, issuance_log.py, pep.py), and the 3 upstream sources the claims reference (envelope.py, verifier.py, evaluator.py). Outcome categories Supported / Contradicted / Under-specified / Reframing required; submission format fixed (classification table + divergence notes + the VL-008 rule-(b) Scope check); negative definition excludes verdicts, suggestions, comparisons, quality ratings, test-suite evaluation, and claims-list re-derivation. Status transitions defined: each spec SINGLE-SOURCE -> CONFIRMED iff all its claims are Supported by two independent verifier runs; any Contradicted claim -> DISPUTED pending correction; Under-specified claims become named gap candidates without blocking the rest.
+
+#### Two process choices, recorded
+1. The concrete request is COMMITTED (docs/methodology/, beside its template), unlike the VL-014/VL-016 requests which existed only in chat. Rationale: the request is the round's task-to-source binding; committing it makes the staging durable and the eventual adjudication reproducible (the VL-008 lesson applied to the request itself).
+2. The claims are enumerated by the same session-pair that wrote the specs and the code. This is a known limitation, not a defect: VL-008's procedure binds the VERIFIER to the sources, and the Reframing-required category plus the "if a claim misquotes its spec, say what the spec actually says" instruction give the verifier a sanctioned path to challenge the enumeration itself. The adjudication entry must treat a verifier challenge to a claim's framing as first-class signal.
+
+#### What happens next (the author's)
+Run the request against Grok and OpenAI with the 9 files attached; collect both full responses including Scope check sections; bring them back for adjudication (procedure-adherence check, per-claim tally, status transitions, gap-candidate promotion) at a future entry (proposed VL-102 or thereabouts).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-099 (the issuance log; the last of the three artifacts under verification). This entry cites VL-008 (the procedure), VL-014/VL-015/VL-016 (the request-runs-adjudication lifecycle it instantiates), VL-017a (the template it fills), and VL-097/098/099 (the artifacts whose specs it stages for verification); it does not cite its own (request + STATE + ledger) hash.
+
+#### Next trajectory action
+In-session: the tooling inventory (docs/TOOLING.md, proposed VL-101). Author-parallel: execute the verification runs. G5 unchanged and the author's.
