@@ -27,6 +27,17 @@ directive, chosen 2026-06-10):
    EXECUTED action against the ISSUED envelopes. An action with no
    matching, bound, single-use envelope is OUT_OF_SCOPE (the
    auditability property from the VL-096 follow-on discussion).
+5. reevaluate_envelope(envelope) (VL-098, spec 27): the semantic rung -
+   internal consistency of the recorded decision vs the recorded
+   condition_results, plus a live re-run of the PRODUCTION evaluate()
+   (and the three condition functions) over the envelope's recorded
+   request_context against the live manifest. This is the tool that
+   PERFORMS the re-evaluation reassert()'s RE-EVALUATE-REQUIRED
+   outcome demands; before VL-098 that outcome named work no tool did.
+
+The evaluation ladder: shape (inspect) -> provenance (verify_issuer) ->
+currency (reassert) -> semantics (reevaluate) -> log completeness
+(reconcile). The rungs are orthogonal and composable by design.
 
 ==============================================================
 Honest scope (GR-3 / canon section 14)
@@ -79,6 +90,14 @@ from IMPLEMENTATION.envelope import (
     _SIGNATURE_EXCLUDED_KEYS,
     canonical_json,
     reassert,
+)
+from IMPLEMENTATION.evaluator import (
+    ac3_valid,
+    evaluate,
+    load_manifest,
+    manifest_integrity_valid,
+    safe_manifest,
+    t26_valid,
 )
 from IMPLEMENTATION.verifier import (
     REF_VERIFY_ENVELOPE_ABSENT,
@@ -245,6 +264,115 @@ def verify_issuer(
             return {"verified": False, "reason": REF_VERIFY_SIGNATURE_EXPIRED}
 
     return {"verified": True, "reason": ISSUER_VERIFIED}
+
+
+# ---------------------------------------------------------------------------
+# Capability 5: semantic re-evaluation (VL-098, spec 27)
+# ---------------------------------------------------------------------------
+
+# Inconsistency reasons (closed set; spec 27 section 2.1). The recorded
+# decision and the recorded condition_results must agree under evaluate()'s
+# own short-circuit logic; anything undecidable is inconsistent (canon
+# section 9 fail-closed).
+INCONSISTENT_CONDITIONS_MALFORMED = "CONDITIONS_MALFORMED"
+INCONSISTENT_ELIGIBLE_WITH_FAILED_CONDITION = "ELIGIBLE_WITH_FAILED_CONDITION"
+INCONSISTENT_REFUSE_WITH_ALL_CONDITIONS_TRUE = "REFUSE_WITH_ALL_CONDITIONS_TRUE"
+INCONSISTENT_UNKNOWN_DECISION = "UNKNOWN_DECISION"
+
+_CONDITION_KEYS = ("ac3", "t26", "manifest_integrity")
+
+
+def _record_consistency(envelope: Dict[str, Any]) -> Optional[str]:
+    """Spec 27 section 2.1: return None if the recorded decision agrees
+    with the recorded condition_results under evaluate()'s short-circuit
+    logic, else the inconsistency reason. condition_results.ccs is None at
+    issuance (VL-029 Decision A) and is NOT consulted - it is
+    reassert-time, not issue-time."""
+    conditions = envelope.get("condition_results")
+    if not isinstance(conditions, dict):
+        return INCONSISTENT_CONDITIONS_MALFORMED
+    values = []
+    for key in _CONDITION_KEYS:
+        value = conditions.get(key)
+        if not isinstance(value, bool):
+            return INCONSISTENT_CONDITIONS_MALFORMED
+        values.append(value)
+    decision = envelope.get("decision")
+    if decision == "ELIGIBLE":
+        return None if all(values) else INCONSISTENT_ELIGIBLE_WITH_FAILED_CONDITION
+    if decision == "REFUSE":
+        return None if not all(values) else INCONSISTENT_REFUSE_WITH_ALL_CONDITIONS_TRUE
+    return INCONSISTENT_UNKNOWN_DECISION
+
+
+def reevaluate_envelope(
+    envelope: Any,
+    manifest: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    The semantic rung (spec 27): judge an envelope's CONTENTS.
+
+    Two checks:
+    1. Internal consistency - the recorded decision vs the recorded
+       condition_results, under evaluate()'s own short-circuit logic
+       (the hash region protects these fields against TAMPER; this
+       check catches an issuer that wrote a self-contradictory record).
+    2. Live re-evaluation - rebuild the evaluator ctx from the recorded
+       request_context (AP, OP, expected_manifest_version,
+       expected_manifest_sha256 - the four fields evaluate() consults;
+       context does not enter AC3/T26/integrity) and run the PRODUCTION
+       evaluate() plus the three condition functions individually
+       against the live manifest. This performs the re-evaluation that
+       reassert()'s RE-EVALUATE-REQUIRED outcome demands.
+
+    Live-state semantics are inherent: manifest_integrity_valid() fails
+    closed unless the passed manifest equals the on-disk
+    MANIFEST/manifest.json (the G11 fix, VL-053). The manifest parameter
+    exists for test injection of malformed manifests only. An ELIGIBLE
+    envelope issued under a since-transitioned manifest correctly
+    re-evaluates REFUSE - that IS the answer, not a tool defect.
+
+    Returns {"ok": True, "consistent", "inconsistency",
+    "recorded_decision", "live_decision", "live_conditions",
+    "reproduced"} or fail-closed {"ok": False, "reason":
+    REF_VERIFY_ENVELOPE_ABSENT} on shape. Judges, never raises on
+    content (canon section 9).
+    """
+    if not _structurally_sound(envelope):
+        return {"ok": False, "reason": REF_VERIFY_ENVELOPE_ABSENT}
+
+    inconsistency = _record_consistency(envelope)
+
+    rc = envelope["request_context"]
+    ctx = {
+        "AP": rc["AP"],
+        "OP": rc["OP"],
+        "expected_manifest_version": rc["expected_manifest_version"],
+        "expected_manifest_sha256": rc["expected_manifest_sha256"],
+    }
+    live_manifest = manifest if manifest is not None else load_manifest()
+    live_decision = evaluate(ctx, live_manifest)
+
+    checked = safe_manifest(live_manifest)
+    if checked is None:
+        live_conditions = {key: False for key in _CONDITION_KEYS}
+    else:
+        live_conditions = {
+            "ac3": ac3_valid(ctx, checked["AR"]),
+            "t26": t26_valid(ctx, checked["R"]),
+            "manifest_integrity": manifest_integrity_valid(ctx, checked),
+        }
+
+    recorded_decision = envelope.get("decision")
+    return {
+        "ok": True,
+        "consistent": inconsistency is None,
+        "inconsistency": inconsistency,
+        "recorded_decision": recorded_decision,
+        "live_decision": live_decision,
+        "live_conditions": live_conditions,
+        "reproduced": live_decision == recorded_decision,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -437,6 +565,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                                             "JSON for reassert(); default uses "
                                             "live local state")
 
+    p_reeval = sub.add_parser(
+        "reevaluate",
+        help="semantic re-evaluation: recorded-decision consistency + a live "
+             "re-run of the production evaluator over the recorded request",
+    )
+    p_reeval.add_argument("envelope", help="path to an envelope JSON file")
+
     p_rec = sub.add_parser("reconcile", help="reconcile executed actions "
                                              "against issued envelopes")
     p_rec.add_argument("--issued", required=True, help="issued envelopes (JSONL)")
@@ -461,6 +596,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             outcome = reassert(envelope, record_source=record)
             print(json.dumps({"reassert": outcome}, indent=2, sort_keys=True))
             ok = ok and outcome["outcome"] == "REASSERTED"
+    elif args.command == "reevaluate":
+        result = reevaluate_envelope(_load_json(args.envelope))
+        print(json.dumps({"reevaluate": result}, indent=2, sort_keys=True))
+        ok = bool(result.get("ok")) and bool(result.get("consistent")) and bool(
+            result.get("reproduced"))
     else:
         issued = _load_jsonl(args.issued)
         executed = _load_jsonl(args.executed)

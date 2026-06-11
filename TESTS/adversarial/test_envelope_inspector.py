@@ -8,6 +8,9 @@ Derived from docs/restructure/26_envelope_inspector_spec.md and canon:
     part of the reconcile matching predicate - spec section 3.4 (a))
   - section 14 (non-executing: the inspector computes verdicts only)
 
+VL-098 extends with the semantic rung (spec 27): recorded-decision
+consistency + live re-evaluation through the production evaluate().
+
 The reconciler's auditability property under test: every executed action
 maps to a signed, bound, single-use issued envelope, or is named
 OUT_OF_SCOPE / DUPLICATE_CONSUMPTION. The trustworthy-log assumption is
@@ -17,7 +20,7 @@ Per VL-040 constraint (i): no hash-value pinning - manifest hashes are
 computed live; envelopes are built with a pinned timestamp_utc for
 determinism; keypairs are generated live and never written to disk.
 
-Ledger: VL-097.
+Ledger: VL-097, VL-098.
 """
 
 import json
@@ -37,9 +40,14 @@ from IMPLEMENTATION.envelope_inspector import (
     ENVELOPE_CONSUMED,
     ENVELOPE_INVALID,
     ENVELOPE_UNUSED,
+    INCONSISTENT_CONDITIONS_MALFORMED,
+    INCONSISTENT_ELIGIBLE_WITH_FAILED_CONDITION,
+    INCONSISTENT_REFUSE_WITH_ALL_CONDITIONS_TRUE,
+    INCONSISTENT_UNKNOWN_DECISION,
     ISSUER_VERIFIED,
     inspect_envelope,
     reconcile,
+    reevaluate_envelope,
     verify_issuer,
 )
 from IMPLEMENTATION.evaluator import load_manifest, manifest_sha256
@@ -59,8 +67,8 @@ PINNED_TS = "2026-06-10T00:00:00+00:00"
 def _interaction(**overrides):
     manifest = load_manifest()
     interaction = {
-        "AP": ["execution_authority", "verified_identity"],
-        "OP": ["compute:basic"],
+        "AP": ["identity", "role"],
+        "OP": ["session", "request"],
         "context": {"purpose": "inspector-test"},
         "expected_manifest_version": manifest["version"],
         "expected_manifest_sha256": manifest_sha256(),
@@ -121,8 +129,8 @@ def test_inspect_decodes_bound_scope(issuer):
     assert decoded["ok"] is True
     scope = decoded["scope"]
     assert scope["target_url"] == TARGET_URL
-    assert scope["AP"] == ["execution_authority", "verified_identity"]
-    assert scope["OP"] == ["compute:basic"]
+    assert scope["AP"] == ["identity", "role"]
+    assert scope["OP"] == ["session", "request"]
     assert scope["context"] == {"purpose": "inspector-test"}
     assert scope["expected_manifest_sha256"] == manifest_sha256()
     meta = decoded["meta"]
@@ -279,8 +287,8 @@ def test_reconcile_no_envelopes_out_of_scope():
 
 @pytest.mark.parametrize("mutate", [
     lambda a: a.update(target_url="http://other.example/target"),
-    lambda a: a["interaction"].update(AP=["execution_authority"]),
-    lambda a: a["interaction"].update(OP=["compute:basic", "files:write"]),
+    lambda a: a["interaction"].update(AP=["identity"]),
+    lambda a: a["interaction"].update(OP=["session", "request", "files:write"]),
     lambda a: a["interaction"].update(context={"purpose": "swapped"}),
     lambda a: a["interaction"].update(expected_manifest_version="9.9.9"),
     lambda a: a["interaction"].update(expected_manifest_sha256="0" * 64),
@@ -302,7 +310,7 @@ def test_reconcile_ap_op_set_semantics(issuer):
     same AP unsorted and duplicated still matches."""
     env = _signed(issuer)
     action = _action(interaction=_interaction(
-        AP=["verified_identity", "execution_authority", "verified_identity"]))
+        AP=["role", "identity", "role"]))
     report = reconcile([action], [env])
     assert report["actions"][0]["verdict"] == AUDIT_MATCHED
 
@@ -382,6 +390,143 @@ def test_reconcile_malformed_action_out_of_scope(issuer):
                        [_signed(issuer)])
     assert [a["verdict"] for a in report["actions"]] == [
         AUDIT_OUT_OF_SCOPE, AUDIT_OUT_OF_SCOPE]
+
+
+# ---------------------------------------------------------------------------
+# Capability 5: reevaluate (VL-098, spec 27)
+# ---------------------------------------------------------------------------
+
+
+def test_reevaluate_reproduces_current_eligible():
+    """Spec 27 positive control: a freshly issued ELIGIBLE envelope is
+    internally consistent and reproduces ELIGIBLE against live state
+    (canon 11.7 AC3, 11.8 T26, 11.9 integrity all re-confirmed)."""
+    result = reevaluate_envelope(_envelope())
+    assert result["ok"] is True
+    assert result["consistent"] is True
+    assert result["inconsistency"] is None
+    assert result["recorded_decision"] == "ELIGIBLE"
+    assert result["live_decision"] == "ELIGIBLE"
+    assert result["live_conditions"] == {
+        "ac3": True, "t26": True, "manifest_integrity": True}
+    assert result["reproduced"] is True
+
+
+@pytest.mark.parametrize("failed", ["ac3", "t26", "manifest_integrity"])
+def test_reevaluate_eligible_with_failed_condition_inconsistent(failed):
+    """Spec 27 section 2.1: ELIGIBLE requires all three recorded
+    conditions True; each single False is the contradiction evaluate()'s
+    short-circuit could never produce."""
+    env = _envelope()
+    env["condition_results"][failed] = False
+    result = reevaluate_envelope(env)
+    assert result["consistent"] is False
+    assert result["inconsistency"] == INCONSISTENT_ELIGIBLE_WITH_FAILED_CONDITION
+
+
+def test_reevaluate_refuse_with_all_true_inconsistent():
+    """Spec 27 section 2.1: all three conditions True forces ELIGIBLE in
+    evaluate(); a REFUSE recording all-True is self-contradictory."""
+    env = _envelope(decision="REFUSE")
+    result = reevaluate_envelope(env)
+    assert result["consistent"] is False
+    assert result["inconsistency"] == INCONSISTENT_REFUSE_WITH_ALL_CONDITIONS_TRUE
+
+
+def test_reevaluate_refuse_with_failed_condition_consistent():
+    """Spec 27 section 2.1: REFUSE with at least one False condition is
+    exactly what evaluate() produces - consistent."""
+    interaction = _interaction(AP=["identity"])  # AC3 fails (missing "role")
+    env = _envelope(interaction=interaction, decision="REFUSE")
+    env["condition_results"]["ac3"] = False
+    result = reevaluate_envelope(env)
+    assert result["consistent"] is True
+    assert result["recorded_decision"] == "REFUSE"
+    assert result["live_decision"] == "REFUSE"
+    assert result["live_conditions"]["ac3"] is False
+    assert result["reproduced"] is True
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda e: e.pop("condition_results"),
+    lambda e: e.update(condition_results="not-a-dict"),
+    lambda e: e["condition_results"].pop("t26"),
+    lambda e: e["condition_results"].update(ac3="true"),
+])
+def test_reevaluate_malformed_conditions_fail_closed(mutate):
+    """Canon section 9: missing or non-boolean condition_results is
+    undecidable -> inconsistent, never a raise. (The structural guard
+    does not require condition_results; reevaluate checks it itself.)"""
+    env = _envelope()
+    mutate(env)
+    result = reevaluate_envelope(env)
+    assert result["ok"] is True
+    assert result["consistent"] is False
+    assert result["inconsistency"] == INCONSISTENT_CONDITIONS_MALFORMED
+
+
+def test_reevaluate_unknown_decision_inconsistent():
+    """Spec 27 section 2.1: the decision vocabulary is closed."""
+    env = _envelope()
+    env["decision"] = "MAYBE"
+    result = reevaluate_envelope(env)
+    assert result["inconsistency"] == INCONSISTENT_UNKNOWN_DECISION
+
+
+def test_reevaluate_ccs_none_not_consulted():
+    """VL-029 Decision A: condition_results.ccs is None at issuance and
+    is reassert-time, not issue-time; it must not affect consistency."""
+    env = _envelope()
+    assert env["condition_results"]["ccs"] is None
+    assert reevaluate_envelope(env)["consistent"] is True
+
+
+def test_reevaluate_stale_manifest_pin_decision_changed():
+    """Spec 27 section 2.2: an ELIGIBLE envelope whose recorded manifest
+    pins no longer match live state re-evaluates REFUSE (integrity fails)
+    - the answer RE-EVALUATE-REQUIRED demands, performed by a tool. The
+    recorded conditions stay all-True (consistent at issuance); only the
+    LIVE verdict changes."""
+    interaction = _interaction(expected_manifest_sha256="0" * 64)
+    env = _envelope(interaction=interaction)
+    result = reevaluate_envelope(env)
+    assert result["consistent"] is True
+    assert result["live_decision"] == "REFUSE"
+    assert result["live_conditions"]["manifest_integrity"] is False
+    assert result["live_conditions"]["ac3"] is True
+    assert result["reproduced"] is False
+
+
+def test_reevaluate_malformed_manifest_fails_closed():
+    """Canon section 9 / safe_manifest: a malformed live manifest yields
+    REFUSE and all-False live conditions, never a raise."""
+    result = reevaluate_envelope(_envelope(), manifest={"AR": "not-a-list"})
+    assert result["live_decision"] == "REFUSE"
+    assert result["live_conditions"] == {
+        "ac3": False, "t26": False, "manifest_integrity": False}
+    assert result["reproduced"] is False
+
+
+@pytest.mark.parametrize("bad", [None, [], "envelope", 7])
+def test_reevaluate_structural_fail_closed(bad):
+    """Parity with inspect: the verifier's structural guard, fail-closed."""
+    assert reevaluate_envelope(bad) == {
+        "ok": False, "reason": REF_VERIFY_ENVELOPE_ABSENT}
+
+
+def test_cli_reevaluate_exit_codes(tmp_path):
+    """Spec 27 section 3: exit 0 iff ok and consistent and reproduced."""
+    good = tmp_path / "good.json"
+    good.write_text(json.dumps(_envelope()), encoding="utf-8")
+    assert _run_cli(["reevaluate", str(good)]).returncode == 0
+
+    stale = tmp_path / "stale.json"
+    stale.write_text(json.dumps(_envelope(
+        interaction=_interaction(expected_manifest_sha256="0" * 64))),
+        encoding="utf-8")
+    result = _run_cli(["reevaluate", str(stale)])
+    assert result.returncode == 1
+    assert '"reproduced": false' in result.stdout
 
 
 # ---------------------------------------------------------------------------
