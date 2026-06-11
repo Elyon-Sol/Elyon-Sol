@@ -51,13 +51,16 @@ project continuity:
    the last step of each working session.
 2. Read **`EVIDENCE/verification_ledger.md`** for the record of
    how each project claim became trusted. Every advance is a
-   numbered `VL-NNN` entry. The current most-recent entry is
-   VL-029 (commit `79012d7`).
+   numbered `VL-NNN` entry. The most recent entry is the
+   ledger's tail; `STATE.md`'s "Last updated" line names it.
 3. Read **`docs/restructure/04_current_vs_claimed.md`** for the
    living gap document.
 4. Read **`docs/restructure/06_spec_to_code_traceability.md`**
    for the per-canon-section implementation status.
-5. Read **`CANON/canon.md`** (ASCII-safe transcription of
+5. Read **`docs/TOOLING.md`** for the one-page inventory of
+   every functional tool (gate, target, records, audit layer,
+   harness, deploy) with invocation syntax.
+6. Read **`CANON/canon.md`** (ASCII-safe transcription of
    `canon_v0.9.8.4.pdf`) as the derivation source for the spec
    and code.
 
