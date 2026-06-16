@@ -79,9 +79,8 @@ description.
 - Test ONLY the four hosts listed above. Nothing else is in scope.
 - No denial-of-service or volumetric testing. No social engineering or phishing of
   the operator or any person. No attacks on other systems, tenants, or networks.
-- Report privately first (see below). Please allow <DISCLOSURE WINDOW, e.g. 30
-  days> for a fix before any public disclosure; we will coordinate timing and
-  credit with you.
+- Report privately first (see below). Please allow 90 days for a fix before any
+  public disclosure; we will coordinate timing and credit with you.
 - Safe harbor: good-faith security research conducted within this scope and these
   rules is authorized; we will not pursue action against testing that stays within
   them. <Have counsel finalize this clause.>
@@ -106,7 +105,7 @@ description.
 
 ## How to submit
 
-Send to <CONTACT - security@elyon-sol.io or a form link>:
+Send to security@elyon-sol.io (or the program's intake on the bug-bounty platform):
 - the break category (target / sidecar / infrastructure),
 - exact reproduction steps (request(s), headers, order, timing),
 - what you observed (status codes, the `/received` count, response headers).
@@ -116,16 +115,16 @@ anonymously, your choice) and published as either a fix or a documented limit.
 
 ## Reward
 
-<REWARD - decide before publishing. Example tiers:>
-- Confirmed target or sidecar break: <$amount>, by severity / novelty.
-- Confirmed infrastructure finding (out-of-scope of the claim, still real): <$amount
-  or credit>.
+Small bounty pool, paid by severity / novelty (set the per-tier amounts before
+publishing):
+- Confirmed target or sidecar break: <$AMOUNT TBD>, by severity / novelty.
+- Confirmed infrastructure finding (out-of-scope of the claim, still real): <$AMOUNT
+  TBD or credit>.
 - Duplicate or already-known: credit, first reporter noted.
-Credit-only is also a legitimate model for a first run; decide and state it here.
+Every confirmed break is also publicly credited (or anonymously, your choice).
 
 ## What we do with the result
 
 A confirmed break becomes a fix or a documented limit, with your credit. A run
 that finds nothing is recorded as "not broken within this scope and this window" -
-never as "unbreakable." We are looking for the edge, honestly. Thank you for
-looking with us.
+never as "unbreakable." We are looking for the edge
