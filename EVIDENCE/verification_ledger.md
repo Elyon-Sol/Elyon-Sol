@@ -16000,3 +16000,25 @@ Prior substantive entry: VL-103. This entry cites VL-061 (the reference-target c
 
 #### Next trajectory action
 The author's: validate the container stand-up (`docker compose -f docker-compose.yml -f docker-compose.authz.yml up --build`) + `envoy --mode validate`, then bring the sidecar to a first OPA-shop design partner. The named next sidecar increment is build-order step 4 (declarative CUSTOM interaction mapping). G5 (a real EXTERNAL attacker on a real PUBLIC surface) remains the only open ROAD item - this track is upstream-of-OPA integration breadth, not a G5 referent.
+
+
+### VL-105 - 2026-06-15 - ext-authz sidecar TLS test path: in-sandbox referents (hermetic handshake + real loopback TLS) + the two-VM manual runbook
+**Status:** RECORDED (a test + deploy increment on the VL-104 sidecar track; verified in-container - suite 387 -> 391; the real-loopback-TLS proof runner exits 0). Referent-bound: artifacts are `TESTS/deploy/test_authz_sidecar_tls.py`, `EVIDENCE/proofs/authz_sidecar_tls_001_runner.py`, `deploy/docker-compose.authz.tls.yml`, `deploy/elyon-authz/VM_TLS_TEST.md`, and the `elyon-authz` leaf added to `deploy/tls/gen_certs.py`.
+**Author:** Claude, at the user's request (test the sidecar in the VM TLS env).
+**Classification:** trajectory move - extends the shipped sidecar to the C2 every-hop-TLS posture and gives it an in-sandbox TLS referent + an executable manual VM test; no gap moved (G5 unchanged).
+
+#### What landed
+- `deploy/tls/gen_certs.py` - `SERVICES` gains `elyon-authz`, so the cert tooling emits an `elyon-authz` leaf (SAN = its compose DNS name + localhost/127.0.0.1 + any extra hostnames), parity with the gate/target/publisher leaves (VL-082). Additive; the gate's default path is untouched.
+- `TESTS/deploy/test_authz_sidecar_tls.py` (4) - the C2 sandbox-green referent for the sidecar leaf: a strict (VERIFY_X509_STRICT) in-memory MemoryBIO TLS handshake SUCCEEDS with a client trusting the dev CA and is REFUSED with a wrong CA (fail-closed); `write_deployment_certs` emits the leaf; a dependency-free structural check of the TLS overlay. Hermetic / CI-safe (no sockets), parity with `test_tls_certs.py`.
+- `EVIDENCE/proofs/authz_sidecar_tls_001_runner.py` - the stronger in-sandbox demonstration: the PRODUCTION sidecar served on a REAL loopback uvicorn+TLS socket, answering ALLOW(200, REASSERTED_AND_BOUND) for a real gate-minted envelope and DENY(403, REF_VERIFY_SIGNATURE_INVALID) for a tampered one, over an HTTPS client that VERIFIES the dev CA. Exits 0/1. CI-excluded (the same GitHub-hosted loopback-TLS reachability sensitivity as `g5_multiprocess_tls`; the `*authz_sidecar_tls*` skip case added to `.github/workflows/ci.yml`, and the hermetic handshake test above is the CI-gated equivalent).
+- `deploy/docker-compose.authz.tls.yml` - TLS overlay matching `docker-compose.tls.yml`: `elyon-authz` serves `uvicorn --ssl-*` with its leaf + the CA mount; documents the Envoy `UpstreamTlsContext` snippet for the every-hop (Envoy<->sidecar) TLS hop.
+- `deploy/elyon-authz/VM_TLS_TEST.md` - the executable two-VM manual test: generate certs with real SANs, bootstrap the trust material, stand the sidecar up under TLS on VM-B, mint a real envelope from VM-A's gate, present it to the sidecar over HTTPS for ALLOW, and drive forged / rebind / replay / un-attested DENY; an optional full Envoy Mode A chain; troubleshooting; honest scope.
+
+#### Honest scope
+Two VMs are distinct OS hosts with real cross-host TLS, so the manual run exercises the sidecar over real transport - but both ends are the operator's, so it is NOT the external-attacker / public-surface referent and does not move G5 (parity with `host_setup_virtualbox.md`'s honest-scope note). Build-then-wire: the sidecar's decision path and every existing default path are byte-unchanged; the `gen_certs` / `ci.yml` edits are deploy + CI tooling. Suite 387 -> 391.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-104. This entry cites VL-082 (the C2 TLS cert tooling + the in-memory-handshake referent pattern it parallels), VL-083 (the env-driven live-runner + CI-skip precedent it follows), and VL-104 (the sidecar it puts under TLS); it does not cite its own (5 artifacts + 2 tooling edits + STATE + ledger) hash.
+
+#### Next trajectory action
+The author's: run `deploy/elyon-authz/VM_TLS_TEST.md` on the two VMs (real cross-host TLS). The named next in-house sidecar increment remains build-order step 4 (the declarative CUSTOM interaction-mapping format for gate-less deployments). G5 (a real EXTERNAL attacker on a real PUBLIC surface) remains the only open ROAD item.
