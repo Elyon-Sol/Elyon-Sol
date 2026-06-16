@@ -81,9 +81,10 @@ def test_r01_lock_serializes_concurrent_claims():
 
     class BlockingSeen(dict):
         def __contains__(self, key):
-            entered.set()        # inside the critical region
-            release.wait(2.0)    # hold to widen the window
-            return dict.__contains__(self, key)
+            present = dict.__contains__(self, key)  # capture membership BEFORE blocking
+            entered.set()                            # inside the critical region
+            release.wait(2.0)                        # hold so BOTH capture 'absent' before either sets
+            return present
 
     cache._seen = BlockingSeen()
     results = []
