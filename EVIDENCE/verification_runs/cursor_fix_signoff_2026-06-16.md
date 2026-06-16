@@ -1,4 +1,5 @@
-<paste your round-3 "TEST WEAKNESS" Verdict: TEST WEAKNESS
+WHITE-BOX in-house Cursor review record - internal evidence, NOT external validation (VL-057), NOT a G5 referent.
+Verdict: TEST WEAKNESS
 The production fixes for R-01 and P-01 are sound for their stated scope (single-process + threadpool; duplicate ASGI header fields). The P-01 envelope tests are real revert-catchers via TestClient. The R-01 concurrency test did not fail when the lock was removed on this platform (0/40 and 0/200 rounds at 32–128 threads), so it does not reliably prove the R-01 fix.
 1. R-01 fully closed
 Holds (for claimed scope: one process, shared cache, threadpool)

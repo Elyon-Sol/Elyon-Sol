@@ -1,4 +1,5 @@
-<paste your round-2 "TESTS INADEQUATE" Verdict: TESTS INADEQUATE
+WHITE-BOX in-house Cursor review record - internal evidence, NOT external validation (VL-057), NOT a G5 referent.
+Verdict: TESTS INADEQUATE
 R-01 is sound for the scoped claim (same process, shared cache). P-01 is sound for duplicate ASGI header fields and fail-closed overall, but envelope-duplicate behavior is untested at integration depth, and comma-folded headers bypass the duplicate detector (still DENY). Tests prove R-01 and interaction-header P-01 only.
 Point 1 — R-01 lock scope (_seen access)
 Sound

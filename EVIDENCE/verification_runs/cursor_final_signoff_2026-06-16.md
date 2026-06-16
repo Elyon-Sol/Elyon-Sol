@@ -1,4 +1,5 @@
-<paste your round-4 "FINAL SIGN-OFF" Verdict: FINAL SIGN-OFF (sound + proven + record accurate + no residual)
+WHITE-BOX in-house Cursor review record - internal evidence, NOT external validation (VL-057), NOT a G5 referent.
+Verdict: FINAL SIGN-OFF (sound + proven + record accurate + no residual)
 Minor caveats only: STATE.md still cites suite 394 at one bullet (HEAD is 399); R-01 deterministic test has low-probability timing sensitivity under extreme CI load (not observed in 15 consecutive local runs).
 1. R-01 fix still sound
 Holds
