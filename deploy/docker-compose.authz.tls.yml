@@ -1,0 +1,45 @@
+# TLS overlay for the ext-authz sidecar (VL-105), matching the C2 posture
+# (deploy/docker-compose.tls.yml): the sidecar SERVES under TLS with its own
+# `elyon-authz` leaf cert, so a direct HTTPS caller - or Envoy's upstream TLS
+# context - verifies it under the dev CA. Use it WITH the base + sidecar overlays
+# (add docker-compose.tls.yml too if you also want the gate/target/publisher
+# under TLS):
+#
+#   cd deploy
+#   python bootstrap_config.py                 # .env (gate key + anchor)
+#   python tls/gen_certs.py                     # tls/certs/ (CA + leaves incl. elyon-authz)
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f docker-compose.authz.yml \
+#     -f docker-compose.authz.tls.yml \
+#     up --build
+#
+# UNVALIDATED in the build sandbox (no docker); the cert MATERIAL + a real loopback
+# TLS handshake for the elyon-authz leaf are validated by
+# TESTS/deploy/test_authz_sidecar_tls.py and
+# EVIDENCE/proofs/authz_sidecar_tls_001_runner.py. The real two-host run is the
+# author's, on the VMs (deploy/elyon-authz/VM_TLS_TEST.md).
+services:
+  elyon-authz:
+    command: ["uvicorn", "IMPLEMENTATION.authz_sidecar:app", "--host", "0.0.0.0", "--port", "9200",
+              "--ssl-certfile", "/certs/elyon-authz.crt", "--ssl-keyfile", "/certs/elyon-authz.key"]
+    volumes:
+      - ./tls/certs:/certs:ro
+
+# Envoy <-> sidecar over TLS (every-hop): give the elyon_authz cluster in
+# envoy.example.yaml an upstream TLS context so Envoy verifies the sidecar leaf
+# under the CA. Add this transport_socket to that cluster (and mount ./tls/certs
+# into the envoy service):
+#
+#   transport_socket:
+#     name: envoy.transport_sockets.tls
+#     typed_config:
+#       "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+#       sni: elyon-authz
+#       common_tls_context:
+#         validation_context:
+#           trusted_ca: { filename: /certs/ca.crt }
+#
+# and change the elyon-authz http_service server_uri scheme to reflect TLS
+# (https). The same pattern applies to the opa_ext_authz and upstream_service
+# clusters if those hops are TLS too.

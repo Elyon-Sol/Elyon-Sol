@@ -28,7 +28,10 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 VALIDITY_DAYS = 825  # the CA/Browser-forum leaf cap; fine for a dev CA too.
-SERVICES = ("gate", "target", "publisher")
+# elyon-authz is the ext-authz admissibility sidecar (VL-104). Its leaf SAN is its
+# compose DNS name, so Envoy (upstream TLS context) and a direct HTTPS caller both
+# verify it under this CA - parity with the gate/target/publisher leaves (VL-105).
+SERVICES = ("gate", "target", "publisher", "elyon-authz")
 
 
 def _now():
@@ -138,7 +141,7 @@ def main():
     extra = tuple(sys.argv[1:])
     write_deployment_certs(out, extra_sans=extra)
     print("wrote certs to", out)
-    print("  ca.crt + {gate,target,publisher}.{crt,key}")
+    print("  ca.crt + {gate,target,publisher,elyon-authz}.{crt,key}")
     if extra:
         print("  extra SANs:", ", ".join(extra))
     print("  (private keys are out-of-band; deploy/tls/certs/ is git-ignored)")

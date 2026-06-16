@@ -64,6 +64,14 @@ jobs:
                 # g5_signed_cross_host, and root_recovery_cross_host.
                 echo "::notice::SKIP CI-env-sensitive multi-process-TLS (verified locally): $r"
                 continue ;;
+              *authz_sidecar_tls*)
+                # Serves the ext-authz sidecar on a loopback uvicorn+TLS socket and
+                # drives ALLOW/DENY over an HTTPS client (VL-105). Same GitHub-hosted
+                # loopback-TLS reachability sensitivity as the multi-process-TLS
+                # runner; the CI-gated equivalent is the in-memory handshake test
+                # TESTS/deploy/test_authz_sidecar_tls.py. Run locally / on the VMs.
+                echo "::notice::SKIP CI-env-sensitive sidecar loopback-TLS (verified locally): $r"
+                continue ;;
             esac
             echo "===== $r ====="
             if python "$r"; then
