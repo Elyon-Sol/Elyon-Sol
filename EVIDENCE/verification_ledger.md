@@ -16062,3 +16062,36 @@ Prior substantive entry: VL-105. This entry cites VL-008 (the procedure, includi
 
 #### Next trajectory action
 Unchanged: G5 (a real EXTERNAL attacker on a real PUBLIC surface) remains the only open ROAD item. This round adds independent-derivation conformance backing to the sidecar track; it is not a G5 referent and does not change G5's status.
+
+### VL-107 - 2026-06-16 - G5 Phase-1 forks locked + attacker-pack consistency repair (execution session; no code/canon/test change)
+**Status:** RECORDED (an execution + documentation increment on the G5 go-live track; no code, canon, manifest, or test change; suite unchanged). Referent-bound: the artifacts are deploy/BREAK_IT.md, deploy/RED_TEAM_OUTREACH.md, deploy/LIVE_BRINGUP_RUNBOOK.md, plus this STATE + ledger close. Grounded per SESSION_PROTOCOL resume + the deploy/G5_SESSION_KICKOFF.md task-to-source binding.
+**Author:** Claude (clean-context Cowork session), at the author's request (execute G5 Phase 1 + kick off Phase 3.1 per the kickoff).
+**Classification:** efficiency / orientation move per VL-017a - it locks the section-6 forks and repairs deploy-doc consistency; it does NOT move a gap, add a claim, or change G5's status.
+
+#### What this session could and could not do (the honest ceiling)
+G5 Phase 1's definition-of-done (four real internet-reachable nodes under a real CA, author self-test green over the public surface, REAL_TRANSPORT flipped, pack published, a blind attacker recruited) is AUTHOR-LOCUS by nature: it needs cloud accounts/billing, the elyon-sol.io registrar, Let's Encrypt (which needs the live hosts first), counsel sign-off, and real people. The Cowork sandbox has none of these and cannot push. Nothing went live this session; G5 is unchanged - still NOT-MET, the project still NOT-READY for an external-validation claim. What this session did is lock the decisions that gate execution and make the recruiting pack publish-ready pending those decisions + counsel.
+
+#### Forks locked (kickoff section 5 / G5_GO_LIVE.md section 6)
+- Hosts: Hetzner CX22 (host A, gate) + DigitalOcean (host B, target/publisher/sidecar) - two providers, different networks (the no-surprises split; Hetzner + Oracle-Free is the cheaper alternative). Pricing to be re-verified at execution time.
+- Recruiting tier (Phase 3.1): a private, time-boxed bug-bounty platform listing (HackerOne / Bugcrowd / Intigriti) - the platform handles authorization + blind vetting. Specific platform TBD.
+- Reward: a small bounty pool, paid per severity/novelty, plus public credit. Per-tier amounts TBD before publishing.
+- Counsel: the BREAK_IT.md safe-harbor / authorization clause is a HARD GATE before publish - everything else is staged, but the one-pager does not go public until counsel signs the clause.
+
+#### Pack consistency repair (a process finding against 24c197a)
+The 24c197a commit message claimed "all four attacker-facing docs decontaminated and consistent (elyon-sol.io, ports 8443/9443/9143/9243)." That held for BREAK_IT / HOW_TO_INTERACT / RED_TEAM_BRIEFING but was FALSE for deploy/RED_TEAM_OUTREACH.md, which still carried [EXAMPLE.COM] + the old ports 8000/9000/9100 in its program-scope block. Corrected to the canonical four hosts. deploy/LIVE_BRINGUP_RUNBOOK.md (the operator doc the author follows) likewise still bound services on 8000/9000/9100 - which would contradict the URLs the attacker pack publishes - and predates the VL-104/105 sidecar entirely; ports aligned to 8443/9443/9143 and a prominent SIDECAR GAP note added pointing to G5_GO_LIVE.md section 2 + the authz compose overlays for the authz.elyon-sol.io:9243 bring-up + the 4th DNS record. Both files were also untracked (left loose by the VL-106 close) and are committed here - a second close-protocol completion, same family as the VL-020 follow-up.
+
+#### BREAK_IT.md placeholders (determinable filled; decision-pending marked)
+Filled: contact (security@elyon-sol.io / platform intake); coordinated-disclosure window 90 days (resolving a 30-vs-90 inconsistency between BREAK_IT and RED_TEAM_OUTREACH); reward reworded to the locked small-bounty-pool model. Left as MARKED TODO (decision-pending, not silently filled): the per-tier bounty $ amounts, the engagement window placeholders, the RED_TEAM_BRIEFING reporting channel, and the counsel safe-harbor clause.
+
+#### Verification done this session
+- Decontamination re-scan of the four attacker-facing docs: zero canon/ledger/VL/cross-model leak (BREAK_IT's only such tokens are the operator-header instruction NOT to publish them, which is stripped pre-publish). Gate 4 holds.
+- Self-test contract check: EVIDENCE/proofs/attack_suite_live_runner.py reads exactly ELYON_LIVE_GATE_URL / ELYON_LIVE_TARGET_URL / ELYON_LIVE_TARGET_ID / ELYON_TLS_CA_BUNDLE - matches the runbook step 5 after the port alignment. Inspector (IMPLEMENTATION/envelope_inspector.py) and both live runners present.
+
+#### Out of scope (committed separately, not part of this G5 increment)
+The concurrent universal-PDP track (docs/design/universal_pdp_upstream_design.md) and the durable task tracker (TASKS.md), both left untracked by the prior session, are committed in their own commit to satisfy the at-rest clean-tree invariant; they are NOT G5 artifacts (kickoff section 3 OUT list).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-106. This entry cites VL-103 (artifact 29, the G5 plan it executes against), VL-104/105 (the sidecar whose ports/overlays the runbook gap note points to), VL-057 / ext-readiness gate 4 (the decontamination bar the pack re-verifies), VL-017a (the efficiency/orientation classification), and VL-020 (the incomplete-close-then-follow-up precedent); it does not cite its own (3 deploy docs + STATE + ledger) hash.
+
+#### Next trajectory action
+Unchanged in substance: execute deploy/LIVE_BRINGUP_RUNBOOK.md + deploy/G5_GO_LIVE.md Phase 1 (AUTHOR) - provision Hetzner + DigitalOcean, set the four DNS A-records, issue Let's Encrypt certs, bring up the four nodes under TLS, run the self-test GREEN over the public surface, then flip REAL_TRANSPORT naming the run log. In parallel: get counsel sign-off on the safe-harbor clause, set the bounty amounts + window, stand up the private bug-bounty listing, and commission the Phase 3.2 rebuild estimator. G5 stays NOT-MET until a blind external party engages.
