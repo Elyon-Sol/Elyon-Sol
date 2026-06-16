@@ -309,3 +309,17 @@ def test_shared_replay_cache_cross_instance(gate_signing):
     r2 = _post(client_b, interaction, env)                      # SAME envelope, instance B
     assert r2.status_code == 403
     assert r2.json()["detail"]["reason"] == REF_VERIFY_REPLAY   # cross-instance replay caught
+
+
+def test_reference_target_refuses_duplicate_envelope_header_p01(gate_signing):
+    """P-01: a VALID envelope presented as a DUPLICATE header is treated as absent
+    (fail closed), not first-wins honored. Fails if the envelope guard is reverted."""
+    app, client = _make_target(gate_signing)
+    interaction = _normalized_interaction()
+    env = _signed_envelope(gate_signing, interaction=interaction)
+    body = canonical_json(env)
+    resp = client.post("/target", json=interaction,
+                       headers=[("X-Elyon-Sol-Envelope", body), ("X-Elyon-Sol-Envelope", body)])
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["reason"] == REF_VERIFY_ENVELOPE_ABSENT
+    assert app.state.received == []

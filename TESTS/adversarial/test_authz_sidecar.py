@@ -314,3 +314,27 @@ def test_healthz_is_live_even_when_unconfigured():
     r = client.get("/healthz")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
+
+
+def test_p01_duplicate_envelope_header_denied(gate_signing):
+    """P-01: a VALID envelope presented as a DUPLICATE header is DENIED (treated
+    absent), not first-wins ALLOWED. Fails if the envelope guard is reverted."""
+    client = TestClient(_app(_config(gate_signing)))
+    env = _admit("transfer_funds", {"amount": 100, "to": "acct-42"})
+    body = canonical_json(env)
+    inter = canonical_json(interaction_for("transfer_funds", {"amount": 100, "to": "acct-42"}))
+    r = client.post("/authz", headers=[(ENVELOPE_HEADER, body), (ENVELOPE_HEADER, body),
+                                       (INTERACTION_HEADER, inter)])
+    assert r.status_code == 403
+
+
+def test_p01_folded_envelope_header_fails_closed(gate_signing):
+    """A comma-folded duplicate (one header, two JSON blobs) bypasses the duplicate
+    detector but must still fail closed (unparseable -> absent -> DENY)."""
+    client = TestClient(_app(_config(gate_signing)))
+    env = _admit("transfer_funds", {"amount": 100, "to": "acct-42"})
+    body = canonical_json(env)
+    inter = canonical_json(interaction_for("transfer_funds", {"amount": 100, "to": "acct-42"}))
+    r = client.post("/authz", headers=[(ENVELOPE_HEADER, body + "," + body),
+                                       (INTERACTION_HEADER, inter)])
+    assert r.status_code == 403
