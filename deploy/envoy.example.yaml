@@ -1,0 +1,137 @@
+# Elyon-Sol Mode A: two ext_authz filters in one Envoy chain (OPA sidecar build,
+# step 3). The order is load-bearing and matches the design (section 3):
+#
+#     client -> Envoy
+#                 |-- ext_authz #1: elyon-authz  (admissibility + attestation)
+#                 |       deny -> 403, stop
+#                 |-- ext_authz #2: opa (opa-envoy gRPC)   (policy)
+#                 |       deny -> 403, stop
+#                 -> upstream service (acts)
+#
+# Admissibility is checked BEFORE policy: "is this interaction admissible to be
+# considered at all?" (elyon-authz) gates "does policy permit it?" (OPA). Each
+# layer is independently fail-closed; neither imports the other.
+#
+# failure_mode_allow is FALSE on BOTH filters: a sidecar (or OPA) that is down,
+# times out, or errors DENIES the request - never opens. This is the Envoy-level
+# expression of the project's fail-closed invariant (canon section 9).
+#
+# UNVALIDATED in the build sandbox (no envoy binary). Validate before deploy:
+#     envoy --mode validate -c deploy/envoy.example.yaml
+# Stand up via deploy/docker-compose.authz.yml. This is an EXAMPLE: addresses,
+# ports, and timeouts are illustrative and tuned per deployment.
+
+static_resources:
+  listeners:
+    - name: public_listener
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 10000 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: backend
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: "/" }
+                          route: { cluster: upstream_service }
+                http_filters:
+                  # --- ext_authz #1: elyon-authz (admissibility), FIRST ---
+                  - name: envoy.filters.http.ext_authz.elyon
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+                      transport_api_version: V3
+                      # Fail CLOSED: a down/erroring sidecar denies, never allows.
+                      failure_mode_allow: false
+                      http_service:
+                        server_uri:
+                          uri: elyon-authz:9200
+                          cluster: elyon_authz
+                          timeout: 2s
+                        # Envoy appends the original path to this prefix; the
+                        # sidecar answers any path under /authz.
+                        path_prefix: /authz
+                        authorization_request:
+                          # Forward the attestation + interaction headers the
+                          # sidecar verifies. Without these the sidecar sees an
+                          # un-attested call and denies (REF_VERIFY_ENVELOPE_ABSENT).
+                          allowed_headers:
+                            patterns:
+                              - exact: "x-elyon-sol-envelope"
+                                ignore_case: true
+                              - exact: "x-elyon-sol-interaction"
+                                ignore_case: true
+                        authorization_response:
+                          # Surface the decision reason to logs / the upstream.
+                          allowed_upstream_headers:
+                            patterns:
+                              - exact: "x-elyon-decision"
+                                ignore_case: true
+                              - exact: "x-elyon-reason"
+                                ignore_case: true
+                  # --- ext_authz #2: OPA (policy), SECOND ---
+                  - name: envoy.filters.http.ext_authz.opa
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+                      transport_api_version: V3
+                      failure_mode_allow: false
+                      grpc_service:
+                        envoy_grpc:
+                          cluster_name: opa_ext_authz
+                        timeout: 2s
+                  # --- router: only reached if BOTH filters allowed ---
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: elyon_authz
+      type: STRICT_DNS
+      connect_timeout: 1s
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: elyon_authz
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: elyon-authz, port_value: 9200 }
+
+    - name: opa_ext_authz
+      type: STRICT_DNS
+      connect_timeout: 1s
+      lb_policy: ROUND_ROBIN
+      # opa-envoy speaks gRPC over HTTP/2.
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      load_assignment:
+        cluster_name: opa_ext_authz
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: opa, port_value: 9191 }
+
+    - name: upstream_service
+      type: STRICT_DNS
+      connect_timeout: 1s
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: upstream_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: upstream, port_value: 9000 }
+
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
