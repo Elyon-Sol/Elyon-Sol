@@ -1,0 +1,15 @@
+============================================================================================
+LIVE ATTACK SUITE vs a REAL surface over real transport - VL-083 (C3-live)
+  gate=https://gate.elyon-sol.io:8443  target=https://target.elyon-sol.io:9443  target_id=https://target.elyon-sol.io:9443/target  tls_ca=(system store / none)
+============================================================================================
+[PASS] positive_control a valid admitted call is delivered and acted on (push)   -> HONORED
+[PASS] unattested       reach the target with no admissibility envelope (A1)     -> REFUSED:REF_VERIFY_ENVELOPE_ABSENT
+[PASS] forged_signature tamper a signed field; pass off a forged envelope        -> REFUSED:REF_VERIFY_SIGNATURE_INVALID
+[PASS] replay           present the same admitted envelope twice (exactly-once)  -> REFUSED:REF_VERIFY_REPLAY
+[PASS] rebind_tool      use a transfer envelope to authorize delete_database     -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] rebind_args      use the envelope with different (larger) args            -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+[PASS] target_url_swap  present an envelope bound to another (different-path) target -> REFUSED:REF_VERIFY_BINDING_MISMATCH
+--------------------------------------------------------------------------------------------
+positive control honored: True | adversarial attacks defeated over real transport: 6/6
+============================================================================================
+RESULT: ALL ATTACKS DEFEATED over real transport (the gate-1 referent)

@@ -16095,3 +16095,36 @@ Prior substantive entry: VL-106. This entry cites VL-103 (artifact 29, the G5 pl
 
 #### Next trajectory action
 Unchanged in substance: execute deploy/LIVE_BRINGUP_RUNBOOK.md + deploy/G5_GO_LIVE.md Phase 1 (AUTHOR) - provision Hetzner + DigitalOcean, set the four DNS A-records, issue Let's Encrypt certs, bring up the four nodes under TLS, run the self-test GREEN over the public surface, then flip REAL_TRANSPORT naming the run log. In parallel: get counsel sign-off on the safe-harbor clause, set the bounty amounts + window, stand up the private bug-bounty listing, and commission the Phase 3.2 rebuild estimator. G5 stays NOT-MET until a blind external party engages.
+
+### VL-108 - 2026-06-16 - G5 Phase 1 executed: four-node public surface live under a real CA; author self-test green over real transport; REAL_TRANSPORT upgraded from the VirtualBox tier to the public surface
+**Status:** RECORDED (an execution increment - deployment + author self-test on real public hosts; no gate / verifier / crypto / sidecar code change). Referent-bound: the run log is EVIDENCE/proofs/attack_suite_live_run_2026-06-16.log; the predicate change is EVIDENCE/readiness.json (REAL_TRANSPORT). Grounded per SESSION_PROTOCOL resume + deploy/G5_SESSION_KICKOFF.md.
+**Author:** the project author (provisioned the hosts, ran every command, executed the self-test and pasted back the outputs) + Claude (verified the code contracts, generated the exact command syntax, adjudicated outputs, authored this close).
+**Classification:** trajectory move - it moves G5 Phase 1 from PLANNED / AUTHOR-locus to DONE (the public surface exists and the author self-test is green over it). It does NOT close G5 (no external attacker yet).
+
+#### What landed (on real hosts; not in the repo)
+Four internet-reachable nodes on Hetzner under Let's Encrypt TLS, two continents, single carrier (a deliberate POC / red-team-stage choice; multi-carrier deferred):
+- gate.elyon-sol.io:8443 (Helsinki) - pep; holds the private Ed25519 signing key (key id gate-deploy-001); systemd elyon-gate.
+- target.elyon-sol.io:9443 (Hillsboro US-West) - reference_target; the primary attack target; SIGNED freshness mode (pinned publisher key); systemd elyon-target.
+- pub.elyon-sol.io:9143 (Helsinki) - publisher; serves /published_hashes.json (byte-anchor) + /published_hashes_signed.json (a fresh publisher Ed25519 key, 300s not_after); systemd elyon-pub.
+- authz.elyon-sol.io:9243 (Ashburn US-East) - ext-authz sidecar; local pinned record; systemd elyon-authz.
+Only the minimal runtime file set was placed on the public hosts (the Dockerfile COPY set), NOT the full repo - canon.md / the ledger / STATE are kept off the attack surface (Gate-4 hygiene + the gate's key custody).
+
+#### What landed (in the repo - this commit)
+- EVIDENCE/proofs/attack_suite_live_run_2026-06-16.log - the author self-test over the public surface in signed mode: positive control HONORED + 6/6 adversarial (un-attested / forged / replay / rebind-tool / rebind-args / target-swap) refused, exit 0.
+- EVIDENCE/readiness.json - REAL_TRANSPORT.proof re-pointed from the VirtualBox / dev-CA log (real_transport_attack_001.log, VL-090) to the public-surface log; blocked_by rewritten to the upgraded honest bound.
+- STATE.md - Last-updated -> VL-108 (VL-107 -> PREVIOUS, VL-106 dropped); a Current-verified-state bullet; the Next-open-action pre-exposure checklist.
+
+#### Honest ceiling (carry it intact)
+The self-test is the AUTHOR's OWN scripted attack and exercises the 6 gate-2 cases + positive control ONLY. Claims 8-13 (drift / expired decision / issuer-key + root revocation / stale published record / the authz sidecar live-ALLOW path) are in-house-tested (the suite + the VL-104/105/106 sidecar work) but were NOT live-adversarially-exercised over the public surface this session. REAL_TRANSPORT's definition (the VL-079 gate-2 suite over real transport) is met; it does not assert the wider claim set. G5 (GR-3) - a real EXTERNAL stranger on the public surface - remains NOT-MET; the project remains NOT-READY for an external-validation / production claim. Standing this up makes the claim TESTABLE by a stranger; it does not make it true.
+
+#### Open items before exposure (now the Next-open-action)
+(1) REGENERATE the publisher signing key - it was exposed in the working chat - and re-pin on the target; (2) live-verify the sidecar ALLOW / DENY; (3) backfill the renewal deploy-hook on gate + pub; (4) counsel sign-off on the safe-harbor clause (deploy/SAFE_HARBOR_DRAFT.md); (5) bounty tiers + window + reporting channel; (6) publish the pack + open the listing; (7) commission the Phase 3.2 rebuild estimator.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-107. This entry cites VL-083 / VL-090 (the C3-live runner + the prior VirtualBox REAL_TRANSPORT referent it upgrades), VL-081 / VL-082 (the deploy + TLS bring-up artifacts executed), VL-091 (the signed-record freshness mode now configured), VL-104 / VL-105 (the sidecar now live), and VL-103 / VL-107 (artifact 29 + the forks this executes against); it does not cite its own (log + readiness + STATE + ledger) hash.
+
+#### Next trajectory action
+The pre-exposure checklist above, then publish + recruit a blind attacker. G5 is MET only when that party engages the live surface.
+
+#### Process finding (appended) - STATE.md truncation from VL-107 (Cowork mount artifact), detected and repaired at VL-108
+git object-store inspection during the VL-108 close found that the VL-107 commit (6db8ee5, already pushed) captured a TRUNCATED STATE.md: 1117 lines ending mid-word ("emitting the seventh re") inside the Known-open-gaps G2 bullet, versus the clean 1167-line 24c197a:STATE.md. The Cowork mount served `git add` a truncated working-tree view (the SESSION_PROTOCOL rule-6 stat-cache / ghost hazard); roughly 50 lines (Known-open-gaps G2-tail through G14) were lost on origin. NO content was permanently lost - the section is intact at 24c197a:STATE.md and untouched by VL-107/108 (both edit only the file head). After a Cowork restart re-mounted the folder fresh (rule 8), VL-108 rebuilt STATE.md by applying the VL-108 head edits to HEAD:STATE.md and splicing the clean "## Known open gaps" tail from 24c197a (result 1175 lines, ending correctly at the G14 entry). This VL-108 commit therefore ALSO REPAIRS the VL-107 truncation on origin (forward fix; no history rewrite). Lesson: after a mount-mediated `git add`, verify the committed blob (git cat-file -s / line count vs the prior commit), not only the working-tree grep.
