@@ -121,3 +121,15 @@ external validation.
 
 Hand the individual researcher the briefing pack (RED_TEAM_BRIEFING.md) - live URLs,
 the claim sheet, the named floors, the inspector 
+
+
+## Deployment-posture notes (VL-110 cross-model round; named-open items)
+- R-02 (replay across instances): the default replay cache is PER-PROCESS. For >1 worker/replica,
+  set ELYON_REPLAY_REDIS_URL (a shared store). If you run multi-instance, also set
+  ELYON_REPLAY_MULTI_INSTANCE=1 so a missing shared store FAILS CLOSED at startup instead of
+  silently giving each process its own cache. Single-instance (this deployment) is unchanged.
+- B-01 (sidecar binding): the ext-authz sidecar's default extractor reads the interaction from a
+  CLIENT-CONTROLLABLE header. Run it ONLY as a standalone decision endpoint (as here), or behind an
+  upstream that re-verifies the same envelope it executes. Do NOT place it inline in front of a
+  body-carrying upstream until build-order step 4 (derive interaction from the ext_authz request
+  body/path) is built.

@@ -16175,3 +16175,36 @@ Process-integrity correction (self-caught). VL-109 follow-up 2 (commit 45b737e) 
 
 ### VL-109 follow-up 4 - 2026-06-16 - Cursor verification-run records committed; STATE suite-count corrected; zero-timing R-01 revert-catcher added
 Referent-binding + cleanup. (1) The Cursor white-box rounds were committed to EVIDENCE/verification_runs/ so the arc is referent-bound (not chat-only): cursor_whitebox_review_2026-06-16.md (round 1, adjudicated), cursor_fix_verification_2026-06-16.md (round 2, "TESTS INADEQUATE"), cursor_fix_signoff_2026-06-16.md (round 3, "TEST WEAKNESS"), cursor_final_signoff_2026-06-16.md (round 4, "FINAL SIGN-OFF"). All are WHITE-BOX in-house records (full-repo reviewer; internal evidence, FORBIDDEN to show a blind reviewer as validation per VL-057); NOT G5 referents. (2) STATE.md suite-count corrected (the VL-109 bullet said 394, which was point-in-time; now notes 399 after follow-ups 1-3). (3) Added test_r01_check_and_claim_acquires_lock - a zero-timing structural R-01 revert-catcher (asserts check_and_claim enters the lock; no concurrency/sleep dependence), retiring the timing-margin caveat the round-4 sign-off flagged. Suite 399 -> 400 green. No production code change. Does not cite its own hash (VL-012).
+
+
+### VL-110 - 2026-06-16 - cross-model white-box round (3 clean runs): R-01/P-01 + crypto core re-confirmed; named-posture gaps; R-02 guard + B-01 scope applied; B-01-step-4/F-01/K-01 scheduled
+**Status:** RECORDED (a cross-model white-box round adjudicated under VL-008, plus two hardening increments + a schedule; suite +1 test). Referent-bound: the fixes are IMPLEMENTATION/replay_cache.py (R-02 guard) + IMPLEMENTATION/authz_sidecar.py (B-01 docstring) + TESTS/adversarial/test_findings_002.py (R-02 test) + deploy/LIVE_BRINGUP_RUNBOOK.md (posture note). The three verbatim run outputs are a pending referent commit under EVIDENCE/verification_runs/cursor_xmodel_*.
+**Author:** the project author (ran the identical prompt across Cursor's models, pasted the outputs) + Claude (cross-model adjudication, the two fixes, the schedule).
+**Classification:** WHITE-BOX in-house (every model had the full repo) - internal evidence, FORBIDDEN to a blind reviewer (VL-057), NOT a G5 referent. Conformance/hardening class (VL-106 precedent).
+
+#### The round
+Identical scoped adversarial+verify prompt run across distinct model families (one Anthropic-class labeled "cursor", Grok/xAI, OpenAI). Procedure check: all three procedurally clean - scope checks present, citations specific; the one novel claim (K-01) spot-checked accurate vs HEAD; NO fabricated citations in any run (contrast VL-102/106 Gemini). No runs discarded.
+
+#### Unanimous (>=2 clean runs) - CONFIRMED
+R-01 SOUND (all 3); P-01 SOUND (all 3); the cryptographic enforce path holds (signature/canonical-JSON determinism, AP/OP+target+context binding, anchor pinning, fail-closed, in-process replay atomicity) - all 3 "held". NO new protocol/crypto break found by any model.
+
+#### Findings - all already-NAMED deployment-posture gaps; none exploitable on the current single-worker/standalone surface
+- B-01 (sidecar binds the X-Elyon-Sol-Interaction HEADER, not the upstream's executed body): CONVERGENT - raised by 2 models, OpenAI rated High. Not a break of the narrow sidecar claim (the token is valid) and not exploitable on the standalone sidecar (no upstream behind it), but it defeats gating once the sidecar fronts a body-carrying upstream. = build-order step 4.
+- R-02 (per-process InMemoryReplayCache default; >1 process/replica without a shared store => cross-process replay): documented in readiness.json; not exploitable single-worker.
+- F-01 (sidecar byte-anchor only, no signed-record freshness): bounded by the 300s decision window; target already has signed mode.
+- K-01 (issuer-key revocation/window check is only on the key_record_view branch; the default static-pin enforce path skips it - verifier.py:322-336 inside `if key_record_view is not None`, default consumers pass pinned_public_keys only): documented (issuer_key_revocation built, wired_to_default false); only matters under gate-key compromise (an out-of-band floor) and is bounded by the 300s envelope not_after.
+
+#### Applied this entry
+- R-02 fail-closed guard: replay_cache_from_env() now raises if ELYON_REPLAY_MULTI_INSTANCE is set without ELYON_REPLAY_REDIS_URL; default single-instance path (InMemory) byte-behavior-unchanged. Revert-catcher test_r02_multi_instance_without_shared_store_fails_closed.
+- B-01 scope: a SECURITY SCOPE docstring on default_interaction_extractor + a deploy-posture note (do not deploy the sidecar inline in front of a body-carrying upstream until step 4).
+
+#### Scheduled (named-open build items; none blocking the current surface)
+- B-01 step 4: derive the sidecar interaction from the Envoy ext_authz request (method/path/body) instead of the client header.
+- F-01: wire signed-record freshness into the sidecar (mirror reference_target's optional signed mode).
+- K-01: pass key_record_view into verify_envelope on the default enforce surfaces (or shrink ELYON_DECISION_MAX_AGE_SECONDS to bound revocation lag).
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-109 (+ follow-ups). This entry cites VL-008 (the cross-model procedure + discard rule), VL-106 (the conformance/internal-evidence class + surplus-run posture), VL-057 (the blind-reviewer-FORBIDDEN bar), VL-076/094 (the ReplayCache seam behind R-02), VL-104 (the sidecar design + step 4 behind B-01), and VL-042 (the key-record view behind K-01); it does not cite its own hash.
+
+#### Next trajectory action
+The VL-108 pre-exposure checklist (counsel, bounty/window/channel, publish, recruit) + the three scheduled build items above. G5 remains NOT-MET until a blind external party engages.

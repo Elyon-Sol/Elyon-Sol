@@ -122,3 +122,25 @@ def test_r01_check_and_claim_acquires_lock():
     cache._lock = _Probe()
     cache.check_and_claim("d", None)
     assert calls, "check_and_claim must acquire self._lock"
+
+
+
+def test_r02_multi_instance_without_shared_store_fails_closed():
+    """R-02 guard: declaring a multi-instance deployment without a shared replay
+    store must fail closed (a per-process cache cannot enforce single-use across
+    processes). Default single-instance behavior is unchanged. Revert-catcher:
+    delete the ELYON_REPLAY_MULTI_INSTANCE block in replay_cache_from_env and this
+    fails (no RuntimeError raised)."""
+    import os, pytest
+    from IMPLEMENTATION.replay_cache import replay_cache_from_env, InMemoryReplayCache
+    prev_multi = os.environ.pop("ELYON_REPLAY_MULTI_INSTANCE", None)
+    prev_redis = os.environ.pop("ELYON_REPLAY_REDIS_URL", None)
+    try:
+        assert isinstance(replay_cache_from_env(), InMemoryReplayCache)  # default unchanged
+        os.environ["ELYON_REPLAY_MULTI_INSTANCE"] = "1"
+        with pytest.raises(RuntimeError):
+            replay_cache_from_env()
+    finally:
+        os.environ.pop("ELYON_REPLAY_MULTI_INSTANCE", None)
+        if prev_multi is not None: os.environ["ELYON_REPLAY_MULTI_INSTANCE"] = prev_multi
+        if prev_redis is not None: os.environ["ELYON_REPLAY_REDIS_URL"] = prev_redis

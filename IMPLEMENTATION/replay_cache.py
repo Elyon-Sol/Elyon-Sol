@@ -200,4 +200,15 @@ def replay_cache_from_env():
     url = os.environ.get("ELYON_REPLAY_REDIS_URL")
     if url:
         return ExternalStoreReplayCache(RedisReplayStore.from_url(url))
+    # R-02 (cross-model finding): a per-process InMemoryReplayCache CANNOT enforce
+    # single-use across processes/replicas. A deployment that runs >1 worker/replica
+    # must declare ELYON_REPLAY_MULTI_INSTANCE=1; declaring it WITHOUT a shared store
+    # fails closed here rather than silently handing out per-process caches that each
+    # honor the same token once. Single-instance (no flag) is unchanged.
+    if os.environ.get("ELYON_REPLAY_MULTI_INSTANCE", "").strip().lower() in ("1", "true", "yes"):
+        raise RuntimeError(
+            "ELYON_REPLAY_MULTI_INSTANCE is set but ELYON_REPLAY_REDIS_URL is not: a per-process "
+            "InMemoryReplayCache cannot enforce single-use across processes/replicas. Set "
+            "ELYON_REPLAY_REDIS_URL (a shared store) or unset ELYON_REPLAY_MULTI_INSTANCE."
+        )
     return InMemoryReplayCache()

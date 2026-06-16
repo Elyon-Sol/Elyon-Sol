@@ -205,6 +205,16 @@ def default_interaction_extractor(request: Request) -> Optional[Dict[str, Any]]:
     The CUSTOM declarative-mapping extractor (gate-less / direct deployments,
     design section 5) is phase 4 and is deliberately NOT built here; a deployment
     that needs it injects its own extractor with this same signature.
+
+    SECURITY SCOPE (B-01, cross-model finding): this default reads the interaction
+    from a CLIENT-CONTROLLABLE header. It is safe for the standalone decision
+    endpoint (the sidecar only answers ALLOW/DENY; nothing executes a body behind
+    it). It is NOT safe INLINE in front of a body-carrying upstream (Envoy
+    ext_authz) with this default, because the header need not match the bytes the
+    upstream executes. For inline use, build the phase-4 extractor that derives the
+    interaction from the ext_authz request itself (method/path/body), or require
+    the upstream to re-verify the same envelope it executes. Until then, do not
+    place the sidecar inline.
     """
     # P-01: a duplicate interaction header is ambiguous (which value binds would
     # depend on header ordering) -> treat as absent, fail closed at the binding check.
