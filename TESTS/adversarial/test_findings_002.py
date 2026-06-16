@@ -68,3 +68,36 @@ def test_p01_duplicate_interaction_header_is_absent():
     req = _request([(INTERACTION_HEADER, '{"AP": ["read"]}'),
                     (INTERACTION_HEADER, '{"AP": ["admin"]}')])
     assert default_interaction_extractor(req) is None
+
+
+def test_r01_lock_serializes_concurrent_claims():
+    """Deterministic R-01 revert-catcher: force two threads to interleave at the
+    check-then-set via a blocking membership check. With the lock, exactly one
+    claims; remove the lock and both observe 'absent' and both claim (-> 2)."""
+    import time
+    cache = InMemoryReplayCache()
+    entered = threading.Event()
+    release = threading.Event()
+
+    class BlockingSeen(dict):
+        def __contains__(self, key):
+            entered.set()        # inside the critical region
+            release.wait(2.0)    # hold to widen the window
+            return dict.__contains__(self, key)
+
+    cache._seen = BlockingSeen()
+    results = []
+
+    def claim():
+        results.append(cache.check_and_claim("decision-xyz", None))
+
+    t1 = threading.Thread(target=claim)
+    t2 = threading.Thread(target=claim)
+    t1.start()
+    assert entered.wait(2.0)     # t1 is inside __contains__ (holding the lock, if present)
+    t2.start()
+    time.sleep(0.2)              # if unlocked, t2 reaches __contains__ too
+    release.set()
+    t1.join(2.0); t2.join(2.0)
+    assert results.count(True) == 1, \
+        "R-01: %d concurrent claims honored (lock missing?)" % results.count(True)

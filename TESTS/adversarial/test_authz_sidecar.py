@@ -338,3 +338,17 @@ def test_p01_folded_envelope_header_fails_closed(gate_signing):
     r = client.post("/authz", headers=[(ENVELOPE_HEADER, body + "," + body),
                                        (INTERACTION_HEADER, inter)])
     assert r.status_code == 403
+
+
+def test_p01_duplicate_interaction_header_denied(gate_signing):
+    """P-01 (integration): a valid envelope with DUPLICATE interaction headers is
+    DENIED (extractor -> None -> binding/absent), not first-wins ALLOWED. The first
+    header matches the envelope, so a reverted guard would ALLOW; this asserts 403."""
+    client = TestClient(_app(_config(gate_signing)))
+    env = _admit("transfer_funds", {"amount": 100, "to": "acct-42"})
+    body = canonical_json(env)
+    inter = canonical_json(interaction_for("transfer_funds", {"amount": 100, "to": "acct-42"}))
+    other = canonical_json(interaction_for("delete_database", {"db": "prod"}))
+    r = client.post("/authz", headers=[(ENVELOPE_HEADER, body),
+                                       (INTERACTION_HEADER, inter), (INTERACTION_HEADER, other)])
+    assert r.status_code == 403
