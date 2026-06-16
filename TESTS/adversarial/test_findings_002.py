@@ -102,3 +102,23 @@ def test_r01_lock_serializes_concurrent_claims():
     t1.join(2.0); t2.join(2.0)
     assert results.count(True) == 1, \
         "R-01: %d concurrent claims honored (lock missing?)" % results.count(True)
+
+
+def test_r01_check_and_claim_acquires_lock():
+    """Zero-timing R-01 revert-catcher: check_and_claim must enter the lock's
+    critical section. Removing `with self._lock:` makes this fail deterministically,
+    with no concurrency/timing dependence (complements the behavioral test)."""
+    cache = InMemoryReplayCache()
+    calls = []
+    inner = cache._lock
+
+    class _Probe:
+        def __enter__(self):
+            calls.append(1)
+            return inner.__enter__()
+        def __exit__(self, *a):
+            return inner.__exit__(*a)
+
+    cache._lock = _Probe()
+    cache.check_and_claim("d", None)
+    assert calls, "check_and_claim must acquire self._lock"
