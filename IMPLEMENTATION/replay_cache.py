@@ -43,6 +43,7 @@ existing per-request try/except, which maps it to a refusal - the call is NOT
 honored on an undecidable claim.
 """
 
+import threading
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Protocol, runtime_checkable
 
@@ -103,6 +104,11 @@ class InMemoryReplayCache:
 
     def __init__(self) -> None:
         self._seen: Dict[str, Optional[datetime]] = {}
+        # R-01: prune+check+set below is a check-then-set that must be atomic. The
+        # ext-authz sidecar runs check() via run_in_threadpool, so two threads can
+        # both observe a decision_id absent before either claims it - a concurrent
+        # single-use bypass (a replayed token honored twice). Serialize it.
+        self._lock = threading.Lock()
 
     def check_and_claim(
         self,
@@ -113,12 +119,13 @@ class InMemoryReplayCache:
     ) -> bool:
         current = _utcnow(now)
         seen = self._seen
-        for k in [k for k, exp in seen.items() if exp is not None and exp <= current]:
-            del seen[k]
-        if decision_id in seen:
-            return False
-        seen[decision_id] = not_after
-        return True
+        with self._lock:
+            for k in [k for k, exp in seen.items() if exp is not None and exp <= current]:
+                del seen[k]
+            if decision_id in seen:
+                return False
+            seen[decision_id] = not_after
+            return True
 
 
 class ExternalStoreReplayCache:

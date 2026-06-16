@@ -206,6 +206,10 @@ def default_interaction_extractor(request: Request) -> Optional[Dict[str, Any]]:
     design section 5) is phase 4 and is deliberately NOT built here; a deployment
     that needs it injects its own extractor with this same signature.
     """
+    # P-01: a duplicate interaction header is ambiguous (which value binds would
+    # depend on header ordering) -> treat as absent, fail closed at the binding check.
+    if len(request.headers.getlist(INTERACTION_HEADER)) > 1:
+        return None
     raw = request.headers.get(INTERACTION_HEADER)
     if raw is None:
         return None
@@ -270,8 +274,11 @@ def build_authz_sidecar_app(
             if config is None:
                 return _deny(REF_TARGET_NOT_CONFIGURED)
 
-            # Step 2: read the attestation header (absent / unparseable -> A1).
-            raw = request.headers.get(ENVELOPE_HEADER)
+            # Step 2: read the attestation header (absent / unparseable / DUPLICATE
+            # -> A1). P-01: a duplicate envelope header is ambiguous (the verified
+            # value would depend on header ordering), so treat it as absent -> fail closed.
+            raw = (None if len(request.headers.getlist(ENVELOPE_HEADER)) > 1
+                   else request.headers.get(ENVELOPE_HEADER))
             envelope = None
             if raw is not None:
                 try:

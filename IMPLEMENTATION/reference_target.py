@@ -242,7 +242,9 @@ def build_reference_target_app(
         except Exception:
             interaction = None
 
-        raw = request.headers.get(ENVELOPE_HEADER)
+        # P-01: a duplicate envelope header is ambiguous -> treat as absent (A1).
+        raw = (None if len(request.headers.getlist(ENVELOPE_HEADER)) > 1
+               else request.headers.get(ENVELOPE_HEADER))
         envelope = None
         if raw is not None:
             try:
