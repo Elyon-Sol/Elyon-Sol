@@ -1,0 +1,8 @@
+========================================================================================
+LIVE SIDECAR ALLOW/DENY CHECK (claim 13) - https://authz.elyon-sol.io:9243
+========================================================================================
+[ALLOW] valid envelope -> 200 {'x-elyon-decision': 'ALLOW', 'x-elyon-reason': 'REASSERTED_AND_BOUND'}
+[DENY]  tampered envelope -> 403 {'x-elyon-decision': 'DENY', 'x-elyon-reason': 'REF_VERIFY_SIGNATURE_INVALID'}
+----------------------------------------------------------------------------------------
+RESULT: PASS - sidecar ALLOWs valid, DENYs tampered
+exit=0
