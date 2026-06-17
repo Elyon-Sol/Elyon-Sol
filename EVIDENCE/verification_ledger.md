@@ -16208,3 +16208,7 @@ Prior substantive entry: VL-109 (+ follow-ups). This entry cites VL-008 (the cro
 
 #### Next trajectory action
 The VL-108 pre-exposure checklist (counsel, bounty/window/channel, publish, recruit) + the three scheduled build items above. G5 remains NOT-MET until a blind external party engages.
+
+
+### VL-110 follow-up - 2026-06-16 - cross-model run outputs committed (referent-binding)
+The three verbatim cross-model run outputs from VL-110 are now committed (closing the "pending referent commit" note): EVIDENCE/verification_runs/cursor_xmodel_cursor_2026-06-16.md, cursor_xmodel_grok_2026-06-16.md, cursor_xmodel_openai_2026-06-16.md - each with a WHITE-BOX / internal / NOT-a-G5-referent provenance header (VL-057), ASCII-normalized (VL-009). No code/test/STATE change. Does not cite its own hash (VL-012).
