@@ -28,9 +28,11 @@ configuration, decides ALLOW or DENY for the incoming request:
   3. Extract the live interaction (the load-bearing design point, section 5). The
      DEFAULT (attested-forward) extractor reads the gate-normalized interaction
      from the structured X-Elyon-Sol-Interaction header (canonical-JSON). The
-     CUSTOM declarative-mapping extractor (gate-less deployments) is phase 4 and
-     is NOT built here; the extractor is an injectable seam so that mode can land
-     later without touching this module's decision path.
+     CUSTOM declarative-mapping extractor (gate-less / INLINE deployments) is
+     build-order step 4 and is now provided by `build_request_body_extractor`
+     (B-01): it derives the interaction from the ext_authz request body so the
+     binding covers the bytes the upstream executes. Both are injectable through
+     the same seam; the DEFAULT stays header-read, so no default path changes.
   4. Hand (envelope, interaction) to the PRODUCTION ExecutorGate.check, which
      composes verify_envelope (signature -> reassert/currency -> binding ->
      freshness) and the VL-076 ReplayCache seam. The sidecar performs NO
@@ -93,14 +95,17 @@ Secure distribution of the anchor and the public-key pin is the named G5 floor
 here.
 """
 
+import hashlib
+import inspect
 import json
 import os
 from datetime import timedelta
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from fastapi import FastAPI, Request, Response
 from fastapi.concurrency import run_in_threadpool
 
+from IMPLEMENTATION.envelope import canonical_json
 from IMPLEMENTATION.executor_sdk import ExecutorGate
 from IMPLEMENTATION.reference_target import (
     REF_TARGET_ANCHOR_MISMATCH,
@@ -202,19 +207,21 @@ def default_interaction_extractor(request: Request) -> Optional[Dict[str, Any]]:
     gate then refuses at the binding check (envelope present) or the presence
     guard (envelope absent); never an exception, never a fail-open.
 
-    The CUSTOM declarative-mapping extractor (gate-less / direct deployments,
-    design section 5) is phase 4 and is deliberately NOT built here; a deployment
-    that needs it injects its own extractor with this same signature.
+    The CUSTOM declarative-mapping extractor (gate-less / direct / INLINE
+    deployments, design section 5) is build-order step 4 and is provided by
+    `build_request_body_extractor` below; a deployment that needs it injects that
+    extractor (or its own) with this same signature.
 
     SECURITY SCOPE (B-01, cross-model finding): this default reads the interaction
     from a CLIENT-CONTROLLABLE header. It is safe for the standalone decision
     endpoint (the sidecar only answers ALLOW/DENY; nothing executes a body behind
     it). It is NOT safe INLINE in front of a body-carrying upstream (Envoy
     ext_authz) with this default, because the header need not match the bytes the
-    upstream executes. For inline use, build the phase-4 extractor that derives the
-    interaction from the ext_authz request itself (method/path/body), or require
-    the upstream to re-verify the same envelope it executes. Until then, do not
-    place the sidecar inline.
+    upstream executes. For inline use, inject `build_request_body_extractor`
+    (B-01 step 4), which derives the interaction from the ext_authz request body
+    so the binding covers the bytes the upstream executes; or require the upstream
+    to re-verify the same envelope it executes. Do NOT place the sidecar inline
+    with this default header-read extractor.
     """
     # P-01: a duplicate interaction header is ambiguous (which value binds would
     # depend on header ordering) -> treat as absent, fail closed at the binding check.
@@ -228,6 +235,138 @@ def default_interaction_extractor(request: Request) -> Optional[Dict[str, Any]]:
     except (json.JSONDecodeError, ValueError):
         return None
     return value if isinstance(value, dict) else None
+
+
+# --------------------------------------------------------------------------- #
+# CUSTOM (gate-less / INLINE) interaction extractor - B-01 build-order step 4
+# --------------------------------------------------------------------------- #
+#
+# The DEFAULT extractor above reads the interaction from a header the upstream
+# gate set. Placed INLINE in front of a body-carrying upstream, that header is
+# client-controllable and need not match the bytes the upstream executes
+# (finding B-01, cross-model convergent / rated High): an attacker can present a
+# valid envelope plus a benign interaction header while sending a different body
+# for the upstream to act on. This extractor closes that gap by deriving the live
+# interaction from the ext_authz request ITSELF - specifically the request body
+# Envoy forwards (the SAME bytes the upstream receives) - so context.args_sha256
+# binds the envelope to what is actually EXECUTED, not to a side-channel header.
+#
+# It is the "declarative mapping" of design section 5: the deployer authors the
+# static parts of the interaction (the authority/operation sets and manifest
+# pinning the route requires, plus where the tool identity comes from); the args
+# digest is taken from the body at request time. The mapping is config, not code
+# - this factory turns it into an extractor with the SAME signature as
+# default_interaction_extractor (an injectable seam, build-then-wire: no default
+# path changes; nothing wires this on by default).
+
+
+def _resolve_tool(
+    tool_spec: Union[str, Dict[str, Any]], request: Request
+) -> Optional[str]:
+    """Resolve the interaction's context.tool from the declarative mapping.
+
+    tool_spec is one of:
+      - a literal str                  -> a constant tool identity (one tool per
+                                          route).
+      - {"from": "path"}               -> the request path (request.url.path).
+      - {"from": "header", "name": H}  -> the value of request header H.
+
+    Anything that does not resolve to a non-empty str returns None (the gate then
+    fails closed at the binding check); never raises.
+    """
+    if isinstance(tool_spec, str):
+        return tool_spec or None
+    if isinstance(tool_spec, dict):
+        src = tool_spec.get("from")
+        if src == "path":
+            return request.url.path or None
+        if src == "header":
+            name = tool_spec.get("name")
+            if isinstance(name, str):
+                return request.headers.get(name) or None
+    return None
+
+
+def build_request_body_extractor(
+    *,
+    ap: List[str],
+    op: List[str],
+    expected_manifest_version: str,
+    expected_manifest_sha256: str,
+    tool: Union[str, Dict[str, Any]],
+    args_field: Optional[str] = None,
+) -> Callable[[Request], Any]:
+    """Build a CUSTOM interaction extractor that derives the interaction from the
+    ext_authz request BODY (B-01 step 4; design section 5 CUSTOM mode).
+
+    The returned extractor reproduces the canonical interaction shape that
+    IMPLEMENTATION/mcp_server.interaction_for emits, so the gate's binding check
+    compares byte-identically:
+
+        {AP, OP, context: {tool, args_sha256},
+         expected_manifest_version, expected_manifest_sha256}
+
+    with the load-bearing difference that context.args_sha256 is
+    sha256(canonical_json(args)) over args taken from the REQUEST BODY, not from a
+    client header:
+      - args_field=None  -> the whole parsed JSON body IS the args object.
+      - args_field="X"   -> body["X"] is the args object (body must be a JSON
+                            object with that field, else fail closed).
+
+    Because Envoy forwards the same body to the sidecar and to the upstream, the
+    digest binds the envelope to the bytes the upstream EXECUTES - the property
+    the default header-read extractor cannot offer inline.
+
+    Declarative mapping (the deployer-authored piece, design section 5):
+      ap, op                            - the authority/operation sets the route
+                                          requires. Normalized (sorted + deduped,
+                                          the request_validator rule) so the
+                                          binding comparison is byte-identical to
+                                          issuance.
+      expected_manifest_version/sha256  - the manifest pin the route admits under.
+      tool                              - see _resolve_tool.
+      args_field                        - None (whole body) or a body sub-field.
+
+    The extractor is async (it must read request.body()); build_authz_sidecar_app
+    awaits an awaitable extractor result, so the default sync extractor is
+    unaffected. Every malformed input (unparseable body, missing args field,
+    unresolvable tool) returns None, which the gate turns into a fail-closed
+    refusal (binding mismatch / absent) - never an exception, never a fail-open.
+    The extractor performs NO admissibility logic and NO cryptography; it only
+    reconstructs the interaction the production gate then checks.
+    """
+    norm_ap = sorted(set(ap))
+    norm_op = sorted(set(op))
+
+    async def _extract(request: Request) -> Optional[Dict[str, Any]]:
+        tool_id = _resolve_tool(tool, request)
+        if tool_id is None:
+            return None
+        body_bytes = await request.body()
+        try:
+            parsed = json.loads(body_bytes)
+        except (json.JSONDecodeError, ValueError, TypeError):
+            return None
+        if args_field is None:
+            args = parsed
+        elif isinstance(parsed, dict) and args_field in parsed:
+            args = parsed[args_field]
+        else:
+            return None
+        # The exact digest interaction_for uses, so a body equal to the args the
+        # envelope was minted for yields an identical context.args_sha256.
+        args_sha256 = hashlib.sha256(
+            canonical_json(args).encode("utf-8")
+        ).hexdigest()
+        return {
+            "AP": list(norm_ap),
+            "OP": list(norm_op),
+            "context": {"tool": tool_id, "args_sha256": args_sha256},
+            "expected_manifest_version": expected_manifest_version,
+            "expected_manifest_sha256": expected_manifest_sha256,
+        }
+
+    return _extract
 
 
 def _deny(reason: str) -> Response:
@@ -264,8 +403,11 @@ def build_authz_sidecar_app(
     get cross-instance exactly-once; the gate is otherwise stateless and rebuilt
     per request from config (parity with reference_target's per-request fail-closed).
 
-    interaction_extractor is injectable so the phase-4 CUSTOM declarative mapping
-    can be supplied later without changing the decision path.
+    interaction_extractor is injectable so the CUSTOM declarative mapping
+    (build_request_body_extractor, B-01 step 4) can be supplied without changing
+    the decision path. It may be sync (the default header-read extractor) or
+    async (the body-deriving extractor, which must read request.body()); an
+    awaitable result is awaited.
     """
     app = FastAPI(title="Elyon-Sol ext-authz admissibility sidecar")
     app.state.replay_cache = (
@@ -296,8 +438,14 @@ def build_authz_sidecar_app(
                 except (json.JSONDecodeError, ValueError):
                     envelope = None
 
-            # Step 3: extract the live interaction (default: header-read).
+            # Step 3: extract the live interaction. The DEFAULT reads the
+            # gate-forwarded header; an injected CUSTOM extractor (B-01 step 4,
+            # build_request_body_extractor) derives it from the ext_authz request
+            # body and is async, so await an awaitable result. The default sync
+            # extractor returns its value directly and is behavior-unchanged.
             interaction = interaction_extractor(request)
+            if inspect.isawaitable(interaction):
+                interaction = await interaction
 
             # Step 4: the PRODUCTION gate is the SOLE acceptance authority. Build
             # it from out-of-band config, sharing the app's replay cache (the

@@ -128,8 +128,11 @@ the claim sheet, the named floors, the inspector
   set ELYON_REPLAY_REDIS_URL (a shared store). If you run multi-instance, also set
   ELYON_REPLAY_MULTI_INSTANCE=1 so a missing shared store FAILS CLOSED at startup instead of
   silently giving each process its own cache. Single-instance (this deployment) is unchanged.
-- B-01 (sidecar binding): the ext-authz sidecar's default extractor reads the interaction from a
+- B-01 (sidecar binding): the ext-authz sidecar's DEFAULT extractor reads the interaction from a
   CLIENT-CONTROLLABLE header. Run it ONLY as a standalone decision endpoint (as here), or behind an
-  upstream that re-verifies the same envelope it executes. Do NOT place it inline in front of a
-  body-carrying upstream until build-order step 4 (derive interaction from the ext_authz request
-  body/path) is built.
+  upstream that re-verifies the same envelope it executes. Build-order step 4 is now BUILT (VL-111):
+  to place the sidecar INLINE in front of a body-carrying upstream, inject
+  `build_request_body_extractor` (it derives the interaction from the ext_authz request body, so
+  context.args_sha256 binds the EXECUTED bytes) AND configure Envoy `with_request_body` so the
+  sidecar receives the same bytes the upstream executes. Do NOT place it inline with the DEFAULT
+  header-read extractor.
