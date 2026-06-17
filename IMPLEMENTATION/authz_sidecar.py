@@ -18,8 +18,10 @@ configuration, decides ALLOW or DENY for the incoming request:
 
   1. Resolve out-of-band configuration (never from the repo): the target_url this
      surface serves (for the binding check), the local published-record bytes +
-     the pinned anchor, the pinned gate signing public key, and the optional
-     clock-skew tolerance. Incomplete / malformed configuration FAILS CLOSED
+     the pinned anchor, the pinned gate signing public key, the optional
+     clock-skew tolerance, and (optionally) a pinned publisher key enabling
+     SIGNED-record freshness mode (F-01, VL-112). Incomplete / malformed
+     configuration FAILS CLOSED
      (REF_TARGET_NOT_CONFIGURED) - the same per-request fail-closed posture
      reference_target.py and pep.py take when the trust base is unconfigured.
   2. Read the X-Elyon-Sol-Envelope attestation header (absent / unparseable ->
@@ -89,6 +91,18 @@ Resolved from the environment, never from the repo:
   ELYON_REPLAY_REDIS_URL    - optional; a shared Redis-backed ReplayCache for
                               cross-instance exactly-once (replay_cache_from_env,
                               VL-076/094). Absent -> per-instance InMemoryReplayCache.
+  ELYON_PUBLISHER_KEY_ID    - optional (F-01 signed mode); the pinned publisher
+                              signing key id. Present with _HEX -> SIGNED mode.
+  ELYON_PUBLISHER_KEY_HEX   - optional (F-01); the pinned publisher signing public
+                              key (raw Ed25519 public bytes as hex).
+  ELYON_SIGNED_RECORD_PATH  - optional (F-01); local path to the SIGNED record
+                              (published_hashes_signed.json). Defaults to the
+                              ELYON_RECORD_PATH sibling filename. In signed mode the
+                              sidecar validates this record's publisher signature +
+                              freshness + serial per request and uses it as the
+                              gate's record_source; a stale/invalid record fails
+                              closed (REF_VERIFY_PUBLISHED_RECORD_STALE / _INVALID).
+                              Absent publisher key -> byte-anchor path unchanged.
 
 Secure distribution of the anchor and the public-key pin is the named G5 floor
 (Decision F; external_verification_readiness gate 5): acknowledged, not defended
@@ -107,6 +121,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from IMPLEMENTATION.envelope import canonical_json
 from IMPLEMENTATION.executor_sdk import ExecutorGate
+from IMPLEMENTATION.published_record_source import load_signed_record_from_bytes
 from IMPLEMENTATION.reference_target import (
     REF_TARGET_ANCHOR_MISMATCH,
     REF_TARGET_NOT_CONFIGURED,
@@ -134,6 +149,14 @@ ENV_PINNED_ROOT = "ELYON_PINNED_ROOT_SHA256"
 ENV_GATE_KEY_ID = "ELYON_GATE_KEY_ID"
 ENV_GATE_PUBLIC_KEY_HEX = "ELYON_GATE_PUBLIC_KEY_HEX"
 ENV_CLOCK_SKEW_SECONDS = "ELYON_CLOCK_SKEW_SECONDS"
+# Optional signed-record (freshness) mode env vars (F-01, VL-112; parity with
+# reference_target's ELYON_PUBLISHER_KEY_*). When a pinned publisher key is
+# present the sidecar consults a LOCAL SIGNED record (publisher signature +
+# freshness + serial) instead of the byte-anchor record. Absent -> byte-anchor
+# path unchanged.
+ENV_PUBLISHER_KEY_ID = "ELYON_PUBLISHER_KEY_ID"
+ENV_PUBLISHER_KEY_HEX = "ELYON_PUBLISHER_KEY_HEX"
+ENV_SIGNED_RECORD_PATH = "ELYON_SIGNED_RECORD_PATH"
 
 
 def config_from_env() -> Optional[Dict[str, Any]]:
@@ -187,13 +210,45 @@ def config_from_env() -> Optional[Dict[str, Any]]:
             return None
         clock_skew = timedelta(seconds=seconds)
 
-    return {
+    config = {
         "target_url": target_url,
         "record_bytes": record_bytes,
         "pinned_root_sha256": pinned_root,
         "pinned_public_keys": {key_id: public_key},
         "clock_skew": clock_skew,
     }
+
+    # Optional signed-record (freshness) mode (F-01, VL-112): pin a publisher key
+    # and point at a LOCAL signed record. When present, the sidecar validates the
+    # signed record per request (publisher signature + freshness + serial via
+    # published_record_source.load_signed_record_from_bytes) and uses the
+    # validated record as the gate's record_source instead of the byte-anchor
+    # record; a stale/invalid record fails closed with the reader's
+    # REF_VERIFY_PUBLISHED_RECORD_* reason. Absent -> the byte-anchor path is
+    # byte-behaviour-unchanged. The signed-record bytes are READ here (an
+    # unreadable file is a config fault -> None -> REF_TARGET_NOT_CONFIGURED); the
+    # freshness/signature decision is made per request in the handler so it
+    # surfaces the right reason. The signed path defaults to the byte-anchor
+    # path's sibling filename (published_hashes.json -> published_hashes_signed.json),
+    # the same derivation reference_target uses for its signed URL.
+    pub_key_id = os.environ.get(ENV_PUBLISHER_KEY_ID)
+    pub_key_hex = os.environ.get(ENV_PUBLISHER_KEY_HEX)
+    if pub_key_id and pub_key_hex:
+        try:
+            publisher_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(pub_key_hex))
+        except Exception:
+            return None
+        signed_record_path = os.environ.get(ENV_SIGNED_RECORD_PATH) or \
+            record_path.replace("published_hashes.json", "published_hashes_signed.json")
+        try:
+            with open(signed_record_path, "rb") as f:
+                signed_record_bytes = f.read()
+        except OSError:
+            return None
+        config["pinned_publisher_keys"] = {pub_key_id: publisher_key}
+        config["signed_record_bytes"] = signed_record_bytes
+
+    return config
 
 
 def default_interaction_extractor(request: Request) -> Optional[Dict[str, Any]]:
@@ -455,14 +510,37 @@ def build_authz_sidecar_app(
             # record whose bytes do not hash to the pin makes the gate's record
             # load fail -> REF_TARGET_ANCHOR_MISMATCH (fail closed before any
             # currency claim is trusted).
-            gate = ExecutorGate(
-                pinned_public_keys=config["pinned_public_keys"],
-                target_id=config["target_url"],
-                record_bytes=config["record_bytes"],
-                pinned_root=config["pinned_root_sha256"],
-                replay_cache=request.app.state.replay_cache,
-                clock_skew=config["clock_skew"],
-            )
+            # F-01 (VL-112): SIGNED mode when a publisher key is pinned - validate
+            # the LOCAL signed record (publisher signature + freshness + serial)
+            # and use the validated record as the gate's record_source; a stale /
+            # invalid record fails closed with the reader's REF_VERIFY_PUBLISHED_
+            # RECORD_* reason (this is the freshness the byte-anchor path lacks).
+            # BYTE-ANCHOR mode (default, no publisher key): the unchanged
+            # record_bytes + pinned_root path (no temporal dimension).
+            if config.get("pinned_publisher_keys"):
+                signed = load_signed_record_from_bytes(
+                    config["signed_record_bytes"],
+                    config["pinned_publisher_keys"],
+                    clock_skew=config["clock_skew"],
+                )
+                if signed["reason"] is not None:
+                    return _deny(signed["reason"])
+                gate = ExecutorGate(
+                    pinned_public_keys=config["pinned_public_keys"],
+                    target_id=config["target_url"],
+                    record_source=signed["record"],
+                    replay_cache=request.app.state.replay_cache,
+                    clock_skew=config["clock_skew"],
+                )
+            else:
+                gate = ExecutorGate(
+                    pinned_public_keys=config["pinned_public_keys"],
+                    target_id=config["target_url"],
+                    record_bytes=config["record_bytes"],
+                    pinned_root=config["pinned_root_sha256"],
+                    replay_cache=request.app.state.replay_cache,
+                    clock_skew=config["clock_skew"],
+                )
 
             # ExecutorGate.check loads + anchor-verifies the record, which for a
             # local file is fast but is still synchronous I/O; run it off the event
