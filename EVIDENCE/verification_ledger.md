@@ -16268,3 +16268,90 @@ Prior substantive entry: VL-111. This entry cites VL-091 (the reference target's
 
 #### Next trajectory action
 K-01 (pass key_record_view on the default enforce path so issuer-key revocation is honored there) - the last scheduled build item - plus the VL-108 pre-exposure checklist (counsel safe-harbor sign-off, bounty tiers/window/channel, publish, recruit). G5 remains NOT-MET until a blind external party engages the live surface.
+
+### VL-113 - 2026-06-17 - T-governance: Feature 1 increment 1a - impact classification (requires_approval) built-then-wire with review fixes H1+H2
+
+#### What landed
+The first increment of the governance-layer build (spec: docs/design/governance_layer_design.md,
+corrected). A new orchestration-layer module IMPLEMENTATION/impact.py provides two pure,
+manifest-derived functions: safe_high_impact(manifest) validates the new HIGH_IMPACT manifest
+field, returning a set of selector tokens or None (the fail-closed sentinel) on any malformation;
+requires_approval(ctx, manifest) returns True iff the interaction is high-impact and therefore
+needs an out-of-band human approval grant before forward, fail-closed (any doubt -> True).
+
+Two adversarial-review fixes are baked in and pinned by revert-catchers:
+- [FIX H1] a MISSING or malformed HIGH_IMPACT fails CLOSED (-> requires approval), never the
+  `.get(..., [])` empty-set that would silently disable oversight for the whole deployment. An
+  EXPLICIT empty list is the operator's conscious "nothing is high-impact" opt-out (distinct
+  from a missing key, which is None).
+- [FIX H2] every HIGH_IMPACT selector token must be a member of the manifest's required sets
+  (AR u R); a token outside them is a manifest error -> fail closed. Because coverage already
+  forces AP>=AR and OP>=R, an ELIGIBLE caller cannot omit a high-impact token to self-declare
+  low-impact. Impact is a property of the interaction TYPE (the pinned manifest), not a
+  caller-set flag.
+
+#### Placement decision (why impact.py, not evaluator.py as the base design suggested)
+envelope.reassert() pins evaluator_sha256 = sha256(IMPLEMENTATION/evaluator.py). Adding the
+functions to evaluator.py changed its hash and made every envelope verified against a pinned
+published record read as an evaluator-version TRANSITION (canon 12.4 -> RE_EVALUATE_REQUIRED),
+which RED-ed 49 verify-against-pinned-record tests in the clean-extraction run. Impact
+classification is orchestration-layer logic that lives ABOVE G(I) (the PENDING_APPROVAL layer),
+so it belongs in its own module; impact.py reuses evaluator.safe_set and leaves evaluator.py
+byte-identical (hash unchanged, verified). This keeps the hash-pinned core predicate stable and
+the G(I) boundary clean; recorded as a refinement of design section 1.7.
+
+#### Canon / build-then-wire posture
+Canon UNTOUCHED (GR-1); both governance features layer above G(I), no canon hash change.
+Build-then-wire: requires_approval has NO caller on the default pep.py path this increment;
+evaluator.py and safe_manifest()/evaluate() are byte-identical to HEAD (verified by sha), so the
+default decision path is byte-behavior-unchanged. Wiring into pep.governed_call (design 1.3 /
+increment 1c) is a later increment; the oversight GUARANTEE is not claimed until Feature 2
+(non-bypassable) is built, and no readiness predicate goes green on Feature 1 alone.
+
+#### Tests + revert-catcher discipline
+TESTS/adversarial/test_requires_approval.py adds 10 tests; suite 419 -> 429 green in a pristine
+`git archive HEAD` extraction. Three starred revert-catchers were each proven to go RED when its
+fix is reverted, then GREEN when restored: missing HIGH_IMPACT -> requires approval (RED when
+reverted to `.get(...,[])`) [FIX H1]; out-of-band HIGH_IMPACT token -> fail closed (RED when the
+AR u R subset check is dropped) [FIX H2]; eligible-and-low-impact-by-omission is unreachable (RED
+on the same revert) [FIX H2].
+
+#### Spec-defines-the-change
+docs/design/governance_layer_design.md (the uploaded design + the eight review fixes H1-H8 marked
+inline) is the spec commit and precedes the build commit, per the project's spec-defines-the-change
+pattern.
+
+#### Honest scope / GR-3
+Impact is TOKEN-level, not semantic (a benign-labelled call that is semantically high-impact is
+out of scope by design). The remaining six review fixes (H3-H8: grant single-use under scale,
+binding to decision_sha256 + gate-side pending-state, SoD as custody, the 202 state-machine
+placement, grant freshness reuse, and the audit-reconcile extension) are scheduled for increments
+1b-1d. WHITE-BOX in-house build; NOT external validation (GR-3); does not enter the attacker pack.
+
+#### Files affected
+docs/design/governance_layer_design.md (NEW/corrected - the spec); IMPLEMENTATION/impact.py (NEW);
+TESTS/adversarial/test_requires_approval.py (NEW); STATE.md (Last-updated + governance item in
+Next open action); EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/evaluator.py (byte-identical, hash unchanged), pep.py, envelope.py, verifier.py,
+MANIFEST/manifest.json, CANON/*, EVIDENCE/readiness.json - all unchanged.
+
+#### Environment note (Cowork sandbox)
+Validated against a pristine `git archive HEAD` extraction because the mount is again truncating
+working-tree reads (VL-108 hazard: HEAD STATE.md 1187 lines vs mount 1085; ledger 16270 vs 16139;
+authz_sidecar.py 581 vs 309). The commit chain was built from HEAD-intact blobs and written to a
+side ref (refs/heads/governance-f1-inc1); main is UNTOUCHED. The AUTHOR MUST, natively: rebuild
+the working tree from HEAD (clear the truncation per SESSION_PROTOCOL rule 2), verify the
+committed blobs, fast-forward main to the side ref, and push (the sandbox has no push credentials,
+rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Feature 1 increment 1b: IMPLEMENTATION/approval.py - the approval grant (build/sign/verify)
+reusing envelope.py's Ed25519 + binding to decision_sha256 [FIX H4] + freshness reuse [FIX H7].
+Then 1c (pep.py wiring: 202 state machine [FIX H6]; pending-state + grant replay cache
+[FIX H3/H4]; REF_APPROVAL_*; approver-key custody/role [FIX H5]) and 1d (issuance-log + reconcile
+extension [FIX H8]; approver CLI). The G5 external-readiness road is unchanged and parallel.
