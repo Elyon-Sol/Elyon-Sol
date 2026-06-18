@@ -16536,3 +16536,81 @@ forwarded high-impact decision_id has a matching consumed-grant record bound to 
 Schedule the H5 load-bearing custody (approver provenance/role via the signed key-record chain)
 and the SHARED-store wiring for the pending-set + grant single-use under scale. Then Feature 2
 (non-bypassable) + the integration proof.
+
+### VL-116 - 2026-06-18 - T-governance: Feature 1 increment 1d - the audit half ([FIX H8]) + the approver CLI; Feature 1 mechanism complete
+
+#### What landed
+The auditable governance trail and the human surface; Feature 1's mechanism (impact -> grant ->
+wiring -> audit) is now complete end to end.
+
+- IMPLEMENTATION/issuance_log.py: JsonlApprovalLog + approval_log_from_env() (ELYON_APPROVAL_LOG_PATH),
+  mirroring the issuance log's durability discipline. Two record types: approval_request (the 202
+  hold) and grant_consumed (the approved release).
+- IMPLEMENTATION/pep.py: writes the approval_request record at the 202 hold and the grant_consumed
+  record in the approved leg AFTER the grant_id claim and BEFORE the forward. Injected/env, DEFAULT
+  None (no records, byte-behavior-identical); fail-closed when CONFIGURED (a hold/release that
+  cannot be recorded -> REF_PEP_FAIL_CLOSED; record before you act, canon section 9).
+- IMPLEMENTATION/envelope_inspector.py: reconcile_approvals(issued_envelopes, approval_records) with
+  the closed violation set FORWARDED_WITHOUT_GRANT (a held AND forwarded high-impact decision with
+  no grant_consumed - the governance guarantee broken), ORPHAN_CONSUMPTION (a release with no hold),
+  DUPLICATE_GRANT (a grant_id consumed twice), DUPLICATE_REQUEST_CONSUMPTION (a 202 honored twice).
+  The existing reconcile() is byte-unchanged.
+- IMPLEMENTATION/approver_cli.py: the minimal human surface - a SEPARATE process holding the
+  approver PRIVATE key (never the gate's, never in the repo). make_grant() is the testable core
+  (wraps approval.build_grant/sign_grant so a grant it emits is exactly what verify_grant accepts);
+  main() reads a 202 JSON, shows the human the decision being released, and on confirmation emits a
+  signed grant.
+
+#### Canon / build-then-wire posture
+Canon UNTOUCHED (GR-1). evaluator.py, impact.py, approval.py BYTE-IDENTICAL to the VL-115 tip.
+Default-off: with no approval log configured the full pre-existing suite is unchanged. The approval
+trail and reconcile audit a LOG; they add no runtime invariant and refuse nothing (parity with
+reconcile()).
+
+#### Tests + revert-catcher discipline
+TESTS/adversarial/test_approval_audit.py adds 9 tests; suite 452 -> 461 green in a pristine git
+archive extraction. The starred revert-catcher - a held AND forwarded high-impact decision with NO
+grant_consumed must be FORWARDED_WITHOUT_GRANT - was proven RED when the predicate is removed (the
+gap would be reported clean), and an end-to-end variant (drive pep approved-forward, then drop the
+consumption records) is caught the same way. The approver CLI's grant is accepted by verify_grant.
+
+#### Honest scope / GR-3
+reconcile_approvals is keyed on decision_sha256 (issuance-invariant), so it proves "every
+held+forwarded high-impact decision has at least one recorded grant", NOT a per-issuance 1:1 match
+(the grant is claimed before the envelope's decision_id is assigned; per-issuance linkage is a
+later refinement). The log is the trustworthy referent (the explicit bound, parity with
+reconcile). Feature 1 is now mechanism-complete, but the oversight GUARANTEE is still NOT claimed -
+it requires Feature 2 (non-bypassable); a caller that skips the gate skips the human. Two Feature-1
+RESIDUALS remain before claiming: R1 ([FIX H5] load-bearing) approver-key provenance + an explicit
+approver ROLE via the signed key-record/root-record chain (the gate already holds only public
+approver keys; this hardens the trust source); R2 ([FIX H3]/[FIX H4] under scale) a SHARED store
+for the grant single-use cache + the pending-request set (reuse the R-02 declare-or-fail guard).
+WHITE-BOX in-house build; NOT external validation (GR-3); does not enter the attacker pack. No
+readiness predicate goes green on Feature 1 alone.
+
+#### Files affected
+IMPLEMENTATION/issuance_log.py (JsonlApprovalLog + approval_log_from_env); IMPLEMENTATION/pep.py
+(approval-log wiring, default-off, fail-closed-when-configured); IMPLEMENTATION/envelope_inspector.py
+(reconcile_approvals + the violation vocabulary); IMPLEMENTATION/approver_cli.py (NEW);
+TESTS/adversarial/test_approval_audit.py (NEW); STATE.md; EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/evaluator.py + impact.py + approval.py (byte-identical), envelope.py, verifier.py,
+MANIFEST/* + EVIDENCE/published_hashes.json (no manifest change this increment), CANON/* (canon
+untouched), EVIDENCE/readiness.json - unchanged.
+
+#### Environment note (Cowork sandbox)
+Validated against a pristine git archive extraction (mount truncation, VL-108). Commit chain built
+from VL-115-tip-intact blobs on side ref refs/heads/governance-f1-inc4; main untouched. The AUTHOR
+verifies the blobs natively, fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Feature 1 residuals then Feature 2. R1: approver-key provenance/role via the signed key-record /
+root-record chain (custody hardening of [FIX H5]). R2: a SHARED store (ExternalStoreReplayCache +
+a shared pending-set) for single-use + the 202 slot under horizontal scale ([FIX H3]/[FIX H4]),
+with the R-02 declare-or-fail guard. Then Feature 2 (non-bypassable: inline body-bound sidecar +
+mTLS client-auth + egress topology + the network-layer bypass-refused proof) and the integration
+proof. Only after Feature 2 does the oversight guarantee become claimable.
