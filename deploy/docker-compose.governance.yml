@@ -1,0 +1,69 @@
+# Governance-substrate overlay (R1 + R2). Compose WITH the base (+ tls):
+#   cd deploy && docker compose \
+#       -f docker-compose.yml -f docker-compose.tls.yml -f docker-compose.governance.yml \
+#       up -d --build redis gate gate2 target publisher
+#
+# What it adds:
+#   - redis           : the SHARED store for R2 (grant single-use + the 202 pending-set).
+#   - gate / gate2     : TWO gate replicas sharing redis, each run via the R1 wiring shim
+#                        (deploy.governance.approver_trust_bootstrap:app) so approver trust
+#                        is role-distinct from the signed key record, and the 202 slot +
+#                        grant single-use are GLOBAL across both replicas (R2).
+#   - approver-cli     : the SEPARATE approver process (profile "approver"); holds the
+#                        approver PRIVATE key (custody) and mints a grant on demand.
+# Env comes from deploy/.env (see deploy/governance.env.example).
+services:
+  redis:
+    image: redis:7-alpine
+
+  gate:
+    command: ["uvicorn", "deploy.governance.approver_trust_bootstrap:app",
+              "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      ELYON_SIGNING_KEY_HEX: ${ELYON_SIGNING_KEY_HEX}
+      ELYON_SIGNING_KEY_ID: ${ELYON_SIGNING_KEY_ID}
+      ELYON_DECISION_MAX_AGE_SECONDS: "300"
+      ELYON_APPROVER_KEY_RECORD_PATH: ${ELYON_APPROVER_KEY_RECORD_PATH}
+      ELYON_PINNED_ROOT_KEY_ID: ${ELYON_PINNED_ROOT_KEY_ID}
+      ELYON_PINNED_ROOT_PUBKEY_B64: ${ELYON_PINNED_ROOT_PUBKEY_B64}
+      ELYON_CLOCK_SKEW_SECONDS: ${ELYON_CLOCK_SKEW_SECONDS}
+      ELYON_REPLAY_MULTI_INSTANCE: "1"
+      ELYON_PENDING_REDIS_URL: redis://redis:6379/0
+      ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+    depends_on: [redis, target]
+
+  gate2:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["uvicorn", "deploy.governance.approver_trust_bootstrap:app",
+              "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      ELYON_SIGNING_KEY_HEX: ${ELYON_SIGNING_KEY_HEX}
+      ELYON_SIGNING_KEY_ID: ${ELYON_SIGNING_KEY_ID}
+      ELYON_DECISION_MAX_AGE_SECONDS: "300"
+      ELYON_APPROVER_KEY_RECORD_PATH: ${ELYON_APPROVER_KEY_RECORD_PATH}
+      ELYON_PINNED_ROOT_KEY_ID: ${ELYON_PINNED_ROOT_KEY_ID}
+      ELYON_PINNED_ROOT_PUBKEY_B64: ${ELYON_PINNED_ROOT_PUBKEY_B64}
+      ELYON_CLOCK_SKEW_SECONDS: ${ELYON_CLOCK_SKEW_SECONDS}
+      ELYON_REPLAY_MULTI_INSTANCE: "1"
+      ELYON_PENDING_REDIS_URL: redis://redis:6379/0
+      ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+    depends_on: [redis, target]
+    ports:
+      - "8001:8001"
+
+  approver-cli:
+    profiles: ["approver"]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    # Runs the human approver surface on demand:
+    #   docker compose -f ... --profile approver run --rm approver-cli \
+    #       --decision-sha256 <X> --approval-request-id <Y> --grant-id <Z> --yes
+    entrypoint: ["python", "-m", "IMPLEMENTATION.approver_cli"]
+    environment:
+      # CUSTODY: the approver PRIVATE key lives ONLY in this process, never on the gate.
+      ELYON_APPROVER_KEY_HEX: ${ELYON_APPROVER_KEY_HEX}
+      ELYON_APPROVER_KEY_ID: ${ELYON_APPROVER_KEY_ID}
+
