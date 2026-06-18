@@ -207,6 +207,37 @@ def _accept(reason: str = ACCEPT_REASSERTED_AND_BOUND) -> Dict[str, Any]:
     return {"accepted": True, "reason": reason}
 
 
+def not_after_valid(not_after_raw, now=None, clock_skew=timedelta(0)):
+    """
+    Shared validity-window check for a signed `not_after` instant (VL-041
+    semantics, factored out at VL-114 so the decision-freshness check in
+    verify_envelope and the approval-grant freshness check in approval.py
+    ([FIX H7]) use ONE implementation, not two).
+
+    Returns True iff the instant is acceptable:
+      - `None` (absent) -> True: no expiry was stamped (the issuer's choice;
+        a caller may additionally require presence by policy - approval.py
+        does, for grants).
+      - a malformed or tz-NAIVE ISO-8601 string -> False (fail closed,
+        canon section 9).
+      - a tz-aware instant -> True iff now < not_after + clock_skew (strict;
+        clock_skew default 0 reproduces the pre-VL-114 strict comparison).
+
+    `now` is injectable for deterministic tests; it defaults to
+    datetime.now(timezone.utc).
+    """
+    if not_after_raw is None:
+        return True
+    try:
+        na = datetime.fromisoformat(not_after_raw)
+    except (ValueError, TypeError):
+        return False
+    if na.tzinfo is None:
+        return False
+    current = now if now is not None else datetime.now(timezone.utc)
+    return current < na + clock_skew
+
+
 def verify_envelope(
     envelope: Any,
     interaction: Dict[str, Any],
@@ -365,18 +396,15 @@ def verify_envelope(
         # This is the time-bounded answer to the VL-040 follow-up 2 decisive
         # failure (compromised key): it bounds a leaked key's usefulness
         # without depending on detecting the leak.
-        not_after_raw = envelope.get("not_after")
-        if not_after_raw is not None:
-            try:
-                not_after = datetime.fromisoformat(not_after_raw)
-            except (ValueError, TypeError):
-                return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
-            if not_after.tzinfo is None:
-                return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
-            current = now if now is not None else datetime.now(timezone.utc)
-            # VL-075: tolerate clock_skew past not_after (default 0 -> strict).
-            if current >= not_after + clock_skew:
-                return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
+        # VL-114: the decision-freshness check is now the shared not_after_valid()
+        # primitive (below), so the approval-grant freshness check
+        # (IMPLEMENTATION/approval.py, [FIX H7]) REUSES the exact same logic
+        # rather than re-implementing it. Behavior is byte-identical to the
+        # prior inline VL-041/VL-075 block: absent not_after = no expiry; a
+        # malformed or tz-naive value, or now >= not_after + clock_skew, is a
+        # REFUSE (REF_VERIFY_SIGNATURE_EXPIRED).
+        if not not_after_valid(envelope.get("not_after"), now=now, clock_skew=clock_skew):
+            return _reject(REF_VERIFY_SIGNATURE_EXPIRED)
 
     # ----- Step 2: currency + integrity via reassert() -----
     # Fail closed on any structural surprise reassert() trips over that
