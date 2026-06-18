@@ -16845,3 +16845,91 @@ replay_cache_from_env's R-02 declare-or-fail guard. Then only the OPERATOR-LOCUS
 (Envoy with_request_body inline body binding) + 3 (network ACL + agent egress) on real hosts remain
 before the oversight guarantee is deployment-claimable; an external attacker on a live deployment
 (G5, GR-3) certifies it.
+
+
+### VL-120 - 2026-06-18 - T-governance: Feature 1 residual R2 - shared store for single-use + the pending-set ([FIX H3]/[FIX H4] under horizontal scale)
+
+#### What landed
+The shared-store residual that lets grant single-use and the 202 pending-slot hold ACROSS
+instances. Before R2, pep hard-coded a per-process pending set (_PendingApprovals dict) and a
+per-process grant-replay cache (InMemoryReplayCache()), so a horizontally-scaled gate kept N
+independent copies: a 202 issued on instance A was unknown to instance B (approved resubmit ->
+REF_APPROVAL_REQUEST_UNKNOWN), and - worse for [FIX H3] - single-consume of both the
+approval_request_id and the grant_id held only per-process (one approval -> one execution PER
+replica).
+
+- NEW IMPLEMENTATION/pending_store.py: the pending-approval-set seam, a SIBLING of replay_cache.py.
+  PendingApprovals Protocol (issue / check_and_consume); PendingStore cross-process primitive
+  (put / consume_if_matches = compare-AND-delete); InMemoryPendingApprovals (behavior-IDENTICAL to
+  pep's pre-R2 _PendingApprovals); ExternalStorePendingApprovals(store) delegating the global
+  atomic consume; RedisPendingStore (SET [EX] + a Lua GET-compare-DEL so a concurrent
+  double-consume succeeds at most once and a wrong-decision probe deletes nothing); and
+  pending_store_from_env() with the R-02 declare-or-fail guard reused from replay_cache_from_env.
+- IMPLEMENTATION/pep.py (the only default-path edit): _PENDING = pending_store_from_env() and
+  _GRANT_REPLAY = replay_cache_from_env() (the [FIX H3] requirement: the grant single-use cache now
+  rides the shared ExternalStoreReplayCache under scale). _PendingApprovals retained as a
+  backward-compatible alias of InMemoryPendingApprovals (three test files import it). DEFAULT (no
+  ELYON_* env) is byte-behavior-identical: both builders return their in-memory impls, which are
+  behavior-identical to the pre-R2 constructors. A gate that declares ELYON_REPLAY_MULTI_INSTANCE
+  without a shared store (ELYON_PENDING_REDIS_URL / ELYON_REPLAY_REDIS_URL) now FAILS CLOSED at
+  import/startup rather than handing each replica a per-process set/cache.
+
+#### Canon / posture
+Canon UNTOUCHED (GR-1). evaluator.py / impact.py / approval.py / envelope.py / verifier.py /
+key_record_source.py / approver_trust.py / replay_cache.py / MANIFEST/manifest.json /
+EVIDENCE/published_hashes.json all byte-IDENTICAL to the base (verified by hash-object vs the base
+blob). The ONLY default-path change is pep.py (the import line + the _PENDING/_GRANT_REPLAY block),
+and its default behavior is byte-behavior-unchanged.
+
+#### Tests
+TESTS/adversarial/test_pending_store.py adds 18 tests, mirroring test_shared_replay_cache.py: the
+in-memory parity + unknown/wrong-decision refusals; the GAP (two separate sets miss a cross-instance
+consume) vs the SEAM (one shared store catches it, single-use across both); the external adapter +
+a fake shared store (incl. fail-closed propagation); RedisPendingStore against a fake redis (Lua
+compare-and-delete, TTL derivation, no-TTL parity); the protocol-conformance checks; and the
+pending_store_from_env default + R-02 guard. Suite 481 -> 499 green in a pristine git archive HEAD
+extraction. Two revert-catchers proven RED-on-revert then GREEN: removing the R-02 guard fails
+test_from_env_multi_instance_without_store_fails_closed; making consume delete-on-mismatch fails
+test_in_memory_wrong_decision_refused_and_not_consumed. The three test files that import
+_PendingApprovals from pep and the full pep-approval suite stay green (backward-compat alias +
+byte-identical default wiring).
+
+#### Honest scope / GR-3
+R2 makes single-use + the pending-set shared-CAPABLE and fail-closed-under-scale; the guarantee
+holds across instances ONLY with a shared store actually deployed (ELYON_PENDING_REDIS_URL /
+ELYON_REPLAY_REDIS_URL pointing at one Redis). The RedisPendingStore is exercised against a fake
+redis in-repo; a real Redis behind N gate processes is a deployment property (G5/operator-locus),
+not an in-repo artifact. With R2, the in-repo governance-substrate BUILD is COMPLETE (Feature 1
+mechanism 1a-1d + R1 provenance/role + R2 shared store; Feature 2 mTLS layer 2a; the integration
+proof). What remains for a DEPLOYABLE, claimable oversight guarantee is purely OPERATOR-LOCUS:
+Feature-2 layers 1 (Envoy with_request_body inline body binding) + 3 (network ACL + agent egress)
+on real hosts, plus actually wiring the shared store. WHITE-BOX in-house; NOT a G5 referent; no
+readiness predicate goes green on R2.
+
+#### Files affected
+IMPLEMENTATION/pending_store.py (NEW); IMPLEMENTATION/pep.py (import + _PENDING/_GRANT_REPLAY
+wiring + _PendingApprovals alias); TESTS/adversarial/test_pending_store.py (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/evaluator.py, impact.py, approval.py, envelope.py, verifier.py, key_record_source.py,
+approver_trust.py, replay_cache.py; MANIFEST/manifest.json; CANON/*; EVIDENCE/published_hashes.json
+- all byte-identical to the base.
+
+#### Environment note (Cowork sandbox)
+Base = c29cb4a (origin/main after the R1 native ff+push). Built/validated against a pristine
+git archive extraction (the VL-108 mount-truncation hazard persists). Commit chain built from
+base-intact blobs on side ref refs/heads/governance-f1-r2; main untouched. The AUTHOR verifies the
+blobs natively, fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+The in-repo governance-substrate build is COMPLETE. The remaining path to a claimable oversight
+guarantee is OPERATOR-LOCUS, not new in-repo capability: (i) stand up the shared store (one Redis
+behind the gate replicas; set ELYON_PENDING_REDIS_URL + ELYON_REPLAY_REDIS_URL + declare
+ELYON_REPLAY_MULTI_INSTANCE); (ii) wire Feature-2 layers 1 (Envoy with_request_body inline
+body-binding) + 3 (network ACL + agent egress) per deploy/NONBYPASS_TOPOLOGY.md. Only inside a
+deployment wiring all three Feature-2 layers WITH R1 + R2 does the oversight guarantee become
+claimable, and only an external attacker on that live deployment (G5, GR-3) certifies it.
