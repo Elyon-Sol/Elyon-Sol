@@ -245,3 +245,17 @@ __marimo__/
 deploy/.env
 deploy/tls/certs/
 !EVIDENCE/proofs/**/*.log
+
+# Private business / career / IP working docs — MUST stay out of the public repo.
+#   The repo is public (AGPL open-core). Anything matching below is local-only.
+*_PRIVATE.md
+/TASKS.md
+/FORWARD_PLAN.md
+/FILING_ORGANIZATION_PLAN.md
+/LAWYER_CONSULTATION_QUESTIONS.md
+/IP_CHECKLIST_PRIVATE.md
+/SDK_STRATEGY_PRIVATE.md
+/LINKEDIN_*.txt
+/Justin_Laporte_Resume_*.docx
+/*Invention_Disclosure*
+/*IP_Commercialization*
