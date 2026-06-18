@@ -58,9 +58,12 @@ from IMPLEMENTATION.pep import app
 # that pep.py rejects the `interaction` envelope at the Pydantic
 # layer (no `interaction` field on GovernedCallRequest).
 LIVE_MANIFEST_VERSION = "1.0"
-LIVE_MANIFEST_SHA256 = (
-    "a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8"
-)
+# VL-115: derive the manifest sha LIVE rather than pinning a literal, so this
+# fixture survives a manifest change (e.g. adding HIGH_IMPACT). The literal
+# was the suite's one hand-coded manifest hash; deriving it matches the
+# manifest_sha256() discipline the rest of the suite already uses (VL-034).
+from IMPLEMENTATION.evaluator import manifest_sha256 as _manifest_sha256
+LIVE_MANIFEST_SHA256 = _manifest_sha256()
 
 
 def _valid_interaction():

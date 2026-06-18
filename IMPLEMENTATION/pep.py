@@ -67,11 +67,13 @@ input to `envelope_inspector reconcile --issued` (spec 28).
 
 import json
 import os
+import threading
 import uuid
 from datetime import datetime, timezone, timedelta
 
 import requests
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from IMPLEMENTATION.evaluator import (
     load_manifest,
@@ -83,11 +85,107 @@ from IMPLEMENTATION.evaluator import (
 )
 from IMPLEMENTATION.envelope import build_envelope, canonical_json, sign_envelope
 from IMPLEMENTATION.issuance_log import issuance_log_from_env
+from IMPLEMENTATION.impact import requires_approval
+from IMPLEMENTATION.approval import (
+    verify_grant,
+    REF_APPROVAL_REPLAY,
+    REF_APPROVAL_REQUEST_UNKNOWN,
+)
+from IMPLEMENTATION.replay_cache import InMemoryReplayCache
 from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
 )
 from IMPLEMENTATION.transport import post_to_target
+
+
+# ===========================================================================
+# Governance Feature 1 (human oversight) - gate-side state + helpers (VL-115).
+# requires_approval/verify_grant are the pure halves (VL-113/VL-114); this is
+# the STATEFUL wiring half. Build-then-wire ended here: the approval branch is
+# on the default path, but with the default manifest (HIGH_IMPACT: []) it is a
+# no-op, so the default forward stays byte-behavior-identical.
+# ===========================================================================
+
+# Approver public-key trust map (key_id -> public_key with .verify). Injected
+# (a harness/deploy shim) then env. The approver PRIVATE key is NEVER resolvable
+# by the gate ([FIX H5] custody): the gate holds only public keys here. Provenance
+# via the signed key-record chain + an explicit approver role is the load-bearing
+# H5 refinement, scheduled (a static pin is the minimal viable now).
+_INJECTED_APPROVER_KEYS = None  # set to {key_id: public_key} by a harness/deploy
+
+
+def _get_approver_keys():
+    if _INJECTED_APPROVER_KEYS is not None:
+        return _INJECTED_APPROVER_KEYS
+    key_id = os.environ.get("ELYON_APPROVER_KEY_ID")
+    pub_hex = os.environ.get("ELYON_APPROVER_PUBKEY_HEX")
+    if key_id and pub_hex:
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+            Ed25519PublicKey,
+        )
+        return {key_id: Ed25519PublicKey.from_public_bytes(bytes.fromhex(pub_hex))}
+    return {}  # no approver configured -> every grant is KEY_UNKNOWN (fail closed)
+
+
+class _PendingApprovals:
+    """The gate-side pending-request set ([FIX H4]). issue() records the
+    approval_request_id the 202 hands out, bound to the held decision_sha256;
+    check_and_consume() honors it exactly once and only for the SAME decision.
+    Lock-serialized (the check-then-delete must be atomic).
+
+    Honest scope: in-process. Under horizontal scale a 202 issued on instance A
+    and approved on instance B needs a SHARED store (the same R-02 story as the
+    grant replay cache); single-instance is exact, multi-instance is a scheduled
+    shared-store wiring."""
+
+    def __init__(self):
+        self._d = {}
+        self._lock = threading.Lock()
+
+    def issue(self, request_id, decision_sha256):
+        with self._lock:
+            self._d[request_id] = decision_sha256
+
+    def check_and_consume(self, request_id, decision_sha256):
+        with self._lock:
+            ds = self._d.get(request_id)
+            if ds is None or ds != decision_sha256:
+                return False
+            del self._d[request_id]
+            return True
+
+
+_PENDING = _PendingApprovals()
+
+# Grant single-use ([FIX H3]): the gate claims grant_id exactly once via the
+# VL-076 ReplayCache seam, atomically BEFORE the forward. Honest scope: a
+# per-process InMemoryReplayCache; a shared ExternalStoreReplayCache is required
+# under horizontal scale (else one approval -> one execution per instance).
+_GRANT_REPLAY = InMemoryReplayCache()
+
+
+def _extract_grant(request):
+    """Read an approval grant off the request, or None if absent (-> 202 hold).
+    A present-but-unparseable grant returns the raw string so verify_grant maps
+    it to REF_APPROVAL_MALFORMED (a junk grant is a refusal, not a hold)."""
+    raw = request.headers.get("X-Elyon-Sol-Approval-Grant")
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return raw  # non-dict -> verify_grant -> REF_APPROVAL_MALFORMED
+
+
+def _grant_not_after(grant):
+    na = grant.get("not_after") if isinstance(grant, dict) else None
+    if isinstance(na, str):
+        try:
+            return datetime.fromisoformat(na)
+        except ValueError:
+            return None
+    return None
 
 
 app = FastAPI(title="Elyon-Sol PEP")
@@ -247,17 +345,10 @@ async def governed_call(request: Request):
             detail={"terminal_state": "REFUSE"},
         )
 
-    # ----- Envelope construction (G0 build half close at VL-029) -----
-    # Canonical CCS per artifact 05 + canon section 12. Decision C1:
-    # condition booleans derived independently in pep.py rather than
-    # from evaluator.evaluate()'s aggregate return. safe_manifest()
-    # is re-called here (it already succeeded inside evaluate()) so
-    # the envelope construction is locally self-consistent: each
-    # boolean passed to build_envelope has a direct visible derivation
-    # in pep.py. Wrapped in try/except (W2 fail-closed discipline):
-    # an unexpected exception in any condition function or in
-    # build_envelope() must raise REF_PEP_FAIL_CLOSED, matching the
-    # symmetric protection around evaluate() and the upstream POST.
+    # ----- Envelope construction (unsigned) - VL-029 build half; SPLIT from
+    # signing at VL-115 so the approval gate can read decision_sha256 BEFORE any
+    # sign/issuance/forward side effect. Fail-closed (W2): any exception here ->
+    # REF_PEP_FAIL_CLOSED. -----
     try:
         safe_mfst = safe_manifest(manifest)
         ac3 = ac3_valid(normalized_interaction, safe_mfst["AR"])
@@ -272,10 +363,94 @@ async def governed_call(request: Request):
             t26=t26,
             manifest_integrity=mi,
         )
-        # VL-047 mandatory signing cutover: sign the envelope on the default
-        # forward. The signed object is used for BOTH the push header and the
-        # response. No signing key -> fail closed here (caught below as
-        # REF_PEP_FAIL_CLOSED), never a downgrade to an unsigned forward.
+    except Exception as e:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "terminal_state": "REFUSE",
+                "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
+                "error": str(e),
+            },
+        )
+
+    # ----- Approval gate (governance Feature 1; design 1.3; [FIX H6]) -----
+    # Placed AFTER the ELIGIBLE+envelope build and BEFORE the sign/forward
+    # try-blocks, as EXPLICIT early returns/raises, so (a) a 202 hold can never
+    # be swallowed by a fail-closed except and converted to a 403, and (b) no
+    # high-impact call without a valid grant can reach post_to_target. The 202
+    # leg and the approved leg are mutually exclusive; the approved leg falls
+    # through to the single existing sign+forward (no second forward).
+    # requires_approval is manifest-derived and fail-closed; for the default
+    # manifest (HIGH_IMPACT: []) it is False and this whole block is a no-op
+    # (the default forward path is byte-behavior-unchanged).
+    try:
+        needs_approval = requires_approval(normalized_interaction, manifest)
+    except Exception:
+        needs_approval = True  # fail closed
+    if needs_approval:
+        decision_sha256 = envelope["decision_sha256"]
+        grant = _extract_grant(request)
+        if grant is None:
+            # 202 HOLD: do NOT sign, do NOT issuance-log a forward, do NOT
+            # post_to_target. Issue an approval_request_id bound to this
+            # decision and record it pending ([FIX H4]).
+            approval_request_id = uuid.uuid4().hex
+            _PENDING.issue(approval_request_id, decision_sha256)
+            return JSONResponse(
+                status_code=202,
+                content={
+                    "terminal_state": "PENDING_APPROVAL",
+                    "approval_request_id": approval_request_id,
+                    "decision_sha256": decision_sha256,
+                },
+            )
+        # A grant is present: verify provenance/binding/SoD/freshness (pure),
+        # then consume the 202 slot and claim the grant_id, both BEFORE forward.
+        signing_meta = _get_signing_key()
+        gate_key_id = signing_meta[1] if signing_meta else None
+        grant_req_id = grant.get("approval_request_id") if isinstance(grant, dict) else None
+        verdict = verify_grant(
+            grant,
+            expected_decision_sha256=decision_sha256,
+            expected_approval_request_id=grant_req_id,
+            approver_public_keys=_get_approver_keys(),
+            gate_key_id=gate_key_id,
+        )
+        if not verdict["accepted"]:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "terminal_state": "REFUSE",
+                    "refusal_reason_code": verdict["reason"],
+                },
+            )
+        # [FIX H4] request identity + single 202->approval: the request_id must
+        # be one the gate issued, unconsumed, and bound to THIS decision.
+        if not _PENDING.check_and_consume(grant_req_id, decision_sha256):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "terminal_state": "REFUSE",
+                    "refusal_reason_code": REF_APPROVAL_REQUEST_UNKNOWN,
+                },
+            )
+        # [FIX H3] single-use: claim grant_id exactly once, atomically, BEFORE
+        # the forward. A replayed grant -> REFUSE (never a second execution).
+        if not _GRANT_REPLAY.check_and_claim(grant["grant_id"], _grant_not_after(grant)):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "terminal_state": "REFUSE",
+                    "refusal_reason_code": REF_APPROVAL_REPLAY,
+                },
+            )
+        # approved -> fall through to the existing sign + issuance-log + forward.
+
+    # ----- Sign + issuance-log (VL-047 + VL-099; SPLIT from build at VL-115) -----
+    # Fail-closed (W2): no signing key, a signing error, or an issuance-log
+    # append failure on a CONFIGURED log -> REF_PEP_FAIL_CLOSED, never a
+    # downgrade to an unsigned forward and never an unrecorded issuance.
+    try:
         signing = _get_signing_key()
         if signing is None:
             raise RuntimeError(
@@ -290,13 +465,6 @@ async def governed_call(request: Request):
             envelope, signing_key, key_id,
             not_after=not_after, decision_id=uuid.uuid4().hex,
         )
-        # VL-099: record the issuance (spec 28). AFTER signing (the log
-        # records what was issued, signed and decision_id-bearing) and
-        # BEFORE the push (issuance is the signing, not the delivery; an
-        # issued-but-undelivered envelope must still be on the log).
-        # Inside this try: an append failure on a CONFIGURED log fails
-        # closed (REF_PEP_FAIL_CLOSED below) and the target is never
-        # called - do not issue what you cannot record (canon section 9).
         issuance_log = _get_issuance_log()
         if issuance_log is not None:
             issuance_log.append(envelope)

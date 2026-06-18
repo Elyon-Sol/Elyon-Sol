@@ -50,6 +50,11 @@ REF_APPROVAL_SOD = "REF_APPROVAL_SOD"
 REF_APPROVAL_BINDING_MISMATCH = "REF_APPROVAL_BINDING_MISMATCH"
 REF_APPROVAL_REQUEST_MISMATCH = "REF_APPROVAL_REQUEST_MISMATCH"
 REF_APPROVAL_EXPIRED = "REF_APPROVAL_EXPIRED"
+# Surfaced by the pep wiring (1c), not verify_grant: single-use of the grant
+# (grant_id already claimed) and of the 202 slot (approval_request_id not in the
+# gate's pending-unconsumed set / not bound to this decision).
+REF_APPROVAL_REPLAY = "REF_APPROVAL_REPLAY"
+REF_APPROVAL_REQUEST_UNKNOWN = "REF_APPROVAL_REQUEST_UNKNOWN"
 
 ACCEPT_GRANT_VALID = "GRANT_VALID"
 
