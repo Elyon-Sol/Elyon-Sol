@@ -57,6 +57,48 @@ class JsonlIssuanceLog:
             os.fsync(f.fileno())
 
 
+APPROVAL_LOG_PATH_ENV = "ELYON_APPROVAL_LOG_PATH"
+
+
+class JsonlApprovalLog:
+    """Append-only JSONL approval log (governance Feature 1, [FIX H8]).
+
+    Records the approval lifecycle so `envelope_inspector reconcile_approvals`
+    can prove no high-impact action was forwarded without a recorded human
+    grant. Two record types, written by pep.governed_call:
+
+      {"type": "approval_request", "decision_sha256", "approval_request_id"}
+          - written at the 202 PENDING_APPROVAL hold.
+      {"type": "grant_consumed", "decision_sha256", "approval_request_id",
+       "grant_id", "approver_key_id"}
+          - written in the approved leg, after the grant is claimed and BEFORE
+            the forward (a consumed-but-not-forwarded record still proves the
+            human grant existed; canon section 9 - record before you act).
+
+    Same durability discipline as the issuance log (flush + fsync per line;
+    canonical_json so the bytes are ASCII, sorted, whitespace-free)."""
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+
+    def append(self, record: Dict[str, Any]) -> None:
+        line = canonical_json(record)
+        with open(self.path, "a", encoding="utf-8", newline="\n") as f:
+            f.write(line + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+
+
+def approval_log_from_env() -> Optional["JsonlApprovalLog"]:
+    """A JsonlApprovalLog when ELYON_APPROVAL_LOG_PATH is set, else None
+    (parity with issuance_log_from_env; default None = no approval logging,
+    byte-behavior-identical to pre-[FIX H8])."""
+    path = os.environ.get(APPROVAL_LOG_PATH_ENV)
+    if path:
+        return JsonlApprovalLog(path)
+    return None
+
+
 def issuance_log_from_env() -> Optional[JsonlIssuanceLog]:
     """A JsonlIssuanceLog when ELYON_ISSUANCE_LOG_PATH is set, else None
     (parity with replay_cache_from_env, VL-076/094). Read per call so a

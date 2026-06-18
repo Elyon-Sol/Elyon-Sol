@@ -84,7 +84,7 @@ from IMPLEMENTATION.evaluator import (
     manifest_integrity_valid,
 )
 from IMPLEMENTATION.envelope import build_envelope, canonical_json, sign_envelope
-from IMPLEMENTATION.issuance_log import issuance_log_from_env
+from IMPLEMENTATION.issuance_log import issuance_log_from_env, approval_log_from_env
 from IMPLEMENTATION.impact import requires_approval
 from IMPLEMENTATION.approval import (
     verify_grant,
@@ -236,6 +236,18 @@ def _get_issuance_log():
     if _INJECTED_ISSUANCE_LOG is not None:
         return _INJECTED_ISSUANCE_LOG
     return issuance_log_from_env()
+
+
+# VL-116 ([FIX H8]): the approval log records the held-request + grant-consumption
+# governance trail. Injected-then-env, default None (no records; byte-behavior
+# identical to pre-VL-116). reconcile_approvals consumes it.
+_INJECTED_APPROVAL_LOG = None  # set by a harness/deploy shim
+
+
+def _get_approval_log():
+    if _INJECTED_APPROVAL_LOG is not None:
+        return _INJECTED_APPROVAL_LOG
+    return approval_log_from_env()
 
 
 def _schema_refusal_exception(code: str) -> HTTPException:
@@ -396,6 +408,26 @@ async def governed_call(request: Request):
             # decision and record it pending ([FIX H4]).
             approval_request_id = uuid.uuid4().hex
             _PENDING.issue(approval_request_id, decision_sha256)
+            # [FIX H8] record the hold so reconcile_approvals can later prove a
+            # forwarded high-impact decision had a recorded grant. Fail closed on
+            # a CONFIGURED log (do not acknowledge a hold you cannot record).
+            approval_log = _get_approval_log()
+            if approval_log is not None:
+                try:
+                    approval_log.append({
+                        "type": "approval_request",
+                        "decision_sha256": decision_sha256,
+                        "approval_request_id": approval_request_id,
+                    })
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=403,
+                        detail={
+                            "terminal_state": "REFUSE",
+                            "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
+                            "error": str(e),
+                        },
+                    )
             return JSONResponse(
                 status_code=202,
                 content={
@@ -444,6 +476,29 @@ async def governed_call(request: Request):
                     "refusal_reason_code": REF_APPROVAL_REPLAY,
                 },
             )
+        # [FIX H8] record the grant consumption AFTER the claim and BEFORE the
+        # forward: the auditable proof a human grant released this exact
+        # decision. Fail closed on a CONFIGURED log - do not forward what you
+        # cannot record (canon section 9).
+        approval_log = _get_approval_log()
+        if approval_log is not None:
+            try:
+                approval_log.append({
+                    "type": "grant_consumed",
+                    "decision_sha256": decision_sha256,
+                    "approval_request_id": grant_req_id,
+                    "grant_id": grant["grant_id"],
+                    "approver_key_id": grant.get("approver_key_id"),
+                })
+            except Exception as e:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "terminal_state": "REFUSE",
+                        "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
+                        "error": str(e),
+                    },
+                )
         # approved -> fall through to the existing sign + issuance-log + forward.
 
     # ----- Sign + issuance-log (VL-047 + VL-099; SPLIT from build at VL-115) -----

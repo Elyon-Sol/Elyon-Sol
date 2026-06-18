@@ -518,6 +518,144 @@ def reconcile(
 
 
 # ---------------------------------------------------------------------------
+# Capability 5: reconcile_approvals (governance Feature 1, [FIX H8])
+# ---------------------------------------------------------------------------
+
+# Approval-audit violation vocabulary (closed set).
+APPROVAL_FORWARDED_WITHOUT_GRANT = "FORWARDED_WITHOUT_GRANT"
+APPROVAL_ORPHAN_CONSUMPTION = "ORPHAN_CONSUMPTION"
+APPROVAL_DUPLICATE_GRANT = "DUPLICATE_GRANT"
+APPROVAL_DUPLICATE_REQUEST_CONSUMPTION = "DUPLICATE_REQUEST_CONSUMPTION"
+
+
+def reconcile_approvals(
+    issued_envelopes: List[Any],
+    approval_records: List[Any],
+) -> Dict[str, Any]:
+    """
+    Audit the governance trail: prove no HELD high-impact decision was
+    FORWARDED without a recorded human grant ([FIX H8]).
+
+    Inputs:
+      issued_envelopes : the gate issuance log (the same JSONL `reconcile`
+                         consumes). A structurally-sound ELIGIBLE entry means
+                         the decision was forwarded.
+      approval_records : the approval log (JSONL) pep writes - `approval_request`
+                         records (the 202 holds) and `grant_consumed` records
+                         (the approved releases).
+
+    Binding key is `decision_sha256` (present in both the envelope and every
+    approval record; it transitively binds target/AP/OP/context/manifest). A
+    decision is HIGH-IMPACT-AND-HELD iff it has an approval_request; it was
+    FORWARDED iff its decision_sha256 appears among the issued envelopes.
+
+    Violations (closed set; the log is the trustworthy referent, as for
+    reconcile()):
+      FORWARDED_WITHOUT_GRANT       - a decision that was held AND forwarded but
+                                      has NO grant_consumed: the governance
+                                      guarantee broken (an action executed
+                                      without a recorded human grant).
+      ORPHAN_CONSUMPTION            - a grant_consumed with no matching
+                                      approval_request (same request_id +
+                                      decision_sha256): a release with no hold.
+      DUPLICATE_GRANT               - one grant_id consumed more than once.
+      DUPLICATE_REQUEST_CONSUMPTION - one approval_request_id consumed more than
+                                      once (a single 202 honored twice).
+
+    Returns {"violations": [...], "summary": {...}}; summary.clean is True iff
+    there are zero violations. Fail-closed on malformed records (a record that
+    is not a dict, or lacks its keys, is itself an ORPHAN/STRUCTURAL violation
+    rather than being silently dropped).
+
+    Scope (honest): keyed on decision_sha256, which is issuance-invariant, so
+    this proves "every held+forwarded high-impact decision has at least one
+    recorded grant", not a per-issuance 1:1 match (the grant is claimed before
+    the envelope's decision_id is assigned). Per-issuance linkage is a later
+    refinement. Deliberate non-checks (parity with reconcile): no signature or
+    freshness re-verification - those are the runtime gate's job (VL-114/115);
+    this audits the LOG.
+    """
+    violations: List[Dict[str, Any]] = []
+
+    # issued (forwarded) decision_sha256 set
+    forwarded = set()
+    for env in issued_envelopes:
+        # The issuance log is the gate-produced, trustworthy referent (parity
+        # with reconcile's trustworthy-log bound). An entry counts as FORWARDED
+        # iff it is an ELIGIBLE record carrying a decision_sha256; full envelope
+        # structure is reconcile()'s concern, not the approval audit's.
+        if isinstance(env, dict) and env.get("decision") == "ELIGIBLE":
+            ds = env.get("decision_sha256")
+            if isinstance(ds, str):
+                forwarded.add(ds)
+
+    # index requests and consumptions
+    requested_decisions = set()              # decision_sha256 with a hold
+    request_pairs = set()                    # (request_id, decision_sha256)
+    consumed_by_decision = set()             # decision_sha256 with a release
+    grant_id_seen = {}                       # grant_id -> count
+    request_consumed = {}                    # approval_request_id -> count
+    consumptions = []                        # (request_id, decision_sha256, grant_id, idx)
+
+    for idx, rec in enumerate(approval_records):
+        if not isinstance(rec, dict):
+            violations.append({"index": idx, "violation": APPROVAL_ORPHAN_CONSUMPTION,
+                               "reason": "record is not an object"})
+            continue
+        rtype = rec.get("type")
+        ds = rec.get("decision_sha256")
+        rid = rec.get("approval_request_id")
+        if rtype == "approval_request":
+            if isinstance(ds, str):
+                requested_decisions.add(ds)
+            if isinstance(rid, str) and isinstance(ds, str):
+                request_pairs.add((rid, ds))
+        elif rtype == "grant_consumed":
+            gid = rec.get("grant_id")
+            if isinstance(ds, str):
+                consumed_by_decision.add(ds)
+            if isinstance(gid, str):
+                grant_id_seen[gid] = grant_id_seen.get(gid, 0) + 1
+            if isinstance(rid, str):
+                request_consumed[rid] = request_consumed.get(rid, 0) + 1
+            consumptions.append((rid, ds, gid, idx))
+        else:
+            violations.append({"index": idx, "violation": APPROVAL_ORPHAN_CONSUMPTION,
+                               "reason": "unknown or missing record type"})
+
+    # ORPHAN_CONSUMPTION: a release with no matching hold
+    for rid, ds, gid, idx in consumptions:
+        if (rid, ds) not in request_pairs:
+            violations.append({"index": idx, "violation": APPROVAL_ORPHAN_CONSUMPTION,
+                               "decision_sha256": ds, "approval_request_id": rid})
+
+    # DUPLICATE_GRANT / DUPLICATE_REQUEST_CONSUMPTION
+    for gid, n in grant_id_seen.items():
+        if n > 1:
+            violations.append({"violation": APPROVAL_DUPLICATE_GRANT,
+                               "grant_id": gid, "count": n})
+    for rid, n in request_consumed.items():
+        if n > 1:
+            violations.append({"violation": APPROVAL_DUPLICATE_REQUEST_CONSUMPTION,
+                               "approval_request_id": rid, "count": n})
+
+    # FORWARDED_WITHOUT_GRANT: held AND forwarded but never released
+    for ds in sorted(requested_decisions & forwarded):
+        if ds not in consumed_by_decision:
+            violations.append({"violation": APPROVAL_FORWARDED_WITHOUT_GRANT,
+                               "decision_sha256": ds})
+
+    summary = {
+        "forwarded": len(forwarded),
+        "held": len(requested_decisions),
+        "consumed": len(consumed_by_decision),
+        "violations": len(violations),
+        "clean": len(violations) == 0,
+    }
+    return {"violations": violations, "summary": summary}
+
+
+# ---------------------------------------------------------------------------
 # CLI (spec section 3.5). cryptography is imported lazily ONLY for --keys
 # (parity with envelope.py's no-hard-dependency rule).
 # ---------------------------------------------------------------------------
