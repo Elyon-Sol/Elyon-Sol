@@ -16436,3 +16436,103 @@ gate-side pending-request set issuing/consuming approval_request_id; grant singl
 ReplayCache seam claimed atomically before forward, shared-store-under-scale ([FIX H3]/[FIX H4]);
 REF_APPROVAL_* surfaced as 202/403; approver-key trust via the signed key-record chain with an
 approver role ([FIX H5]). Then 1d (issuance-log + reconcile extension [FIX H8]; approver CLI).
+
+### VL-115 - 2026-06-18 - T-governance: Feature 1 increment 1c - the pep approval WIRING (the first default-path touch + first stateful gate)
+
+#### What landed
+pep.governed_call gains the approval gate that turns the held PENDING_APPROVAL design (1.3) into
+running code. This is the first increment that (a) touches the DEFAULT path and (b) makes the gate
+STATEFUL, so the prior increments' "default path byte-identical" guarantee now holds by explicit
+no-op rather than by absence of a caller.
+
+Manifest groundwork:
+- MANIFEST/manifest.json gains an EXPLICIT HIGH_IMPACT: [] - the operator's conscious "nothing is
+  high-impact yet" opt-out ([FIX H1]); requires_approval therefore returns False on the default
+  manifest, so the default forward path is byte-behavior-unchanged.
+- That changed manifest_sha256, so EVIDENCE/published_hashes.json was REGENERATED via
+  EVIDENCE/published_hashes_gen.py (constraint i: never hand-copied). No committed SIGNED record
+  exists, so no publisher-key re-sign was needed (that remains author-locus if/when a signed
+  record is introduced).
+- The suite's one hand-coded manifest-sha literal (TESTS/adversarial/test_request_schema.py
+  LIVE_MANIFEST_SHA256) was made live-derived via manifest_sha256(), matching the VL-034
+  derive-live discipline so the fixture survives manifest changes.
+
+The gate (IMPLEMENTATION/pep.py), placed AFTER the ELIGIBLE+envelope build and BEFORE the
+sign/forward try-blocks, as explicit early returns/raises ([FIX H6]):
+- requires_approval(normalized_interaction, manifest) - manifest-derived, fail-closed (any
+  exception -> treat as high-impact).
+- high-impact + NO grant -> 202 PENDING_APPROVAL: issue an approval_request_id bound to this
+  decision_sha256, record it in the gate-side pending set, and return WITHOUT sign / issuance-log
+  / post_to_target. The envelope is built (unsigned) first only to read decision_sha256; building
+  has no side effects.
+- high-impact + grant present (off the X-Elyon-Sol-Approval-Grant header): verify_grant
+  (provenance / decision+request binding / SoD / freshness), then consume the 202 slot from the
+  pending set ([FIX H4]: must be issued, unconsumed, and bound to THIS decision), then claim
+  grant_id exactly once via the VL-076 ReplayCache seam ([FIX H3]) - both BEFORE the forward. A
+  bad/expired/forged/replayed/unknown grant -> 403 REF_APPROVAL_*. An approved grant falls through
+  to the SINGLE existing sign + issuance-log + forward (no second forward).
+- Approver trust is an injected/env public-key map (_get_approver_keys) with a gate_key_id SoD
+  check ([FIX H5] custody half: the gate holds only PUBLIC approver keys; the private key is never
+  resolvable by the gate). Two REF_APPROVAL_* codes added for the wiring layer
+  (REF_APPROVAL_REPLAY, REF_APPROVAL_REQUEST_UNKNOWN).
+
+The build/sign split: the old single try (build+sign+log) is split into a build try and a
+sign+log try with the approval gate between; for the default path the outcomes are identical (any
+build/sign/log exception still -> REF_PEP_FAIL_CLOSED).
+
+#### Canon / build-then-wire posture
+Canon UNTOUCHED (GR-1); the new states live ABOVE G(I). evaluator.py and impact.py byte-identical
+to the VL-114 tip; approval.py changed only by +2 surfaced codes. The default path (HIGH_IMPACT
+empty) is byte-behavior-unchanged: the full pre-existing suite stays green. manifest.json is a
+legitimate manifest change (a new pinned field), reflected in the regenerated published record -
+NOT a canon change.
+
+#### Tests + revert-catcher discipline
+TESTS/test_pep_approval.py adds 9 tests over TestClient (202 hold; approved-forwards-once;
+binding/SoD/expired/replay/unknown-request/unknown-key refusals each asserting NO forward;
+non-high-impact unchanged). Suite 443 -> 452 green in a pristine git archive extraction (from the
+VL-114 tip). The core revert-catcher - high-impact + no grant -> 202 AND requests.post NEVER
+called - was proven RED when the approval gate is removed (the high-impact call then forwards
+without approval) and GREEN restored. requires_approval is monkeypatched True in the wiring tests
+(classification itself is unit-tested at VL-113); these pin the H6 placement, H4 pending binding,
+and H3 single-use.
+
+#### Honest scope / GR-3
+The pending-request set and the grant single-use cache are IN-PROCESS; under horizontal scale a
+202 issued on one instance and approved on another, or a grant replayed across instances, needs a
+SHARED store (the same R-02 story as the executor replay cache) - a scheduled wiring, single-
+instance is exact. The [FIX H5] LOAD-BEARING half (approver-key provenance + an explicit approver
+role via the signed key-record chain) is scheduled; a static/injected pin is the minimal viable
+now. The [FIX H8] audit half (issuance-log + reconcile records held requests and grant
+consumption, with a predicate that no high-impact forward lacks a recorded grant) is 1d. The
+oversight GUARANTEE is still NOT claimed - it requires Feature 2 (non-bypassable); no readiness
+predicate goes green on Feature 1 alone. WHITE-BOX in-house build; NOT external validation (GR-3);
+does not enter the attacker pack.
+
+#### Files affected
+MANIFEST/manifest.json (add HIGH_IMPACT: []); EVIDENCE/published_hashes.json (regenerated);
+IMPLEMENTATION/pep.py (approval gate + gate-side state/helpers; build/sign split);
+IMPLEMENTATION/approval.py (+2 wiring codes); TESTS/adversarial/test_request_schema.py
+(live-derived manifest sha); TESTS/test_pep_approval.py (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/evaluator.py + impact.py (byte-identical), envelope.py, verifier.py,
+CANON/* (canon untouched), EVIDENCE/readiness.json - unchanged.
+
+#### Environment note (Cowork sandbox)
+Validated against a pristine git archive extraction (mount truncation, VL-108). Commit chain built
+from VL-114-tip-intact blobs on side ref refs/heads/governance-f1-inc3; main untouched. The AUTHOR
+verifies the blobs natively, fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Feature 1 increment 1d: extend IMPLEMENTATION/issuance_log.py + IMPLEMENTATION/envelope_inspector.py
+with approval-request and grant-consumption record types and a reconcile predicate that every
+forwarded high-impact decision_id has a matching consumed-grant record bound to its decision_sha256
+([FIX H8]); plus IMPLEMENTATION/approver_cli.py (the minimal human surface, separate key).
+Schedule the H5 load-bearing custody (approver provenance/role via the signed key-record chain)
+and the SHARED-store wiring for the pending-set + grant single-use under scale. Then Feature 2
+(non-bypassable) + the integration proof.
