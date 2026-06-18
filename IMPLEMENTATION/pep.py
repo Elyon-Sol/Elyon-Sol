@@ -91,7 +91,11 @@ from IMPLEMENTATION.approval import (
     REF_APPROVAL_REPLAY,
     REF_APPROVAL_REQUEST_UNKNOWN,
 )
-from IMPLEMENTATION.replay_cache import InMemoryReplayCache
+from IMPLEMENTATION.replay_cache import InMemoryReplayCache, replay_cache_from_env
+from IMPLEMENTATION.pending_store import (
+    pending_store_from_env,
+    InMemoryPendingApprovals,
+)
 from IMPLEMENTATION.request_validator import (
     validate_request,
     REF_SCHEMA_PARSE_ERROR,
@@ -128,41 +132,21 @@ def _get_approver_keys():
     return {}  # no approver configured -> every grant is KEY_UNKNOWN (fail closed)
 
 
-class _PendingApprovals:
-    """The gate-side pending-request set ([FIX H4]). issue() records the
-    approval_request_id the 202 hands out, bound to the held decision_sha256;
-    check_and_consume() honors it exactly once and only for the SAME decision.
-    Lock-serialized (the check-then-delete must be atomic).
+# The gate-side pending-request set ([FIX H4]) and the grant single-use cache
+# ([FIX H3]) now come from their sibling-module *_from_env builders (R2, VL-120).
+# Default (no ELYON_* env): InMemoryPendingApprovals + InMemoryReplayCache - the
+# per-process behavior pep had before R2, byte-behavior-identical. A gate that
+# declares itself horizontally scaled (ELYON_REPLAY_MULTI_INSTANCE) without a
+# shared store fails closed at startup (the R-02 declare-or-fail guard), instead
+# of handing each replica a per-process set/cache that consumes the same
+# approval_request_id / grant_id once EACH.
+#
+# _PendingApprovals is retained as a backward-compatible alias of the now-shared
+# InMemoryPendingApprovals (callers/tests that construct a fresh in-process set).
+_PendingApprovals = InMemoryPendingApprovals
 
-    Honest scope: in-process. Under horizontal scale a 202 issued on instance A
-    and approved on instance B needs a SHARED store (the same R-02 story as the
-    grant replay cache); single-instance is exact, multi-instance is a scheduled
-    shared-store wiring."""
-
-    def __init__(self):
-        self._d = {}
-        self._lock = threading.Lock()
-
-    def issue(self, request_id, decision_sha256):
-        with self._lock:
-            self._d[request_id] = decision_sha256
-
-    def check_and_consume(self, request_id, decision_sha256):
-        with self._lock:
-            ds = self._d.get(request_id)
-            if ds is None or ds != decision_sha256:
-                return False
-            del self._d[request_id]
-            return True
-
-
-_PENDING = _PendingApprovals()
-
-# Grant single-use ([FIX H3]): the gate claims grant_id exactly once via the
-# VL-076 ReplayCache seam, atomically BEFORE the forward. Honest scope: a
-# per-process InMemoryReplayCache; a shared ExternalStoreReplayCache is required
-# under horizontal scale (else one approval -> one execution per instance).
-_GRANT_REPLAY = InMemoryReplayCache()
+_PENDING = pending_store_from_env()
+_GRANT_REPLAY = replay_cache_from_env()
 
 
 def _extract_grant(request):
