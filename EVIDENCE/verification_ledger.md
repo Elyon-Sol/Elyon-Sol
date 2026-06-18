@@ -16758,3 +16758,90 @@ new in-repo capability: (i) OPERATOR-LOCUS Feature-2 layers 1 + 3 on real hosts;
 residuals R1 ([H5] approver provenance/role via the signed key-record chain) + R2 ([H3]/[H4]
 shared store under scale). Only then does the oversight guarantee become claimable, and only an
 external attacker on a live deployment (G5, GR-3) certifies it.
+
+
+### VL-119 - 2026-06-18 - T-governance: Feature 1 residual R1 - approver provenance + role ([FIX H5] load-bearing half)
+
+#### What landed
+The load-bearing half of [FIX H5]. verify_grant (VL-114) and the pep wiring (VL-115) already
+enforce the CHEAP Separation-of-Duties check (approver_key_id != gate_key_id) over a STATIC
+approver-key pin. [FIX H5] requires SoD to be a CUSTODY/PROVENANCE invariant, not a key_id string
+compare: the approver public keys the gate trusts must flow through the EXISTING signed
+key-record / root-record chain and carry an explicit `approver` ROLE distinct from `issuer`, with
+SoD enforced as ROLE-DISTINCTNESS in the SIGNED record. R1 builds exactly that, ABOVE G(I).
+
+- NEW IMPLEMENTATION/approver_trust.py: resolve_approver_keys(validated_key_record_trust_view,
+  gate_key_id, now, clock_skew) -> {key_id: public_key}. A key is eligible IFF its signed
+  record-role is EXACTLY "approver" (role-distinctness; the load-bearing SoD), it is NOT revoked,
+  it is within [not_before - skew, not_after + skew) (mirrors verify_envelope's VL-075 issuer-key
+  window), and key_id != gate_key_id (belt-and-braces). Everything else is excluded fail-closed.
+  The result is a drop-in for verify_grant's `approver_public_keys`, so approval.py is byte-UNCHANGED.
+- IMPLEMENTATION/key_record_source.py: ADDITIVE only - the per-key trust view now surfaces the
+  signed entry's OPTIONAL `role` field ("role": entry.get("role")). Because the publisher signs
+  canonical_json(record minus signature), which includes every key entry, the role is
+  signature-provenanced by construction. A role-less record (pre-VL-119) loads with role None and
+  yields NO approver keys (fail-closed). No required-field change; existing membership-based tests
+  unaffected.
+
+#### How it composes (build-then-wire)
+The gate's existing _INJECTED_APPROVER_KEYS seam (pep.py, VL-115) already accepts exactly the
+{key_id: public_key} map resolve_approver_keys returns, so R1 is wireable WITHOUT a pep edit: a
+deployment computes resolve_approver_keys(load_key_record_from_bytes(...)) and injects the result.
+pep.py is therefore byte-IDENTICAL to HEAD this increment (no default-path touch).
+
+#### Canon / posture
+Canon UNTOUCHED (GR-1). evaluator.py / impact.py / approval.py / envelope.py / verifier.py /
+pep.py / MANIFEST/manifest.json / EVIDENCE/published_hashes.json all byte-IDENTICAL to HEAD
+(verified by hash-object vs HEAD blob). The only changes are the NEW approver_trust.py, the
+ADDITIVE role surfacing in key_record_source.py, and the NEW test file.
+
+#### Tests
+TESTS/adversarial/test_approver_trust.py adds 15 tests, all driving the REAL chain
+(load_key_record_from_bytes) and, where end-to-end, the REAL grant verifier (verify_grant) - never
+a stub. Suite 466 -> 481 green in a pristine git archive HEAD extraction. The core revert-catcher
+(test_issuer_role_cannot_authorize_revert_catcher) proves an ISSUER-role key that signs a grant is
+EXCLUDED -> verify_grant REF_APPROVAL_KEY_UNKNOWN, and asserts the CONTRAST that a role-ignoring
+resolver WOULD honor the gate's self-minted approval (GRANT_VALID). With the role gate reverted,
+3 tests go RED (the revert-catcher, test_selects_only_approver_role, test_roleless_key_surfaces_role_none);
+GREEN on restore. Provenance proven: a tampered key record validates to no trust view -> no
+approver key; a key the publisher never signed is KEY_UNKNOWN. Positive composition proven GREEN
+end-to-end (signed chain -> resolve -> verify_grant GRANT_VALID).
+
+#### Honest scope / GR-3
+This delivers the PROVENANCE + ROLE half of [FIX H5] (WHERE approver trust comes from). The CUSTODY
+half - a deployment proof that the gate PROCESS cannot resolve the approver PRIVATE key - remains an
+operator/deployment property, not an in-repo artifact. A key record that publishes no roles yields
+no approver keys (fail-closed): a deployment using signed-chain approver trust MUST publish an
+explicit approver role. WHITE-BOX in-house; NOT a G5 referent; no readiness predicate goes green on
+R1. The oversight GUARANTEE is still claimable only inside a deployment wiring all three Feature-2
+layers plus R1 AND R2; R2 ([H3]/[H4] shared store under horizontal scale) remains the open in-repo
+governance residual after this entry.
+
+#### Files affected
+IMPLEMENTATION/approver_trust.py (NEW); IMPLEMENTATION/key_record_source.py (additive role
+surfacing); TESTS/adversarial/test_approver_trust.py (NEW); STATE.md; EVIDENCE/verification_ledger.md
+(this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/evaluator.py, impact.py, approval.py, envelope.py, verifier.py, pep.py;
+MANIFEST/manifest.json; CANON/*; EVIDENCE/published_hashes.json - all byte-identical to HEAD.
+
+#### Environment note (Cowork sandbox)
+Resume found a dirty mount (VL-108 truncation/stale-index hazard): HEAD == origin/main == 195269e,
+but the mount served truncated working-tree reads (ledger 16139/16760, pep.py 354/567, STATE
+1023/1201) and a stale index listing present files as deleted. Ruled out as an artifact per the
+protocol (HEAD blobs intact; host files match HEAD); NOTHING discarded. All build + validation ran
+against a pristine `git archive HEAD` extraction. Commit chain built from HEAD-intact blobs on side
+ref refs/heads/governance-f1-r1; main untouched. The AUTHOR verifies the blobs natively,
+fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+R2 ([FIX H3]/[FIX H4] under horizontal scale): a SHARED store (ExternalStoreReplayCache + a shared
+pending-set) so grant single-use and the 202 slot hold across instances, reusing
+replay_cache_from_env's R-02 declare-or-fail guard. Then only the OPERATOR-LOCUS Feature-2 layers 1
+(Envoy with_request_body inline body binding) + 3 (network ACL + agent egress) on real hosts remain
+before the oversight guarantee is deployment-claimable; an external attacker on a live deployment
+(G5, GR-3) certifies it.
