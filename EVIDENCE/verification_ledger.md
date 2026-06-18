@@ -16688,3 +16688,73 @@ layers (Envoy with_request_body inline binding; network ACL + agent egress) on r
 Feature-1 residuals R1 ([H5] approver provenance/role via the signed key-record chain) + R2
 ([H3]/[H4] shared store under scale). Only inside a deployment wiring all three Feature-2 layers
 does the oversight guarantee become claimable.
+
+### VL-118 - 2026-06-18 - T-governance: the integration proof (design 3.3) - Feature 1 and Feature 2 compose
+
+#### What landed
+The capstone of the governance-substrate build: a single proof that the two features COMPOSE, so
+the only path to executing a high-impact action is through-the-gate (Feature 2 mTLS) AND
+with-a-valid-human-grant (Feature 1).
+
+- EVIDENCE/proofs/governance_integration_001_runner.py (standalone, exit 0) and
+  TESTS/test_governance_integration.py (suite-pinned) assert four legs, all of which must hold:
+  A) a direct bypass is refused at the TLS handshake (Feature 2 mTLS; real MemoryBIO handshake);
+  B) a routed-but-UNAPPROVED high-impact call returns 202 PENDING_APPROVAL and the target is NEVER
+     called (Feature 1 hold, [FIX H6]);
+  C) a routed + APPROVED call (the grant minted by approver_cli.make_grant) executes EXACTLY once,
+     and the issuance + approval logs reconcile_approvals clean (no FORWARDED_WITHOUT_GRANT,
+     [FIX H8]);
+  D) a REPLAYED grant_id presented against a fresh 202 is refused with NO second execution
+     ([FIX H3] single-use).
+- EVIDENCE/proofs/governance_integration_001.{md,log}: the proof note + captured run log
+  (RESULT: PASS).
+
+Hermetic: a private dev CA + the real pep ASGI app driven via TestClient with the gate/approver
+keys injected in-process. NO IMPLEMENTATION change - the proof composes existing code (impact.py,
+approval.py, pep.py, envelope_inspector.py, approver_cli.py, deploy/tls/gen_certs.py).
+
+#### Canon / posture
+Canon UNTOUCHED (GR-1). No IMPLEMENTATION/ change; the full pre-existing suite is unaffected and
+gains one integration test. This is a composition PROOF, not new runtime behavior.
+
+#### Tests
+Suite 465 -> 466 green in a pristine git archive extraction; the runner exits 0 from the committed
+tree. Leg B (no execution without a grant) and leg D (no second execution on replay) both assert
+the target-call list directly, so a regression that forwarded an unapproved or replayed
+high-impact call would fail the proof.
+
+#### Honest scope / GR-3
+The proof shows the two mechanisms compose IN-PROCESS. It does NOT stand up the full deployment:
+Feature 2 layers 1 (inline body binding via Envoy with_request_body) and 3 (network ACL + agent
+egress) remain OPERATOR-LOCUS (deploy/NONBYPASS_TOPOLOGY.md), and single-use + the pending-set are
+single-instance until a shared store is wired (R2). The oversight GUARANTEE is claimable ONLY
+inside a deployment that wires all three Feature-2 layers plus the R1/R2 hardening; the in-repo
+artifact is the composition proof, not a live non-bypassable deployment. WHITE-BOX in-house proof;
+NOT external validation (GR-3); does not enter the attacker pack. No readiness predicate goes green
+on this proof.
+
+#### Files affected
+TESTS/test_governance_integration.py (NEW); EVIDENCE/proofs/governance_integration_001_runner.py
+(NEW); EVIDENCE/proofs/governance_integration_001.md (NEW);
+EVIDENCE/proofs/governance_integration_001.log (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, MANIFEST/*, CANON/*, EVIDENCE/published_hashes.json,
+EVIDENCE/readiness.json - unchanged.
+
+#### Environment note (Cowork sandbox)
+Validated against a pristine git archive extraction (mount truncation, VL-108). Commit chain built
+from VL-117-tip-intact blobs on side ref refs/heads/governance-f2-inc2; main untouched. The AUTHOR
+verifies the blobs natively, fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+The governance-substrate BUILD is in-repo complete (Feature 1 mechanism 1a-1d + Feature 2 mTLS 2a
++ this integration proof). What remains is the path to a DEPLOYABLE oversight guarantee, none of it
+new in-repo capability: (i) OPERATOR-LOCUS Feature-2 layers 1 + 3 on real hosts; (ii) Feature 1
+residuals R1 ([H5] approver provenance/role via the signed key-record chain) + R2 ([H3]/[H4]
+shared store under scale). Only then does the oversight guarantee become claimable, and only an
+external attacker on a live deployment (G5, GR-3) certifies it.
