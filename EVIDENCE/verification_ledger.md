@@ -16933,3 +16933,79 @@ ELYON_REPLAY_MULTI_INSTANCE); (ii) wire Feature-2 layers 1 (Envoy with_request_b
 body-binding) + 3 (network ACL + agent egress) per deploy/NONBYPASS_TOPOLOGY.md. Only inside a
 deployment wiring all three Feature-2 layers WITH R1 + R2 does the oversight guarantee become
 claimable, and only an external attacker on that live deployment (G5, GR-3) certifies it.
+
+
+### VL-121 - 2026-06-18 - T-governance: governance-substrate DEPLOYMENT artifacts authored (operator-locus; R1 + R2 + Feature-2 wiring)
+
+#### What landed
+The operator-locus deployment package that wires the completed in-repo governance build (Feature 1
+mechanism 1a-1d + R1 + R2; Feature 2 mTLS 2a; integration proof) into a real, all-layers deployment.
+NO IMPLEMENTATION / TESTS / canon change; the full suite is unaffected (499, unchanged). These are
+deploy/ artifacts - authored and locally smoke-validated, but UNVALIDATED on real hosts (no docker /
+real CA / real Redis / multi-host network in the sandbox).
+
+- deploy/governance/approver_trust_bootstrap.py (NEW): the R1 wiring shim. The gate's stock entry
+  (uvicorn IMPLEMENTATION.pep:app) only had a STATIC approver pin (the [FIX H5] weakness). This thin
+  ASGI shim loads the SIGNED key record, validates it against the pinned root, resolves the
+  ROLE-DISTINCT approver map (approver_trust.resolve_approver_keys, excluding the gate issuer id),
+  injects it into pep._INJECTED_APPROVER_KEYS, and re-exposes pep.app. Run the gate as
+  `uvicorn deploy.governance.approver_trust_bootstrap:app`. Fail-closed: bad record / no approver
+  role -> empty map -> every grant REF_APPROVAL_KEY_UNKNOWN. SMOKE-VALIDATED in-sandbox: a built
+  signed record with an approver-role + an issuer-role key injects ONLY the approver-role key.
+- deploy/docker-compose.governance.yml (NEW): overlay adding redis (the R2 shared store) + TWO gate
+  replicas (gate + gate2) both run via the shim and both pointed at redis with
+  ELYON_REPLAY_MULTI_INSTANCE=1 + ELYON_PENDING_REDIS_URL + ELYON_REPLAY_REDIS_URL (so single-use +
+  the 202 slot are global, R2), + an approver-cli service (profile "approver") holding the approver
+  PRIVATE key in a SEPARATE process (custody). YAML-validated; network aligned to the base/replay
+  overlays (default network, reach by service name).
+- deploy/governance.env.example (NEW): the full ELYON_* env contract for the governance deployment.
+  Every var the shim reads is set here and in the compose overlay (cross-checked); the R2 vars match
+  the pending_store/replay_cache reads.
+- deploy/GOVERNANCE_DEPLOYMENT.md (NEW): the end-to-end runbook - R1 (signed key-record + approver
+  role + CLI custody), R2 (shared store + the declare-or-fail guard), Feature-2 layers 1 (Envoy
+  with_request_body inline body-binding) + 2 (mTLS, proven in-repo) + 3 (network ACL + egress, per
+  NONBYPASS_TOPOLOGY.md) - each with an acceptance check, the live A-D integration replay (VL-118's
+  four legs), and a sign-off checklist. Leads with the HONEST claimability gate: the oversight
+  guarantee is claimable ONLY inside a deployment wiring ALL of R1 + R2 + F2 layers 1-3, and only an
+  external attacker (G5) certifies it.
+
+#### Canon / posture
+Canon UNTOUCHED (GR-1). No IMPLEMENTATION / MANIFEST / TESTS / EVIDENCE-proof change; G(I) core and
+every code module byte-identical to the R2 base. Suite 499 unchanged (deploy-only additions).
+
+#### Honest scope / GR-3
+These are AUTHORED, locally-smoke-validated deployment artifacts, NOT a live deployment and NOT
+external validation. The shim is smoke-validated in-sandbox; the compose/env/runbook are
+syntactically validated and consistency-checked against the code's env reads, but the real stand-up
+(docker, real CA, a real Redis behind N replicas, multi-host network ACL/egress, Envoy
+with_request_body) is the operator's and remains UNVALIDATED here. The oversight GUARANTEE is NOT
+claimed; no readiness predicate goes green. G5 stays NOT-MET until a blind external party engages the
+live, all-layers-wired surface.
+
+#### Files affected
+deploy/governance/approver_trust_bootstrap.py (NEW); deploy/docker-compose.governance.yml (NEW);
+deploy/governance.env.example (NEW); deploy/GOVERNANCE_DEPLOYMENT.md (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, TESTS/, MANIFEST/, CANON/, EVIDENCE/published_hashes.json - byte-identical to
+the R2 base (c29cb4a..R2-tip).
+
+#### Environment note (Cowork sandbox)
+Base = the R2 side-ref tip (built on c29cb4a = origin/main after R1's native ff+push); R2 itself is
+not yet on origin (the author's native ff+push lands it). Built/validated against the pristine R2
+extraction (VL-108 mount truncation persists). Commit chain on side ref refs/heads/governance-deploy-prep,
+which includes R2 as ancestor; main untouched - the AUTHOR verifies the blobs natively, fast-forwards
+main (R2 + deploy-prep together, or R2 first then this), and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Operator execution, not in-repo code: (1) stand up redis + the two gate replicas via the governance
+overlay and run the R2 acceptance checks (declare-or-fail; cross-instance single-use); (2) publish the
+approver-role key record + pin the root, run the gate via the shim, run the R1 acceptance checks
+(issuer-role cannot authorize; revocation via the record); (3) wire Feature-2 layers 1 + 3 per
+NONBYPASS_TOPOLOGY.md and enable layer 2 mTLS; (4) replay VL-118's A-D integration legs on the live
+surface; (5) arrange the external attacker (G5) per BREAK_IT.md + SAFE_HARBOR_DRAFT.md. Only then is
+the oversight guarantee deployment-claimable, and only G5 certifies it.
