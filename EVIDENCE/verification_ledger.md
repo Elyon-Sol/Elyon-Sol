@@ -16614,3 +16614,77 @@ a shared pending-set) for single-use + the 202 slot under horizontal scale ([FIX
 with the R-02 declare-or-fail guard. Then Feature 2 (non-bypassable: inline body-bound sidecar +
 mTLS client-auth + egress topology + the network-layer bypass-refused proof) and the integration
 proof. Only after Feature 2 does the oversight guarantee become claimable.
+
+### VL-117 - 2026-06-18 - T-governance: Feature 2 increment 2a - the mTLS client-auth proof (closing A1 at the transport layer)
+
+#### What landed
+The load-bearing network-layer property of Feature 2 (non-bypassable enforcement): the target
+refuses any client that is not the gate AT THE TLS LAYER, before any app logic. This elevates A1
+from "the app refuses bare calls" to "the network refuses to carry a bypassing call at all".
+
+NO IMPLEMENTATION change. The dev-CA leaves already carry the CLIENT_AUTH EKU
+(deploy/tls/gen_certs.py gen_leaf) and the transport seam already supports client certs (one-way
+TLS by default per the TLS dossier 9.5); this increment PROVES the mTLS property and documents the
+deployment, rather than adding gate code.
+
+- TESTS/deploy/test_mtls_required.py (4 hermetic MemoryBIO handshake tests, reusing
+  deploy.tls.gen_certs): the bare connection (no gate client cert) is REFUSED at the handshake
+  when the target sets CERT_REQUIRED (the design-2.3 star proof); a connection presenting the gate
+  cert is HONORED and the target reads the gate's identity; a client cert from an untrusted CA is
+  REFUSED; and a CONTRAST test shows that with the target in one-way TLS the same bare connection
+  IS accepted - demonstrating mTLS is exactly the layer that closes A1.
+- EVIDENCE/proofs/nonbypass_direct_call_refused_runner.py: the same proof over REAL sockets
+  (loopback), with the SERVER side authoritative (on TLS 1.3 the client handshake can return
+  before the server's client-auth rejection propagates, so the proof reads the target's verdict:
+  bare connection REFUSED_AT_TLS, gate connection ACCEPTED). Exit 0.
+- deploy/NONBYPASS_TOPOLOGY.md: the three-layer recipe (inline body-bound sidecar; mTLS
+  client-auth; network ACL + agent egress) with each layer's status and the bypass-refused
+  procedure.
+
+#### Canon / posture
+Canon UNTOUCHED (GR-1). No IMPLEMENTATION/ change, so the full pre-existing suite is unaffected;
+the 4 new tests are transport-layer proofs. This is a Feature-2 capability proof, not a new
+runtime invariant in the gate.
+
+#### Tests + revert demonstration
+Suite 461 -> 465 green in a pristine git archive extraction. The bare-call-refused property was
+demonstrated as a revert-catcher pair: WITH mTLS (CERT_REQUIRED) the bare call is refused; WITHOUT
+it (one-way TLS, the contrast/revert) the bare call is accepted and the bypass reopens - so a
+regression of the target to one-way TLS makes the catcher go RED.
+
+#### Honest scope / GR-3
+Non-bypassable holds ONLY within the network boundary the operator controls. The mTLS layer
+(layer 2) is BUILT + PROVEN in-repo; layer 1 (the inline body binding via Envoy with_request_body;
+the extractor was built at VL-111) and layer 3 (the network ACL + agent egress restriction) are
+OPERATOR-LOCUS on real hosts and are NOT in-repo-testable. A1 is therefore NARROWED, not
+blanket-closed; G4 is NOT marked RESOLVED (docs/restructure/04_current_vs_claimed.md unchanged this
+increment - it earns the update when layers 1+3 are wired on a real deployment). The Feature-1
+oversight GUARANTEE becomes claimable only inside a deployment that wires all three layers; the
+in-repo artifact is the proof + the recipe, not a live non-bypassable deployment. WHITE-BOX
+in-house proof; NOT external validation (GR-3); does not enter the attacker pack.
+
+#### Files affected
+TESTS/deploy/test_mtls_required.py (NEW); EVIDENCE/proofs/nonbypass_direct_call_refused_runner.py
+(NEW); deploy/NONBYPASS_TOPOLOGY.md (NEW); STATE.md; EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/ (no gate code change), MANIFEST/*, CANON/*, EVIDENCE/published_hashes.json,
+EVIDENCE/readiness.json - unchanged.
+
+#### Environment note (Cowork sandbox)
+Validated against a pristine git archive extraction (mount truncation, VL-108). Commit chain built
+from VL-116-tip-intact blobs on side ref refs/heads/governance-f2-inc1; main untouched. The AUTHOR
+verifies the blobs natively, fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+The INTEGRATION proof (design 3.3): one runner asserting a high-impact call cannot execute unless
+it BOTH routes through the gate (mTLS, Feature 2) AND carries a valid human grant (Feature 1) -
+direct bypass TLS-refused; routed-but-unapproved 202 with no execution; routed+approved executes
+exactly once and is reconcilable on the issuance + approval logs. Then the OPERATOR-LOCUS Feature-2
+layers (Envoy with_request_body inline binding; network ACL + agent egress) on real hosts, and the
+Feature-1 residuals R1 ([H5] approver provenance/role via the signed key-record chain) + R2
+([H3]/[H4] shared store under scale). Only inside a deployment wiring all three Feature-2 layers
+does the oversight guarantee become claimable.
