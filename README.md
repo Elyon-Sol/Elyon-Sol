@@ -549,7 +549,19 @@ the source of truth and this README is the stale one.
 
 ## License
 
-**Proprietary - all rights reserved.** Copyright (c) 2026 Justin LaPorte. See `LICENSE` in the repository root. No right to use, copy, modify, distribute, or sell this software is granted except under a separate written agreement with the copyright holder. "Elyon-Sol" is a trademark of Justin LaPorte (application pending). Prior public releases of portions of this software under the MIT License remain MIT-licensed for those released copies; this repository and all subsequent releases are proprietary.
+**Open-core.** The core in this repository — the admission gate, admissibility
+envelope, target-side verifier, the ext-authz sidecar, and supporting modules — is
+licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**; see `LICENSE`.
+You may use, run, modify, and redistribute it under AGPL's terms (including the
+network-use source-disclosure obligation). A **commercial license** is available for
+those who cannot accept AGPL's terms — e.g. embedding the core in a closed product or
+SaaS; see `COMMERCIAL.md`. The administration / tooling SDK is proprietary and sold
+separately (not in this repository). Full model: `LICENSING.md`. Contributions: see
+`CONTRIBUTING.md` (DCO sign-off required so the core can remain dual-licensed).
+
+"Elyon-Sol" is a trademark of Justin Laporte (application pending); the license covers the
+code, not the name. Portions previously released under the MIT License remain MIT-licensed
+for those released copies; this repository's core is AGPL-3.0 going forward.
 
 ---
 
