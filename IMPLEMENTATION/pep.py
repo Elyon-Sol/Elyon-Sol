@@ -175,6 +175,26 @@ def _grant_not_after(grant):
 app = FastAPI(title="Elyon-Sol PEP")
 
 
+@app.on_event("startup")
+def _assert_governance_wiring_on_startup():
+    """Fail closed at startup if the SHA-pinned manifest declares HIGH_IMPACT
+    actions but the gate is not wired to honor oversight (review findings
+    G-01/G-03/G-04/G-06). NO-OP for the default HIGH_IMPACT:[] manifest, so the
+    non-high-impact deployment is byte-behavior-unchanged. Build-then-wire: the
+    check lives in IMPLEMENTATION/governance_wiring.py (pure, tested directly);
+    this hook only gathers live gate state and calls it."""
+    from IMPLEMENTATION.governance_wiring import assert_high_impact_wiring
+
+    assert_high_impact_wiring(
+        manifest=load_manifest(),
+        approver_keys=_get_approver_keys(),
+        approver_from_injected=_INJECTED_APPROVER_KEYS is not None,
+        approval_log_configured=_get_approval_log() is not None,
+        pending_redis_url=os.environ.get("ELYON_PENDING_REDIS_URL"),
+        replay_redis_url=os.environ.get("ELYON_REPLAY_REDIS_URL"),
+    )
+
+
 # VL-065 decision freshness (A3b close): the default ELIGIBLE forward stamps a
 # signed not_after (decision max-age) so a captured, validly-signed decision is
 # NOT honored arbitrarily later. Verification-layer policy enforced by
