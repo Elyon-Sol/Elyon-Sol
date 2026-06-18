@@ -16355,3 +16355,84 @@ reusing envelope.py's Ed25519 + binding to decision_sha256 [FIX H4] + freshness 
 Then 1c (pep.py wiring: 202 state machine [FIX H6]; pending-state + grant replay cache
 [FIX H3/H4]; REF_APPROVAL_*; approver-key custody/role [FIX H5]) and 1d (issuance-log + reconcile
 extension [FIX H8]; approver CLI). The G5 external-readiness road is unchanged and parallel.
+
+### VL-114 - 2026-06-17 - T-governance: Feature 1 increment 1b - the approval grant (approval.py) built-then-wire with review fixes H3/H4/H5/H7
+
+#### What landed
+IMPLEMENTATION/approval.py - the approval GRANT (the out-of-band, human-signed object that
+releases a held high-impact decision). Three functions mirror envelope.py's Ed25519 +
+canonical_json discipline (reuse, not re-implement): build_grant() (unsigned grant bound to
+decision_sha256 + approval_request_id + a mandatory grant_id + a tz-aware not_after),
+sign_grant() (adds approver_key_id + approver_signature over canonical_json(grant minus the
+signature), duck-typed key like sign_envelope), and verify_grant() (a pure verifier returning
+{accepted, reason} over the REF_APPROVAL_* vocabulary).
+
+Review fixes baked in and pinned by revert-catchers:
+- [FIX H4] the grant binds decision_sha256 (transitively target_url / AP / OP / context /
+  manifest pins) AND approval_request_id; an approval of action A cannot release action/args/
+  target B, nor a different held request.
+- [FIX H3] grant_id is MANDATORY (a grant without it is REFUSED); this guarantees the later
+  single-use claim (1c) has a non-skippable key - it forbids the executor_sdk "id is None ->
+  skip" replay hole at the grant layer.
+- [FIX H5] separation of duties: verify_grant rejects approver_key_id == gate_key_id BEFORE the
+  signature check, so a gate-minted approval is refused even if well-signed. This is the
+  belt-and-braces id check; the load-bearing custody invariant (the gate cannot resolve the
+  approver PRIVATE key; approver provenance/role from the signed key-record chain) is the
+  1c/deploy layer.
+- [FIX H7] freshness REUSES one primitive: verifier.not_after_valid() was factored out of
+  verify_envelope step 1.5b (behavior-preserving; suite green) and is called by both. A grant's
+  not_after is MANDATORY (absent -> REFUSE, unlike an envelope where absent = no expiry);
+  tz-naive or past -> REFUSE; clock_skew tolerated symmetrically.
+
+#### Scope boundary (1b vs 1c)
+verify_grant is PURE - crypto provenance, action/request binding, SoD, freshness - over the trust
+inputs the caller passes. It does NOT consume the grant: SINGLE-USE (claim grant_id once via the
+VL-076 ReplayCache seam) and the server-side pending-request set are STATEFUL gate concerns wired
+in pep.governed_call at 1c. Build-then-wire: approval.py has NO caller on the default pep.py path
+this increment.
+
+#### Canon / build-then-wire posture
+Canon UNTOUCHED (GR-1); the grant lives ABOVE G(I). evaluator.py and impact.py byte-identical to
+the VL-113 tip (verified). verifier.py changed only by the behavior-preserving extraction of
+not_after_valid; verifier.py is not hash-pinned (the envelope pins canon.lock, evaluator.py,
+manifest.json), so the refactor touches no pinned record. No default pep.py path changed.
+
+#### Tests + revert-catcher discipline
+TESTS/adversarial/test_approval.py adds 14 tests over REAL Ed25519 keypairs; suite 429 -> 443
+green in a pristine git archive extraction (from the VL-113 tip). Five starred revert-catchers
+each proven RED on revert then GREEN restored: action binding [H4], request binding [H4],
+mandatory grant_id [H3], SoD [H5], freshness/expired [H7].
+
+#### Honest scope / GR-3
+The remaining fixes are 1c/1d: gate-side pending-state + grant single-use claim under scale (the
+stateful half of [H3]/[H4]), the 202 state-machine placement ([H6]), approver-key custody/role
+via the signed key-record chain (the load-bearing half of [H5]), and the issuance-log + reconcile
+extension ([H8]). WHITE-BOX in-house build; NOT external validation (GR-3); does not enter the
+attacker pack. The oversight GUARANTEE is still not claimed (needs Feature 2); no readiness
+predicate goes green on Feature 1 alone.
+
+#### Files affected
+IMPLEMENTATION/approval.py (NEW); IMPLEMENTATION/verifier.py (extract not_after_valid and reuse it
+in step 1.5b - behavior-preserving); TESTS/adversarial/test_approval.py (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/evaluator.py + impact.py (byte-identical), pep.py, envelope.py, MANIFEST/*,
+CANON/*, EVIDENCE/readiness.json - unchanged.
+
+#### Environment note (Cowork sandbox)
+Validated against a pristine git archive extraction (mount truncation, VL-108). The commit chain
+was built from VL-113-tip-intact blobs on side ref refs/heads/governance-f1-inc2; main is
+untouched. The AUTHOR verifies the blobs natively, fast-forwards main, and pushes (no sandbox push
+credentials; SESSION_PROTOCOL rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Feature 1 increment 1c: pep.governed_call wiring - the 202 PENDING_APPROVAL state machine as an
+explicit early return outside the sign/forward try ([FIX H6]); the requires_approval gate; a
+gate-side pending-request set issuing/consuming approval_request_id; grant single-use via the
+ReplayCache seam claimed atomically before forward, shared-store-under-scale ([FIX H3]/[FIX H4]);
+REF_APPROVAL_* surfaced as 202/403; approver-key trust via the signed key-record chain with an
+approver role ([FIX H5]). Then 1d (issuance-log + reconcile extension [FIX H8]; approver CLI).
