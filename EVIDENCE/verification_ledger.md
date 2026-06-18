@@ -17009,3 +17009,90 @@ approver-role key record + pin the root, run the gate via the shim, run the R1 a
 NONBYPASS_TOPOLOGY.md and enable layer 2 mTLS; (4) replay VL-118's A-D integration legs on the live
 surface; (5) arrange the external attacker (G5) per BREAK_IT.md + SAFE_HARBOR_DRAFT.md. Only then is
 the oversight guarantee deployment-claimable, and only G5 certifies it.
+
+
+### VL-122 - 2026-06-18 - LIVE-OPS: publisher signing-key ROTATION + byte-anchor->signed correction (VL-108 pre-exposure items 1 & 2 closed)
+
+#### What happened
+The VL-108 pre-exposure checklist item 1 - regenerate the publisher signing key (it had been exposed
+in a working chat) and re-pin it - was EXECUTED on the live four-node surface, under a strict
+no-secret-in-history/never-typed protocol. NO repository code/canon/manifest/test change; the suite
+is unaffected. This is a live-ops + record-correction entry.
+
+- ROTATION. A fresh Ed25519 publisher keypair was generated ON the publisher host by an in-process
+  generator that writes the PRIVATE key straight to a 0600 EnvironmentFile and prints ONLY the public
+  key (never the private). The publisher now signs /published_hashes_signed.json under key id
+  `pub-2026-06-18`; the exposed key and every transient throwaway are now trusted by NO node.
+- CORRECTION (the load-bearing finding). VL-108 documented the deployment as "target+publisher in
+  SIGNED freshness mode", but the live target's ELYON_PUBLISHER_URL pointed at the BYTE-ANCHOR
+  endpoint /published_hashes.json (the unsigned record: currency pins only, no publisher_key_id /
+  publisher_signature). So the target was actually BYTE-ANCHOR, not signed - no consumer verified the
+  publisher signature, and the exposed publisher signing key was not load-bearing for the target. The
+  rotation re-pinned the new publisher PUBLIC key on the target AND repointed it at the SIGNED
+  endpoint, moving it to GENUINE signed-freshness mode.
+- VERIFICATION (live, two ways). (a) A direct on-target check calling the same trust function the
+  service uses, published_record_source.fetch_signed_record, returned PASS (key_id=pub-2026-06-18).
+  (b) The full live attack suite (EVIDENCE/proofs/attack_suite_live_runner.py) over the public surface
+  returned exit 0: positive control HONORED end-to-end (gate admits->signs->forwards to the target IN
+  SIGNED MODE->target verifies the new publisher record->acts) and 6/6 gate-2 attacks REFUSED
+  (unattested/forged-sig/replay/rebind-tool/rebind-args/target-url-swap). The suite was run
+  VERSION-MATCHED at the deployed commit (3343e32), because the laptop's main pins the post-VL-115
+  manifest sha (ac18ac78) while the live gate holds the VL-109 manifest (a21dea8b) - a latest-main
+  harness is correctly REFUSED by the live gate (expected, not a fault).
+- SIDECAR (authz). Confirmed NOT in signed mode (it does not consume the published record), so the
+  rotation does not touch it. VL-108 item 2 (live sidecar ALLOW/DENY - only deny-on-junk had been
+  confirmed) was closed by a live recheck against authz.elyon-sol.io:9243 /authz: a real gate-signed
+  envelope -> 200 ALLOW (REASSERTED_AND_BOUND); a forged envelope -> 403 DENY
+  (REF_VERIFY_SIGNATURE_INVALID); an absent envelope -> 403 DENY (REF_VERIFY_ENVELOPE_ABSENT).
+- GATE. Signs envelopes; does NOT consume the published record (no publisher pin). Its issuer key
+  (ELYON_SIGNING_KEY_*) was never exposed (only the publisher key leaked), so it was not rotated.
+
+#### Deployment fact (for the record)
+The live four-node surface (gate.elyon-sol.io:8443, target:9443, pub:9143, authz:9243) runs commit
+3343e32 (VL-109), NOT latest main. The governance layer (R1 VL-119 / R2 VL-120) and the post-VL-115
+manifest are NOT deployed there; deploying them is the separate operator-locus governance deployment
+(deploy/GOVERNANCE_DEPLOYMENT.md). Hosts were also renamed to functional names (pub/target/gate/authz)
+for operability - cosmetic, no effect on DNS/TLS/services.
+
+#### Tooling landed
+deploy/rotate_publisher_key.py (NEW) - the safe keygen helper: writes the private key to a 0600 file,
+prints ONLY the public key + a suggested key id; never prints the private key (unless an explicit
+--print-private). deploy/KEY_ROTATION.md (NEW) - the rotation runbook (per-node var table, steps,
+live verification, retirement check), env names cross-checked against the code's constants.
+
+#### Canon / posture / honest scope
+Canon UNTOUCHED (GR-1). NO IMPLEMENTATION/MANIFEST/TESTS/EVIDENCE-proof change - this is live-ops +
+two new deploy/ docs; the in-repo suite is unaffected. The rotation is VERIFIED on the live surface
+(direct check + full suite green); WHITE-BOX author self-test, NOT external validation. G5 (a blind
+external attacker) remains NOT-MET.
+
+#### VL-108 pre-exposure checklist status
+Item 1 (regenerate + re-pin publisher key) - CLOSED (this entry). Item 2 (sidecar live ALLOW/DENY) -
+CLOSED (this entry). OPEN: item 3 (cert-renewal deploy-hook - a restart-elyon hook was added on at
+least one host; verify across all four), item 4 (counsel safe-harbor sign-off - HARD GATE before
+publish), item 5 (bounty tiers / window / reporting channel), item 6 (publish the decontaminated
+attacker pack + open the private bounty listing), item 7 (recruit). G5 stays NOT-MET until a blind
+external party engages.
+
+#### Files affected
+deploy/rotate_publisher_key.py (NEW); deploy/KEY_ROTATION.md (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, MANIFEST/, CANON/, TESTS/, EVIDENCE/proofs/, EVIDENCE/published_hashes.json -
+byte-identical to the base.
+
+#### Environment note (Cowork sandbox)
+Base = origin/main 2aedb03. Built against a pristine git archive extraction. Commit chain on side ref
+refs/heads/keyrotation-vl122; main untouched - the AUTHOR verifies the blobs natively, fast-forwards
+main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+The remaining VL-108 pre-exposure items (3-7) are the path to opening the external engagement (G5):
+verify cert-renewal hooks on all four hosts; counsel safe-harbor sign-off; set bounty tiers + window +
+channel; publish the decontaminated attacker pack; recruit. Separately, the in-repo governance build
+(R1+R2) is complete and its operator-locus deployment (Redis shared store + Feature-2 layers 1+3 +
+the R1 approver key-record) per deploy/GOVERNANCE_DEPLOYMENT.md remains the other open deployment track.
