@@ -17096,3 +17096,101 @@ verify cert-renewal hooks on all four hosts; counsel safe-harbor sign-off; set b
 channel; publish the decontaminated attacker pack; recruit. Separately, the in-repo governance build
 (R1+R2) is complete and its operator-locus deployment (Redis shared store + Feature-2 layers 1+3 +
 the R1 approver key-record) per deploy/GOVERNANCE_DEPLOYMENT.md remains the other open deployment track.
+
+
+### VL-123 - 2026-06-18 - T-governance: Cursor white-box review of the governance core - hardening cluster (G-01/03/04/06 FIXED; G-02/05 documented)
+
+#### What happened
+A Cursor Mode-A white-box adversarial review (per the CURSOR_REVIEW_governance_core packet) of the
+governance core - approval.py, approver_trust.py + key_record_source role surfacing, impact.py,
+pending_store.py, replay_cache.py, the pep governed_call approval branch, approver_cli.py, and the
+issuance_log/envelope_inspector audit - found NO exploitable bug on a correctly-wired single-instance
+gate (the hold -> verify_grant -> consume pending -> claim grant -> forward chain is correctly
+ordered and fail-closed). It surfaced six DEPLOYMENT-POSTURE findings; the load-bearing three were
+re-verified against the code line-by-line before acting (project rule: do not trust an assertion
+without reading the lines). WHITE-BOX = internal hardening evidence, NOT a G5 referent (GR-3, VL-057).
+
+#### Findings + disposition
+- G-01 (High, P3) FIXED. The bare static approver pin (ELYON_APPROVER_PUBKEY_HEX) enforces SoD only
+  as approver_key_id != gate_key_id, so `uvicorn IMPLEMENTATION.pep:app` lets a gate self-approve
+  under a DIFFERENT key_id with its own key material. R1 (role-distinctness from the signed
+  key-record chain) is the fix, but nothing forced it.
+- G-06 (Low, P3) FIXED. A high-impact gate with an empty resolved approver map starts silently and
+  REFUSES every grant at request time (fail-closed but not loud).
+- G-04 (Medium, P6) FIXED. The [FIX H8] approval log is optional, so issuance-logged-but-no-approval-
+  log forwards an approved high-impact call with no grant_consumed record -> reconcile_approvals
+  cannot detect FORWARDED_WITHOUT_GRANT.
+- G-03 (High, P4) FIXED. pending_store_from_env and replay_cache_from_env resolve independently, so a
+  shared pending store WITHOUT a shared grant-replay store (or vice versa) leaves grant single-use
+  per-process under scale.
+- G-02 (High, P4) DOCUMENTED, not code-fixed. An UNDECLARED multi-worker gate (no
+  ELYON_REPLAY_MULTI_INSTANCE, no Redis URLs, workers>1) gets per-process state. A worker cannot
+  observe the worker count, so this is not fully closable from inside the app; the declare-or-fail
+  guard + the new G-03 coherence check NARROW it, but the operator's multi-instance declaration
+  remains load-bearing (honest residual; named in governance_wiring.py + GOVERNANCE_DEPLOYMENT.md).
+- G-05 (Low, P2) DOCUMENTED, ruled out. pep passes verify_grant expected_approval_request_id =
+  grant's own field, so that step is a tautology; the request-identity binding is actually carried by
+  _PENDING.check_and_consume (server-side compare-and-delete). Redundant defense-in-depth, NOT a
+  bypass. Left as-is with a note; a future tightening could pass the server-side pending id.
+
+#### The fix
+NEW IMPLEMENTATION/governance_wiring.py: assert_high_impact_wiring() - a single fail-closed startup
+check that fires ONLY when the SHA-pinned manifest DECLARES high-impact actions (safe_high_impact
+non-empty, or malformed -> fail-closed-declared). It refuses to start when: approver trust is not
+R1-injected (G-01), the approver map is empty (G-06), no approval log is configured (G-04), or the
+pending/replay shared stores are configured incoherently (one XOR the other, G-03). NO-OP for the
+default HIGH_IMPACT:[] manifest, so the non-high-impact deployment is byte-behavior-unchanged.
+IMPLEMENTATION/pep.py adds ONE @app.on_event("startup") hook that gathers live gate state
+(load_manifest / _get_approver_keys / _INJECTED_APPROVER_KEYS / _get_approval_log / the two Redis
+env vars) and calls the pure check. Build-then-wire: the logic is in the pure module (tested
+directly); the hook is thin. Declaring HIGH_IMPACT is itself an explicit opt-in, so a deployment that
+does so must wire oversight safely or the gate fails closed at startup.
+
+#### Canon / posture
+Canon UNTOUCHED (GR-1). evaluator.py / envelope.py / verifier.py / impact.py / approval.py /
+approver_trust.py / pending_store.py / replay_cache.py / key_record_source.py / MANIFEST/manifest.json
+/ CANON/* / EVIDENCE/published_hashes.json all byte-IDENTICAL to the base. The ONLY default-path file
+touched is pep.py, and its sole change is the startup hook (the governed_call request path is
+byte-unchanged; the hook no-ops on the default manifest).
+
+#### Tests
+TESTS/adversarial/test_governance_wiring.py adds 13 tests: high_impact_declared (empty/non-empty/
+malformed); the default-empty path is a no-op even with all-bad wiring; safe wiring passes; a
+revert-catcher per finding (G-01/G-06/G-04/G-03, each RED if its check is removed - proven); malformed
+HIGH_IMPACT fails closed; multiple-problems-reported-together; and a real-startup-hook test
+(`with TestClient(pep.app)`) confirming the default app starts clean. Suite 499 -> 512 green in a
+pristine git archive extraction; the existing pep/approval/governance suites are unaffected (they use
+TestClient(app) without the context manager, so the startup hook does not fire, and the repo manifest
+is HIGH_IMPACT:[] regardless).
+
+#### Honest scope / GR-3
+This is in-house WHITE-BOX hardening (the reviewer had the full repo) - internal evidence, NOT
+external validation and FORBIDDEN to show a blind reviewer (VL-057). The findings were
+deployment-posture, none exploitable on the live surface (HIGH_IMPACT:[], single worker), so the live
+four-node deployment is UNAFFECTED. The guard hardens FUTURE high-impact / scaled deployments; no
+readiness predicate goes green; G5 (a blind external attacker) remains NOT-MET. Recommended follow-up:
+a cross-model convergence round (Grok/OpenAI) on the same packet, discarding any fabricated-citation
+run (VL-008 rule b). NOTE: the startup hook uses the deprecated FastAPI on_event API (works on
+current FastAPI; a lifespan migration is a future cosmetic).
+
+#### Files affected
+IMPLEMENTATION/governance_wiring.py (NEW); IMPLEMENTATION/pep.py (startup hook only);
+TESTS/adversarial/test_governance_wiring.py (NEW); STATE.md; EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All G(I) core + governance crypto modules, MANIFEST/*, CANON/*, EVIDENCE/published_hashes.json -
+byte-identical to the base.
+
+#### Environment note (Cowork sandbox)
+Base = origin/main aa2dea0 (VL-122). Built/validated against a pristine git archive extraction. Commit
+chain on side ref refs/heads/governance-wiring-vl123; main untouched - the AUTHOR verifies the blobs
+natively, fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Optional: the cross-model convergence round on the governance-core review packet. The in-repo
+governance build (Feature 1 + R1 + R2 + this wiring guard) is complete; the operator-locus deployment
+(GOVERNANCE_DEPLOYMENT.md - Redis shared store + Feature-2 layers 1+3 + the R1 approver key-record)
+and the VL-108 pre-exposure items 3-7 remain the open deployment tracks. G5 NOT-MET.
