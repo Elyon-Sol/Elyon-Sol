@@ -1,0 +1,5 @@
+A. direct bypass refused at TLS      : True
+B. routed+unapproved held (202,no-op): True
+C. routed+approved executed once     : True | reconciles clean: True
+D. replayed grant refused (no 2nd run): True
+RESULT: PASS
