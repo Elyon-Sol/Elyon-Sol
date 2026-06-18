@@ -155,7 +155,8 @@ def load_key_record_from_bytes(
     The trust view carries STATUS per key (decision 2: richer view) so
     verify_envelope can later discriminate UNKNOWN / REVOKED / OUT_OF_WINDOW:
         {key_id: {"public_key": <obj>, "revoked": <bool>,
-                  "not_before": <aware dt>, "not_after": <aware dt>}}
+                  "not_before": <aware dt>, "not_after": <aware dt>,
+                  "role": <str or None>}}   # role: VL-119 R1, optional, signed
     """
     if clock_skew < timedelta(0):
         raise ValueError("clock_skew must be non-negative")
@@ -257,6 +258,13 @@ def load_key_record_from_bytes(
             "revoked": entry["revoked"],
             "not_before": not_before,
             "not_after": key_not_after,
+            # VL-119 (R1, [FIX H5] provenance+role): surface the signed key
+            # entry's OPTIONAL role so the approver-trust resolver can enforce
+            # role-distinctness from the SIGNED record. The publisher signs the
+            # whole record (this entry included), so the role is signature-
+            # provenanced. Absent -> None (role-less, pre-VL-119 behavior); a
+            # role-less key is never an approver (fail-closed at the resolver).
+            "role": entry.get("role"),
         }
 
     return {"trust_view": trust_view, "reason": None}
