@@ -17194,3 +17194,81 @@ Optional: the cross-model convergence round on the governance-core review packet
 governance build (Feature 1 + R1 + R2 + this wiring guard) is complete; the operator-locus deployment
 (GOVERNANCE_DEPLOYMENT.md - Redis shared store + Feature-2 layers 1+3 + the R1 approver key-record)
 and the VL-108 pre-exposure items 3-7 remain the open deployment tracks. G5 NOT-MET.
+
+
+### VL-124 - 2026-06-18 - T-governance: cross-model convergence round on the governance core (Cursor + OpenAI + Grok) - VL-123 confirmed; two single-model sharpenings named-open
+
+#### What happened
+The VL-123 Cursor white-box review was followed by an independent cross-model round on the SAME
+governance-core bundle (docs/methodology/xmodel_review_governance_core_request.md - a re-worded packet
+that names the properties P1-P6 but NOT the prior findings or line numbers, so each run is independent
+rather than an echo). Grok and OpenAI each ran it against the zipped HEAD-6ea0ccd source bundle. Both
+are PROCEDURALLY CLEAN per VL-008: scope-bound to the provided files, cited only in-scope path:line,
+and gave the explicit scope-confirmation line (NO fabrication - unlike the Gemini runs discarded at
+VL-102/VL-106 under rule b). Verbatim transcripts: EVIDENCE/verification_runs/governance_core_{cursor,
+openai,grok}_2026-06-18.md. NO repository code/canon/manifest/test change in this entry - it records a
+verification round and schedules two refinements.
+
+#### Convergence (the headline)
+UNANIMOUS across three independent models: NO exploitable bug on a correctly-wired single-process gate
+(the hold -> verify_grant -> consume-pending -> claim-grant -> forward chain is correctly ordered and
+fail-closed), and all [FIX H1]-[H8] hold IN CODE, not just docstrings. Every break attempt (tampered/
+cross-bound grants, gate self-approval, replay, concurrent resubmit, malformed manifest, missing
+record) was refused or ruled out. The only weak paths are DEPLOYMENT-POSTURE: P3 (the bare static
+approver pin), P4 (single-use under undeclared multi-instance / no shared store), P6 (no approval
+log) - the exact class VL-123's governance_wiring guard was built to catch, which Grok independently
+credits as catching them at startup. OpenAI's findings map 1:1 onto the Cursor cluster: GL-01<->G-01
+(P3), GL-02<->G-05 (P2, both RULED OUT - the verify_grant request-id check is redundant because the
+binding is carried by _PENDING.check_and_consume), GL-03<->G-04 (P6), GL-04<->G-02/03 (P4). The round
+therefore CONFIRMS VL-123's gap analysis and that the guard works.
+
+#### Two single-model sharpenings (OpenAI), NAMED-OPEN / scheduled - not yet fixed
+- GL-01-refine (P3): VL-123's startup guard requires approver trust to be INJECTED (not the bare
+  static pin) but checks injected-ness, NOT signed-chain PROVENANCE - so an injected map of
+  gate-controlled keys under a different key_id still passes the guard and verify_grant. Verified real
+  on inspection. Deployment-gated (in-process injection is already operator-controlled) and not
+  exploitable on the live surface, but it means VL-123 NARROWED G-01, did not fully close it. The
+  robust fix is for pep to resolve approver keys from the signed key-record chain ITSELF (env-driven:
+  load_key_record_from_bytes + resolve_approver_keys in _get_approver_keys), so the in-process
+  injection seam stops being the trust boundary and the approver_trust_bootstrap shim becomes optional.
+- GL-03-refine (P6): VL-123's audit-wiring guard is STARTUP-only; it should ALSO be enforced in the
+  REQUEST PATH (high-impact + no approval log -> fail closed at governed_call), so it holds even if the
+  startup hook does not run. NOTE: this changes the approved-forward contract and the pep approval test
+  fixtures must then configure an approval log - hence scheduled as its own increment, not folded here.
+Grok did NOT surface either sharpening (it judged the guard sufficient), so both are SINGLE-MODEL
+findings, verified-on-inspection, scheduled for a deliberate follow-up increment rather than a reflex.
+
+#### Canon / posture / honest scope
+Canon UNTOUCHED (GR-1). NO IMPLEMENTATION/MANIFEST/TESTS/EVIDENCE-proof change - this entry adds the
+review request (docs/methodology/) + three verbatim run transcripts (EVIDENCE/verification_runs/) +
+this ledger entry. The suite is unaffected. This is an in-house WHITE-BOX cross-model round (every
+model had the full bundle) - internal CONVERGENCE / hardening evidence, NOT external validation and
+FORBIDDEN to show a blind reviewer (GR-3, VL-057). None of the findings are exploitable on the live
+surface (HIGH_IMPACT:[], single worker); the live four nodes are UNAFFECTED. No readiness predicate
+goes green; G5 (a blind external attacker) remains NOT-MET.
+
+#### Files affected
+docs/methodology/xmodel_review_governance_core_request.md (NEW);
+EVIDENCE/verification_runs/governance_core_cursor_2026-06-18.md (NEW);
+EVIDENCE/verification_runs/governance_core_openai_2026-06-18.md (NEW);
+EVIDENCE/verification_runs/governance_core_grok_2026-06-18.md (NEW); STATE.md;
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, MANIFEST/, CANON/, TESTS/, EVIDENCE/proofs/, EVIDENCE/published_hashes.json -
+byte-identical to the base.
+
+#### Environment note (Cowork sandbox)
+Base = origin/main 6ea0ccd (VL-123). Built against a pristine git archive extraction. Commit chain on
+side ref refs/heads/governance-xmodel-vl124; main untouched - the AUTHOR verifies the blobs natively,
+fast-forwards main, and pushes (no sandbox push credentials; rule 7).
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+SCHEDULED follow-up increment (when chosen): GL-01-refine (pep resolves approver keys from the signed
+key-record chain in-process, closing the SoD provenance residual + simplifying deployment) and
+GL-03-refine (request-path audit fail-closed + the test-fixture updates it requires). Both are
+deployment-gated, not exploitable. Otherwise the open tracks are unchanged: the operator-locus
+governance deployment (GOVERNANCE_DEPLOYMENT.md) and the VL-108 pre-exposure items 3-7. G5 NOT-MET.
