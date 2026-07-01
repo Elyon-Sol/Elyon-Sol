@@ -37,7 +37,11 @@ Focus: a custom admission-control protocol. Researchers receive a claim sheet of
 Out-of-scope as findings (stated boundaries, not bugs): caller declining to route
   through the gate (A1), root/publisher key compromise, semantic legitimacy of an
   authorized action, denial of service.
-Rewards: small bounty pool, per-severity [AMOUNTS TBD]. Window: [DATES TBD]. Disclosure: coordinated, 90 days.
+Recognition (not cash): a confirmed break earns a permanent named entry in the public
+  verification ledger, co-credit on the next Zenodo record (DOI + ORCID), a CVE where
+  applicable, an invitation to co-author the fix, and a founding red-team seat; teams
+  can earn a documented ownership/co-maintainer path. Window: [DATES TBD]. Disclosure:
+  coordinated, 90 days.
 
 ---
 

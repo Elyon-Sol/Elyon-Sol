@@ -113,15 +113,37 @@ Send to security@elyon-sol.io (or the program's intake on the bug-bounty platfor
 We reproduce, classify, and respond. Every confirmed break is credited to you (or
 anonymously, your choice) and published as either a fix or a documented limit.
 
-## Reward
+## What you earn - recognition and ownership, not a bounty
 
-Small bounty pool, paid by severity / novelty (set the per-tier amounts before
-publishing):
-- Confirmed target or sidecar break: <$AMOUNT TBD>, by severity / novelty.
-- Confirmed infrastructure finding (out-of-scope of the claim, still real): <$AMOUNT
-  TBD or credit>.
+This is not a cash bounty. Elyon-Sol is an attempt to build a verifiable oversight
+layer for AI actions - a public good - and we are recruiting people who want their
+name on that work, not selling findings by the pound. Every reward here is durable
+credit, real authorship, and a documented stake in what the project becomes. All
+credit is attributed by name/handle or anonymous - your choice, every time.
+
+- Confirmed target or sidecar break (a named break): a PERMANENT, citable entry in
+  the project's public verification ledger, attributed to you ("the <you> finding");
+  co-credit on the next Zenodo Enforcement-Evidence Addendum (a real DOI tied to your
+  ORCID - acknowledgment, or contributor/creator for a load-bearing break); a CVE
+  where applicable; an invitation to co-design the fix and be named its author in
+  code and in the ledger; and a founding seat on the standing Elyon-Sol red team
+  (first access to future rounds).
+- Confirmed infrastructure finding (out-of-scope of the claim, still real): public
+  credit in the repository's security acknowledgments, listed as a project hardener,
+  and a written reference on request.
 - Duplicate or already-known: credit, first reporter noted.
-Every confirmed break is also publicly credited (or anonymously, your choice).
+
+For teams that want to go deeper than a single finding, there is a path to real
+ownership: authorship of a named hardening module carried in the codebase and the
+Zenodo record; a co-maintainer / advisory track on the governance layer with input
+to the roadmap and design reviews; and, for substantial ongoing collaboration, a
+documented partnership arrangement (including a stake in commercial-license outcomes
+of work you author, discussed case by case). We would rather share the credit and the
+direction with people who helped earn it than pay a flat rate for a report.
+
+A written reference/recommendation from the author - describing exactly what you found
+and built - is available to any contributor for use with employers, grants, or
+platform reputation.
 
 ## What we do with the result
 

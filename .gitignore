@@ -172,7 +172,7 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
+# /site  # mkdocs build-output ignore; we keep our published site here
 
 # mypy
 .mypy_cache/
