@@ -17272,3 +17272,67 @@ key-record chain in-process, closing the SoD provenance residual + simplifying d
 GL-03-refine (request-path audit fail-closed + the test-fixture updates it requires). Both are
 deployment-gated, not exploitable. Otherwise the open tracks are unchanged: the operator-locus
 governance deployment (GOVERNANCE_DEPLOYMENT.md) and the VL-108 pre-exposure items 3-7. G5 NOT-MET.
+
+### VL-125 - 2026-07-01 - T-recruiting: private-invite red-team pack + public one-page site + non-monetary recognition model authored (no code/canon/test/verification change)
+
+Recruiting / publication assets for the G5 external-validation engagement (pre-exposure item 6)
+were authored and committed at build 816beb8; this entry is the STATE + ledger close. NO
+IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof change - the test suite is unaffected.
+This is NOT a verification event; it records the authoring of external-facing recruiting material
+and its honest-scope framing, per the close protocol's continuity requirement.
+
+#### What was authored
+- site/index.html (NEW): a self-contained one-page public site - features, technologies, the
+  four-node live surface (gate/target/authz/pub), canon v0.9.8.4 (G(I) = AC^3 ^ T^26 ^ CCS), the
+  CURRENT Zenodo record 10.5281/zenodo.20751592, and the red-team challenge. Carries the honest-
+  scope note (no external validation yet; G5 is the open finish line).
+- deploy/PRIVATE_INVITE_PROGRAM.md (NEW): platform-neutral, invite-only program pack (scope, rules,
+  recognition model, SLA, vetting, safe harbor, doc inventory), replacing the YesWeHack-specific pack.
+- deploy/SOLICITOR_INTAKE_CHEATSHEET.md (NEW): operator cheat sheet - what to give a researcher who
+  solicits at security@elyon-sol.io, in gated order (public vs gated buckets, vetting, signed
+  authorization, then the briefing pack), plus a reply template, a never-send list, and curated
+  where-to-post venues.
+- deploy/BREAK_IT.md + deploy/RED_TEAM_OUTREACH.md: the reward section revised from a CASH bounty to
+  a NON-MONETARY recognition/ownership model (permanent named ledger entry, Zenodo co-credit + ORCID,
+  CVE where applicable, invited fix-authorship, a founding red-team seat, and a team creative-
+  ownership / co-maintainer path).
+
+#### Decisions recorded this session
+- The reward model is now recognition + ownership, NOT cash (author decision).
+- The engagement is PRIVATE, invite-only, run directly by the team - NO bug-bounty platform. Entry is
+  a solicitation to security@elyon-sol.io, then vetting + a signed Authorization-to-Test. YesWeHack
+  is retired (deploy/YESWEHACK_PROGRAM.md removed).
+- .gitignore line 175 '/site' (an inherited mkdocs build-output ignore) was commented out so the
+  published site source under site/ is trackable - the THIRD instance of the inherited-.gitignore
+  collision pattern (cf. VL-010, VL-017; a standing candidate audit of .gitignore remains open).
+
+#### Honest scope
+Author-authored recruiting material, NOT external validation and NOT a live launch. The program's
+HARD GATES (counsel-signed safe-harbor clause, a green live self-test over the four nodes, cert-
+renewal hooks, a signed Authorization-to-Test) are UNMET, so nothing is published or open. Publisher-
+key rotation (pre-exposure item 1) was already closed at VL-122. G5 (a blind external attacker on the
+live surface) remains NOT-MET; no readiness predicate goes green.
+
+#### Files affected
+site/index.html (NEW); deploy/PRIVATE_INVITE_PROGRAM.md (NEW); deploy/SOLICITOR_INTAKE_CHEATSHEET.md
+(NEW); deploy/BREAK_IT.md; deploy/RED_TEAM_OUTREACH.md; deploy/YESWEHACK_PROGRAM.md (REMOVED);
+.gitignore; STATE.md; EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, CANON/, MANIFEST/, TESTS/, EVIDENCE/proofs/, EVIDENCE/published_hashes.json -
+byte-identical.
+
+#### Environment note (Cowork sandbox)
+The recruiting assets landed natively at commit 816beb8 (build); this STATE + ledger entry is the
+follow-up close commit. Authored via the Cowork host file tools. The sandbox mount showed the VL-108-
+class artifacts during the session - a stale .git/index.lock and a wedged/ghost deploy/
+YESWEHACK_PROGRAM.md (stat present, open/unlink absent) - cleared natively before commit; no work lost.
+
+#### Citation discipline (VL-012)
+Does not cite its own hash.
+
+#### Next trajectory action
+Unchanged. G5 pre-exposure items 3-7 remain open: cert-renewal hooks (item 3), counsel sign-off on
+the safe-harbor clause (item 4, HARD GATE), set the engagement window + reporting channel (item 5),
+publish the pack + open the private invite (item 6 - the ASSETS are now drafted; publishing is gated
+on counsel + the live hard gates), and the parallel Phase-3.2 rebuild estimator (item 7). G5 NOT-MET.
