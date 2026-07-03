@@ -1,0 +1,31 @@
+Subject: Critique wanted: Ed25519 authorization tokens bound to a hash-pinned decision (canonicalization, signed-vs-hashed split, SoD)
+
+Hello,
+
+I'd appreciate this list's critique of a small authorization-token construction. It uses only standard primitives (Ed25519, SHA-256, canonical JSON) and claims no novelty in the primitives; my questions are about the construction. One line of context: it is a pre-execution authorization check that must decide, and later re-verify, whether a requested operation is permitted under an explicit, hash-pinned ruleset.
+
+The token records the inputs a decision was made under -- a version- and SHA-256-pinned authorization ruleset, the hash of the decision code, and the hash of the specification it implements -- plus the request and the per-condition results. Two derived fields:
+
+- decision_sha256 = SHA-256 over canonical JSON of the token MINUS {issue timestamp, issuer key id, issuer signature, expiry (not_after), per-issuance replay id}.
+- An Ed25519 signature over canonical JSON of the token MINUS {issuer signature, timestamp}. So not_after and the replay id are signed (tamper-evident) but are NOT inputs to decision_sha256 -- a signed, expiring token and its unsigned form share a decision hash, so a verifier can bind to the decision independently of issuance, while a captured token's lifetime cannot be extended.
+
+Where I'd welcome holes:
+
+1. Canonicalization. Sorted keys, no whitespace, us-ascii escaping. JSON canonicalization is a classic signature footgun (duplicate keys, number/Unicode normalization; cf. JCS / RFC 8785). Is this adequate to sign over, or should it be JCS or a non-JSON encoding?
+
+2. The signed-region vs hashed-region split, and the not_after asymmetry (signed but not hashed): any binding or downgrade attack I'm missing?
+
+3. Separation of duties for a second-party approval: a distinct approver key signs a single-use grant bound to decision_sha256 AND the pending-request id; approver eligibility is resolved from a signed key-record chain in which an "approver" role is distinct from "issuer," rather than a key_id != issuer_key_id comparison. Does the signed-role approach actually prevent an issuer from minting its own approval?
+
+4. Replay/freshness: single-use via a mandatory per-issuance id inside a signed expiry window, with a shared store across instances. Comments on the trust model and clock-skew handling welcome.
+
+Full construction and threat model (white-box review only; no external validation yet) are in an open-access preprint: https://doi.org/10.5281/zenodo.21147717
+
+Thanks,
+Justin C. LaPorte
+
+---
+NOTES (not part of the post):
+- Send as PLAIN TEXT from your subscribed address (HTML gets stripped/bounced).
+- Expect blunt, fast technical replies; reply INLINE (quote the point, answer under it).
+- Keep to this one focused thread; do not follow up with project links.

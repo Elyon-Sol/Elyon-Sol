@@ -1,0 +1,84 @@
+<svg viewBox="0 0 1584 396" width="1584" height="396" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0e15"/>
+      <stop offset="0.55" stop-color="#0b1119"/>
+      <stop offset="1" stop-color="#0e1626"/>
+    </linearGradient>
+    <radialGradient id="glowTeal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#57d0a3" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#57d0a3" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowBlue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3f7bd0" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#3f7bd0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3b57"/>
+      <stop offset="0.5" stop-color="#17223a"/>
+      <stop offset="1" stop-color="#0a1120"/>
+    </linearGradient>
+    <linearGradient id="stoneDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c2740"/>
+      <stop offset="1" stop-color="#0a1020"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1584" height="396" fill="url(#bg)"/>
+  <ellipse cx="560" cy="150" rx="540" ry="220" fill="url(#glowBlue)"/>
+  <circle cx="1290" cy="212" r="250" fill="url(#glowTeal)"/>
+
+  <!-- subtle divider -->
+  <line x1="1092" y1="86" x2="1092" y2="322" stroke="#22304a" stroke-width="1" opacity="0.6"/>
+
+  <!-- ===== Text block ===== -->
+  <text x="420" y="160" font-family="DejaVu Sans, Arial, sans-serif" font-weight="800" font-size="78" letter-spacing="3" fill="#eef2f9"><tspan>ELYON</tspan><tspan fill="#57d0a3">-SOL</tspan></text>
+  <rect x="422" y="178" width="258" height="3" fill="#57d0a3" opacity="0.9"/>
+  <text x="420" y="218" font-family="DejaVu Sans, Arial, sans-serif" font-size="24" fill="#aab6cc">Pre-execution admission control for AI actions.</text>
+  <text x="420" y="266" font-family="DejaVu Sans Mono, monospace" font-size="27" letter-spacing="1" fill="#66b2ff">G(I) = AC&#179; &#8743; T&#178;&#8310; &#8743; CCS</text>
+  <text x="420" y="308" font-family="DejaVu Sans, Arial, sans-serif" font-size="17.5" fill="#7f8ca6">Ed25519-signed &#183; human-in-the-loop oversight &#183; elyon-sol.io</text>
+
+  <!-- ===== Gargoyle guardian ===== -->
+  <g transform="translate(1140,48)">
+    <!-- gothic gate arch behind -->
+    <path d="M64,262 L64,120 Q64,52 150,34 Q236,52 236,120 L236,262" fill="none" stroke="#57d0a3" stroke-width="2" opacity="0.30"/>
+    <path d="M86,262 L86,128 Q86,72 150,56 Q214,72 214,128 L214,262" fill="none" stroke="#66b2ff" stroke-width="1.4" opacity="0.16"/>
+
+    <!-- wings -->
+    <path d="M172,150 L206,96 L198,124 L246,104 L234,140 L286,132 L262,158 L300,168 L246,192 L192,184 L172,166 Z" fill="url(#stone)"/>
+    <path d="M128,150 L94,96 L102,124 L54,104 L66,140 L14,132 L38,158 L0,168 L54,192 L108,184 L128,166 Z" fill="url(#stone)"/>
+
+    <!-- tail -->
+    <path d="M176,254 Q216,258 226,230 Q221,246 206,252 L178,262 Z" fill="url(#stoneDark)"/>
+
+    <!-- ledge -->
+    <rect x="30" y="262" width="240" height="16" rx="2" fill="url(#stoneDark)"/>
+    <line x1="32" y1="263" x2="268" y2="263" stroke="#57d0a3" stroke-width="1" opacity="0.18"/>
+
+    <!-- body -->
+    <path d="M118,152 L182,152 L196,214 L176,264 L124,264 L104,214 Z" fill="url(#stone)"/>
+    <!-- arms resting on ledge -->
+    <path d="M112,158 L124,158 L120,262 L104,262 Z" fill="url(#stone)"/>
+    <path d="M188,158 L176,158 L180,262 L196,262 Z" fill="url(#stone)"/>
+    <!-- claws -->
+    <path d="M102,262 L106,270 L110,262 Z M110,262 L114,270 L118,262 Z" fill="url(#stoneDark)"/>
+    <path d="M180,262 L184,270 L188,262 Z M188,262 L192,270 L196,262 Z" fill="url(#stoneDark)"/>
+
+    <!-- head -->
+    <path d="M132,152 L168,152 L174,124 L162,100 L150,94 L138,100 L126,124 Z" fill="url(#stone)"/>
+    <!-- horns -->
+    <path d="M138,104 L127,68 L149,106 Z" fill="url(#stone)"/>
+    <path d="M162,104 L173,68 L151,106 Z" fill="url(#stone)"/>
+    <!-- brow shadow + snout -->
+    <path d="M150,130 L159,150 L141,150 Z" fill="#0a1020" opacity="0.55"/>
+    <!-- eyes (glowing) -->
+    <circle cx="141" cy="121" r="10" fill="#57d0a3" opacity="0.22"/>
+    <circle cx="159" cy="121" r="10" fill="#57d0a3" opacity="0.22"/>
+    <circle cx="141" cy="121" r="4.3" fill="#7dfcc4"/>
+    <circle cx="159" cy="121" r="4.3" fill="#7dfcc4"/>
+  </g>
+
+  <!-- gargoyle caption -->
+  <text x="1290" y="352" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-size="19" letter-spacing="5" fill="#d0d9e8">GARGOYLE</text>
+  <text x="1290" y="373" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="13.5" letter-spacing="0.5" fill="#8894a8">the admissibility-envelope guardian</text>
+</svg>

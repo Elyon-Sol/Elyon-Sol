@@ -148,7 +148,7 @@
     <div class="formula">G(I) = <b>AC³</b> ∧ <b>T²⁶</b> ∧ <b>CCS</b></div>
     <div class="btns">
       <a class="btn primary" href="#redteam">Try to break it →</a>
-      <a class="btn ghost" href="https://doi.org/10.5281/zenodo.20751592" target="_blank" rel="noopener">Read the Zenodo record</a>
+      <a class="btn ghost" href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Read the Zenodo record</a>
     </div>
     <div class="badges">
       <span class="badge"><b>Fail-closed</b> · refuses on any doubt</span>
@@ -275,14 +275,14 @@
       </div>
       <div class="card">
         <h3>Zenodo — Enforcement Evidence Addendum</h3>
-        <div class="kv"><b>Latest (Rev 5)</b> <a href="https://doi.org/10.5281/zenodo.20751592" target="_blank" rel="noopener">10.5281/zenodo.20751592</a></div>
-        <div class="kv"><b>Author</b> Justin LaPorte · <a href="https://orcid.org/0000-0003-1811-1107" target="_blank" rel="noopener">ORCID</a></div>
-        <div class="kv"><b>Published</b> 18 Jun 2026 · Report · CC BY 4.0</div>
+        <div class="kv"><b>Latest (Rev 6)</b> <a href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">10.5281/zenodo.21107731</a></div>
+        <div class="kv"><b>Author</b> Justin LaPorte · <a href="https://orcid.org/0009-0008-3785-3089" target="_blank" rel="noopener">ORCID</a></div>
+        <div class="kv"><b>Published</b> 1 Jul 2026 · Report · CC BY 4.0</div>
         <div class="kv"><b>Code</b> AGPL-3.0 open-core · repository private, access on request</div>
-        <a class="btn ghost" style="margin-top:14px" href="https://doi.org/10.5281/zenodo.20751592" target="_blank" rel="noopener">Open the record →</a>
+        <a class="btn ghost" style="margin-top:14px" href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Open the record →</a>
       </div>
     </div>
-    <p class="muted" style="font-size:.85rem;margin-top:14px">Version chain: Rev 2 (zenodo.20387278) → Rev 3 (20600051) → Rev 4 (20740388) → <b>Rev 5 (20751592, current published)</b>. Rev 6 (governance-layer snapshot) is staged for release.</p>
+    <p class="muted" style="font-size:.85rem;margin-top:14px">Version chain: Rev 2 (zenodo.20387278) → Rev 3 (20600051) → Rev 4 (20740388) → Rev 5 (20751592) → <b>Rev 6 (21107731, current published — governance / human-oversight layer, suite 512/512)</b>.</p>
   </div>
 </section>
 
@@ -359,41 +359,4 @@
         <ul class="clean" style="margin-top:2px">
           <li>Mint a sample token: <span class="mono">POST /governed-call</span> on the gate, present it once to the target/sidecar to see a valid flow.</li>
           <li>Then attack the edges — drop the header, alter a field, replay, expire, re-point at another action/target, fabricate.</li>
-          <li>Use the envelope inspector CLI to confirm a break before submitting.</li>
-          <li>Report privately to <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>: break category, exact repro steps, and what you observed (status codes, <span class="mono">/received</span> count, headers).</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="note" style="margin-top:22px"><b>How access works.</b> This is a private, invite-only engagement — there is no public bug-bounty platform and no open sign-up. To take part, send a solicitation to <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>; qualified researchers and teams are then invited individually under a signed authorization. Invitations are issued only once the pre-launch gates are met (publisher-key rotation confirmed, counsel sign-off on the safe-harbor clause, a green live self-test over all four nodes, cert-renewal hooks in place, and a signed Authorization-to-Test on file).</div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="wrap">
-    <div class="fgrid">
-      <div style="max-width:44ch">
-        <div class="brand" style="margin-bottom:8px"><span class="dot"></span> Elyon-Sol</div>
-        <p class="muted" style="margin:0">A deterministic, fail-closed admission gate for actions. Canon v0.9.8.4 · AGPL-3.0 open-core.</p>
-        <p class="muted" style="margin-top:14px;font-size:.82rem"><b style="color:var(--muted)">Honest scope:</b> No external, third-party adversarial validation on a live public surface has yet been completed. Published enforcement evidence is author-driven observation; real external red-team validation is the open finish line — which is exactly what the challenge above exists to close.</p>
-      </div>
-      <div>
-        <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)">Contact</h3>
-        <p class="muted" style="margin:.2em 0"><a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a> — findings</p>
-        <p class="muted" style="margin:.2em 0"><a href="mailto:admin@elyon-sol.io">admin@elyon-sol.io</a> — access requests</p>
-        <p class="muted" style="margin:.2em 0"><a href="mailto:justin@elyon-sol.io">justin@elyon-sol.io</a> — author</p>
-      </div>
-      <div>
-        <h3 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)">Links</h3>
-        <p class="muted" style="margin:.2em 0"><a href="https://doi.org/10.5281/zenodo.20751592" target="_blank" rel="noopener">Zenodo record (DOI)</a></p>
-        <p class="muted" style="margin:.2em 0"><a href="https://orcid.org/0000-0003-1811-1107" target="_blank" rel="noopener">Author ORCID</a></p>
-        <p class="muted" style="margin:.2em 0">Repository — private, access on request</p>
-      </div>
-    </div>
-    <p style="margin-top:34px;font-size:.8rem">© 2026 Justin LaPorte · Document CC BY 4.0 · Core AGPL-3.0. Elyon-Sol guarantees an action is <i>authorized</i>, not that it is <i>wise</i>.</p>
-  </div>
-</footer>
-
-</body>
-</html>
+          <li>Use the envelope inspector CLI to confirm a break befor
