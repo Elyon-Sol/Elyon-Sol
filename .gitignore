@@ -259,3 +259,12 @@ deploy/tls/certs/
 /Justin_Laporte_Resume_*.docx
 /*Invention_Disclosure*
 /*IP_Commercialization*
+# Session-local working docs + utilities (VL-126 triage; not repo material)
+/SESSION_WORK_ASSESSMENT.md
+/TLS_BOOTSTRAP_DOSSIER.md
+/check_history.sh
+/disable_history.sh
+# Superseded Zenodo addendum drafts (committed versions live in docs/zenodo/*.md)
+/docs/ZENODO_REV*_ADDENDUM.md
+# Zenodo upload artifacts; the .md files are the tracked source
+/docs/zenodo/*.pdf
