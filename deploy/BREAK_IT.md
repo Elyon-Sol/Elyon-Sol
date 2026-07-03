@@ -105,7 +105,7 @@ description.
 
 ## How to submit
 
-Send to security@elyon-sol.io (or the program's intake on the bug-bounty platform):
+Send to security@elyon-sol.io:
 - the break category (target / sidecar / infrastructure),
 - exact reproduction steps (request(s), headers, order, timing),
 - what you observed (status codes, the `/received` count, response headers).

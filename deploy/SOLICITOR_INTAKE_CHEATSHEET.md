@@ -106,6 +106,9 @@ Post the public one-pager + Zenodo DOI and route everyone to security@elyon-sol.
 - Standards & policy circles: NIST AI RMF community, MLCommons, Partnership on AI.
 
 **Broad reach — as a teaser that routes to email, not open sign-up**
+- LinkedIn (PRIMARY channel, VL-127) — the challenge posted from the author's profile;
+  paste-ready drafts in `docs/outreach/linkedin_redteam_posts.md`. Replies route to
+  security@elyon-sol.io; no open sign-up.
 - A "Show HN" / Hacker News post of the one-pager + the Zenodo record; Lobste.rs; r/netsec
   (mod-permitting) and r/crypto; Mastodon infosec and X/Twitter appsec.
 - A short write-up on the project blog / Substack / Medium linking the challenge and the DOI,
