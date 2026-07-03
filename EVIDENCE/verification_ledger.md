@@ -17431,3 +17431,79 @@ model the pack was aligned to), VL-122 (Gate-1 closure + signed-mode facts), VL-
 hazard family + the pre-exposure list), VL-057 (referent-binding / verdict demotion), VL-012 (the
 hash rule), and VL-010/VL-017 (the .gitignore pattern contrast). It cites the two build commits
 685a907 and a2c9f82; it does not cite its own hash.
+
+---
+
+### VL-127 - 2026-07-03 - T-recruiting: channel re-alignment - no bug-bounty platform; the site disclaimer + LinkedIn posts are the solicitation channels; residual platform/cash references purged; LinkedIn drafts authored
+
+#### Decision recorded (author, this session)
+No bug-bounty platform will be engaged for the G5 red-team recruiting - YesWeHack was
+retired at VL-125, and HackerOne / Bugcrowd / Intigriti (still recommended as "Best fit"
+in the pre-VL-127 outreach doc) are now explicitly NOT used. The solicitation channels
+are: (a) the public one-page site, whose engagement/disclaimer block (committed at
+VL-125/40fb5e6) already carries the private invite-only format, the safe-harbor line,
+the scope/rules, and the security@elyon-sol.io intake; and (b) LinkedIn posts from the
+author's profile. All channels route to the same gated intake + vetting + signed
+Authorization-to-Test.
+
+#### What changed (build a8ae52b)
+- deploy/RED_TEAM_OUTREACH.md REWRITTEN: a channel preamble (private/invite-only, the two
+  channels, the intake path); section A's subject de-cashed ("Paid short engagement" ->
+  "Short invited engagement") and its "Compensation: [$X / negotiable]" replaced with the
+  VL-125 recognition/ownership model inline; section B retitled "(private, invite-only -
+  no platform)" (scope/focus/boundaries/recognition text unchanged); section C's
+  "compensation agreed" -> "recognition terms agreed"; section D now leads with LinkedIn
+  (PRIMARY) + the public site, keeps GitHub/conferences, r/netsec/OWASP/Discords, and
+  Upwork/Toptal cold-briefing, and closes with an explicit NOT-used note naming the
+  platforms (the only remaining platform-name mention in the recruiting assets, and it is
+  negative). REPAIRS a pre-existing COMMITTED defect: the prior blob ended mid-word
+  ("- Upwork / Toptal - c", no trailing newline) - the chat-paste-eats-content family,
+  present since the file's VL-107-era commit and unnoticed until this scan.
+- deploy/BREAK_IT.md: the submission line drops "(or the program's intake on the
+  bug-bounty platform)" - security@elyon-sol.io is the single intake.
+- deploy/SOLICITOR_INTAKE_CHEATSHEET.md: the broad-reach venue list now leads with
+  LinkedIn as the PRIMARY channel, pointing at the drafts file.
+- NEW docs/outreach/linkedin_redteam_posts.md: three paste-ready drafts - Post 1 the
+  challenge (claim-to-disprove verbatim from the site, recognition model, intake, DOI
+  10.5281/zenodo.21107731), Post 2 mission-aligned for the AI-governance/safety audience
+  (leads with the honest no-external-validation-yet status as the reason for the ask),
+  Post 3 a short reshare. Each leads with the cheatsheet's three-lead rule; the file
+  carries a publishing-is-GATED banner (PHASE1 gates incl. the counsel HARD GATE),
+  [SITE URL] fill-fields, and a comment/reply discipline section per artifact 29 4.4
+  (answer operational questions only; never explain the design or hint at attacks; no
+  scope in comments; never imply external validation exists until a G5 referent is
+  ledgered).
+
+#### Honest scope
+NO IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof change; the suite is
+unaffected. This is a channel DECISION plus author-authored assets, NOT external
+validation and NOT a launch: nothing has been posted anywhere; the PHASE1 hard gates
+(counsel-signed safe harbor, in-window green self-test, cert hooks, signed
+Authorization-to-Test) remain unmet; pre-exposure items 3-7 remain open as ordered in
+STATE.md. G5 remains NOT-MET; no readiness predicate goes green. A residue scan of
+deploy/ + site/ + docs/outreach/ at the build commit confirms the only platform-name
+mention left in the recruiting assets is the explicit NOT-used note.
+
+#### Files affected
+deploy/RED_TEAM_OUTREACH.md; deploy/BREAK_IT.md; deploy/SOLICITOR_INTAKE_CHEATSHEET.md;
+docs/outreach/linkedin_redteam_posts.md (NEW); STATE.md; EVIDENCE/verification_ledger.md
+(this entry).
+
+#### Files NOT affected
+site/index.html (its disclaimer/engagement block was already aligned - verified, not
+changed); all of IMPLEMENTATION/, CANON/, MANIFEST/, TESTS/, EVIDENCE/proofs/,
+EVIDENCE/published_hashes.json - byte-identical.
+
+#### Environment note (Cowork sandbox)
+Same session as VL-126; the same tmpfs-staged plumbing route was used (the mount still
+serves stale-length reads after host edits), and every committed blob hash-verified
+against the staged bytes (all MATCH). The sandbox cannot push: HEAD is now FIVE commits
+ahead of origin/main (685a907, a2c9f82, 56b1ea9, a8ae52b, and this close). The AUTHOR
+verifies natively and pushes; pushing is the first task of any session that resumes
+before it lands.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-126. Cites VL-125 (the private-invite/recognition model this
+completes), VL-108 (mount hazard family), VL-107 (the era of the repaired truncation),
+VL-057 (no-verdicts-shown rule carried into the drafts), and artifact 29 4.4 (the
+no-coaching discipline). Cites the build commit a8ae52b; does not cite its own hash.
