@@ -17336,3 +17336,98 @@ Unchanged. G5 pre-exposure items 3-7 remain open: cert-renewal hooks (item 3), c
 the safe-harbor clause (item 4, HARD GATE), set the engagement window + reporting channel (item 5),
 publish the pack + open the private invite (item 6 - the ASSETS are now drafted; publishing is gated
 on counsel + the live hard gates), and the parallel Phase-3.2 rebuild estimator (item 7). G5 NOT-MET.
+
+---
+
+### VL-126 - 2026-07-03 - T-bookkeeping close-repair + T-external Phase-3.2 asset: the 40fb5e6 close repaired (pre-launch pack landed, COPYRIGHT_HEADER retired, session-local files ignored) + the rebuild-estimator commissioning brief authored
+
+#### What the resume found (close-protocol invariant violated)
+- Commit 40fb5e6 (2026-07-03, native: preprint md+PDF, LinkedIn profile + Gargoyle banner, Rev6
+  Zenodo post, outreach drafts (metzdowd, MCP), ORCID correction, site Rev6 DOI update) landed
+  AFTER the VL-125 close with NO STATE.md update and NO ledger entry, and the tree was left dirty:
+  docs/COPYRIGHT_HEADER.txt deleted-on-disk but tracked, and 14 untracked files from the
+  2026-06-18/19 native sessions.
+- The apparent 6-file "modified" set was the VL-108-class mount artifact (stale index + truncated
+  mount reads), ruled out per SESSION_PROTOCOL environment rule 2: the host files match HEAD
+  (verified via the host file tools - .gitignore's full tail present; STATE.md tail matches the
+  HEAD blob). The index was rebuilt from HEAD via a tmpfs GIT_INDEX_FILE; nothing was discarded.
+- NEW artifact VARIANT recorded: after host-tool edits, the mount served reads CAPPED AT THE
+  PRE-EDIT byte length with the new content mixed in - neither pure-stale nor pure-truncated
+  (grep found new strings while wc -c reported the old size and tails were mangled). Consequence:
+  no git add through the mount; both build commits were assembled from tmpfs-staged exact content
+  via plumbing (hash-object -w + update-index --cacheinfo + write-tree + commit-tree +
+  update-ref), per environment rule 5, and every committed blob was hash-verified against the
+  staged bytes (all MATCH).
+
+#### What landed (close-repair build, commit 685a907)
+- deploy/AUTHORIZATION_TO_TEST.md, deploy/SAFE_HARBOR_CLAUSE.md, deploy/PHASE1_PRELAUNCH_RUNBOOK.md
+  COMMITTED. These were already referenced by the COMMITTED deploy/PRIVATE_INVITE_PROGRAM.md doc
+  inventory (rows naming AUTHORIZATION_TO_TEST and SAFE_HARBOR_CLAUSE) - i.e., HEAD carried broken
+  references until this commit. Their stale YesWeHack-era references were updated to the VL-125
+  private-invite model (platform/channel lines; the paste target for the counsel-approved clause is
+  now PRIVATE_INVITE_PROGRAM.md's SAFE HARBOR section; the launch line now points at
+  SOLICITOR_INTAKE_CHEATSHEET.md; researcher acceptance recorded by counter-signature or written
+  acceptance instead of platform terms).
+- deploy/PHASE1_PRELAUNCH_RUNBOOK.md annotated with honest STATUS notes: Gate 1 (publisher-key
+  rotation) CLOSED at VL-122 (key id pub-2026-06-18; kept for the method of record); Gate 3 green
+  runs on record (attack suite exit 0 at VL-108, version-matched signed-mode re-run + sidecar live
+  ALLOW/DENY at VL-122; REAL_TRANSPORT flipped at VL-108) with an explicit re-run-inside-the-window
+  requirement.
+- docs/design/governance_layer_KICKOFF.md COMMITTED (the session-kickoff companion to the committed
+  governance_layer_design.md; the governance build it kicked off completed at VL-113..VL-120).
+- docs/COPYRIGHT_HEADER.txt deletion COMMITTED - the AUTHOR confirmed this session the deletion was
+  intentional.
+- .gitignore: 10 session-local/superseded files added to the deliberate private section
+  (SESSION_WORK_ASSESSMENT.md, TLS_BOOTSTRAP_DOSSIER.md, check_history.sh, disable_history.sh,
+  docs/ZENODO_REV{4,5,6}_ADDENDUM.md drafts - superseded by the committed docs/zenodo/*.md - and
+  docs/zenodo/*.pdf upload artifacts). This is the deliberate private-section pattern, NOT a fourth
+  instance of the inherited-.gitignore collision pattern (VL-010/VL-017/VL-125).
+
+#### What was authored (Phase-3.2 asset half, commit a2c9f82)
+- NEW deploy/REBUILD_ESTIMATOR_BRIEF.md: the commissioning pack for ext-readiness Gate 3
+  (docs/methodology/external_verification_readiness.md) / execution-plan Phase 3.2 (artifact 29).
+  Carries: the cost question verbatim (assemble the equivalent admission-and-attestation substrate
+  from OPA + SPIFFE + a PKI, or the estimator's own component judgment) BOUND to whether it SHIPPED,
+  not to an estimate (a model's "1-2 months" is named non-evidential per VL-057); the stake-free
+  eligibility filter with the explicit contrast that blindness is Gate 4's filter, not Gate 3's,
+  plus the do-not-show-convergence-verdicts rule (VL-057); a functional-equivalence target bound to
+  falsifiable_claim_sheet.md Section 1 rows 1-8 (fail-closed pinned admission; signed action-bound
+  attestation; replay/freshness; drift refusal; enforcement locus + positive control); the report
+  deliverable (shipped-or-not, cost actuals, per-item friction, verdict, up-front estimator-declared
+  time-box); both-verdicts-acceptable framing; verbatim ledgering + the VL-125 recognition model;
+  and an author-fills engagement-terms block (estimator, time-box, compensation TBD, channel).
+
+#### Honest scope
+NO IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof change; the test suite is unaffected
+(the session's diff against 40fb5e6 is deploy assets, docs, .gitignore, STATE.md, and this ledger
+entry only). These are author-authored ASSETS, not referents: ext-readiness Gate 3 remains NOT MET
+until a stake-free person ships the report (whatever it concludes); the pre-exposure items 3-6
+remain open (item 3 cert hooks, item 4 counsel HARD GATE, item 5 window/channel, item 6 publish);
+G5 (a blind external attacker on the live surface) remains NOT-MET; no readiness predicate goes
+green.
+
+#### Files affected
+deploy/AUTHORIZATION_TO_TEST.md (NEW), deploy/SAFE_HARBOR_CLAUSE.md (NEW),
+deploy/PHASE1_PRELAUNCH_RUNBOOK.md (NEW), docs/design/governance_layer_KICKOFF.md (NEW),
+deploy/REBUILD_ESTIMATOR_BRIEF.md (NEW), docs/COPYRIGHT_HEADER.txt (REMOVED), .gitignore,
+STATE.md, EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, CANON/, MANIFEST/, TESTS/, EVIDENCE/proofs/, EVIDENCE/published_hashes.json
+- byte-identical to 40fb5e6.
+
+#### Environment note (Cowork sandbox)
+Ghost .git/HEAD.lock and 235 orphaned .git/objects tmp_obj_* files (debris of the mount's
+unlink-block during plumbing) were cleaned after granting file-delete; a Jul-1 ghost index.lock
+resists unlink (rule-4 wedge) but does not block the tmpfs-index commit route - a Cowork restart
+clears it. The sandbox has no GitHub credentials: HEAD is three commits ahead of origin/main
+(685a907, a2c9f82, and this close commit). The AUTHOR verifies the blobs natively (git cat-file -s
+/ content spot-checks vs this entry's inventory) and pushes; until then the at-rest invariant is
+knowingly open, and pushing is the FIRST task of any session that resumes before it lands.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-125. This entry cites VL-125 (the private-invite model and recognition
+model the pack was aligned to), VL-122 (Gate-1 closure + signed-mode facts), VL-108 (the mount
+hazard family + the pre-exposure list), VL-057 (referent-binding / verdict demotion), VL-012 (the
+hash rule), and VL-010/VL-017 (the .gitignore pattern contrast). It cites the two build commits
+685a907 and a2c9f82; it does not cite its own hash.
