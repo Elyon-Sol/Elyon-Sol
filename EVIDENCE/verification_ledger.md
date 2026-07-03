@@ -17507,3 +17507,70 @@ Prior substantive entry: VL-126. Cites VL-125 (the private-invite/recognition mo
 completes), VL-108 (mount hazard family), VL-107 (the era of the repaired truncation),
 VL-057 (no-verdicts-shown rule carried into the drafts), and artifact 29 4.4 (the
 no-coaching discipline). Cites the build commit a8ae52b; does not cite its own hash.
+
+---
+
+### VL-128 - 2026-07-03 - LIVE currency sweep: all four public nodes verified current; live attack suite green version-matched at 3343e32 (author self-test, NOT external validation)
+
+#### What was done
+A four-node currency check of the live public surface, run from the author's laptop against
+the deployed Hetzner nodes, prompted by the GitHub Ideas solicitation post (the author wanted
+to confirm the surface is current before any responder arrives). Four checks:
+
+1. TRANSPORT + CERTS (openssl s_client per node). All four up; Let's Encrypt leaf certs valid,
+   CN-matched, notBefore 2026-06-16, notAfter 2026-09-14 (~73 days out at check time):
+   gate.elyon-sol.io:8443, target.elyon-sol.io:9443, pub.elyon-sol.io:9143, authz.elyon-sol.io:9243.
+2. SERVICE LIVENESS (curl). authz /healthz -> 200; target /received -> 200;
+   pub /published_hashes.json -> 200; gate /governed-call -> 405 (POST-only route answering,
+   i.e. the app is up).
+3. SIGNED-RECORD CURRENCY. pub /published_hashes_signed.json validated:
+   publisher_key_id = pub-2026-06-18 (the VL-122 rotated key; old key retired), serial present,
+   issued_at 2026-07-03T20:41:38Z, not_after 2026-07-03T20:46:38Z -> FRESH at check time. The
+   ~5-minute window confirms a LIVE publisher actively re-signing on a schedule, not a stale
+   committed file.
+4. LIVE ATTACK SUITE (EVIDENCE/proofs/attack_suite_live_runner.py over real TLS). GREEN, exit 0:
+   positive_control HONORED; unattested -> REF_VERIFY_ENVELOPE_ABSENT; forged_signature ->
+   REF_VERIFY_SIGNATURE_INVALID; replay -> REF_VERIFY_REPLAY; rebind_tool / rebind_args /
+   target_url_swap -> REF_VERIFY_BINDING_MISMATCH. 6/6 request-tampering attacks defeated over
+   real cross-host transport + positive control honored.
+
+#### Version-matching (a process finding, resolved)
+The first run of the live runner FAILED (KeyError 'envelope' on the positive control) because the
+laptop checkout was on main (HEAD), whose manifest hashes to ac18ac78... (HIGH_IMPACT:[] added at
+VL-115), while the DEPLOYED gate runs 3343e32, whose manifest hashes to a21dea8b... . interaction_for
+embeds the manifest pin from the local checkout, so a HEAD-pinned request is correctly REFUSED by
+the 3343e32 gate (403, no envelope) -> the KeyError. This is the gate doing its job, not a defense
+failure. Resolved per VL-122's "run version-matched" rule via a detached worktree at 3343e32
+(`git worktree add ../elyon-live 3343e32`), from which the suite ran green. LESSON (reinforces
+VL-122): the live runner MUST be run from a checkout at the deployed commit; a manifest/schema skew
+between the runner and the deployed gate surfaces as a positive-control failure, not a silent pass.
+The runner by design does NOT drive the stale/drifted_state cases over the generic HTTP adapter
+(they stay covered in-process); this run covers the request-tampering class over real transport.
+
+#### Honest scope
+WHITE-BOX AUTHOR SELF-TEST confirming (a) the four nodes are current and (b) the defenses hold over
+real transport at the deployed commit - the same class of evidence as VL-108 and VL-122. This is
+NOT external validation and NOT a G5 referent (GR-3/VL-057): the author ran their own scripted suite
+against their own surface. No readiness predicate changes; REAL_TRANSPORT was already green at VL-108.
+G5 (a blind external attacker on the live surface) remains NOT-MET. The GitHub Ideas post is a
+solicitation, not an engagement; the pre-exposure HARD GATES (counsel-signed safe harbor above all,
+plus the in-window self-test + cert-renewal hooks + signed Authorization-to-Test) remain UNMET, so
+no responder should be pointed at the live hosts yet.
+
+#### Files affected
+STATE.md (currency line + a Current-verified-state bullet), EVIDENCE/verification_ledger.md (this
+entry). NO IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof change; the suite is unaffected;
+no live-run log file is committed (the run was on the author's laptop; this entry is the record).
+
+#### Environment note (Cowork sandbox)
+This entry was assembled in the same Cowork session via the tmpfs-staged plumbing route (the mount
+serves stale-length reads after host edits); the committed blobs hash-verify against the staged
+bytes. The sandbox cannot push; HEAD is now SIX commits ahead of origin/main (685a907, a2c9f82,
+56b1ea9, a8ae52b, a7c3593, and this entry). The AUTHOR verifies natively and pushes; pushing is the
+first task of any session that resumes before it lands.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-127. Cites VL-122 (the rotated key pub-2026-06-18 + the version-matched
+run rule + the byte-anchor->signed correction), VL-108 (the prior live green + REAL_TRANSPORT flip),
+VL-083 (the live-runner + REAL_TRANSPORT predicate it exercises), VL-115 (the manifest change behind
+the version skew), and VL-057/GR-3 (the not-external-validation discipline). Does not cite its own hash.
