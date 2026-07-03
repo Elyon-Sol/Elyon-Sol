@@ -17574,3 +17574,67 @@ Prior substantive entry: VL-127. Cites VL-122 (the rotated key pub-2026-06-18 + 
 run rule + the byte-anchor->signed correction), VL-108 (the prior live green + REAL_TRANSPORT flip),
 VL-083 (the live-runner + REAL_TRANSPORT predicate it exercises), VL-115 (the manifest change behind
 the version skew), and VL-057/GR-3 (the not-external-validation discipline). Does not cite its own hash.
+
+---
+
+### VL-129 - 2026-07-03 - SITE honest-scope cleanup: four public-site overclaims/contradictions corrected in the repo-canonical site/index.html; live WordPress copy still to update
+
+#### What prompted it
+A review of the LIVE public site (https://elyon-sol.io) against repo state. First finding: the
+live site is a WordPress deployment (WordPress 6.9.4), a SEPARATE artifact from the committed
+site/index.html - so the public-facing claims live OUTSIDE the repo's ledgered honesty controls
+and had drifted from them. The committed site/index.html shared the same copy and the same four
+problems, so it was corrected here as the canonical source; the same four edits still have to be
+applied in the WordPress editor (not repo-reachable from this session).
+
+#### The four items (all corrected in build 01aef29)
+1. OVERCLAIM (legal): the engagement block read "Safe harbor - Good-faith research within scope is
+   authorized (counsel-finalized clause)". deploy/SAFE_HARBOR_CLAUSE.md is headed "DRAFT for counsel
+   review (HARD GATE)" and STATE item 4 (counsel sign-off) is UNMET. A public "counsel-finalized"
+   claim is false against our own record and a reliance risk. Corrected to: authorized under a
+   clause "currently in counsel review - not yet finalized. No invitations issue and no traffic is
+   authorized until it is signed."
+2.+3. MISSING honest-scope + live-vs-built drift: the site advertised the human-oversight governance
+   (202 PENDING_APPROVAL), mTLS non-bypass, and "512 tests green" alongside "these are the only hosts
+   in scope", implying the live nodes enforce them. Per VL-122 the live four nodes run 3343e32
+   (pre-governance, ~394-399 tests); the governance/mTLS/512 build is on side refs, NOT deployed. And
+   no external validation exists (GR-3). Added a "Honest scope" paragraph in the live-surface section:
+   Elyon-Sol has not yet been externally validated (this challenge is how we seek it; a break would be
+   the FIRST such result); the public nodes enforce the cryptographic admission core (signing,
+   freshness, single-use, binding); the governance + mTLS layers are implemented/tested in the
+   codebase but NOT deployed on these public nodes and are OUT OF SCOPE for the live challenge. This
+   also corrects a VL-125 overclaim: its entry said site/index.html "carries the honest-scope note"
+   - it did NOT until this commit.
+4. CONTRADICTION: the canon block read "AGPL-3.0 open-core - repository private, access on request",
+   contradicting the repeated "AGPL-3.0 open-core" badge (and the .gitignore's "repo is public"
+   comment). Changed to "source available on request", removing the internal contradiction WITHOUT
+   asserting a GitHub visibility this session cannot confirm. FLAG (not silently resolved): AGPL-3.0
+   sect.13 requires network-service source availability to users of the deployed service; whether
+   "on request" satisfies it for the live surface is a counsel question, recorded here.
+
+#### Honest scope
+Author-side site copy correction. NO IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof
+change; the suite is unaffected. Only site/index.html + STATE + this entry changed. This is a
+honesty/currency cleanup, not a capability or validation event; no readiness predicate changes; G5
+remains NOT-MET. ACTION STILL OPEN (author-locus, not repo-reachable): apply the same four edits to
+the live WordPress site so the public copy matches the corrected canonical source; until then the
+live site still carries the four items.
+
+#### Files affected
+site/index.html; STATE.md; EVIDENCE/verification_ledger.md (this entry). site/index.html is the
+repo-canonical source; the WordPress deployment is a separate artifact updated out-of-band.
+
+#### Files NOT affected
+All of IMPLEMENTATION/, CANON/, MANIFEST/, TESTS/, EVIDENCE/proofs/ - byte-identical.
+
+#### Environment note (Cowork sandbox)
+Same session/route as VL-126..128 (tmpfs-staged plumbing; mount serves stale-length reads); the
+committed site blob hash-verified against the staged bytes (MATCH). The sandbox cannot push; HEAD is
+now EIGHT commits ahead of origin/main (685a907, a2c9f82, 56b1ea9, a8ae52b, a7c3593, 12a3bb4,
+01aef29, and this close). The AUTHOR verifies natively and pushes; pushing is the first task of any
+session that resumes before it lands.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-128. Cites VL-122 (the live nodes run 3343e32, governance not deployed),
+VL-125 (the recruiting site it corrects + the honest-scope-note overclaim), and GR-3/VL-057 (the
+not-externally-validated discipline the added note restores). Does not cite its own hash.
