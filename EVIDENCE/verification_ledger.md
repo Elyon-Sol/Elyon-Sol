@@ -17716,3 +17716,63 @@ Prior substantive entry: VL-129. Cites VL-128 (the deployed-commit manifest-pin 
 built to avoid), VL-122 (the live nodes run 3343e32), VL-097 (the envelope_inspector the self-adjudication
 doc packages), artifact 29 4.4 (the no-coaching rule) and VL-057 (the gated-pack / no-verdicts discipline).
 Does not cite its own hash.
+
+---
+
+### VL-131 - 2026-07-03 - SITE build-out of the conversion kit + repair of a pre-existing site/index.html truncation
+
+#### Two things happened
+1. The VL-130 recruiting conversion kit was folded into the public site source site/index.html.
+2. A PRE-EXISTING truncation of that file was discovered and repaired.
+
+#### The truncation (root cause)
+site/index.html had been committed TRUNCATED since at least 40fb5e6 (the 2026-07-03 native session,
+before this Cowork session): the blob ended mid-word at "...confirm a break befor" with NO remainder
+of the how-to-start/submit list, NO closing </div>/</section> tags, NO <footer>, and NO </body></html>.
+This is the VL-108/VL-126-class mount-truncation artifact baked into a native commit. It was carried
+forward invisibly through VL-129 (honest-scope cleanup) and 0a4d605 (the quickstart), because those
+edits only touched the MIDDLE of the file and preserved the truncated tail. Confirmed pre-existing:
+git cat-file -p 40fb5e6:site/index.html ends at the identical byte; the only two "footer" matches in
+the file were the CSS rules footer{...}/footer a{...}, not an actual element.
+
+#### What was built (0a4d605, then b21ecc2)
+- 0a4d605: the "Break it in 60 seconds" section (id=tryit) between #surface and #canon - a copy-paste
+  curl walkthrough (mint -> positive control -> five refusable attacks) carrying the PRECOMPUTED
+  args_sha256 (ee0885...8e9d) and the DEPLOYED-manifest pins (version 1.0,
+  sha a21dea8b...23b8 from 3343e32) so the mint call actually succeeds against the live gate; a
+  pre.code / .step code-block CSS; a nav link; and the hero primary CTA retargeted from #redteam to
+  #tryit (send people to a runnable attack, not a wall of text).
+- b21ecc2: REPAIRED the truncation AND folded in the rest of the kit: completed the submit list with
+  the inspector SELF-ADJUDICATION ("the tool decides, not us" + the one-command inspect) and a submit
+  line; added an honest-scope note; a Wall-of-Fame section (id=wall) - a first-blood/CTF board
+  ("nobody has broken it yet", the awaiting row, honorable-mentions note); the why-trust-this honesty
+  block as a claimbox right after the "claim to disprove"; a real <footer> (project/contact links + the
+  "no external validation yet - G5 is the open finish line" line); and #tryit/#wall nav links. The
+  document now closes </body></html> and EVERY tag balances (HTMLParser residual 0; section 9/9,
+  div 127/127, ul 3/3, table 2/2, footer 1/1, body 1/1, html 1/1) - vs the pre-repair unclosed state.
+
+#### Honest scope
+NO IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof change; the suite is unaffected. These
+are public recruiting assets, NOT external validation. CRITICAL DISTINCTION: site/index.html is the
+REPO-CANONICAL source; the LIVE site at elyon-sol.io is a SEPARATE WordPress deployment - these repo
+edits do NOT change what visitors see until the content is applied in the WordPress editor. G5
+(a blind external attacker) remains NOT-MET.
+
+#### Files affected
+site/index.html (0a4d605 + b21ecc2); STATE.md; EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, CANON/, MANIFEST/, TESTS/, EVIDENCE/proofs/ - byte-identical.
+
+#### Environment note (Cowork sandbox)
+Same tmpfs-staged plumbing route; the site blob hash-verified against the staged bytes at each build
+(MATCH), and the on-disk working tree was resynced from HEAD after commit. The truncation being
+pre-existing (in 40fb5e6, a native commit) shows the mount hazard has bitten the AUTHOR's native
+workflow too, not only the sandbox - a reason to prefer the plumbing+verify discipline generally. The
+sandbox cannot push; after VL-129's push HEAD==origin, and VL-130 (2) + VL-131 (0a4d605, b21ecc2, this
+close) leave HEAD FIVE commits ahead of origin/main. The AUTHOR verifies natively and pushes.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-130. Cites VL-130 (the kit it renders), VL-128/VL-122 (the deployed 3343e32
+manifest pins baked into the quickstart), VL-129 (the honest-scope edits it builds past), and
+VL-108/VL-126 (the mount-truncation family this instance belongs to). Does not cite its own hash.
