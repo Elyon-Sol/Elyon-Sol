@@ -141,6 +141,7 @@
       <a href="#tryit">Break it in 60s</a>
       <a href="#canon">Canon &amp; Zenodo</a>
       <a href="#redteam">Red-Team Challenge</a>
+      <a href="#wall">Wall of Fame</a>
     </nav>
   </div>
 </header>
@@ -366,6 +367,10 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
       <b>The claim to disprove.</b> Without the gate's signing key, there is no request you can craft that (a) makes the target perform an action, or (b) makes the sidecar answer <code>ALLOW</code>, unless the token in the <code>X-Elyon-Sol-Envelope</code> header is <b>validly signed</b>, <b>currently valid</b>, <b>bound to exactly that action and target</b>, and <b>not previously used</b>. Using a real token once, as intended, is not a break — that is it working.
     </div>
 
+    <div class="claimbox" style="border-left-color:var(--acc2);margin-top:14px">
+      <b>Why trust this.</b> We won't oversell it — that's the point. It <b>hasn't been externally validated, and we say so</b>: every test to date is ours, and internal evidence is not validation. The <b>tool adjudicates, not the author</b> — a read-only inspector reads your token the way the target does and rules on whether you broke it. The claim is <b>one falsifiable line</b>, and we publish the boundaries we do <i>not</i> defend so we can't move the goalposts. It's all on the public record: formally specified, open source (AGPL), a citable DOI, and a ledger that logs our own corrections.
+    </div>
+
     <div class="two" style="margin-top:24px">
       <div>
         <h3 style="font-size:1.05rem">What counts as a break</h3>
@@ -428,4 +433,51 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
         <ul class="clean" style="margin-top:2px">
           <li>Mint a sample token: <span class="mono">POST /governed-call</span> on the gate, present it once to the target/sidecar to see a valid flow.</li>
           <li>Then attack the edges — drop the header, alter a field, replay, expire, re-point at another action/target, fabricate.</li>
-          <li>Use the envelope inspector CLI to confirm a break befor
+          <li>Confirm a break with the inspector before you submit — <b>the tool decides, not us</b>: <span class="mono">python IMPLEMENTATION/envelope_inspector.py inspect token.json</span>. If it rates your token invalid, expired, replayed, or rebound and the target acted anyway, that gap is the finding — settled before we even reply.</li>
+          <li>Send it to <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>: the class (target / sidecar), the exact requests in order, and what you saw (status codes, the <span class="mono">/received</span> count). We reproduce, classify, and respond.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:24px"><b>Honest scope.</b> No outside party has broken — or independently validated — Elyon-Sol yet. This challenge is how we seek that; a confirmed break would be the first such result. A run that finds nothing is recorded as exactly that, never as "unbreakable."</div>
+  </div>
+</section>
+
+<!-- WALL OF FAME -->
+<section id="wall">
+  <div class="wrap">
+    <div class="eyebrow">Wall of fame</div>
+    <h2>Nobody has broken it yet <span class="live" style="margin-left:8px">open</span></h2>
+    <p class="lead">Every confirmed finding is recorded here permanently — by name or handle, your choice — and mirrored into the project's public verification ledger, the record of record. The first person to make the target act, or the sidecar answer ALLOW, on a call that must be refused takes first blood.</p>
+    <table class="rw" style="margin-top:18px">
+      <thead><tr><th>#</th><th>Finder</th><th>Date</th><th>Class</th><th>Finding</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">—</td><td class="muted">open</td><td class="muted">—</td><td class="muted">—</td><td class="muted">the first confirmed break lands here</td><td><span class="sev high">awaiting</span></td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:.85rem;margin-top:14px">Honorable mentions — real issues outside the core claim (defense-in-depth, doc bugs, infra observations) — are credited too. Self-adjudicate with the inspector, then email <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fgrid">
+    <div>
+      <div class="brand" style="margin-bottom:8px"><span class="dot"></span> Elyon-Sol</div>
+      <div class="muted" style="max-width:46ch;font-size:.85rem">A deterministic, fail-closed admission gate. Governance before intelligence. AGPL-3.0 open-core.</div>
+    </div>
+    <div>
+      <div class="muted" style="margin-bottom:6px">Project</div>
+      <div><a href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Zenodo record (DOI)</a></div>
+      <div><a href="#canon">Canon v0.9.8.4</a></div>
+      <div><a href="#tryit">Break it in 60 seconds</a></div>
+      <div><a href="#wall">Wall of fame</a></div>
+    </div>
+    <div>
+      <div class="muted" style="margin-bottom:6px">Contact</div>
+      <div><a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a></div>
+      <div class="muted" style="font-size:.8rem;margin-top:8px">No external validation yet — G5 is the open finish line.</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
