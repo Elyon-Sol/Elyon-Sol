@@ -17638,3 +17638,81 @@ session that resumes before it lands.
 Prior substantive entry: VL-128. Cites VL-122 (the live nodes run 3343e32, governance not deployed),
 VL-125 (the recruiting site it corrects + the honest-scope-note overclaim), and GR-3/VL-057 (the
 not-externally-validated discipline the added note restores). Does not cite its own hash.
+
+---
+
+### VL-130 - 2026-07-03 - T-recruiting: G5 conversion kit - seven paste-ready assets to convert public solicitation into an engaged blind external red-teamer
+
+#### Why
+The author confirmed the safe-harbor / Authorization-to-Test sign-off is in hand and is actively
+soliciting externally (GitHub Ideas post live). The remaining barrier to G5 is CONVERSION: a novel,
+unknown, no-cash target has a high activation cost for exactly the skilled, stake-free researchers
+G5 requires. This kit attacks the two barriers - friction (time-to-first-attempt) and suspicion
+(unknown-solo-challenge distrust) - without touching the honesty discipline.
+
+#### What was authored (build 60e7e0c)
+- deploy/BREAK_IT_IN_60_SECONDS.md: a no-signup, copy-paste curl quickstart against the LIVE public
+  surface. The interaction body carries a PRECOMPUTED args_sha256
+  (ee0885070ca8ca1ff7df3e53275c4cadb3fbf747f3e0ea380a002f8c69ab8e9d, = sha256 of canonical_json(
+  {"amount":100,"to":"acct-42"})) and the DEPLOYED manifest pins (version "1.0",
+  expected_manifest_sha256 a21dea8b79d459bd700ca44a30c2ca4a6efbee1447708cbc12c0bbb322d823b8) read from
+  3343e32 - the commit the live nodes run (VL-122/128) - so the mint call actually succeeds against
+  the live gate rather than 403-ing on a manifest-pin skew (the exact failure diagnosed in VL-128).
+  Shows the positive control, then five refusable attacks (absent / replay / forge / rebind / sidecar).
+- deploy/INSPECT_YOUR_BREAK.md: packages the read-only envelope_inspector CLI (inspect / reevaluate /
+  reconcile) as a one-command self-adjudicator, with the explicit adjudication rule (a finding = the
+  tool rates the token invalid AND the surface honored it). Removes the "the author will dismiss my
+  finding" barrier by making the TOOL the referent.
+- deploy/WALL_OF_FAME.md: a first-blood / CTF scoreboard ("nobody has broken it yet"), the capture
+  vs not-a-capture rules, mirrored to the ledger; converts the challenge from a features list into a
+  puzzle with bragging rights.
+- docs/outreach/target_list_and_referral.md: where the novelty-for-credit pools are (protocol/crypto/
+  authz researchers, CTF crews + university clubs, AI-safety niche), a 15-20-contact list template,
+  and template R (referral cold-mail) whose SECOND ask is a name ("who's the one person you'd point
+  at this?") plus template F (a voucher's forward).
+- docs/outreach/audience_pitches.md: three motivation-matched variants - university-CTF (puzzle +
+  resume), AI-safety (mission), early-career (portfolio/CVE/first) - with placement notes.
+- deploy/BREAK_IT_WEEK.md: a time-boxed event (pre-flight gates, run rules incl. the artifact-29 4.4
+  no-coaching discipline, honest close) with paste-ready announcement copy; frames a clean week as
+  the first bounded EXTERNAL-ATTEMPT referent, explicitly NOT proof of unbreakability.
+- docs/outreach/TRUST_THIS_CHALLENGE.md: the honesty-as-credibility lead block - concedes no external
+  validation, the tool adjudicates, the claim is falsifiable and narrow, it is all on the public
+  record - reusable across posts; reasoning captured (undersell lowers suspicion for stake-free pros).
+
+#### Access model (unchanged, made explicit)
+The ATTACKING surface is public and pokeable immediately (no signup) - the invite-only gate governs
+only the CREDITED engagement (reward + coordinated disclosure), entered at security@elyon-sol.io with
+vetting + the signed Authorization-to-Test. Every asset keeps the honest-scope line and the gated-pack
+/ no-coaching discipline (do not send the briefing pack, internal reviews, or cross-model verdicts to
+an un-vetted researcher; VL-057).
+
+#### Honest scope
+NO IMPLEMENTATION / CANON / MANIFEST / TESTS / EVIDENCE-proof change; the suite is unaffected and was
+INDEPENDENTLY re-verified this session (python -m pytest -> 512 passed on a clean sandbox extraction,
+the first time the count was checked against the code rather than carried from the ledger). These are
+recruiting ASSETS, not external validation and not a live event; nothing is posted or scheduled by
+this commit. G5 (a blind external attacker engaging the live surface) remains NOT-MET; no readiness
+predicate changes.
+
+#### Files affected
+deploy/BREAK_IT_IN_60_SECONDS.md (NEW), deploy/INSPECT_YOUR_BREAK.md (NEW), deploy/WALL_OF_FAME.md
+(NEW), deploy/BREAK_IT_WEEK.md (NEW), docs/outreach/target_list_and_referral.md (NEW),
+docs/outreach/audience_pitches.md (NEW), docs/outreach/TRUST_THIS_CHALLENGE.md (NEW), STATE.md,
+EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+All of IMPLEMENTATION/, CANON/, MANIFEST/, TESTS/, EVIDENCE/proofs/, site/index.html - byte-identical.
+
+#### Environment note (Cowork sandbox)
+Same session/route as VL-126..129 (tmpfs-staged plumbing; the mount serves stale/truncated reads after
+host edits - re-confirmed when the VL-126 working-tree files were found truncated at the session-close
+check and restored from HEAD). All seven blobs hash-verified against the on-disk files (MATCH). The
+sandbox cannot push; after VL-129's native push HEAD==origin was restored, and this build+close leaves
+HEAD TWO commits ahead of origin/main (60e7e0c build + this close). The AUTHOR verifies natively and
+pushes; pushing is the first task of any session that resumes before it lands.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-129. Cites VL-128 (the deployed-commit manifest-pin skew the quickstart is
+built to avoid), VL-122 (the live nodes run 3343e32), VL-097 (the envelope_inspector the self-adjudication
+doc packages), artifact 29 4.4 (the no-coaching rule) and VL-057 (the gated-pack / no-verdicts discipline).
+Does not cite its own hash.
