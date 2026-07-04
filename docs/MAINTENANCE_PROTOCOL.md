@@ -111,3 +111,48 @@ ACTIVE | SUPERSEDED | RETIRED
   routes belief toward (real-transport adversarial attack; a stake-free rebuild
   attempt) largely do not yet exist - `external_verification_readiness.md` records
   the project as NOT READY, the binding gate being the G5 real-transport floor.
+
+### GR-4 - The verification ledger is append-only and scoped to verification events
+- Date established: 2026-07-03
+- Originating record: commit-only. Per clause 1 below, adopting this rule is not a
+  verification event, so it takes NO VL entry - it is recorded in STATE.md and this
+  commit. The rule obeys itself on the way in.
+- Status: ACTIVE
+- Rule:
+  1. SCOPE. An action earns a `VL-N` entry ONLY if it verified, corrected, retracted,
+     or disputed a claim about the system against a PRIMARY SOURCE (canon, code, a
+     test/runner execution, a live-surface result, or an external referent).
+     Authoring (docs, recruiting, site copy), refactors, packaging, bookkeeping, and
+     environment/recovery notes are recorded in the git commit message and, if they
+     change current state, in STATE.md - NOT in the ledger. `git log` is the
+     authoritative record of what was done; STATE.md is current state; the ledger is
+     verification provenance only.
+  2. APPEND-ONLY. The ledger is never pruned, curated, renumbered, or edited for
+     length or aesthetics. Existing `VL-N` entries and their numbers are immutable:
+     they are cross-referenced by later entries, by GR rules, by STATE.md, and by
+     published Zenodo records, and are reconstructable from git history regardless. A
+     correction to a past entry is a NEW entry that cites it, never an in-place edit.
+  3. READABILITY IS ADDITIVE. Signal-to-noise is managed only by ADDING navigation:
+     a curated index/summary (`EVIDENCE/verification_ledger_index.md`) and/or a
+     byte-preserving archive split that keeps every entry and every cross-reference
+     intact. Reorganizing for the read is permitted; removing content is not.
+  4. SIZE. A new entry states the verification event, its referent, and the outcome.
+     Process/environment diaries and ritual boilerplate are minimized; such notes
+     belong in the commit message, not the entry.
+- Scope: every session close; every candidate ledger entry; the SESSION_PROTOCOL
+  close step "if any claim was verified, corrected, retracted, or disputed this
+  session: append a ledger entry" - GR-4 is the operative definition of that "if".
+- Rationale: the ledger's value is that it is append-only, cross-referenced, and
+  externally cited - credible precisely because it has never been edited for
+  convenience. Two failure modes threaten it. Dilution (logging non-verification work
+  until the load-bearing entries are buried) is cured going forward by clause 1.
+  Curation (pruning/renumbering for cleanliness) is forbidden by clause 2 because it
+  (a) breaks the internal cross-reference graph and external DOI citations, (b)
+  demonstrates the record CAN be author-edited for convenience - self-refuting for a
+  project whose thesis is immutable, fail-closed record-keeping - and (c) is pointless
+  regardless, since git history retains every byte, so it incurs the credibility cost
+  without any storage benefit. The legitimate impulse behind pruning (poor
+  signal-to-noise) is real and is satisfied by clause 3's additive index/archive.
+- Honest ceiling: this rule governs the RECORD, not the work. A leaner, higher-signal
+  ledger is more credible to an external auditor but does not itself advance G5; the
+  binding gate remains a blind external attacker on the live surface.
