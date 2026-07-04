@@ -418,11 +418,20 @@ async def governed_call(request: Request):
             approval_log = _get_approval_log()
             if approval_log is not None:
                 try:
-                    approval_log.append({
+                    hold_record = {
                         "type": "approval_request",
                         "decision_sha256": decision_sha256,
                         "approval_request_id": approval_request_id,
-                    })
+                        # PUBLIC decision context (already in the envelope) so an
+                        # operator surface can show a human what is being held -
+                        # additive keys; reconcile_approvals keys only on
+                        # type/decision_sha256/approval_request_id.
+                        "requested_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    for _ctx_key in ("target_url", "not_after"):
+                        if envelope.get(_ctx_key):
+                            hold_record[_ctx_key] = envelope[_ctx_key]
+                    approval_log.append(hold_record)
                 except Exception as e:
                     raise HTTPException(
                         status_code=403,
@@ -568,4 +577,60 @@ async def governed_call(request: Request):
     return {
         "decision": "ELIGIBLE",
         "envelope": envelope,
+    }
+
+# ---------------------------------------------------------------------------
+# Read-only observability endpoints (DEFAULT OFF). A generic operator surface:
+# they expose ONLY public decision context already durably recorded in the
+# governance logs - no secrets, no key material, no mutation, and they are
+# DISABLED (404) unless ELYON_GATE_READ_ENDPOINTS=1. Intended to be reached
+# over an operator tunnel; never expose them on the public gate surface.
+# Build-then-wire: with the flag unset the gate is byte-behavior-unchanged.
+
+READ_ENDPOINTS_ENV = "ELYON_GATE_READ_ENDPOINTS"
+
+
+def _read_log_records(log):
+    """Best-effort read of a JSONL governance log (issuance or approval)."""
+    path = getattr(log, "path", None)
+    if not path:
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return [json.loads(line) for line in f if line.strip()]
+    except (OSError, ValueError):
+        return []
+
+
+def _require_read_endpoints():
+    if os.environ.get(READ_ENDPOINTS_ENV) != "1":
+        raise HTTPException(status_code=404, detail="not found")
+
+
+@app.get("/pending")
+def pending_holds():
+    """Currently-held 202 approval requests: approval_request records with no
+    matching grant_consumed, derived from the durable approval log (so the view
+    survives a gate restart and stays truthful under [FIX H8] record-before-act)."""
+    _require_read_endpoints()
+    recs = _read_log_records(_get_approval_log())
+    consumed = {
+        (r.get("decision_sha256"), r.get("approval_request_id"))
+        for r in recs if r.get("type") == "grant_consumed"
+    }
+    return [
+        r for r in recs
+        if r.get("type") == "approval_request"
+        and (r.get("decision_sha256"), r.get("approval_request_id")) not in consumed
+    ]
+
+
+@app.get("/audit")
+def audit_tail(tail: int = 50):
+    """Last N records from each governance log (issuance + approval). Read-only."""
+    _require_read_endpoints()
+    n = max(0, min(int(tail), 1000))
+    return {
+        "issuance": _read_log_records(_get_issuance_log())[-n:],
+        "approval": _read_log_records(_get_approval_log())[-n:],
     }
