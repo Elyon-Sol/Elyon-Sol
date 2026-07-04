@@ -6,6 +6,11 @@ index is ADDITIVE (GR-4 clause 3): it points at entries, never replaces them, an
 regenerated - never used to justify removing anything from the ledger. When this index
 and the ledger disagree, the ledger wins.
 
+**Archived (GR-5).** As of 2026-07-03 the ledger is split into immutable volumes:
+VL-001..VL-107 live in `EVIDENCE/ledger_archive/vol_001__VL-001_to_VL-107.md`; VL-108
+onward stay in the active `verification_ledger.md`. This index spans BOTH. Reconstruction
+manifest: `EVIDENCE/ledger_archive/INDEX.md`.
+
 Two views: the load-bearing entries grouped by theme (for orientation), then the full
 chronological list (every entry, by its own title).
 

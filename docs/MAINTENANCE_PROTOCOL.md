@@ -156,3 +156,37 @@ ACTIVE | SUPERSEDED | RETIRED
 - Honest ceiling: this rule governs the RECORD, not the work. A leaner, higher-signal
   ledger is more credible to an external auditor but does not itself advance G5; the
   binding gate remains a blind external attacker on the live surface.
+
+### GR-5 - Ledger archiving is versioned, immutable, and byte-preserving
+- Date established: 2026-07-03
+- Originating record: commit-only (per GR-4 clause 1; archiving is reorganization, not a
+  verification event - no VL entry).
+- Status: ACTIVE
+- Rule:
+  1. VOLUMES. When the active `EVIDENCE/verification_ledger.md` exceeds 100 entries, its
+     oldest contiguous block is MOVED verbatim - cut at a primary `### VL-N` header, never
+     mid-entry - into the next numbered volume under `EVIDENCE/ledger_archive/`, named
+     `vol_NNN__VL-<first>_to_VL-<last>.md`. Entries are moved, never rewritten; numbers
+     never change. (The initial consolidation volume may cover all pre-existing history;
+     subsequent volumes are ~100 entries.)
+  2. IMMUTABILITY + VERSIONING. Each volume, once written, is append-CLOSED and immutable.
+     Its sha256, VL range, and entry count are recorded in the manifest
+     `EVIDENCE/ledger_archive/INDEX.md` and in a sidecar `vol_NNN__*.sha256` (mirroring
+     `canon.lock`). A closed volume is never edited; a correction to an archived entry is a
+     NEW entry in the ACTIVE ledger that cites it (GR-4 clause 2).
+  3. BYTE-PRESERVING RECONSTRUCTION (the invariant). Concatenating, in volume order, every
+     volume's entry region and then the active ledger's entry region MUST reproduce the
+     historical entry region byte-for-byte; with the preamble prepended, the pre-split
+     ledger exactly. Every archiving commit records this reconstruction check (the
+     reassembled sha256 == the pre-split sha256) in INDEX.md; a split whose check fails is
+     rejected and nothing is moved.
+  4. THE ACTIVE FILE. `verification_ledger.md` always keeps its preamble, an "Archived
+     volumes" pointer table (volume, range, sha256), and all un-archived entries. The
+     curated index (`verification_ledger_index.md`) spans all volumes + active.
+- Scope: every archiving event; the archive manifest; any reader reconstructing history.
+- Rationale: archiving keeps the active ledger lean (GR-4 clause 3) WITHOUT deletion.
+  Per-volume hashes plus the reconstruction invariant make the archive tamper-evident AND
+  provably complete, so leanness costs nothing in integrity - the same chunk-and-hash
+  discipline as `canon.lock` and the published record. This is the sanctioned form of the
+  GR-4 clause-3 archive split; it is NOT pruning, which GR-4 clause 2 forbids.
+- Honest ceiling: governs the record's storage, not the work; does not advance G5.
