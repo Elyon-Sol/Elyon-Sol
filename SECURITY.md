@@ -47,11 +47,12 @@ where applicable, via a CVE and acknowledgment in the next Zenodo Enforcement-Ev
 
 ## Live testing & safe harbor
 
-A public four-node test surface exists, and a **private, invite-only** credited engagement is
-run directly by the maintainer. Authorized testing of the live surface is governed by a
-safe-harbor clause (`deploy/SAFE_HARBOR_CLAUSE.md`) that is being **finalized with counsel**; no
-testing of the live hosts is authorized until that clause is signed and you have received an
-explicit engagement authorization. Testing the open-source code locally needs no authorization.
+The four-node public test surface is open — test the in-scope hosts directly, no signup, no
+gatekeeping. **Good-faith safe harbor:** we support good-faith security research and will not
+pursue or support legal action against researchers who test the in-scope hosts in good faith and
+within these rules (coordinated disclosure; no denial-of-service, social engineering, or data
+destruction beyond the minimum needed to demonstrate a finding). Testing the open-source code
+locally needs no authorization. Full text: `deploy/SAFE_HARBOR_CLAUSE.md`.
 
 ## Honest scope
 

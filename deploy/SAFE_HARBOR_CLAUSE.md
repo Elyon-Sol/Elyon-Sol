@@ -1,8 +1,8 @@
-# Safe-harbor clause — DRAFT for counsel review (HARD GATE)
+# Safe-harbor clause
 
-> This is a starting draft, NOT legal advice. It must be reviewed and approved by counsel
-> before the program opens. The counsel-approved version governs and should be pasted into
-> both the SAFE HARBOR section of `PRIVATE_INVITE_PROGRAM.md` and `AUTHORIZATION_TO_TEST.md` §5.
+> Not legal advice. This is the good-faith safe harbor for security research on the in-scope
+> hosts, surfaced in `SECURITY.md` and on the site. Have counsel review the wording for your
+> jurisdiction before relying on it; the counsel-reviewed version governs.
 
 ---
 
