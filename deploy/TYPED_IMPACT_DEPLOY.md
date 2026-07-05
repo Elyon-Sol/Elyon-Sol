@@ -34,7 +34,7 @@ refuse). Its `manifest_sha256 = b1b2128a9ba544ac676580f25db4cc83dd96ad6482040f49
    fail-closes to refuse-all. See `deploy/governance/make_approver_key_record.py` and the root-pin
    caveat in the full-path notes.
 4. **Reconcile the deployed-commit divergence** first: the ledger records the four nodes at
-   `3343e32`; GLESAC's LIVE-1 records the gate at `bd1159b`. Confirm the actual per-node commit.
+   `3343e32`; a later operator deploy record puts the gate at `bd1159b`. Confirm the actual per-node commit.
 
 ## 2. Repo flip + test migration (~85 tests)
 
@@ -78,7 +78,7 @@ A refusal to boot is the intended proof the oversight is wired - fix the wiring,
 
 - benign `read` mint -> gate FORWARDS, target `/received` increments (the challenge-doc positive
   control, restored);
-- sensitive `transfer` mint -> 202 hold -> `glesac pending --approve` (approver key in laptop
+- sensitive `transfer` mint -> 202 hold -> approver approves out-of-band via `approver_cli` (approver key in laptop
   custody) -> present grant -> target acts exactly once -> replay refused;
 - the Phase 1.4 attack-suite (`EVIDENCE/proofs/attack_suite_live_runner.py`) GREEN over real transport
   (its benign positive control now forwards; add the HIL control per the full-path spec 5.2).
