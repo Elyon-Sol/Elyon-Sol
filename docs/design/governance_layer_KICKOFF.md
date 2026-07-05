@@ -1,8 +1,7 @@
 # Governance-Layer Build — Session Kickoff
 
-**How to use:** run this in a NATIVE environment (Claude Code in your terminal on the
-laptop, or hand-applied edits) — NOT a fresh Cowork session. The build must touch the real
-filesystem with native git; the Cowork sandbox mount truncates files on read, and you must
+**How to use:** run this in a NATIVE environment (a native terminal on the laptop, or hand-applied edits) — NOT a fresh build session. The build must touch the real
+filesystem with native git; the sandbox mount truncates files on read, and you must
 never edit source you can't reliably read. Paste the "Opener" block below as the first
 message; it is self-sufficient and needs no memory of the prior conversation.
 

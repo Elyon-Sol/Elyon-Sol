@@ -1002,11 +1002,11 @@ verdicts (VL-023 / VL-040 / VL-042 / VL-044 follow-ups) from evidence to framing
 stress-test. See also docs/methodology/external_verification_readiness.md for the
 human-verification analog: a human reading the self-account is inflated too.
 
-## Lesson 11: Cowork-mount file and git mechanics (write tracked files LF from the Linux side; do not drive git over the sandbox mount)
+## Lesson 11: the sandbox-mount file and git mechanics (write tracked files LF from the Linux side; do not drive git over the sandbox mount)
 
 ### Surface events
 - VL-058: docs/restructure/12_g5_transport_design.md was created and edited with
-  the Cowork desktop file tools, which write CRLF on Windows, while the commit was
+  the sandbox desktop file tools, which write CRLF on Windows, while the commit was
   made from the Linux sandbox side, which stored LF (the repo convention for all
   .md / .py source). Result: a phantom "modified" working-tree file on the host
   after push (CRLF working copy vs LF blob), content byte-identical modulo the
@@ -1019,7 +1019,7 @@ human-verification analog: a human reading the self-account is inflated too.
   author's native terminal at session start was the initial trigger.
 
 ### Failure mode
-A Cowork session has two filesystem views of the same repo: the host (reached by
+A a build session has two filesystem views of the same repo: the host (reached by
 the desktop Write/Edit tools) and the Linux sandbox (reached by the shell over a
 mount). Files written by the desktop tools land CRLF on Windows; files written
 from the Linux side land LF. Editing on one side and committing from the other
@@ -1041,7 +1041,7 @@ the index can corrupt across successive git writes.
   native terminal afterward (git fsck stays clean, but the cruft accumulates).
 
 ### Self-check
-After creating or editing a tracked file in a Cowork session, before committing:
+After creating or editing a tracked file in a a build session, before committing:
 was it written from the Linux side (LF) or the desktop tools (CRLF)? If CRLF,
 normalize to LF before the commit. Before running any git write over the mount,
 ask: can this be run from the native terminal instead? Default to yes.

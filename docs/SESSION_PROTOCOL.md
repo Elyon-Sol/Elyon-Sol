@@ -1,7 +1,7 @@
 # Elyon-Sol - Session Protocol
 
 How to start and end a working session so repository continuity holds.
-This file exists because no model (Claude, Grok, or otherwise) carries
+This file exists because no model carries
 memory between sessions. The repository is the continuity layer; this
 protocol is how a session connects to it.
 
@@ -18,7 +18,7 @@ the OUTPUT of these steps into the session - do not summarize them.
        git status
    Confirm: working tree clean, up to date with origin. If not, resolve
    that first - a dirty tree from a prior session means the prior close
-   protocol was not completed. (In the Cowork sandbox, first rule out a
+   protocol was not completed. (In the sandbox, first rule out a
    mount/index artifact before assuming real corruption - see "Environment /
    sandbox recovery" at the end of this file.)
 
@@ -90,9 +90,9 @@ before anything else.
 
 ---
 
-## Environment / sandbox recovery (Cowork)
+## Environment / sandbox recovery
 
-Applies ONLY when running in the Cowork desktop sandbox - a Linux container
+Applies ONLY when running in the a container sandbox - a Linux container
 with this repo mounted from Windows. A native git checkout can ignore this
 whole section. The mount is occasionally inconsistent; these rules keep a
 session from mistaking an environment artifact for repository corruption, and
@@ -119,7 +119,7 @@ VL-069's resume (a corrupt index + stale lock from a prior crashed session).
 4. Ghost entries. `.git/index.lock` and ref files can wedge: `stat`/`ls` report
    them present while `open`/`unlink` say they do not exist, and git reports
    "File exists" on lock creation. Do not trust their reported state. The host
-   file tools' view is authoritative; a fresh Cowork session re-mounts and
+   file tools' view is authoritative; a fresh build session re-mounts and
    clears the cache.
 
 5. Committing around a wedged lock. Never leave the tree dirty waiting on a
@@ -149,5 +149,5 @@ VL-069's resume (a corrupt index + stale lock from a prior crashed session).
    pushed leaves HEAD ahead of origin - close the push the same session so the
    at-rest invariant holds.
 
-8. Prevention. Restarting Cowork before a session re-mounts the folder fresh
+8. Prevention. Restarting the sandbox before a session re-mounts the folder fresh
    and avoids most ghost-lock wedges.
