@@ -1,0 +1,14 @@
+# Triaged-safe gitleaks findings — reviewed 2026-07-05 before open-sourcing.
+# Both are NON-secrets; documented here so scans/CI exit clean.
+#
+# (1) Gate PUBLIC key printed in a proof log. A verification key is public BY DESIGN
+#     (it is pinned so targets can verify the gate's signature). Not a secret.
+b15e4b2e53dbe43af431b12e61b0698304a5aab0:EVIDENCE/proofs/signing_forgery_defeated_001.log:generic-api-key:5
+#
+# (2) webhook.site TEST-inbox token used in the external-interception proof (May–June 2026).
+#     A throwaway capability URL for a free inbox that only ever held public admissibility
+#     envelopes (no key material). Verified expired/inaccessible (the token endpoint now
+#     redirects to login; free inboxes are purged). Removing it would need a full-history
+#     rewrite, which would break the ledger/Zenodo commit-hash citations — not worth it for
+#     a dead test token.
+2f6a7c3ac0e7c3cb7f962e6d5e251cfb2afbaa1a:EVIDENCE/proofs/external_interception_webhook_001_runner.py:generic-api-key:45
