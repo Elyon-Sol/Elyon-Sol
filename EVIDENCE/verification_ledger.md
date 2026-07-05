@@ -1714,3 +1714,80 @@ close) leave HEAD FIVE commits ahead of origin/main. The AUTHOR verifies nativel
 Prior substantive entry: VL-130. Cites VL-130 (the kit it renders), VL-128/VL-122 (the deployed 3343e32
 manifest pins baked into the quickstart), VL-129 (the honest-scope edits it builds past), and
 VL-108/VL-126 (the mount-truncation family this instance belongs to). Does not cite its own hash.
+
+
+---
+
+### VL-132 - 2026-07-05 - T-governance typed-impact evaluator increment: per-interaction-type required-set selection; impact lifted from all-or-nothing to per-type. EDITS evaluator.py (G(I)) - evaluator_sha256 re-pinned.
+
+#### What was built
+IMPLEMENTATION/evaluator.py gains typed-impact support so eligibility can resolve DIFFERENT required
+sets per declared interaction type - which is what lets impact discriminate (some types forward, some
+hold): (1) resolve_required_sets(manifest, ctx) selects (AR, R) by the caller's declared
+interaction_type, defaulting to the top-level sets for a flat manifest OR an untyped caller, and
+FAIL-CLOSED -> (None, None) -> REFUSE on an unknown/malformed type; (2) safe_manifest validates an
+OPTIONAL interaction_types map fail-closed - each type's AR/R are string-lists whose union is a SUBSET
+of the top-level AR u R (so top-level stays the token vocabulary and impact.safe_high_impact's [FIX H2]
+subset check is UNCHANGED), each carries an EXPLICIT boolean high_impact, and a type's flag must be
+CONSISTENT with whether its own tokens intersect HIGH_IMPACT (a mislabel -> None); (3) evaluate() uses
+resolve_required_sets. IMPLEMENTATION/impact.py is BYTE-UNCHANGED.
+
+#### The finding this corrects
+Impact was structurally all-or-nothing. evaluate() compared against a SINGLE flat AR/R and
+interaction_for returns a FIXED AP/OP for every tool/args, so every eligible caller declared AR u R;
+with [FIX H2] constraining HIGH_IMPACT to a subset of AR u R, any non-empty policy matched EVERY mint
+and an empty one matched none. VL-113's "impact is a property of the interaction TYPE" was therefore
+realized only DEGENERATELY (a single type). This increment makes the type real: a benign type is
+ELIGIBLE while declaring FEWER tokens, so requires_approval can return False for it and True for a
+sensitive type on the SAME manifest - a state the flat model could not express.
+
+#### G(I) distinction from VL-113 (recorded honestly)
+VL-113 deliberately placed impact classification in its OWN module to keep evaluator.py byte-identical,
+because editing evaluator.py changes the pinned evaluator_sha256 and REDs the verify-against-pinned
+tests. Per-type required-set SELECTION is intrinsic to eligibility (which AR/R to compare against), so
+it CANNOT live above G(I): this increment DOES edit evaluator.py. As expected it changed evaluator_sha256
+(89a30ffe... -> e307fab2...) and RED-ed the same 49 verify-against-pinned tests until
+EVIDENCE/published_hashes.json was regenerated via its own generator (never hand-copied) - exactly the
+VL-115 manifest-pin-regen discipline, applied to the evaluator pin. CANON/canon.md is UNTOUCHED
+(canon_sha256 d1c9d18... unchanged); the three invariants (AC^3/T^26/CCS) are unchanged in meaning; the
+evaluator still implements canon v0.9.8.4 (evaluator_version stays 0.9.8.4 - the field denotes the canon
+version implemented, not the code revision; the code identity is evaluator_sha256, which moved and was
+re-pinned). GR-1 (canon-by-increment) is NOT triggered.
+
+#### Backward-compatibility (proven, not asserted)
+A flat manifest (no interaction_types) is the degenerate single-type case and is byte-behaviour-identical:
+the clean git-archive HEAD baseline (515 passed) is UNCHANGED by the evaluator edit once the pin is
+regenerated. TESTS/adversarial/test_typed_impact.py +15 (per-type selection; unknown/mislabeled type
+fail-closed; token-outside-vocabulary rejected; [FIX H1]/[FIX H2] preserved on a typed manifest; the
+headline "benign ELIGIBLE and low-impact" the flat model cannot express), suite 515 -> 530 green
+(working tree; re-verify on a pristine git-archive extraction before finalizing the count). 4
+revert-catchers (per-type selection matters; unknown-type fail-close; token-outside-vocabulary; mislabel).
+
+#### Honest scope / build-then-wire
+EVALUATOR increment only, DEFAULT-OFF: MANIFEST/manifest.json is UNCHANGED (still flat HIGH_IMPACT:[],
+manifest_sha256 ac18ac78... unchanged) and interaction_for STILL returns a fixed AP/OP, so NO production
+behavior changes and no mint forwards or holds differently until the typed manifest + real AP/OP
+derivation are wired (a subsequent increment). Because manifest_sha256 is unchanged, the target/sidecar
+MANIFEST pin is unaffected; but the published-record BYTE-ANCHOR changed (evaluator_sha256 field), so a
+real deployment re-pins Host B on the new anchor. No readiness predicate goes green; G5 NOT-MET.
+WHITE-BOX in-house build, NOT external validation (GR-3/VL-057).
+
+#### Files affected
+IMPLEMENTATION/evaluator.py; EVIDENCE/published_hashes.json (evaluator_sha256 regenerated);
+TESTS/adversarial/test_typed_impact.py (new); STATE.md; EVIDENCE/verification_ledger.md (this entry).
+
+#### Files NOT affected
+IMPLEMENTATION/impact.py, approval.py, pep.py, verifier.py, envelope.py; MANIFEST/manifest.json;
+CANON/ (canon.md/canon.lock byte-identical) - all UNCHANGED.
+
+#### Environment note (Cowork sandbox)
+Built in the Cowork sandbox; files written through bash and verified (ast.parse + byte counts) per the
+VL-108/VL-126 mount-truncation discipline. The "49 REDs until re-pin" was reproduced and resolved exactly
+as VL-113 predicted. Counts are working-tree; the AUTHOR should re-verify on a pristine git-archive HEAD
+extraction and push natively.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-131. Cites VL-113 (the impact-classification origin + the ABOVE-G(I)
+placement this increment consciously departs from), VL-115 (the manifest-pin-regen discipline this
+mirrors for the evaluator pin), GR-1/VL-007 (canon-by-increment, NOT triggered), and VL-108/VL-126 (the
+mount-truncation family). Does not cite its own hash.

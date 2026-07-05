@@ -37,7 +37,73 @@ def safe_manifest(manifest):
     if not isinstance(version, str):
         return None
 
+    # Typed-impact extension (additive, backward-compatible). A manifest MAY
+    # declare `interaction_types`: a map of type-name -> {AR, R, high_impact}.
+    # When absent (the flat/default manifest), nothing below runs and behavior
+    # is byte-identical. When present it is validated fail-closed: any
+    # malformation returns None (evaluate -> REFUSE).
+    #
+    # Invariants enforced here (all fail-closed):
+    #   (a) each type's AR/R are string lists whose union is a SUBSET of the
+    #       top-level AR u R (the token vocabulary). Top-level AR/R therefore
+    #       stays the union, so impact.safe_high_impact's [FIX H2] check
+    #       (HIGH_IMPACT subset of AR u R) is unchanged and needs no edit.
+    #   (b) each type carries an explicit boolean `high_impact`.
+    #   (c) consistency: a type's high_impact flag matches whether its own
+    #       tokens intersect the manifest's HIGH_IMPACT set. A mislabeled type
+    #       (benign flag but a high-impact token, or vice-versa) is a manifest
+    #       error -> None. Skipped only when HIGH_IMPACT is absent/malformed,
+    #       which impact.safe_high_impact already fails closed on ([FIX H1]).
+    types = manifest.get("interaction_types")
+    if types is not None:
+        if not isinstance(types, dict):
+            return None
+        vocab = set(AR) | set(R)
+        hi_raw = manifest.get("HIGH_IMPACT")
+        hi_set = safe_set(hi_raw) if isinstance(hi_raw, list) else None
+        for name, spec in types.items():
+            if not isinstance(name, str) or not isinstance(spec, dict):
+                return None
+            tAR = safe_set(spec.get("AR"))
+            tR = safe_set(spec.get("R"))
+            if tAR is None or tR is None:
+                return None
+            ttok = tAR | tR
+            if not ttok <= vocab:
+                return None  # (a) type token outside the manifest vocabulary
+            flag = spec.get("high_impact")
+            if not isinstance(flag, bool):
+                return None  # (b) explicit boolean required
+            if hi_set is not None:
+                intersects = bool(ttok & hi_set)
+                if intersects != flag:
+                    return None  # (c) mislabeled type -> fail closed
+
     return manifest
+
+
+def resolve_required_sets(manifest, ctx):
+    """Return (AR, R) the caller must cover for eligibility, selected by the
+    caller's declared `interaction_type`.
+
+    Flat/default manifest (no `interaction_types`) OR a caller that declares no
+    type -> the top-level AR/R (byte-identical to the pre-typed behavior). A
+    declared type is resolved from the manifest's `interaction_types` map;
+    an UNKNOWN or malformed type is fail-closed -> (None, None) -> REFUSE.
+    Assumes `manifest` already passed safe_manifest (types well-formed)."""
+    types = manifest.get("interaction_types")
+    if not isinstance(types, dict):
+        return manifest.get("AR"), manifest.get("R")
+    itype = ctx.get("interaction_type") if isinstance(ctx, dict) else None
+    if itype is None:
+        # No declared type: default to the top-level (union) sets. This is the
+        # conservative choice - the caller must then cover the full vocabulary,
+        # which under a typed manifest makes it high-impact (fail toward oversight).
+        return manifest.get("AR"), manifest.get("R")
+    spec = types.get(itype)
+    if not isinstance(spec, dict):
+        return None, None  # unknown/malformed declared type -> fail closed
+    return spec.get("AR"), spec.get("R")
 
 
 def ac3_valid(ctx, AR):
@@ -120,10 +186,14 @@ def evaluate(ctx, manifest):
         if manifest is None:
             return "REFUSE"
 
-        if not ac3_valid(ctx, manifest["AR"]):
+        AR, R = resolve_required_sets(manifest, ctx)
+        if AR is None or R is None:
             return "REFUSE"
 
-        if not t26_valid(ctx, manifest["R"]):
+        if not ac3_valid(ctx, AR):
+            return "REFUSE"
+
+        if not t26_valid(ctx, R):
             return "REFUSE"
 
         if not manifest_integrity_valid(ctx, manifest):
