@@ -268,3 +268,5 @@ deploy/tls/certs/
 /docs/ZENODO_REV*_ADDENDUM.md
 # Zenodo upload artifacts; the .md files are the tracked source
 /docs/zenodo/*.pdf
+
+.venv-live/
