@@ -79,6 +79,7 @@ from IMPLEMENTATION.evaluator import (
     load_manifest,
     evaluate,
     safe_manifest,
+    resolve_required_sets,
     ac3_valid,
     t26_valid,
     manifest_integrity_valid,
@@ -367,8 +368,12 @@ async def governed_call(request: Request):
     # REF_PEP_FAIL_CLOSED. -----
     try:
         safe_mfst = safe_manifest(manifest)
-        ac3 = ac3_valid(normalized_interaction, safe_mfst["AR"])
-        t26 = t26_valid(normalized_interaction, safe_mfst["R"])
+        # Typed-impact (step 8.2): stamp ac3/t26 against the caller's declared
+        # interaction type's required sets, consistent with evaluate(). Flat
+        # manifest -> resolve returns the top-level sets (byte-identical).
+        req_ar, req_r = resolve_required_sets(safe_mfst, normalized_interaction)
+        ac3 = ac3_valid(normalized_interaction, req_ar)
+        t26 = t26_valid(normalized_interaction, req_r)
         mi = manifest_integrity_valid(normalized_interaction, safe_mfst)
         envelope = build_envelope(
             decision="ELIGIBLE",

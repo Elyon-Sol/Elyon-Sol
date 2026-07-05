@@ -1791,3 +1791,72 @@ Prior substantive entry: VL-131. Cites VL-113 (the impact-classification origin 
 placement this increment consciously departs from), VL-115 (the manifest-pin-regen discipline this
 mirrors for the evaluator pin), GR-1/VL-007 (canon-by-increment, NOT triggered), and VL-108/VL-126 (the
 mount-truncation family). Does not cite its own hash.
+
+
+---
+
+### VL-133 - 2026-07-05 - T-governance typed-impact WIRING (step 8.2): request-schema interaction_type + interaction_for per-type derivation + governed_call per-type envelope. Default-off; NO pin change.
+
+#### What was built
+The three wiring points a real submission needs for a BENIGN type to forward end-to-end (surfaced
+by the VL-132 submission-validation harness), all additive and default-off:
+1. IMPLEMENTATION/request_validator.py - `interaction_type` accepted as an OPTIONAL string field
+   (new `_OPTIONAL_INTERACTION_FIELDS`; excluded from the step-4d unknown-key set; type-checked;
+   passed through to the normalized interaction). Absent -> pre-typed behavior, byte-identical.
+2. IMPLEMENTATION/mcp_server.py - `interaction_for` maps a tool to an interaction_type
+   (`_BENIGN_TOOLS` -> "read", `_SENSITIVE_TOOLS` -> "transfer", unknown -> None) and, under a
+   TYPED manifest, emits that type's REDUCED required sets as AP/OP plus interaction_type. Under a
+   FLAT manifest (no interaction_types) it returns the pre-typed hardcoded interaction (full
+   tokens, version 1.0, NO interaction_type field) - BYTE-IDENTICAL for every tool.
+3. IMPLEMENTATION/pep.py - governed_call stamps the envelope's ac3/t26 from
+   `resolve_required_sets(safe_mfst, normalized_interaction)` instead of the top-level AR/R (the
+   gap the VL-132 submission found at the envelope-construction step). Flat manifest -> top-level
+   (byte-identical).
+
+#### Scope / discipline
+DEFAULT-OFF: with the live flat manifest (HIGH_IMPACT:[]) in place, production behavior is
+UNCHANGED - interaction_for emits full tokens, resolve_required_sets returns the top-level sets, and
+no caller sends interaction_type. NO PINNED FILE is touched: canon_sha256, evaluator_sha256
+(e307fab2, from VL-132) and manifest_sha256 (ac18ac78) are all UNCHANGED - request_validator.py /
+mcp_server.py / pep.py are not part of the published record - so 8.2 requires NO re-pin and NO Host
+B action. canon.md UNTOUCHED (GR-1 not triggered). The typed behavior activates only when a typed
+MANIFEST/manifest.json is pinned (the deliberate turn-on step; see deploy/TYPED_IMPACT_DEPLOY.md).
+
+#### The capstone (proven end-to-end)
+A BENIGN `read` submission (reduced tokens + interaction_type) is ELIGIBLE and FORWARDS with no
+202; a SENSITIVE full-authority submission on the SAME typed manifest is HELD (202) -> a
+separately-keyed human grant -> forwards exactly once. The discriminating oversight the flat model
+could not express, driven by the REAL requires_approval through the actual gate (not a forced flag).
+
+#### Tests
+TESTS/adversarial/test_typed_impact_wiring.py +7 (interaction_for flat byte-identity revert-catcher;
+typed benign/sensitive/unknown derivation; schema accepts/rejects/omits interaction_type);
+TESTS/test_typed_impact_e2e.py +1 (the benign-forwards-end-to-end capstone). Suite 533 -> 541 green
+(working tree; re-verify on a pristine git-archive extraction). The flat byte-identity is proven by
+the unchanged 533 baseline plus the explicit revert-catcher.
+
+#### Files affected / NOT affected
+Affected: IMPLEMENTATION/request_validator.py, IMPLEMENTATION/mcp_server.py, IMPLEMENTATION/pep.py;
+TESTS/adversarial/test_typed_impact_wiring.py (new), TESTS/test_typed_impact_e2e.py (new this VL /
+extended); STATE.md; EVIDENCE/verification_ledger.md (this entry). NOT affected: evaluator.py,
+impact.py, approval.py, verifier.py, envelope.py; MANIFEST/manifest.json; EVIDENCE/published_hashes.json
+(no pin change); CANON/.
+
+#### Honest scope / build-then-wire
+WHITE-BOX in-house build, NOT external validation (GR-3/VL-057). No readiness predicate goes green;
+G5 NOT-MET. Turning typing on in production is a separate deliberate step: it flips the live manifest
+(changes manifest_sha256 -> coordinated re-pin), resolves the everything-holds HIGH_IMPACT policy,
+and requires migrating the flat-assuming tests - all enumerated in deploy/TYPED_IMPACT_DEPLOY.md.
+
+#### Environment note (Cowork sandbox)
+Files written through bash and verified (ast.parse + byte counts) per the VL-108/VL-126
+mount-truncation discipline. Counts are working-tree; the AUTHOR re-verifies on a pristine
+git-archive extraction and pushes natively. GR-4 note: this is a code-only WIRING build with no
+behavior change under the live manifest; it is recorded as a VL entry for continuity with the
+VL-113/VL-132 typed-impact line, but is defensibly a commit+STATE-only event under GR-4 - operator's call.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-132. Cites VL-132 (the evaluator increment this wires + the submission
+harness that scoped these three points), VL-054 (the request-schema unknown-key vocabulary this
+extends with an optional field), and VL-115 (the pep approval-gate wiring this per-type-izes). Does
+not cite its own hash.

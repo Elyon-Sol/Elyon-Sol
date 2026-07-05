@@ -1,0 +1,11 @@
+{
+  "version": "1.1",
+  "interaction_type": "default",
+  "AR": ["identity", "role"],
+  "R": ["session", "request"],
+  "HIGH_IMPACT": ["role", "request"],
+  "interaction_types": {
+    "read": {"AR": ["identity"], "R": ["session"], "high_impact": false},
+    "transfer": {"AR": ["identity", "role"], "R": ["session", "request"], "high_impact": true}
+  }
+}

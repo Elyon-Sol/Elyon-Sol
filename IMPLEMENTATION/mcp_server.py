@@ -31,7 +31,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from IMPLEMENTATION.envelope import canonical_json
-from IMPLEMENTATION.evaluator import manifest_sha256
+from IMPLEMENTATION.evaluator import manifest_sha256, load_manifest, resolve_required_sets
 from IMPLEMENTATION.published_source import anchor_sha256, load_record_from_bytes
 from IMPLEMENTATION.replay_cache import InMemoryReplayCache
 from IMPLEMENTATION.reference_target import (
@@ -71,23 +71,65 @@ ENV_TARGET_ID = "ELYON_MCP_TARGET_ID"
 ENV_RECORD_PATH = "ELYON_MCP_RECORD_PATH"
 
 
+# Tool -> interaction-type taxonomy (typed-impact, step 8.2). A tool maps to a
+# manifest interaction_type; the tokens it declares are that type's required
+# sets. Under a TYPED manifest a benign tool declares the reduced (benign) set;
+# under a FLAT manifest (no interaction_types) the output is BYTE-IDENTICAL to
+# the pre-typed hardcoded interaction (full tokens, no interaction_type field),
+# so this is default-off until a typed manifest is pinned. An unknown tool maps
+# to no type -> the top-level (union) sets -> held under a typed policy (fail
+# toward oversight). Edit this table when the deployed manifest's type set changes.
+_BENIGN_TOOLS = frozenset(
+    {"read", "list", "get", "status", "inspect", "read_file", "list_files", "healthz"}
+)
+_SENSITIVE_TOOLS = frozenset(
+    {"transfer", "transfer_funds", "delete", "delete_database", "rotate",
+     "rotate_key", "write", "write_file", "deploy"}
+)
+
+
+def _interaction_type_for_tool(tool: str):
+    """Map a tool name to a manifest interaction_type, or None (unknown -> the
+    conservative top-level path)."""
+    if tool in _BENIGN_TOOLS:
+        return "read"
+    if tool in _SENSITIVE_TOOLS:
+        return "transfer"
+    return None
+
+
 def interaction_for(tool: str, args: Any) -> Dict[str, Any]:
-    """Encode a tool call as an admissibility interaction (identical to the wedge demo so the
-    admitting gate and this executor agree): AP/OP are the authority/operation sets the gate
-    evaluates; the tool identity + an args digest ride in the free-form context (canon 11.1 C),
-    so the envelope BINDS to this exact tool call."""
-    return {
-        "AP": ["identity", "role"],
-        "OP": ["session", "request"],
+    """Encode a tool call as an admissibility interaction. AP/OP are the
+    authority/operation sets the gate evaluates; the tool identity + an args
+    digest ride in the free-form context (canon 11.1 C) so the envelope BINDS to
+    this exact tool call.
+
+    Typed-impact (step 8.2): under a manifest that declares `interaction_types`,
+    the tool's mapped type selects the REDUCED required sets it must cover (a
+    benign tool declares fewer tokens, so requires_approval need not hold it).
+    Under the flat/default manifest the output is byte-identical to the pre-typed
+    behavior (full tokens, no interaction_type field)."""
+    manifest = load_manifest()
+    base = {
         "context": {
             "tool": tool,
             "args_sha256": hashlib.sha256(
                 canonical_json(args).encode("utf-8")
             ).hexdigest(),
         },
-        "expected_manifest_version": "1.0",
+        "expected_manifest_version": manifest.get("version", "1.0"),
         "expected_manifest_sha256": manifest_sha256(),
     }
+    itype = _interaction_type_for_tool(tool)
+    types = manifest.get("interaction_types")
+    if isinstance(types, dict) and itype in types:
+        AR, R = resolve_required_sets(manifest, {"interaction_type": itype})
+        if AR is not None and R is not None:
+            return {"AP": sorted(AR), "OP": sorted(R),
+                    "interaction_type": itype, **base}
+    # Flat manifest or unknown/absent type: top-level tokens, no interaction_type
+    # (byte-identical to the pre-typed default-manifest interaction).
+    return {"AP": ["identity", "role"], "OP": ["session", "request"], **base}
 
 
 class ServerState:

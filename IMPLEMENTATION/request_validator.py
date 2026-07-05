@@ -187,6 +187,12 @@ _REQUIRED_INTERACTION_FIELDS = frozenset(
     }
 )
 
+# OPTIONAL fields inside `interaction` (additive; absent = pre-typed behavior).
+# `interaction_type` (typed-impact, step 8.2) selects the manifest interaction
+# type whose required sets the caller must cover; under a flat manifest it is
+# carried but ignored by the evaluator. A caller may omit it entirely.
+_OPTIONAL_INTERACTION_FIELDS = frozenset({"interaction_type"})
+
 # Named continuity-token patterns (literal key matches), per
 # SPEC/request_schema.md "CCS-shaped fields." These are matched
 # exactly (case-sensitive) in addition to the case-insensitive
@@ -379,7 +385,8 @@ def validate_request(
     # VL-018 used as the closest extant code. Spec:
     # SPEC/request_schema.md "Rejected shapes" -> "Unknown key
     # inside interaction."
-    unknown_keys = set(interaction.keys()) - _REQUIRED_INTERACTION_FIELDS
+    unknown_keys = (set(interaction.keys())
+                    - _REQUIRED_INTERACTION_FIELDS - _OPTIONAL_INTERACTION_FIELDS)
     if unknown_keys:
         return None, REF_SCHEMA_UNKNOWN_KEY
 
@@ -406,6 +413,13 @@ def validate_request(
     if not _is_lowercase_hex_64(interaction["expected_manifest_sha256"]):
         return None, REF_SCHEMA_TYPE_MISMATCH
 
+    # interaction_type (OPTIONAL): a string when present. Absent -> untyped
+    # (the evaluator defaults to the top-level required sets).
+    if "interaction_type" in interaction and not isinstance(
+        interaction["interaction_type"], str
+    ):
+        return None, REF_SCHEMA_TYPE_MISMATCH
+
     # ----- Accept -----
     # Normalize AP and OP (sort + dedupe) for canonical JSON
     # serialization downstream per open question 3 of the spec.
@@ -417,4 +431,6 @@ def validate_request(
         "expected_manifest_version": interaction["expected_manifest_version"],
         "expected_manifest_sha256": interaction["expected_manifest_sha256"],
     }
+    if "interaction_type" in interaction:
+        normalized["interaction_type"] = interaction["interaction_type"]
     return normalized, None
