@@ -27,7 +27,7 @@ In scope (VL-094):
 - Tests: the wired target still refuses a same-instance replay; a `RedisReplayStore` over a fake
   shared client catches a cross-instance replay (two `ExternalStoreReplayCache` over one store);
   `replay_cache_from_env` returns InMemory with no env set.
-- A runbook procedure (deploy/host_setup_virtualbox.md appendix) for the live cross-instance demo:
+- A runbook procedure (deploy/docker-compose.replay.yml) for the live cross-instance demo:
   a Redis service + two target instances sharing it, where a decision_id honored on instance A is
   refused `REF_VERIFY_REPLAY` on instance B.
 

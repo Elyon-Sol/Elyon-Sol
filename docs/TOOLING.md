@@ -69,7 +69,7 @@ record).
 | `deploy/Dockerfile` + `docker-compose.yml` / `.tls.yml` / `.replay.yml` | The packaged stack: gate + reference target + publisher; TLS overlay; shared-Redis replay overlay. (Artifacts 20/21; VL-081/082/094) | `docker compose -f deploy/docker-compose.yml [-f ...tls.yml] [-f ...replay.yml] up --build` per `deploy/runbook.md` |
 | `deploy/bootstrap_config.py` | Generates a coherent deployment config (keys, records, env) that round-trips admit->verify. (VL-081) | `python deploy/bootstrap_config.py` per runbook |
 | `deploy/tls/gen_certs.py` + `trust_bootstrap.md` | Dev-CA certificate generation and the trust bootstrap procedure. (Artifact 21; VL-082) | `python deploy/tls/gen_certs.py` |
-| `deploy/host_setup_virtualbox.md` / `host_setup_hyperv.md` / `runbook.md` | The two-host live procedures (the author's live tier: VL-085..096). | documents |
+| `deploy/runbook.md` / `docker-compose*.yml` | The single-box + containerized live procedures (the author's live tier: VL-085..096). | documents |
 
 ## 7. Repository governance (method on record)
 

@@ -2,8 +2,7 @@
 
 A step-by-step to stand up `elyon-authz` (the admissibility sidecar) under real TLS
 on your existing two-VM cross-host setup and confirm ALLOW/DENY over HTTPS with a
-real gate-minted envelope. Companion to `deploy/host_setup_virtualbox.md` (the VM
-provisioning), `deploy/tls/trust_bootstrap.md` (trust material), and
+real gate-minted envelope. Companion to `deploy/tls/trust_bootstrap.md` (trust material) and
 `deploy/elyon-authz/README.md` (the sidecar itself).
 
 **Honest scope.** Two VMs are distinct OS hosts with a real network + real TLS, so
@@ -25,7 +24,7 @@ PYTHONPATH=. python3 EVIDENCE/proofs/authz_sidecar_tls_001_runner.py
 
 ## Topology
 
-Reuse the `host_setup_virtualbox.md` split, with the sidecar added on VM-B:
+Use a two-VM split (VM-A: gate; VM-B: target + publisher), with the sidecar added on VM-B:
 
 | Host | Runs | Ports |
 | --- | --- | --- |
