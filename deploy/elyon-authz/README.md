@@ -3,8 +3,7 @@
 `elyon-authz` (`IMPLEMENTATION/authz_sidecar.py`) is a thin HTTP ext-authz service
 that wraps the SHIPPED Elyon-Sol verifier so an OPA/Envoy deployment can enforce
 envelope admissibility without writing Python. It answers ALLOW/DENY; it does not
-act. Design: `docs/design/opa_sidecar_design.md`. Build kickoff:
-`docs/design/opa_sidecar_kickoff.md`.
+act. Design: `docs/design/opa_sidecar_design.md`.
 
 It reuses the production gate end to end (`ExecutorGate` -> `verify_envelope` +
 the VL-076 `ReplayCache` seam). It adds no admissibility logic and no
