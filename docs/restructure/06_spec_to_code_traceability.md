@@ -85,4 +85,4 @@ accurate, declarable description of the project.
 3. **Canon-derived tests (gap G7)** reference this map: a test for section 12.3 cites the row, and
    the row cites the test. Spec <-> map <-> test <-> code form a closed loop.
 4. This map is the standing answer to "is the implementation honest about the canon?"  -  it is
-   checkable by you, by Grok, by Claude next session, against the whitepaper and the code.
+   checkable by you, by Grok, by any model next session, against the whitepaper and the code.

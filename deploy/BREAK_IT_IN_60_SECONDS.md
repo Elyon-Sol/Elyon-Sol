@@ -1,7 +1,7 @@
 # Break Elyon-Sol in 60 seconds
 
 No signup, no email, no waiting. The public test surface is live — attack it right now.
-The credited engagement is invite-only (that's about *reward and disclosure*, not access):
+Getting credit is about *reward and disclosure*, not access:
 you can poke the surface this instant, and if you find something real, **then** email
 security@elyon-sol.io to claim credit.
 

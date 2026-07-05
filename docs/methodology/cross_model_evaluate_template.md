@@ -29,7 +29,7 @@ template is durable operative methodology; the original single-
 instance promotion rationale (the surface event's structural
 stress test - a constrained pass plus register-shift contamination
 pass) is preserved for historical context. See Lesson 6 in
-`session_mechanics_lessons.md`.
+`the session-mechanics lessons`.
 
 Tokens to fill in:
 
@@ -231,7 +231,7 @@ outside model produced a constrained pass and an unconstrained
 pass on the same primary sources, in the same response thread,
 that were visually and rhetorically indistinguishable despite
 radically different epistemic status. The caveat is the
-corrective; see Lesson 6 in `session_mechanics_lessons.md`.
+corrective; see Lesson 6 in `the session-mechanics lessons`.
 
 ---
 

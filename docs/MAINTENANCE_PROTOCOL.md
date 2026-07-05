@@ -101,8 +101,7 @@ ACTIVE | SUPERSEDED | RETIRED
   procedurally clean evaluate is still non-evidential on value/soundness. This is
   the evaluate-side analog of GR-2: GR-2 forbids a human-attested readiness value
   standing in for a test; GR-3 forbids a model-persuaded value judgment standing
-  in for a referent-bound result. See Lesson 10
-  (`docs/methodology/session_mechanics_lessons.md`), the VL-057 demotion entry
+  in for a referent-bound result. See the VL-057 demotion entry
   (which demoted the VL-023 / VL-040 / VL-042 / VL-044 follow-up convergence
   verdicts), and `docs/methodology/external_verification_readiness.md` (the
   human-verification analog).

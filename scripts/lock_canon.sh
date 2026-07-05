@@ -48,7 +48,7 @@ cat >> "$LEDGER" << 'LEDGER_EOF'
   CANON/canon.md and locked via CANON/canon.lock.
 - Status: CONFIRMED
 - Sources: CANON/canon_v0.9.8.4.pdf (immutable source of record).
-- Transcription by: Claude. Verified by: Justin Laporte, against the PDF.
+- Transcription by: an AI assistant. Verified by: Justin Laporte, against the PDF.
 - Verified points:
     F4 - Section 3 Notation Clarification: confirmed faithful.
     F5 - Sections 12.1-12.4 and 13 (the G0 sections), checked section by

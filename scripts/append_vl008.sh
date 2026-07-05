@@ -21,7 +21,7 @@ cat >> "$LEDGER" << 'LEDGER_EOF'
 - Event: OpenAI was asked three times to derive specification/implementation
   fidelity from CANON/canon.md + IMPLEMENTATION/evaluator.py.
 - Attempts 1 and 2: NOT derivations. Both ranged outside the supplied
-  artifacts (referencing project history - "Claude's posture", prior
+  artifacts (referencing project history - "the assistant's posture", prior
   iterations, "compression" - none of which is derivable from the two files)
   and characterized the code rather than checking it against the canon.
   Attempt 1 located the CCS mismatch as code-vs-prose rather than code-vs-canon.
@@ -42,7 +42,7 @@ cat >> "$LEDGER" << 'LEDGER_EOF'
   from canon.md and evaluator.py". The operative variable is task-to-source
   binding - whether the task is scoped to primary sources AND the model stays
   within that scope - not the cleanliness of the model's memory.
-- Status of G0: CONFIRMED by three independent derivations - Claude, Grok
+- Status of G0: CONFIRMED by three independent derivations - independent models
   (clean pass, VL-002), OpenAI (attempt 3). This strengthens VL-002.
 - Procedure established for future cross-model verification:
     (a) Scope the task explicitly to the primary sources.

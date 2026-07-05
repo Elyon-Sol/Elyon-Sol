@@ -121,7 +121,7 @@ time. PEP-supplied receipt time is the safer default that the
 canon does not contradict.
 
 The cross-model verification round documented in VL-015
-surfaced this canon under-specification (G12). Claude's schema
+surfaced this canon under-specification (G12). The assistant's schema
 and OpenAI's derivation both treated `t` as not caller-
 supplied; Grok's derivation listed `t` as caller-supplied or
 system-derived (left open). This rationale makes the schema's
@@ -221,7 +221,7 @@ of state transition. Without caller-supplied context on the
 wire, the gate has no way to distinguish context-class
 transitions from authority-class or coverage-class transitions.
 The cross-model verification round documented in VL-015
-surfaced this under-specification: Claude's schema and Grok's
+surfaced this under-specification: the assistant's schema and Grok's
 derivation both treated `C` as caller-supplied; OpenAI's
 stricter reading did not surface `C` as a caller-supplied wire
 field at all. The three-way divergence is recorded as G12.

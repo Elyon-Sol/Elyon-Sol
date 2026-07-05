@@ -251,7 +251,7 @@ tests, or structure change such that the delta no longer exists  -  never by edi
 - **Code:** `pep.py` accepts `context: Dict[str, Any]` opaquely; no time
   field is on the wire. The interpretive choice (C caller-supplied, t
   PEP-supplied) was made silently in the schema's pre-VL-016 draft.
-- **Delta:** Three procedurally-clean derivations (Claude, Grok, OpenAI)
+- **Delta:** Three procedurally-clean derivations (three independent models)
   diverged on `C` and `t` specifically, and only on those components.
   The divergence traces to canon under-specification, not to verifier
   error. VL-016 premise verification confirmed the under-specification

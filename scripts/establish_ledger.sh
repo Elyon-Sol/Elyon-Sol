@@ -45,7 +45,7 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   invariant over state transitions; implemented ccs_valid() is a point-in-time
   manifest-integrity check. They are not the same invariant.
 - Status: CONFIRMED
-- Derived by: Claude, from whitepaper section 12 + IMPLEMENTATION/evaluator.py
+- Derived by: an AI assistant, from whitepaper section 12 + IMPLEMENTATION/evaluator.py
 - Independently re-derived by: Grok, from the same primary sources (whitepaper
   sections 12-13 + evaluator.py), reaching the same localization including the
   section 8.1 comparison.
@@ -59,7 +59,7 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
 - Correction: Verified against test_pep.py (contains 4 tests) and manifest.json.
   The 30/34/37 figures are plausibly one growing suite at different commits.
   Real issue downgraded to: no commit-pinned source of truth; stale README.
-- Derived by: Claude, against test_pep.py + manifest.json + repo README.
+- Derived by: an AI assistant, against test_pep.py + manifest.json + repo README.
 
 ### VL-004 - "Validator wrapped in oversized language" read retracted
 - Date: 2026-05-14
@@ -69,7 +69,7 @@ SINGLE-SOURCE | CONFIRMED | DISPUTED | RETRACTED | CORRECTED
   legitimate formal specification (formal interaction model, set-theoretic
   invariant definitions, prior-work positioning). Accurate finding: faithful
   partial implementation of a real specification, one drifted invariant (G0).
-- Derived by: Claude, against whitepaper v0.9.8.4.
+- Derived by: an AI assistant, against whitepaper v0.9.8.4.
 
 ### VL-005 - Grok first review (rating) - NOT a confirmation event
 - Date: 2026-05-14

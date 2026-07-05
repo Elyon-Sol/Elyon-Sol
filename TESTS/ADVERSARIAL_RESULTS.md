@@ -1,7 +1,7 @@
 
 
 Source:
-- Claude-generated adversarial test suite
+- AI-generated adversarial test suite
 
 Scope:
 - Type coercion (string, int, dict, nested)

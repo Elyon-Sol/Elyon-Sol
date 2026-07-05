@@ -523,8 +523,7 @@ Elyon-Sol/
 |   \-- methodology/             reusable session patterns
 |       +-- apply_script_template.py
 |       +-- build_resumption_request_template.md
-|       +-- verification_request_template.md
-|       \-- session_mechanics_lessons.md
+|       \-- verification_request_template.md
 |
 \-- scripts/
     +-- establish_ledger.sh
@@ -539,8 +538,7 @@ This listing is reconciled against
 diff-of-record at HEAD = 2db1807) and STATE.md citations of
 files added after artifact 01 was last touched (VL-011's
 EVIDENCE reorganization, VL-014's `SPEC/request_schema.md`,
-VL-017a/b's `docs/methodology/` templates, VL-018 follow-up's
-`session_mechanics_lessons.md`, VL-025's `IMPLEMENTATION/envelope.py`,
+VL-017a/b's `docs/methodology/` templates, VL-025's `IMPLEMENTATION/envelope.py`,
 VL-028's two `TESTS/adversarial/` test files). If this listing
 diverges from the actual tree, `01_repository_structure.md` is
 the source of truth and this README is the stale one.

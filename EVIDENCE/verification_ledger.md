@@ -36,7 +36,7 @@ Cross-volume curated map: `EVIDENCE/verification_ledger_index.md`.
 
 ### VL-108 - 2026-06-16 - G5 Phase 1 executed: four-node public surface live under a real CA; author self-test green over real transport; REAL_TRANSPORT upgraded from the VirtualBox tier to the public surface
 **Status:** RECORDED (an execution increment - deployment + author self-test on real public hosts; no gate / verifier / crypto / sidecar code change). Referent-bound: the run log is EVIDENCE/proofs/attack_suite_live_run_2026-06-16.log; the predicate change is EVIDENCE/readiness.json (REAL_TRANSPORT). Grounded per SESSION_PROTOCOL resume + deploy/G5_SESSION_KICKOFF.md.
-**Author:** the project author (provisioned the hosts, ran every command, executed the self-test and pasted back the outputs) + Claude (verified the code contracts, generated the exact command syntax, adjudicated outputs, authored this close).
+**Author:** the project author (provisioned the hosts, ran every command, executed the self-test and pasted back the outputs) + an AI assistant (verified the code contracts, generated the exact command syntax, adjudicated outputs, authored this close).
 **Classification:** trajectory move - it moves G5 Phase 1 from PLANNED / AUTHOR-locus to DONE (the public surface exists and the author self-test is green over it). It does NOT close G5 (no external attacker yet).
 
 #### What landed (on real hosts; not in the repo)
@@ -69,7 +69,7 @@ git object-store inspection during the VL-108 close found that the VL-107 commit
 
 ### VL-108 follow-up - 2026-06-16 - pre-exposure items 1-3 executed (publisher key rotated, sidecar claim-13 live-verified, renewal hooks on all nodes)
 **Status:** RECORDED (execution follow-up to VL-108; no gate / verifier / crypto code change). Referent-bound: EVIDENCE/proofs/sidecar_live_check.py + EVIDENCE/proofs/sidecar_live_check_2026-06-16.log.
-**Author:** the project author (ran every command on the live hosts) + Claude (scripts, adjudication).
+**Author:** the project author (ran every command on the live hosts) + an AI assistant (scripts, adjudication).
 Three of the seven VL-108 pre-exposure items are now done:
 1. PUBLISHER KEY ROTATED. The publisher Ed25519 signing key exposed in the VL-108 working chat was regenerated on pub (new public half c1eb51c9...; id pub-deploy-001 unchanged) and re-pinned on the target (ELYON_PUBLISHER_KEY_HEX). The old key is dead. Re-verified end-to-end by the item-2 mint (gate -> push -> target accepted under the new key).
 2. SIDECAR LIVE-VERIFIED (claim 13). EVIDENCE/proofs/sidecar_live_check.py mints a real envelope from the gate and presents it to authz.elyon-sol.io:9243: a VALID envelope -> ALLOW (200, REASSERTED_AND_BOUND); a TAMPERED one -> DENY (403, REF_VERIFY_SIGNATURE_INVALID). PASS, exit 0 (log: sidecar_live_check_2026-06-16.log). This closes the live-ALLOW gap the VL-108 self-test left open for the sidecar; claim 13 is now live on the public surface (still the author's own check, not an external attacker).
@@ -79,7 +79,7 @@ Remaining VL-108 pre-exposure items (4-7), unchanged: counsel sign-off on the sa
 
 ### VL-109 - 2026-06-16 - Cursor white-box review (Mode A): R-01 + P-01 found & fixed; B-01/F-01/R-02 named-open; in-house hardening, NOT a G5 referent
 **Status:** RECORDED (an in-house white-box hardening round + the resulting build fix; verified - full suite 391 -> 394 green on a native run - committed 3343e32 and deployed to all four live nodes; the live sidecar ALLOW/DENY check re-passed). Referent-bound: EVIDENCE/verification_runs/cursor_whitebox_review_2026-06-16.md (adjudicated record); the fixes are IMPLEMENTATION/replay_cache.py + authz_sidecar.py + reference_target.py + TESTS/adversarial/test_findings_002.py at 3343e32.
-**Author:** the project author (ran Cursor over the local repo, pasted the findings, ran the suite + redeploy natively) + Claude (designed the scoped Mode-A task, adjudicated every finding against HEAD, wrote the fixes + tests).
+**Author:** the project author (ran Cursor over the local repo, pasted the findings, ran the suite + redeploy natively) + an AI assistant (designed the scoped Mode-A task, adjudicated every finding against HEAD, wrote the fixes + tests).
 **Classification:** in-house WHITE-BOX hardening - the reviewer had the full repo (canon, ledger, tests), the antithesis of blind. Internal evidence, FORBIDDEN to present to a blind reviewer as validation (VL-057 / ext-readiness gate 4). NOT a G5 referent and does not change G5's status. Same conformance/hardening class as VL-106; the value is finding bugs to fix BEFORE a real external attacker arrives (the VirtualBox-tier precedent, VL-087..092).
 
 #### Findings, adjudicated against HEAD (all Cursor citations verified accurate - no fabrication)
@@ -117,7 +117,7 @@ Referent-binding + cleanup. (1) The Cursor white-box rounds were committed to EV
 
 ### VL-110 - 2026-06-16 - cross-model white-box round (3 clean runs): R-01/P-01 + crypto core re-confirmed; named-posture gaps; R-02 guard + B-01 scope applied; B-01-step-4/F-01/K-01 scheduled
 **Status:** RECORDED (a cross-model white-box round adjudicated under VL-008, plus two hardening increments + a schedule; suite +1 test). Referent-bound: the fixes are IMPLEMENTATION/replay_cache.py (R-02 guard) + IMPLEMENTATION/authz_sidecar.py (B-01 docstring) + TESTS/adversarial/test_findings_002.py (R-02 test) + deploy/LIVE_BRINGUP_RUNBOOK.md (posture note). The three verbatim run outputs are a pending referent commit under EVIDENCE/verification_runs/cursor_xmodel_*.
-**Author:** the project author (ran the identical prompt across Cursor's models, pasted the outputs) + Claude (cross-model adjudication, the two fixes, the schedule).
+**Author:** the project author (ran the identical prompt across Cursor's models, pasted the outputs) + an AI assistant (cross-model adjudication, the two fixes, the schedule).
 **Classification:** WHITE-BOX in-house (every model had the full repo) - internal evidence, FORBIDDEN to a blind reviewer (VL-057), NOT a G5 referent. Conformance/hardening class (VL-106 precedent).
 
 #### The round
@@ -153,7 +153,7 @@ The three verbatim cross-model run outputs from VL-110 are now committed (closin
 
 ### VL-111 - 2026-06-17 - B-01 build-order step 4 BUILT: sidecar interaction derived from the ext_authz request BODY (in-house half of B-01 closed); build-then-wire, NOT a G5 referent
 **Status:** RECORDED (an in-house build increment on the derivative OPA-sidecar track; build-then-wire, no existing default path changed; TESTS suite 401 -> 411). Referent-bound: the build is IMPLEMENTATION/authz_sidecar.py (`build_request_body_extractor` + `_resolve_tool` + an await-aware decision-path line + the narrowed SECURITY SCOPE / module / param docstrings) and TESTS/adversarial/test_authz_sidecar_body_binding.py (10 tests); the deploy-posture note is deploy/LIVE_BRINGUP_RUNBOOK.md. Grounded per SESSION_PROTOCOL resume against docs/design/opa_sidecar_design.md section 5 + 11 step 4, the VL-110 B-01 finding, and the verifier binding contract (verifier.py interaction binding: AP/OP/context/manifest-pinning equality).
-**Author:** Claude (Cowork session) at the author's request (pick up B-01 step 4); the author commits + pushes natively.
+**Author:** an AI assistant (a build session) at the author's request (pick up B-01 step 4); the author commits + pushes natively.
 **Classification:** trajectory move per VL-017a on the DERIVATIVE (OPA-sidecar) track - it closes the in-house half of the named-open B-01 gap. It is WHITE-BOX in-house build, NOT external validation and NOT a G5 referent; G5 is unchanged.
 
 #### What B-01 step 4 is, and what this build does
@@ -179,7 +179,7 @@ F-01 (wire sidecar signed-record freshness) and K-01 (pass key_record_view on th
 
 ### VL-112 - 2026-06-17 - F-01 BUILT: optional signed-record (freshness) mode wired into the ext-authz sidecar; build-then-wire, NOT a G5 referent
 **Status:** RECORDED (an in-house build increment on the derivative OPA-sidecar track; build-then-wire, no existing default path changed; TESTS suite 411 -> 419). Referent-bound: the build is IMPLEMENTATION/authz_sidecar.py (config_from_env signed-mode resolution + the handler's signed-mode gate branch + the three ENV_PUBLISHER_*/SIGNED_RECORD_PATH names + the published_record_source import + docstring) and TESTS/adversarial/test_authz_sidecar_freshness.py (8 tests). Grounded per SESSION_PROTOCOL resume against the VL-110 F-01 finding, IMPLEMENTATION/reference_target.py's signed mode (VL-091, the pattern mirrored), IMPLEMENTATION/published_record_source.py (load_signed_record_from_bytes, VL-074), and IMPLEMENTATION/executor_sdk.py (ExecutorGate's record_source path).
-**Author:** Claude (Cowork session) at the author's request (pick up F-01); the author commits + pushes natively.
+**Author:** an AI assistant (a build session) at the author's request (pick up F-01); the author commits + pushes natively.
 **Classification:** trajectory move per VL-017a on the DERIVATIVE (OPA-sidecar) track - it closes the named-open F-01 gap (sidecar lacked signed-record freshness). WHITE-BOX in-house build, NOT external validation and NOT a G5 referent; G5 unchanged.
 
 #### What F-01 is, and what this build does

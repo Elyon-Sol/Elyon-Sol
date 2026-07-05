@@ -1,7 +1,7 @@
 ============================= test session starts ==============================
 platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python
 cachedir: .pytest_cache
-rootdir: /home/claude/elyon
+rootdir: /home/user/elyon
 plugins: anyio-4.13.0
 collecting ... collected 54 items
 

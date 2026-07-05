@@ -1,7 +1,7 @@
 Three-domain synthetic POC - LIVE run over real cross-host TLS (VL-096 live)
 ============================================================================
 
-AUTHOR-EXECUTED on the real VirtualBox deployment. Recorded by Claude from the
+AUTHOR-EXECUTED on the real VirtualBox deployment. Recorded by the assistant from the
 author's pasted runner output. Referent: the three generated reports
 EVIDENCE/proofs/three_domain_poc/reports/{medical,legal,finance}_report.md
 (Mode: live; generated 2026-06-10).
