@@ -6,7 +6,7 @@
 2. **Non-bypassable enforcement** — closing A1 so traffic cannot skip the gate.
 
 **Status:** design. This revision folds in the eight findings of the adversarial design
-review (H1–H8; see `governance_layer_adversarial_review.md`). Each correction is marked
+review (H1–H8; see `docs/design/governance_layer_adversarial_review.md`). Each correction is marked
 inline `[FIX H#]`. Build in increments under SESSION_PROTOCOL + VL discipline; canon stays
 locked (GR-1). Grounded in `HEAD` = `dcc66dd` (design originally compiled against `c6b4094`,
 one commit earlier — no material drift).
