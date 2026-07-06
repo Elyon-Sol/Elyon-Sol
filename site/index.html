@@ -136,6 +136,7 @@
     <nav class="links">
       <a href="#what">Overview</a>
       <a href="#features">Features</a>
+      <a href="#compare">Compare</a>
       <a href="#tech">Technology</a>
       <a href="#surface">Live Surface</a>
       <a href="#tryit">Break it in 60s</a>
@@ -205,6 +206,46 @@
       <div class="card"><h3><span class="ic">⏱️</span> Freshness &amp; clock-skew</h3><p>Signed published-record freshness plus a configurable clock-skew window; a stale or out-of-window record is refused rather than trusted.</p></div>
       <div class="card"><h3><span class="ic">🔑</span> Key provenance &amp; rotation</h3><p>Approver and issuer trust is resolved from a signed key-record chain; publisher keys are rotatable live under a no-secret-in-history protocol.</p></div>
       <div class="card"><h3><span class="ic">🧾</span> Auditable &amp; reconcilable</h3><p>An issuance/approval log lets every held-and-forwarded high-impact decision be reconciled — a forward without a recorded grant is a caught invariant violation.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="compare">
+  <style>
+    #compare table.rw td:not(:first-child){text-align:center;font-family:var(--mono)}
+    #compare table.rw th:not(:first-child){text-align:center}
+    #compare table.rw th{font-size:.72rem}
+    #compare .y{color:var(--acc);font-weight:700}
+    #compare .n{color:var(--faint)}
+    #compare .p{color:var(--warn);font-size:.8rem}
+    #compare .d{color:var(--faint)}
+    #compare .scroll{overflow-x:auto}
+  </style>
+  <div class="wrap">
+    <div class="eyebrow">How it compares</div>
+    <h2>What makes it different</h2>
+    <p class="lead">Design properties in the authorization-attestation niche. This is not a claim that policy engines or runtime hooks are worse at what they do &mdash; they are complementary, and Elyon-Sol runs happily as an ext-authz layer alongside OPA.</p>
+    <div class="scroll">
+    <table class="rw" style="min-width:660px">
+      <thead><tr>
+        <th style="width:40%"></th>
+        <th class="y">Elyon-Sol</th>
+        <th>Allow/deny lists</th>
+        <th>Policy engines (OPA)</th>
+        <th>Runtime guard hooks</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Decides before the action runs</td><td class="y">&#10003;</td><td class="y">&#10003;</td><td class="y">&#10003;</td><td class="y">&#10003;</td></tr>
+        <tr><td>Fail-closed by default</td><td class="y">&#10003;</td><td class="p">partial</td><td class="p">config</td><td class="p">partial</td></tr>
+        <tr><td><b>Signed, verifiable receipt</b> per allowed action</td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td></tr>
+        <tr><td>Decision <b>bound to the exact action + arguments</b></td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="p">partial</td></tr>
+        <tr><td><b>Single-use / replay-proof</b> authorization</td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td></tr>
+        <tr><td>Human approval with <b>cryptographic separation of duties</b></td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="p">prompt</td></tr>
+        <tr><td>Policy <b>pinned by hash + version</b></td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="p">partial</td><td class="n">&#10007;</td></tr>
+        <tr><td><b>Falsifiable</b> &mdash; live target + inspector + open break-it challenge</td><td class="y">&#10003;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td></tr>
+      </tbody>
+    </table>
     </div>
   </div>
 </section>
