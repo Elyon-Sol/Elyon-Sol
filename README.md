@@ -82,10 +82,10 @@ single-use authorization bound to exactly that call.
 
 ## How it works (in plain terms)
 
-An allowed decision must pass three checks:
+An allowed decision must pass two checks on the request, plus a continuity property that carries across changes:
 
-- **Authority** — the caller's authorities satisfy what the policy requires for this action.
-- **Coverage** — the operations are covered by what the policy allows.
+- **Authority** — the caller's authorities include everything the policy requires for this action (a set-containment check).
+- **Coverage** — the operations are covered by what the policy allows (the same set-containment check, on the operation sets).
 - **Continuity** — a past "yes" is not honored after the policy or decision logic it depended on changes.
 
 On an allowed decision the gate builds an **admissibility envelope** — a content-hashed, Ed25519-signed
@@ -152,9 +152,11 @@ If you find a gap between a claim here and the code, that's a bug in the claim �
 
 ## Formal model & provenance (for those who want the depth)
 
-Elyon-Sol is derived from a locked formal specification (the "canon", v0.9.8.4), whose model
-`G(I) = AC³ ∧ T²⁶ ∧ CCS` conjoins the three invariants above (Authority = AC³, Coverage = T²⁶,
-Continuity = CCS). The canon is immutable and changes only by version increment.
+Elyon-Sol is derived from a locked formal specification (the "canon", v0.9.8.4), whose decision rule
+`G(I) = AC³ ∧ T²⁶ ∧ CCS` conjoins the three conditions above: **AC³** (Authority) and **T²⁶** (Coverage)
+are the two per-request set-containment checks — `AP ⊇ AR` and `OP ⊇ R` — and **CCS** (Continuity) is the
+property that carries across change. Per the canon (§3), the superscripts are nominal labels from the
+original notation, **not mathematical exponents**. The canon is immutable and changes only by version increment.
 
 Every project claim is traceable to a spec clause, an implementation construct, a test, and an entry
 in an append-only **verification ledger** (`EVIDENCE/verification_ledger.md`) that records how each
@@ -186,7 +188,7 @@ sidecar, and supporting modules — is licensed under **AGPL-3.0** (see `LICENSE
 source-disclosure obligation. A **commercial license** is available for uses that can't accept AGPL's terms
 (`COMMERCIAL.md`); a separate administration/tooling SDK is proprietary and sold separately. Full model:
 `LICENSING.md`. Contributions require a DCO sign-off (`CONTRIBUTING.md`). "Elyon-Sol" is a trademark of
-Justin Laporte (application pending); the license covers the code, not the name.
+Justin LaPorte (application pending); the license covers the code, not the name.
 
 ## Security & contact
 
