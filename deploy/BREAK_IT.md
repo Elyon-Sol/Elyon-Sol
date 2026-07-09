@@ -103,6 +103,39 @@ description.
 4. Full request/response shapes and the sample action are at <link to a short
    "how to interact" appendix>.
 
+## Where the sharp edges are (suggested attack classes)
+
+The signature math is standard and is not the interesting target. In a system
+like this the real breaks live in implementation seams — where two components
+disagree about what a request means. Spend your time here:
+
+1. Canonicalization mismatch (gate vs target). The token is signed over a
+   canonical serialization of the request. If the target parses and re-serializes
+   your request even slightly differently than the gate did, a signature might
+   verify over content the target then reads differently. Try: reordered JSON
+   keys, duplicate keys, added or trailing whitespace/bytes, the same string as
+   raw non-ASCII vs escaped `\uXXXX`, unicode normalization variants (NFC vs NFD),
+   and numbers as integer vs float (`1` vs `1.0`). A break is a request the target
+   ACTS on whose effective content differs from what was signed.
+
+2. A field the signature does not cover. Change ONE field at a time and present
+   the token. If any change alters what the target does yet the token is still
+   honored, that field is outside the signed region. Pay attention to fields that
+   look like metadata — timestamps, identifiers, versions, key ids.
+
+3. Single-use under concurrency (a race). Present the SAME valid token many times
+   SIMULTANEOUSLY — not one after another. If more than one is honored, the
+   single-use check has a time-of-check/time-of-use race.
+
+4. Validity-window edges. Present a token at the exact instant of expiry, or one
+   that is expired to one host but not another (clock skew between the target and
+   the sidecar). A disagreement between two components about whether the same
+   token is still valid is worth reporting.
+
+5. Cross-binding. Take a genuine token minted for action/target A and present it
+   for action/target B; strip a bound field; set a bound field to null or empty.
+   Anything honored across a binding it was not minted for is a break.
+
 ## How to submit
 
 Send to security@elyon-sol.io:
