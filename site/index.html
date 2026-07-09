@@ -152,8 +152,9 @@
   <div class="wrap">
     <div class="eyebrow">Pre-execution admission control · canon v0.9.8.4</div>
     <h1>A gate that decides whether an action is allowed<br>to happen — before it happens.</h1>
-    <p class="tag">Elyon-Sol is a deterministic, fail-closed HTTP admission gate derived from a formal admissibility specification. Given a request and a SHA-256-pinned manifest, it returns <b class="mono" style="color:var(--acc)">ELIGIBLE</b> only if the caller's authority and operation sets satisfy the manifest and the continuity invariant holds — otherwise it refuses, and the upstream is never called.</p>
+    <p class="tag">Elyon-Sol is a deterministic, fail-closed HTTP admission gate derived from a formal admissibility specification. Given a request and a SHA-256-pinned manifest, it returns <b class="mono" style="color:var(--acc)">ELIGIBLE</b> only if the caller's authority and operation sets satisfy the manifest and the continuity property holds — otherwise it refuses, and the upstream is never called.</p>
     <div class="formula">G(I) = <b>AC³</b> ∧ <b>T²⁶</b> ∧ <b>CCS</b></div>
+    <p class="muted" style="font-size:.85rem;max-width:66ch;margin:0 0 22px">Plainly: allow only if the caller's authorities cover what the manifest requires (<b>AC³</b>), the operations are covered (<b>T²⁶</b>), and nothing the decision relied on has changed (<b>CCS</b>). Per the canon, the superscripts are legacy labels — <b>not exponents</b>.</p>
     <div class="btns">
       <a class="btn primary" href="#tryit">Try to break it →</a>
       <a class="btn ghost" href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Read the Zenodo record</a>
@@ -173,19 +174,19 @@
   <div class="wrap">
     <div class="eyebrow">What it is</div>
     <h2>An authorization boundary for actions, not just requests</h2>
-    <p class="lead">The gate constructs an <b>admissibility envelope</b> on every ELIGIBLE decision — a content-hashed record of the full decision context (canon, manifest, evaluator, request, condition results, timestamp), signed with the gate's key. The upstream target performs an action <b>only</b> if the request carries a valid, current, correctly-bound, single-use envelope. The canon defines three invariants, all fully implemented:</p>
+    <p class="lead">The gate constructs an <b>admissibility envelope</b> on every ELIGIBLE decision — a content-hashed record of the full decision context (canon, manifest, evaluator, request, condition results, timestamp), signed with the gate's key. The upstream target performs an action <b>only</b> if the request carries a valid, current, correctly-bound, single-use envelope. A decision must pass two set-containment checks on the request plus one continuity property that carries across changes — all fully implemented:</p>
     <div class="inv" style="margin-top:22px">
       <div class="card">
-        <h3>AC³ <span class="pill">Authority</span></h3>
-        <p>The caller's authority set must satisfy the manifest's required authority set. Canon §§11.3, 11.5.</p>
+        <h3>Authority <span class="pill">AC³</span></h3>
+        <p>The caller's authorities must include everything the manifest requires — a set-containment check, <span class="mono">AP ⊇ AR</span>. Canon §§11.3, 11.5.</p>
       </div>
       <div class="card">
-        <h3>T²⁶ <span class="pill">Coverage</span></h3>
-        <p>The caller's operation set must be covered by the manifest's required operation set. Canon §§11.4, 11.6.</p>
+        <h3>Coverage <span class="pill">T²⁶</span></h3>
+        <p>The caller's operations must be covered by what the manifest permits — the same set-containment check on the operation sets, <span class="mono">OP ⊇ R</span>. Canon §§11.4, 11.6.</p>
       </div>
       <div class="card">
-        <h3>CCS <span class="pill">Continuity</span></h3>
-        <p>Eligibility does not persist across state transitions; any change to canon, manifest, or evaluator invalidates a prior ELIGIBLE. Canon §§12–13.</p>
+        <h3>Continuity <span class="pill">CCS</span></h3>
+        <p>The one that actually holds over time: any change to canon, manifest, or evaluator invalidates a prior ELIGIBLE, so a stale &ldquo;yes&rdquo; never persists. Canon §§12–13.</p>
       </div>
     </div>
   </div>
@@ -409,7 +410,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
         <h3>Canonical model</h3>
         <div class="kv"><b>Version</b> v0.9.8.4 — locked (immutable source of record)</div>
         <div class="kv"><b>Model</b> <span class="mono">G(I) = AC³ ∧ T²⁶ ∧ CCS</span></div>
-        <div class="kv"><b>Invariants</b> Authority · Coverage · Continuity — all implemented</div>
+        <div class="kv"><b>Conditions</b> Authority (AC³) &amp; Coverage (T²⁶) — per-request set checks · Continuity (CCS) — the over-time property</div>
         <div class="kv"><b>Integrity</b> canon.md transcription verified against the PDF; sha-256 locked</div>
       </div>
       <div class="card">
