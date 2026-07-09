@@ -115,6 +115,20 @@ This compares *design properties in the authorization-attestation niche* — not
 engines or runtime hooks are worse at what they do. They're complementary: Elyon-Sol runs happily as
 an ext-authz layer alongside OPA.
 
+### vs capability-token systems (the honest comparison)
+
+The table above is against access-control *styles*. The sharper question is against systems that
+already issue signed, bound tokens — **macaroons, biscuit, SPIFFE/SVID, GNAP, and the IETF
+Transaction Tokens draft**. Stated plainly: an admissibility envelope *is* a capability token —
+signed, action-bound, single-use — and Elyon-Sol claims **no new cryptographic primitive**. What it
+adds over a raw capability token is behavioral: the envelope is a **receipt of a policy decision**
+(it pins the exact canon, manifest, and evaluator that decided), it **self-invalidates when that
+policy changes** (reassertion/continuity — most capability tokens stay valid until expiry regardless
+of policy drift), it makes **human approval a cryptographic separation-of-duties primitive**, and it
+ships with a **live public break-it challenge**. It composes *with* these systems — it can run on top
+of a biscuit rather than instead of one. Full treatment, including "why not just use biscuit +
+ext-authz + a signing step?": [`docs/COMPARISON_capability_tokens.md`](docs/COMPARISON_capability_tokens.md).
+
 ---
 
 ## What's proven — and what isn't
