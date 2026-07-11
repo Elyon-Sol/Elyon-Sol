@@ -270,3 +270,4 @@ deploy/tls/certs/
 /docs/zenodo/*.pdf
 
 .venv-live/
+docs/redteam/
