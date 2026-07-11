@@ -20,6 +20,9 @@ jobs:
     env:
       # The tests and runners import the IMPLEMENTATION package from the repo root.
       PYTHONPATH: ${{ github.workspace }}
+      # Hermetic proof runners + the pytest suite drive the gate over LOOPBACK target_urls;
+      # allow them past the SSRF guard (its blocking is covered by test_ssrf_guard.py).
+      ELYON_ALLOW_PRIVATE_TARGETS: "1"
     steps:
       - uses: actions/checkout@v4
 
