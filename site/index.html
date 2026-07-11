@@ -143,6 +143,7 @@
       <a href="#canon">Canon &amp; Zenodo</a>
       <a href="#redteam">Red-Team Challenge</a>
       <a href="#wall">Wall of Fame</a>
+      <a href="#changelog">Security log</a>
     </nav>
   </div>
 </header>
@@ -526,6 +527,30 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
       </tbody>
     </table>
     <p class="muted" style="font-size:.85rem;margin-top:14px">Honorable mentions — real issues outside the core claim (defense-in-depth, doc bugs, infra observations) — are credited too. Self-adjudicate with the inspector, then email <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>.</p>
+  </div>
+</section>
+
+<!-- SECURITY CHANGELOG -->
+<section id="changelog">
+  <div class="wrap">
+    <div class="eyebrow">Security changelog</div>
+    <h2>We red-teamed ourselves — found and fixed</h2>
+    <p class="lead">Before widening the challenge, we ran a structured internal red-team against the live surface and the code. The cryptographic core held: every forged, tampered, replayed, rebound, or cross-target token was refused. The findings were in the surrounding contract and deployment wiring — where implementation seams live — and every high-severity one is fixed and deployed across all four public nodes.</p>
+
+    <div class="claimbox" style="border-left-color:var(--acc2)">
+      <b>This is internal, author-side work — not external validation.</b> We publish our own findings because the entire premise is that you can trust what we claim. Finding these ourselves strengthens the surface; it does not replace an external break. The open break-it challenge is still the finish line.
+    </div>
+
+    <table class="rw" style="margin-top:22px">
+      <thead><tr><th>Severity</th><th>Finding</th><th>Fix</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sev crit">High</span></td><td>SSRF via the caller-supplied forward target — a valid admission could steer the gate at internal / metadata addresses</td><td>Gate blocks forwards to loopback / link-local / private / metadata space; optional strict allowlist</td><td>Fixed &amp; deployed</td></tr>
+        <tr><td><span class="sev high">High*</span></td><td>A configured clock-skew tolerance widened a replay window past a token's expiry</td><td>Replay retention now tracks the true validity horizon (expiry + skew)</td><td>Fixed &amp; deployed</td></tr>
+        <tr><td><span class="sev med">Med–High</span></td><td>Interaction binding covered only the declared fields; extra body fields were unbound</td><td>Binding is now exact — any field beyond the bound set is refused</td><td>Fixed &amp; deployed</td></tr>
+        <tr><td><span class="sev med">Med</span></td><td>Single-use replay defense depended on a decision id being present</td><td>The enforcing target fails closed when it is absent</td><td>Fixed &amp; deployed</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:.85rem;margin-top:12px">* Exploitable only where a non-zero clock-skew tolerance is configured. Two lower-severity hardening items remain tracked (a canonicalization-consistency cleanup; a safer default for one inline sidecar mode) — neither is a live bypass on the public surface.</p>
   </div>
 </section>
 
