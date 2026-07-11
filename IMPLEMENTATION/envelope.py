@@ -319,6 +319,14 @@ def build_envelope(
         "timestamp_utc": timestamp_utc,
     }
 
+    # SES-7 fix: bind interaction_type when the caller declared one (typed-impact).
+    # It is a load-bearing eligibility input (evaluator.resolve_required_sets), so it
+    # belongs in the signed, hashed receipt. Omitted when absent -> the flat/default
+    # path stays byte-identical (decision_sha256 unchanged for untyped calls).
+    _it = normalized_interaction.get("interaction_type")
+    if _it is not None:
+        envelope["request_context"]["interaction_type"] = _it
+
     # Compute decision_sha256 last, over the envelope minus
     # decision_sha256 itself and minus timestamp_utc (per artifact 05).
     hashable = {k: v for k, v in envelope.items() if k not in _HASH_EXCLUDED_KEYS}

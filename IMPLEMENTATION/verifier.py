@@ -188,6 +188,12 @@ _REQUEST_CONTEXT_KEYS = (
     "expected_manifest_sha256",
 )
 
+# SES-7: interaction_type is an OPTIONAL bound field (typed-impact). Not
+# required-present (flat manifests omit it), but when present it is bound - the
+# envelope and the live interaction must agree, and it is allowed past the
+# exact-binding check without opening the door to other unbound fields.
+_OPTIONAL_REQUEST_CONTEXT_KEYS = ("interaction_type",)
+
 
 def _normalize_set_field(value: Any) -> list:
     """
@@ -429,7 +435,7 @@ def verify_envelope(
 
     # F1 fix: binding is EXACT - reject any live-interaction field beyond the
     # bound set (else a valid-token holder smuggles unbound body data past the check).
-    if set(interaction.keys()) - set(_REQUEST_CONTEXT_KEYS):
+    if set(interaction.keys()) - set(_REQUEST_CONTEXT_KEYS) - set(_OPTIONAL_REQUEST_CONTEXT_KEYS):
         return _reject(REF_VERIFY_BINDING_MISMATCH)
 
     # target_url: plain string equality (the schema does no target_url
@@ -470,6 +476,12 @@ def verify_envelope(
     if "context" not in interaction:
         return _reject(REF_VERIFY_BINDING_MISMATCH)
     if canonical_json(rc["context"]) != canonical_json(interaction["context"]):
+        return _reject(REF_VERIFY_BINDING_MISMATCH)
+
+    # SES-7: interaction_type binding. Both absent (flat) is fine; both present must
+    # be equal; a one-sided declaration is a mismatch. Binds the load-bearing
+    # eligibility input the gate used into what the target independently verifies.
+    if rc.get("interaction_type") != interaction.get("interaction_type"):
         return _reject(REF_VERIFY_BINDING_MISMATCH)
 
     # ----- Step 4: accept -----
