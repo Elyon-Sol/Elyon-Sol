@@ -345,7 +345,7 @@
     <p class="lead">The attacking surface is public. Poke it right now with nothing but <span class="mono">curl</span> and <span class="mono">jq</span> — no signup, no gatekeeping. See a valid flow work, then try to break it; crediting a confirmed break is one email away.</p>
     <p class="muted" style="max-width:80ch;margin-top:8px">A confirmed break — making the target act, or the sidecar answer <span class="mono">ALLOW</span>, on a call that should be refused — would be the first external result this project has ever had. Confirm your break with the inspector (the tool decides, not us), then email <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>.</p>
 
-    <div class="step">1 · Mint a real token from the gate</div>
+    <div class="step">1 · Make a governed call — the gate signs, forwards, and the target acts once</div>
     <pre class="code">INTERACTION='{
   "AP": ["identity","role"],
   "OP": ["session","request"],
@@ -362,12 +362,14 @@ ENV=$(curl -s https://gate.elyon-sol.io:8443/governed-call \
   -d "{\"target_url\":\"https://target.elyon-sol.io:9443/target\",\"interaction\":$INTERACTION}" \
   | jq -c '.envelope')</pre>
 
-    <div class="step">2 · Present it once — the target acts (this is the control, not a break)</div>
-    <pre class="code">curl -s https://target.elyon-sol.io:9443/target \
+    <div class="step">2 · That governed call already acted — so re-presenting the token is a replay</div>
+    <pre class="code"><span class="c"># the /governed-call above admitted, signed, AND forwarded to the target, which acted once</span>
+<span class="c"># (GET /received went up by 1). The envelope is single-use, so presenting it again is a replay:</span>
+curl -s https://target.elyon-sol.io:9443/target \
   -H "X-Elyon-Sol-Envelope: $ENV" \
   -H 'content-type: application/json' \
   -d "$INTERACTION" | jq
-<span class="c"># expect: {"honored": true, "reason": "REASSERTED_AND_BOUND"}</span></pre>
+<span class="c"># expect: {"honored": false, "reason": "REF_VERIFY_REPLAY"} — single-use working</span></pre>
 
     <div class="step">3 · Now try to break it — every one of these SHOULD be refused</div>
     <pre class="code"><span class="c"># a) no token at all</span>
