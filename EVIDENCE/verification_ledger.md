@@ -1860,3 +1860,131 @@ Prior substantive entry: VL-132. Cites VL-132 (the evaluator increment this wire
 harness that scoped these three points), VL-054 (the request-schema unknown-key vocabulary this
 extends with an optional field), and VL-115 (the pep approval-gate wiring this per-type-izes). Does
 not cite its own hash.
+
+---
+
+## VL-135 — SES-1: SSRF guard on the gate forward target (2026-07-11)
+
+**Claim.** `pep.governed_call` forwarded a signed envelope to any caller-supplied `target_url`,
+with no host validation — a valid admission (public manifest pins) could steer the gate at
+loopback / link-local / cloud-metadata (169.254.169.254) / private space (SSRF). Fixed: reject an
+http(s) `target_url` whose host resolves into that space (`REF_PEP_TARGET_URL_BLOCKED`), with an
+optional strict `ELYON_TARGET_URL_ALLOWLIST`; non-http schemes (e.g. `mcp://` identifiers) pass
+through (not an http-forward vector). Guard runs after schema validation, before evaluation.
+
+**Construct.** IMPLEMENTATION/pep.py `_target_url_allowed()` + the governed_call guard.
+**Referent.** TESTS/adversarial/test_ssrf_guard.py. Also proven end-to-end in-process (the real
+pep app forwarded to 169.254.169.254 before the fix; refuses after) and LIVE-verified on
+gate.elyon-sol.io (returns `REF_PEP_TARGET_URL_BLOCKED`).
+**Status.** SINGLE-SOURCE (white-box; found + fixed in-house). Commit ce58d19; deployed to the gate.
+**Honest scope.** Internal red-team finding under the maintainer's CVP-approved account — NOT
+external validation (G5 unchanged). In-scope reachability of the internal address is the vector.
+
+## VL-136 — SES-2: interaction binding made exact (2026-07-11)
+
+**Claim.** `verify_envelope` bound only the five request_context fields; any OTHER field in the
+live interaction was unbound, so a holder of a valid token could smuggle extra body data past the
+check. Fixed: reject a live interaction carrying any field beyond the bound set
+(`REF_VERIFY_BINDING_MISMATCH`).
+**Construct.** IMPLEMENTATION/verifier.py exact-set check against `_REQUEST_CONTEXT_KEYS`.
+**Referent.** TESTS/adversarial/test_fix_binding_replay.py (extra field rejected; exact body accepted).
+**Status.** SINGLE-SOURCE. Commit ce58d19; deployed to target + sidecar.
+**Honest scope.** White-box. Severity depends on the real executor reading unbound fields; the
+reference target does not.
+
+## VL-137 — SES-3: skew-aware replay retention (2026-07-11)
+
+**Claim.** The replay cache pruned an entry at `not_after` while freshness accepted until
+`not_after + clock_skew`, opening a replay window equal to the skew. Fixed: the enforcing target
+retains the replay entry until `not_after + clock_skew` (one validity horizon) and threads the
+configured skew through both checks. Default skew 0 → byte-identical.
+**Construct.** IMPLEMENTATION/reference_target.py `_clock_skew_seconds()` + `exp = not_after + skew`.
+**Referent.** TESTS/adversarial/test_fix_binding_replay.py (retention closes the skew window).
+**Status.** SINGLE-SOURCE. Commit ce58d19. Exploitable only where clock_skew>0 is configured.
+
+## VL-138 — SES-4: decision_id replay backstop (2026-07-11)
+
+**Claim.** The exactly-once check ran only when `decision_id` was present, so a forwarded envelope
+lacking one silently disabled replay defense. Fixed: the target fails closed
+(`REF_TARGET_NO_DECISION_ID`) when a forwarded envelope has no `decision_id`.
+**Construct.** IMPLEMENTATION/reference_target.py replay block.
+**Referent.** TESTS/adversarial/test_fix_binding_replay.py.
+**Status.** SINGLE-SOURCE. Commit ce58d19. Fragility fix (the gate stamps decision_id; this is the backstop).
+
+## VL-139 — SES-7: interaction_type bound into the envelope (2026-07-11)
+
+**Claim.** Under a typed manifest the gate selects the eligibility policy from the caller-supplied
+`interaction_type` (`evaluator.resolve_required_sets`), but `build_envelope` omitted it from
+`request_context` — never hashed into `decision_sha256`, signed, or verifiable target-side. Proven
+self-inconsistent: an envelope authorized a call that, re-evaluated from its OWN recorded context,
+was refused. Fixed: `build_envelope` binds `interaction_type` WHEN PRESENT (flat/untyped path
+byte-identical, so `decision_sha256` and the deployed chain are unchanged); the verifier binds it
+(envelope and live interaction must agree). Also resolves the SES-2 exact-binding vs typed-manifest
+incompatibility.
+**Construct.** IMPLEMENTATION/envelope.py (conditional bind), IMPLEMENTATION/verifier.py
+(`_OPTIONAL_REQUEST_CONTEXT_KEYS` + agreement check).
+**Referent.** TESTS/adversarial/test_fix_interaction_type_binding.py (9 tests: bound, hash changes,
+flat byte-identical, verifier match/mismatch, receipt reproduces the typed verdict).
+**Status.** SINGLE-SOURCE (novel; not in any prior VL, spec clause, or known list — found by
+white-box analysis of the VL-132 typed-impact seam). Committed in this batch.
+**Honest scope.** Attestation-completeness gap, LATENT (deployed manifest is flat → interaction_type
+inert), NOT a privilege escalation. Not a live break.
+
+## VL-140 — SES-8: signed-record serial rollback defense wired (2026-07-11)
+
+**Claim.** published_record_source / key_record_source / root_record_source implement serial-
+rollback as `record["serial"] < last_seen_serial`, but NO production caller persisted or passed
+`last_seen_serial` (reference_target's signed_fetch omitted it; fetch_key_record / fetch_root_record
+have no production callers). The LIVE target runs signed mode, so its rollback protection collapsed
+to the `not_after` window (~max_age) — the serial mechanism, the reason the signed record exists
+over the byte-anchor, was inert. Proven: an older-but-still-fresh signed record is accepted in the
+production call config. Fixed: the enforcing target tracks a monotonic serial high-water mark
+(in-process, lock-guarded; shared-store parity with the replay cache noted) and passes it, refusing
+a lower-serial record as `REF_VERIFY_PUBLISHED_RECORD_STALE`.
+**Construct.** IMPLEMENTATION/reference_target.py `app.state.last_seen_serial` + threaded fetch.
+**Referent.** TESTS/adversarial/test_fix_serial_rollback.py (2 tests).
+**Status.** SINGLE-SOURCE (white-box). Committed in this batch.
+**Honest scope.** Partly acknowledged as build-then-wire in the readers' comments; the novel
+synthesis is that signed mode is LIVE now, so the protection shipped incomplete. Not an in-scope
+break (injecting an old record needs MITM / a compromised or caching publisher).
+
+## VL-141 — SES-5 / SES-6 dispositioned OPEN (tracked, not fixed) (2026-07-11)
+
+**SES-5 (canonicalization).** `envelope.canonical_json` (ensure_ascii=True) diverges from
+`replay/receipt.canonical_json` (ensure_ascii=False) on non-ASCII — pinned in
+TESTS/adversarial/test_seam_canonicalization.py. Not a single-verification bypass today (each path is
+self-consistent); a cross-component footgun. Plan: one canonicalization module/setting repo-wide.
+**SES-6 (sidecar default).** `authz_sidecar.py` defaults to the header interaction-extractor, unsafe
+inline in front of a body-carrying upstream (self-documented in the module). Benign on the standalone
+public sidecar (nothing executes behind the ALLOW verdict). Plan: make the body-deriving extractor
+the inline default or fail closed.
+**Status.** SINGLE-SOURCE, OPEN. Recorded here so the ledger is not silent on known-open items.
+
+## VL-142 — Live chain advanced to HEAD; eight fixes deployed; external validation still OPEN (2026-07-11)
+
+**Event.** An AI-assisted internal red-team (Claude + maintainer, under the maintainer's CVP-approved
+account) against the live surface and code produced VL-135…140. During remediation the FULL live
+chain — gate / reference target / ext-authz sidecar / publisher — was redeployed from git HEAD and
+brought to a consistent snapshot: canon d1c9d187…, evaluator e307fab2… (VL-132), manifest ac18ac78…
+(VL-132). The signed publisher record (published_hashes_signed.json, re-signed per request) now
+serves those pins; the target/sidecar re-pinned the byte anchor 18cf7522…; the site break-it panel
+and Security changelog were updated. End-to-end verified live: a valid governed call is honored
+(target /received increments), the SSRF probe refuses, and the sidecar denies un-attested calls.
+**Suite.** 583/583 green at the fix HEAD (was 541 at VL-134's snapshot; +42 = the six fix suites +
+the SES-8 tests + carried).
+**Honest scope (load-bearing).** This is WHITE-BOX, author-side work (GR-3 / VL-057). The CVP is an
+account-safeguard adjustment for dual-use security work, NOT an external adversary. NO external party
+has broken — or independently validated — the live surface. **G5 remains OPEN**; the found-and-fixed
+record strengthens the surface but does not substitute for an external break.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-134. This block (VL-135…142) cites VL-047 (mandatory signing / the
+default forward these fixes harden), VL-091 (the signed-record freshness reader SES-8 wires),
+VL-132/VL-133/VL-134 (the typed-impact line SES-7 binds), and VL-057 (white-box ≠ external
+validation). Does not cite its own hashes. Commits: ce58d19 (VL-135…138); VL-139/VL-140 committed
+with this ledger block; VL-142 is an operational + deployment record.
+
+#### Environment note (Cowork sandbox)
+Fixes written and re-verified per the VL-108/VL-126 mount-truncation discipline (bash patcher +
+ast.parse + full-suite run); the AUTHOR re-verifies on a pristine extraction and pushes natively.
+GR-4: this block is appended, not edited; SES-5/SES-6 corrections (when fixed) will be NEW entries.
