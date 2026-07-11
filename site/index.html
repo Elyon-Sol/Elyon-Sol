@@ -550,6 +550,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
         <tr><td><span class="sev high">High*</span></td><td>A configured clock-skew tolerance widened a replay window past a token's expiry</td><td>Replay retention now tracks the true validity horizon (expiry + skew)</td><td>Fixed &amp; deployed</td></tr>
         <tr><td><span class="sev med">Med–High</span></td><td>Interaction binding covered only the declared fields; extra body fields were unbound</td><td>Binding is now exact — any field beyond the bound set is refused</td><td>Fixed &amp; deployed</td></tr>
         <tr><td><span class="sev med">Med</span></td><td>Single-use replay defense depended on a decision id being present</td><td>The enforcing target fails closed when it is absent</td><td>Fixed &amp; deployed</td></tr>
+        <tr><td><span class="sev low">Low</span></td><td>Under a typed manifest, the interaction-type that selects the eligibility policy was not bound into the signed receipt (latent — the public surface runs a flat manifest)</td><td>The envelope now binds interaction_type (hashed, signed, verified target-side); the untyped path stays byte-identical</td><td>Fixed</td></tr>
       </tbody>
     </table>
     <p class="muted" style="font-size:.85rem;margin-top:12px">* Exploitable only where a non-zero clock-skew tolerance is configured. Two lower-severity hardening items remain tracked (a canonicalization-consistency cleanup; a safer default for one inline sidecar mode) — neither is a live bypass on the public surface.</p>
