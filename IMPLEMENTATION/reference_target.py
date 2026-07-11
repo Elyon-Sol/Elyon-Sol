@@ -103,6 +103,7 @@ Ledger: VL-061 (T-G5-transport; artifact 12 step 4 reference enforcing target).
 
 import json
 import os
+import threading
 from typing import Any, Callable, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
@@ -237,6 +238,12 @@ def build_reference_target_app(
     # default (per-instance, byte-behaviour-identical to the prior inline seen-dict), or an
     # injected shared cache (e.g. Redis-backed) for cross-instance exactly-once.
     app.state.replay_cache = replay_cache if replay_cache is not None else InMemoryReplayCache()
+    # SES-8: monotonic serial high-water mark for the SIGNED published record, so a
+    # rolled-back but still-fresh record is refused (REF_VERIFY_PUBLISHED_RECORD_STALE)
+    # instead of honored inside its not_after window. In-process (single instance); a
+    # horizontally-scaled deployment shares it the same way it shares the replay cache.
+    app.state.serial_lock = threading.Lock()
+    app.state.last_seen_serial = None
 
     @app.post("/target")
     async def target(request: Request):
@@ -273,13 +280,23 @@ def build_reference_target_app(
         # signed record carries the three currency pins, so it is a drop-in
         # record_source for verify_envelope either way.
         if config.get("pinned_publisher_keys"):
+            # SES-8: pass the highest serial seen so a lower-serial (rolled-back)
+            # record is refused as STALE even while still inside its not_after window.
+            with app.state.serial_lock:
+                _lss = app.state.last_seen_serial
             res = await run_in_threadpool(
                 signed_fetch, config["signed_record_url"],
-                config["pinned_publisher_keys"],
+                config["pinned_publisher_keys"], None, _lss,
             )
             if res["reason"] is not None:
                 raise _refuse(res["reason"])
             record = res["record"]
+            _s = record.get("serial") if isinstance(record, dict) else None
+            if isinstance(_s, int) and not isinstance(_s, bool):
+                with app.state.serial_lock:
+                    if (app.state.last_seen_serial is None
+                            or _s > app.state.last_seen_serial):
+                        app.state.last_seen_serial = _s
         else:
             record = await run_in_threadpool(
                 fetch, config["publisher_url"], config["pinned_root_sha256"]
