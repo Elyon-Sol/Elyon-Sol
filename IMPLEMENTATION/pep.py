@@ -103,6 +103,53 @@ from IMPLEMENTATION.request_validator import (
 )
 from IMPLEMENTATION.transport import post_to_target
 
+# --- SSRF guard (L1 fix): the gate must not be coerced into POSTing a signed
+# envelope to internal/loopback/link-local/metadata space. ---
+import ipaddress as _ipaddress
+import socket as _socket
+from urllib.parse import urlparse as _urlparse
+from fastapi.concurrency import run_in_threadpool
+
+REF_PEP_TARGET_URL_BLOCKED = "REF_PEP_TARGET_URL_BLOCKED"
+
+
+def _target_url_allowed(url):
+    """SSRF guard: reject non-http(s) schemes and hosts resolving to loopback,
+    link-local (incl. metadata 169.254.169.254), private, reserved, multicast or
+    unspecified space. ELYON_TARGET_URL_ALLOWLIST -> strict allowlist;
+    ELYON_ALLOW_PRIVATE_TARGETS=1 -> dev/test opt-out. Fail-closed on error."""
+    try:
+        p = _urlparse(url)
+    except Exception:
+        return False
+    if p.scheme not in ("http", "https"):
+        return True  # not an http(s) forward -> not an SSRF-to-internal vector
+    host = p.hostname
+    if not host:
+        return False
+    allow = os.environ.get("ELYON_TARGET_URL_ALLOWLIST")
+    if allow:
+        return host.lower() in {h.strip().lower() for h in allow.split(",") if h.strip()}
+    if os.environ.get("ELYON_ALLOW_PRIVATE_TARGETS", "").strip().lower() in ("1", "true", "yes"):
+        return True
+    try:
+        addrs = [str(_ipaddress.ip_address(host))]
+    except ValueError:
+        try:
+            port = p.port or (443 if p.scheme == "https" else 80)
+            addrs = [i[4][0] for i in _socket.getaddrinfo(host, port, proto=_socket.IPPROTO_TCP)]
+        except Exception:
+            return False
+    for a in addrs:
+        try:
+            ip = _ipaddress.ip_address(a)
+        except ValueError:
+            return False
+        if (ip.is_loopback or ip.is_link_local or ip.is_private
+                or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
+            return False
+    return True
+
 
 # ===========================================================================
 # Governance Feature 1 (human oversight) - gate-side state + helpers (VL-115).
@@ -332,6 +379,17 @@ async def governed_call(request: Request):
             detail={
                 "terminal_state": "REFUSE",
                 "refusal_reason_code": refusal,
+            },
+        )
+
+    # ----- SSRF guard (L1 fix): block a caller-supplied target_url pointing at
+    # internal/loopback/link-local/metadata space BEFORE minting or forwarding. -----
+    if not await run_in_threadpool(_target_url_allowed, body["target_url"]):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "terminal_state": "REFUSE",
+                "refusal_reason_code": REF_PEP_TARGET_URL_BLOCKED,
             },
         )
 

@@ -34,6 +34,15 @@ def pytest_configure(config):
 
 
 @pytest.fixture(autouse=True)
+def _allow_private_targets(monkeypatch):
+    # SSRF guard (L1 fix) blocks internal/loopback target_urls by default; the
+    # suite drives loopback/example targets, so allow them in-test. Blocking is
+    # covered by test_ssrf_guard.py.
+    monkeypatch.setenv("ELYON_ALLOW_PRIVATE_TARGETS", "1")
+    yield
+
+
+@pytest.fixture(autouse=True)
 def gate_signing(request, monkeypatch):
     import IMPLEMENTATION.pep as pep
 

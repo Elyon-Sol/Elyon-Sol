@@ -106,7 +106,7 @@ import os
 from typing import Any, Callable, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi.concurrency import run_in_threadpool
 
@@ -125,6 +125,8 @@ from IMPLEMENTATION.replay_cache import InMemoryReplayCache, replay_cache_from_e
 # EVIDENCE/proofs/g5_signed_cross_host_001_runner.py).
 REF_TARGET_NOT_CONFIGURED = "REF_TARGET_NOT_CONFIGURED"
 REF_TARGET_ANCHOR_MISMATCH = "REF_TARGET_ANCHOR_MISMATCH"
+# F2 fix: forwarded envelope without a decision_id cannot be single-use-enforced.
+REF_TARGET_NO_DECISION_ID = "REF_TARGET_NO_DECISION_ID"
 
 # The attestation header the gate pushes on its ELIGIBLE forward
 # (pep.py line 280; canonical_json of the signed envelope).
@@ -196,6 +198,15 @@ def _refuse(reason: str) -> HTTPException:
         status_code=403,
         detail={"honored": False, "reason": reason},
     )
+
+
+def _clock_skew_seconds() -> float:
+    """Configured clock-skew tolerance in seconds (default 0). F3 fix: widens BOTH
+    the freshness window AND replay-cache retention together."""
+    try:
+        return float(os.environ.get("ELYON_CLOCK_SKEW_SECONDS", "0") or "0")
+    except ValueError:
+        return 0.0
 
 
 def build_reference_target_app(
@@ -280,12 +291,14 @@ def build_reference_target_app(
         # gate key is supplied, so the issuer signature is required and checked
         # fail-closed before currency (the signed path). Currency is checked
         # against the FETCHED record; the binding closes same-state replay.
+        skew = timedelta(seconds=_clock_skew_seconds())
         result = verify_envelope(
             envelope,
             interaction,
             config["target_url"],
             record_source=record,
             pinned_public_keys=config["pinned_public_keys"],
+            clock_skew=skew,
         )
         if not result["accepted"]:
             raise _refuse(result["reason"])
@@ -297,16 +310,18 @@ def build_reference_target_app(
         # cross-instance exactly-once on a horizontally-scaled executor. check_and_claim
         # prunes expired entries, refuses an already-claimed id, and claims a fresh one.
         decision_id = envelope.get("decision_id")
-        if decision_id is not None:
-            exp = None
-            na = envelope.get("not_after")
-            if isinstance(na, str):
-                try:
-                    exp = datetime.fromisoformat(na)
-                except ValueError:
-                    exp = None
-            if not app.state.replay_cache.check_and_claim(decision_id, exp):
-                raise _refuse(REF_VERIFY_REPLAY)
+        if decision_id is None:
+            # F2 fix: no decision_id -> single-use cannot be enforced -> fail closed.
+            raise _refuse(REF_TARGET_NO_DECISION_ID)
+        exp = None
+        na = envelope.get("not_after")
+        if isinstance(na, str):
+            try:
+                exp = datetime.fromisoformat(na) + skew  # F3: retain through honored window
+            except ValueError:
+                exp = None
+        if not app.state.replay_cache.check_and_claim(decision_id, exp):
+            raise _refuse(REF_VERIFY_REPLAY)
 
         app.state.received.append(interaction)  # the target acts only here
         return {"honored": True, "reason": result["reason"]}

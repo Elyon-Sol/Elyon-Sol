@@ -427,6 +427,11 @@ def verify_envelope(
     if not isinstance(interaction, dict):
         return _reject(REF_VERIFY_BINDING_MISMATCH)
 
+    # F1 fix: binding is EXACT - reject any live-interaction field beyond the
+    # bound set (else a valid-token holder smuggles unbound body data past the check).
+    if set(interaction.keys()) - set(_REQUEST_CONTEXT_KEYS):
+        return _reject(REF_VERIFY_BINDING_MISMATCH)
+
     # target_url: plain string equality (the schema does no target_url
     # normalization; request_validator only checks absolute-URL syntax).
     if envelope["target_url"] != target_url:
