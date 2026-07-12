@@ -51,12 +51,12 @@ Canonicalization discipline
 
 Canonical JSON serialization uses sort_keys=True, separators=(",",":"),
 ensure_ascii=True. The ensure_ascii=True choice matches the VL-009
-ASCII-safe standard repo-wide and diverges from receipt.py's
-canonical_json (which uses ensure_ascii=False; latent inconsistency
-surfaced at VL-012's process findings). The divergence is recorded in
-the VL-025 ledger entry as a process finding; resolution candidate is
-deferred (either update receipt.py to match, or document both
-explicitly).
+ASCII-safe standard repo-wide. This function is the ONE canonicalization
+for the whole repository: replay/receipt.py's former local copy (which
+used ensure_ascii=False; latent inconsistency surfaced at VL-012's
+process findings, recorded at VL-025, dispositioned OPEN as SES-5 at
+VL-141) now REUSES this function (SES-5 / VL-143), so envelope, grant,
+published-record, and receipt canonicalization agree byte-for-byte.
 
 decision_sha256 is computed over the envelope dict minus two fields:
 
@@ -166,9 +166,9 @@ def canonical_json(data: Any) -> str:
 
     Per artifact 05's decision_sha256 field rationale: "canonical JSON
     (sorted keys, no whitespace)." The ensure_ascii=True choice matches
-    the VL-009 ASCII-safe standard and diverges from receipt.py's
-    canonical_json. See module docstring "Canonicalization discipline"
-    for the divergence rationale.
+    the VL-009 ASCII-safe standard. This is the repo-wide canonicalization:
+    replay/receipt.py reuses this function (SES-5 / VL-143). See module
+    docstring "Canonicalization discipline".
     """
     return json.dumps(
         data,

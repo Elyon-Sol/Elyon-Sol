@@ -1,15 +1,22 @@
+"""
+Replay receipts.
+
+Canonicalization (SES-5 / VL-143): canonical_json is REUSED from
+envelope.py — ONE canonicalization repo-wide (sort_keys, no whitespace,
+ensure_ascii=True). The previous LOCAL definition here used
+ensure_ascii=False and diverged from the envelope / grant /
+published-record canonicalization on non-ASCII input (the cross-component
+footgun recorded OPEN at VL-141 and pinned at
+TESTS/adversarial/test_seam_canonicalization.py). Receipts are ephemeral
+(created and verified in-process; none are persisted), so unifying on the
+envelope's ensure_ascii=True changes receipt bytes only for non-ASCII
+field values and leaves the envelope path — and therefore decision_sha256
+and the deployed chain — byte-identical.
+"""
 import hashlib
-import json
 from datetime import datetime, timezone
 
-
-def canonical_json(data):
-    return json.dumps(
-        data,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    )
+from IMPLEMENTATION.envelope import canonical_json
 
 
 def sha256_text(value):

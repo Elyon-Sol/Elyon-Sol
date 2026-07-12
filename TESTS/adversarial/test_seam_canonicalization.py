@@ -11,11 +11,17 @@ directly:
      within a single envelope). Credit-and-pin.
   2. Canonicalization does NOT silently unify unicode-normalization variants or
      int-vs-float (characterization: distinct bytes -> distinct decision_sha256).
-  3. The KNOWN two-implementation divergence (envelope.canonical_json
-     ensure_ascii=True vs replay/receipt.canonical_json ensure_ascii=False,
-     self-flagged in envelope.py's docstring since VL-012/VL-025) is PINNED, so a
-     future change to either side surfaces here instead of silently creating a
-     cross-path hash mismatch on non-ASCII input.
+  3. Canonicalization UNIFICATION (SES-5 / VL-143): the former
+     two-implementation divergence (envelope.canonical_json ensure_ascii=True
+     vs replay/receipt's local copy ensure_ascii=False, self-flagged since
+     VL-012/VL-025, dispositioned OPEN at VL-141) is RESOLVED — receipt.py
+     reuses envelope.canonical_json. Pinned in BOTH directions: the two paths
+     must AGREE on non-ASCII (revert-catcher: RED if receipt.py regrows a
+     local ensure_ascii=False copy) AND the unified form must be the
+     ASCII-ESCAPED one (direction-catcher: RED if anyone "unifies" by
+     flipping envelope.canonical_json to ensure_ascii=False, which would
+     change decision_sha256 on non-ASCII input and break ASCII-safe header
+     transport).
 """
 import unicodedata
 
@@ -103,18 +109,44 @@ def test_int_vs_float_hash_differently():
     assert h_int != h_float
 
 
-# --- 3. Pin the known two-implementation divergence -----------------------
+# --- 3. Pin the SES-5 unification (VL-143) ---------------------------------
 
 def test_envelope_and_receipt_canonicalization_agree_on_ascii():
     data = {"b": 2, "a": "plain-ascii", "n": 1}
     assert canonical_json(data) == receipt_canonical_json(data)
 
 
-def test_envelope_and_receipt_canonicalization_diverge_on_non_ascii():
-    # envelope: ensure_ascii=True (escapes); receipt: ensure_ascii=False (raw).
-    # Pinned so a future edit that unifies them - or that routes a non-ASCII
-    # value across the two paths - surfaces here instead of silently mismatching.
+def test_envelope_and_receipt_canonicalization_agree_on_non_ascii():
+    # SES-5 revert-catcher: before VL-143 receipt.py carried a LOCAL
+    # ensure_ascii=False canonical_json that diverged from envelope's on
+    # non-ASCII input. receipt.py now reuses envelope.canonical_json; if a
+    # local divergent copy is ever reintroduced, this test goes RED.
+    data = {"x": "café", "y": "你好 ☕"}
+    assert canonical_json(data) == receipt_canonical_json(data)
+
+
+def test_unified_canonicalization_is_ascii_escaped():
+    # SES-5 direction-catcher: the unification must land on the ENVELOPE's
+    # ensure_ascii=True form (ASCII-escaped). Unifying the other way would
+    # change decision_sha256 for non-ASCII envelopes (breaking the deployed
+    # chain's hashes) and put raw UTF-8 in the X-Elyon-Sol-Envelope header.
     data = {"x": "café"}
-    assert canonical_json(data) != receipt_canonical_json(data)
-    assert "\\u00e9" in canonical_json(data)          # escaped form
-    assert "é" in receipt_canonical_json(data)   # raw form
+    assert "\\u00e9" in receipt_canonical_json(data)  # escaped, not raw
+    assert "é" not in receipt_canonical_json(data)
+    assert receipt_canonical_json(data) == canonical_json(data)
+
+
+def test_receipt_non_ascii_round_trip_verifies():
+    # The receipt path stays self-consistent under the unified
+    # canonicalization: a receipt with non-ASCII field values verifies.
+    from IMPLEMENTATION.replay.receipt import create_receipt, verify_receipt
+    r = create_receipt(
+        request_id="REQ-café-你好",
+        terminal_state="REFUSED",
+        manifest_version="1.0",
+        manifest_sha256="ab" * 32,
+        refusal_reason_code="REF_TEST_☕",
+    )
+    assert verify_receipt(r) is True
+    r["request_id"] = "REQ-cafe-你好"  # byte-different, no re-hash
+    assert verify_receipt(r) is False
