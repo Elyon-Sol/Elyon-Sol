@@ -95,6 +95,16 @@ Resolved from the environment, never from the repo:
                               signing key id. Present with _HEX -> SIGNED mode.
   ELYON_PUBLISHER_KEY_HEX   - optional (F-01); the pinned publisher signing public
                               key (raw Ed25519 public bytes as hex).
+  ELYON_EXT_AUTHZ_INLINE    - SES-6 (VL-144) posture declaration: set to 1/true/yes
+                              when the sidecar sits INLINE (Envoy ext_authz) in
+                              front of a body-carrying upstream. Under this
+                              declaration the header-read default extractor is
+                              refused (fail closed) and the body-deriving
+                              extractor is resolved from ELYON_INLINE_AP / _OP /
+                              _MANIFEST_VERSION / _MANIFEST_SHA256 / _TOOL
+                              (/ _ARGS_FIELD); an absent/incomplete mapping
+                              DENIES every check (REF_TARGET_NOT_CONFIGURED).
+                              Unset -> standalone header-read default, unchanged.
   ELYON_SIGNED_RECORD_PATH  - optional (F-01); local path to the SIGNED record
                               (published_hashes_signed.json). Defaults to the
                               ELYON_RECORD_PATH sibling filename. In signed mode the
@@ -157,6 +167,20 @@ ENV_CLOCK_SKEW_SECONDS = "ELYON_CLOCK_SKEW_SECONDS"
 ENV_PUBLISHER_KEY_ID = "ELYON_PUBLISHER_KEY_ID"
 ENV_PUBLISHER_KEY_HEX = "ELYON_PUBLISHER_KEY_HEX"
 ENV_SIGNED_RECORD_PATH = "ELYON_SIGNED_RECORD_PATH"
+# SES-6 (VL-144) inline-posture declaration + declarative body-extractor mapping.
+# An INLINE deployment (Envoy ext_authz in front of a body-carrying upstream)
+# MUST declare ELYON_EXT_AUTHZ_INLINE=1; under that declaration the header-read
+# default extractor is REFUSED (fail closed, REF_TARGET_NOT_CONFIGURED) and the
+# body-deriving extractor is resolved from the ELYON_INLINE_* mapping instead
+# (the R-02 declare-or-fail pattern: the process cannot SEE its own topology,
+# so the declaration is load-bearing). Standalone (flag unset) is unchanged.
+ENV_EXT_AUTHZ_INLINE = "ELYON_EXT_AUTHZ_INLINE"
+ENV_INLINE_AP = "ELYON_INLINE_AP"                              # comma-separated
+ENV_INLINE_OP = "ELYON_INLINE_OP"                              # comma-separated
+ENV_INLINE_MANIFEST_VERSION = "ELYON_INLINE_MANIFEST_VERSION"
+ENV_INLINE_MANIFEST_SHA256 = "ELYON_INLINE_MANIFEST_SHA256"
+ENV_INLINE_TOOL = "ELYON_INLINE_TOOL"    # literal | "path" | "header:<Name>"
+ENV_INLINE_ARGS_FIELD = "ELYON_INLINE_ARGS_FIELD"              # optional
 
 
 def config_from_env() -> Optional[Dict[str, Any]]:
@@ -277,6 +301,15 @@ def default_interaction_extractor(request: Request) -> Optional[Dict[str, Any]]:
     so the binding covers the bytes the upstream executes; or require the upstream
     to re-verify the same envelope it executes. Do NOT place the sidecar inline
     with this default header-read extractor.
+
+    SES-6 (VL-144): the warning above is now ENFORCED via declare-or-fail. An
+    inline deployment declares ELYON_EXT_AUTHZ_INLINE=1, under which this
+    header-read extractor is refused (REF_TARGET_NOT_CONFIGURED) and the
+    body-deriving extractor is resolved from the ELYON_INLINE_* mapping
+    (resolve_interaction_extractor_from_env). The process cannot detect its own
+    topology, so the declaration is load-bearing (the R-02 / VL-123 G-02
+    operator-declaration pattern); an UNDECLARED inline placement remains an
+    operator error this module cannot see.
     """
     # P-01: a duplicate interaction header is ambiguous (which value binds would
     # depend on header ordering) -> treat as absent, fail closed at the binding check.
@@ -424,6 +457,75 @@ def build_request_body_extractor(
     return _extract
 
 
+# --------------------------------------------------------------------------- #
+# SES-6 (VL-144): inline posture declaration + env-wired body extractor
+# --------------------------------------------------------------------------- #
+
+def inline_declared() -> bool:
+    """True iff the deployment declares itself INLINE (Envoy ext_authz in front
+    of a body-carrying upstream) via ELYON_EXT_AUTHZ_INLINE. Same truthy
+    convention as ELYON_REPLAY_MULTI_INSTANCE (the R-02 guard)."""
+    return os.environ.get(ENV_EXT_AUTHZ_INLINE, "").strip().lower() in ("1", "true", "yes")
+
+
+def _csv_tokens(raw: Optional[str]) -> Optional[List[str]]:
+    """Parse a comma-separated token list; None/empty -> None (fail closed)."""
+    if not raw:
+        return None
+    tokens = [t.strip() for t in raw.split(",") if t.strip()]
+    return tokens or None
+
+
+def body_extractor_from_env() -> Optional[Callable[[Request], Any]]:
+    """Build the body-deriving extractor (build_request_body_extractor) from the
+    ELYON_INLINE_* declarative mapping. Returns None if any required value is
+    absent or malformed - the caller's signal to fail closed
+    (REF_TARGET_NOT_CONFIGURED), never a silent fallback to the header default.
+
+    ELYON_INLINE_TOOL forms: "path" -> the request path; "header:<Name>" -> the
+    value of request header <Name>; anything else -> a literal tool identity.
+    """
+    ap = _csv_tokens(os.environ.get(ENV_INLINE_AP))
+    op = _csv_tokens(os.environ.get(ENV_INLINE_OP))
+    version = os.environ.get(ENV_INLINE_MANIFEST_VERSION)
+    sha = os.environ.get(ENV_INLINE_MANIFEST_SHA256)
+    tool_raw = os.environ.get(ENV_INLINE_TOOL)
+    if not (ap and op and version and sha and tool_raw):
+        return None
+    tool_raw = tool_raw.strip()
+    if not tool_raw:
+        return None
+    tool: Union[str, Dict[str, Any]]
+    if tool_raw == "path":
+        tool = {"from": "path"}
+    elif tool_raw.startswith("header:"):
+        name = tool_raw[len("header:"):].strip()
+        if not name:
+            return None
+        tool = {"from": "header", "name": name}
+    else:
+        tool = tool_raw
+    args_field = os.environ.get(ENV_INLINE_ARGS_FIELD) or None
+    return build_request_body_extractor(
+        ap=ap,
+        op=op,
+        expected_manifest_version=version,
+        expected_manifest_sha256=sha,
+        tool=tool,
+        args_field=args_field,
+    )
+
+
+def resolve_interaction_extractor_from_env() -> Optional[Callable[[Request], Any]]:
+    """SES-6 (VL-144): resolve the interaction extractor from the declared
+    deployment posture. INLINE declared -> the body-deriving extractor from the
+    ELYON_INLINE_* mapping (None if incomplete -> fail closed); standalone
+    (flag unset) -> the header-read default, byte-behavior-unchanged."""
+    if inline_declared():
+        return body_extractor_from_env()
+    return default_interaction_extractor
+
+
 def _deny(reason: str) -> Response:
     return Response(
         status_code=403,
@@ -440,7 +542,7 @@ def _allow(reason: str) -> Response:
 
 def build_authz_sidecar_app(
     config_provider: Callable[[], Optional[Dict[str, Any]]] = config_from_env,
-    interaction_extractor: Callable[[Request], Optional[Dict[str, Any]]] = default_interaction_extractor,
+    interaction_extractor: Optional[Callable[[Request], Any]] = None,
     replay_cache=None,
 ) -> FastAPI:
     """
@@ -463,6 +565,16 @@ def build_authz_sidecar_app(
     the decision path. It may be sync (the default header-read extractor) or
     async (the body-deriving extractor, which must read request.body()); an
     awaitable result is awaited.
+
+    SES-6 (VL-144): interaction_extractor=None (the deployable default) resolves
+    the extractor PER REQUEST from the declared posture
+    (resolve_interaction_extractor_from_env): standalone -> the header-read
+    default, byte-behavior-unchanged; ELYON_EXT_AUTHZ_INLINE declared -> the
+    body-deriving extractor from the ELYON_INLINE_* mapping, or fail closed
+    (REF_TARGET_NOT_CONFIGURED) if the mapping is absent/incomplete. Under an
+    INLINE declaration the header-read default is REFUSED even when injected
+    explicitly - the client-controllable header must never be the binding
+    source in front of a body-carrying upstream (B-01/SES-6).
     """
     app = FastAPI(title="Elyon-Sol ext-authz admissibility sidecar")
     app.state.replay_cache = (
@@ -493,12 +605,24 @@ def build_authz_sidecar_app(
                 except (json.JSONDecodeError, ValueError):
                     envelope = None
 
-            # Step 3: extract the live interaction. The DEFAULT reads the
-            # gate-forwarded header; an injected CUSTOM extractor (B-01 step 4,
-            # build_request_body_extractor) derives it from the ext_authz request
-            # body and is async, so await an awaitable result. The default sync
-            # extractor returns its value directly and is behavior-unchanged.
-            interaction = interaction_extractor(request)
+            # Step 3: extract the live interaction. SES-6 (VL-144): the active
+            # extractor is resolved per request from the declared posture when
+            # none was injected; an INLINE-declared deployment must never bind
+            # from the client-controllable header, so the header-read default is
+            # refused (fail closed) under that declaration - whether it arrived
+            # by omission (incomplete ELYON_INLINE_* mapping -> None) or by
+            # explicit injection. Standalone (no declaration) resolves to the
+            # header-read default, byte-behavior-unchanged. An injected CUSTOM
+            # extractor (B-01 step 4, build_request_body_extractor) is async, so
+            # await an awaitable result; the sync default returns directly.
+            extractor = (interaction_extractor
+                         if interaction_extractor is not None
+                         else resolve_interaction_extractor_from_env())
+            if extractor is None or (
+                inline_declared() and extractor is default_interaction_extractor
+            ):
+                return _deny(REF_TARGET_NOT_CONFIGURED)
+            interaction = extractor(request)
             if inspect.isawaitable(interaction):
                 interaction = await interaction
 
