@@ -1988,3 +1988,67 @@ with this ledger block; VL-142 is an operational + deployment record.
 Fixes written and re-verified per the VL-108/VL-126 mount-truncation discipline (bash patcher +
 ast.parse + full-suite run); the AUTHOR re-verifies on a pristine extraction and pushes natively.
 GR-4: this block is appended, not edited; SES-5/SES-6 corrections (when fixed) will be NEW entries.
+
+## VL-143 — SES-5 resolved: one canonicalization repo-wide (2026-07-11)
+
+**Claim.** `envelope.canonical_json` (ensure_ascii=True) and `replay/receipt.py`'s LOCAL copy
+(ensure_ascii=False) diverged on non-ASCII input — recorded since VL-012/VL-025, dispositioned OPEN
+as SES-5 at VL-141. Fixed: receipt.py now REUSES `envelope.canonical_json`, so there is ONE
+canonicalization repo-wide. Direction: unify on the ENVELOPE's ensure_ascii=True — the deployed
+chain's `decision_sha256`, the grant/published-record signatures, and ASCII-safe header transport
+(pep.py) all ride it, so the envelope path stays byte-identical. Receipts are ephemeral (created
+and verified in-process; none persisted), so receipt bytes change only for non-ASCII field values.
+**Construct.** IMPLEMENTATION/replay/receipt.py (local def replaced by the envelope import);
+envelope.py docstring updates only (envelope.py is not hash-pinned; `canonical_json` behavior
+byte-identical, checked against a known-input serialization).
+**Referent.** TESTS/adversarial/test_seam_canonicalization.py section 3 rewritten: the VL-141
+divergence pin RETIRED (it existed to surface exactly this change); an agree-on-non-ASCII
+revert-catcher (RED if a local divergent copy regrows — proven: 2 RED with the old def restored,
+GREEN on re-fix); an ASCII-escaped direction-catcher (RED if anyone "unifies" the other way, which
+would change decision_sha256 on non-ASCII input); a non-ASCII receipt round-trip. Suite 583 → 585
+(−1 retired pin, +3).
+**Status.** RESOLVED (was OPEN, VL-141). SINGLE-SOURCE, white-box. Committed natively with this
+ledger block.
+**Honest scope.** Assurance/hygiene fix, not a live break: the divergence was never a
+single-verification bypass (each path was self-consistent); it was a cross-component footgun. NO
+pinned file touched — canon/evaluator/manifest hashes unchanged; no re-pin, no redeploy required.
+
+## VL-144 — SES-6 resolved: sidecar inline posture declare-or-fail (2026-07-11)
+
+**Claim.** `authz_sidecar` defaulted to the header-read interaction extractor, unsafe INLINE in
+front of a body-carrying upstream (B-01: the client-controllable X-Elyon-Sol-Interaction header
+need not match the bytes the upstream executes); the safe body-deriving extractor existed (VL-111)
+but nothing prevented deploying the unsafe default inline — the gap was documentation-only.
+Fixed via declare-or-fail (the R-02 / VL-123 G-02 operator-declaration pattern, because the process
+cannot see its own topology): an inline deployment declares `ELYON_EXT_AUTHZ_INLINE=1`, under which
+the header-read default is REFUSED (`REF_TARGET_NOT_CONFIGURED` — even when explicitly injected)
+and the body-deriving extractor is resolved from the new `ELYON_INLINE_*` declarative mapping
+(AP/OP/manifest pins/tool[/args_field]); an absent or incomplete mapping DENIES every check.
+Standalone (flag unset) is byte-behavior-unchanged, including falsy flag values.
+**Construct.** IMPLEMENTATION/authz_sidecar.py: `inline_declared()`, `body_extractor_from_env()`,
+`resolve_interaction_extractor_from_env()`; `build_authz_sidecar_app`'s extractor default None →
+resolved PER REQUEST from the declared posture; the step-3 handler guard. No new refusal code.
+**Referent.** TESTS/adversarial/test_authz_sidecar_inline_default.py (+8): the three guard
+revert-catchers proven RED on revert (silent header fallback restored → a gate-attested request
+ALLOWs under the inline declaration) and GREEN on re-fix; standalone regression (header path
+unchanged); the declared-inline default BINDS TO THE BODY (tampered body refused at
+REF_VERIFY_BINDING_MISMATCH despite a benign interaction header — the B-01 rebind defeated).
+Suite 585 → 593; all 44 pre-existing sidecar tests green.
+**Status.** RESOLVED (was OPEN, VL-141). SINGLE-SOURCE, white-box. Committed natively with this
+ledger block.
+**Honest scope.** The live public sidecar is STANDALONE (nothing executes behind its ALLOW) and its
+behavior is unchanged; redeploy is optional — the fix is inert until declared. An UNDECLARED inline
+placement remains an operator error the process cannot detect; the declaration is load-bearing and
+is documented in the module docstring and env contract. Not a live break; an enforcement gap closed.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-142. This block (VL-143/144) cites VL-141 (the OPEN dispositions
+resolved here), VL-012/VL-025 (the canonicalization divergence's first record), VL-110/VL-111
+(B-01 and the body-deriving extractor SES-6 wires in), VL-123 (the G-02 operator-declaration
+precedent), and VL-076 (the replay seam, unchanged). Does not cite its own hashes (VL-012).
+
+#### Environment note (Cowork sandbox)
+Written via the VL-108/VL-126 mount-truncation discipline (bash heredoc/patcher + ast.parse +
+content grep + full-suite run, 593/593 with xdist); sandbox `git status` unreliable (null-sha1
+index) as documented — the AUTHOR verifies the working tree, re-verifies on a pristine extraction,
+and commits + pushes natively. GR-4: appended, not edited.
