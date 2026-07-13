@@ -267,7 +267,12 @@ def load_key_record_from_bytes(
             "role": entry.get("role"),
         }
 
-    return {"trust_view": trust_view, "reason": None}
+    # SES-9a: surface the validated record's SERIAL (additive; the signed
+    # region includes it, verified above) so a consumer can keep a monotonic
+    # high-water mark across fetches - the SES-8 rollback defense the signed
+    # HASH record path already has. Absent from the _reject shape; consumers
+    # read it with .get(). trust_view/reason contract unchanged.
+    return {"trust_view": trust_view, "reason": None, "serial": record["serial"]}
 
 
 def fetch_key_record(

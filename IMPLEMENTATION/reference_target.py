@@ -114,6 +114,7 @@ from fastapi.concurrency import run_in_threadpool
 from IMPLEMENTATION.published_source import fetch_published_record
 from IMPLEMENTATION.verifier import verify_envelope, REF_VERIFY_REPLAY
 from IMPLEMENTATION.published_record_source import fetch_signed_record
+from IMPLEMENTATION.key_record_source import fetch_key_record
 from IMPLEMENTATION.replay_cache import InMemoryReplayCache, replay_cache_from_env
 
 
@@ -145,6 +146,19 @@ ENV_GATE_PUBLIC_KEY_HEX = "ELYON_GATE_PUBLIC_KEY_HEX"
 ENV_PUBLISHER_KEY_ID = "ELYON_PUBLISHER_KEY_ID"
 ENV_PUBLISHER_KEY_HEX = "ELYON_PUBLISHER_KEY_HEX"
 ENV_SIGNED_RECORD_URL = "ELYON_SIGNED_RECORD_URL"
+# Optional SIGNED KEY-RECORD mode (SES-9a / K-01, VL-110; parity with the
+# ELYON_PUBLISHER_* signed-hash-record block above). When ALL THREE are present
+# the target resolves the GATE issuer key from the publisher-signed key record
+# (fetched + validated per request; issuer-key revocation + validity window are
+# then ENFORCED via the verifier's record-exclusive key_record_view branch,
+# VL-042) instead of the static ELYON_GATE_* pin. The ROOT public key is the
+# out-of-band pin (never fetched alongside the record - that would be
+# circular). Absent -> the static-pin path, byte-behavior-unchanged. A
+# PARTIALLY-set trio is a configuration error -> fail closed
+# (REF_TARGET_NOT_CONFIGURED).
+ENV_KEY_RECORD_URL = "ELYON_KEY_RECORD_URL"
+ENV_KEY_RECORD_ROOT_ID = "ELYON_KEY_RECORD_ROOT_ID"
+ENV_KEY_RECORD_ROOT_HEX = "ELYON_KEY_RECORD_ROOT_HEX"
 
 
 def config_from_env() -> Optional[Dict[str, Any]]:
@@ -191,6 +205,22 @@ def config_from_env() -> Optional[Dict[str, Any]]:
         config["pinned_publisher_keys"] = {pub_key_id: publisher_key}
         config["signed_record_url"] = os.environ.get(ENV_SIGNED_RECORD_URL) or \
             publisher_url.replace("published_hashes.json", "published_hashes_signed.json")
+    # Optional SIGNED KEY-RECORD mode (SES-9a): pin a key-record ROOT public key
+    # + a key-record URL. ALL THREE or NONE: a partially-set trio, like a
+    # malformed root key, is a configuration error -> None (fail closed,
+    # REF_TARGET_NOT_CONFIGURED) - never a silent downgrade to the static pin.
+    kr_url = os.environ.get(ENV_KEY_RECORD_URL)
+    kr_root_id = os.environ.get(ENV_KEY_RECORD_ROOT_ID)
+    kr_root_hex = os.environ.get(ENV_KEY_RECORD_ROOT_HEX)
+    if kr_url or kr_root_id or kr_root_hex:
+        if not (kr_url and kr_root_id and kr_root_hex):
+            return None
+        try:
+            root_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(kr_root_hex))
+        except Exception:
+            return None
+        config["key_record_url"] = kr_url
+        config["pinned_key_record_roots"] = {kr_root_id: root_key}
     return config
 
 
@@ -215,6 +245,7 @@ def build_reference_target_app(
     fetch: Callable[..., Optional[Dict[str, Any]]] = fetch_published_record,
     signed_fetch: Callable[..., Dict[str, Any]] = fetch_signed_record,
     replay_cache=None,
+    key_record_fetch: Callable[..., Dict[str, Any]] = fetch_key_record,
 ) -> FastAPI:
     """
     Build the reference enforcing-target ASGI app.
@@ -244,6 +275,12 @@ def build_reference_target_app(
     # horizontally-scaled deployment shares it the same way it shares the replay cache.
     app.state.serial_lock = threading.Lock()
     app.state.last_seen_serial = None
+    # SES-9a: separate monotonic high-water mark for the SIGNED KEY RECORD's
+    # serial (parity with the SES-8 hash-record mark above), so a rolled-back
+    # but still-fresh key record - one that could resurrect a since-revoked
+    # gate key - is refused (REF_VERIFY_KEY_RECORD_STALE) instead of honored
+    # inside its not_after window. Guarded by the same serial_lock.
+    app.state.last_seen_key_record_serial = None
 
     @app.post("/target")
     async def target(request: Request):
@@ -304,17 +341,51 @@ def build_reference_target_app(
             if record is None:
                 raise _refuse(REF_TARGET_ANCHOR_MISMATCH)
 
+        skew = timedelta(seconds=_clock_skew_seconds())
+
+        # SIGNED KEY-RECORD mode (SES-9a / K-01): a key-record root is pinned,
+        # so fetch + validate the publisher-signed KEY record per request (the
+        # same cadence as the signed hash record above) and hand the validated
+        # trust view to the verifier, which then enforces issuer-key
+        # revocation + validity window (record-exclusive, VL-042) before the
+        # signature check - a compromised gate key is revoked IN-BAND by
+        # flipping `revoked` in one signed record instead of re-pinning every
+        # consumer out-of-band. A stale/invalid/transport-failed key record
+        # fails CLOSED with the reader's REF_VERIFY_KEY_RECORD_* reason - never
+        # a downgrade to the static pin. Absent (default), key_record_view
+        # stays None and the static-pin path is byte-behavior-unchanged.
+        key_record_view = None
+        if config.get("pinned_key_record_roots"):
+            with app.state.serial_lock:
+                _klss = app.state.last_seen_key_record_serial
+            kres = await run_in_threadpool(
+                key_record_fetch, config["key_record_url"],
+                config["pinned_key_record_roots"],
+                last_seen_serial=_klss, clock_skew=skew,
+            )
+            if kres.get("trust_view") is None:
+                raise _refuse(kres["reason"])
+            key_record_view = kres["trust_view"]
+            _ks = kres.get("serial")
+            if isinstance(_ks, int) and not isinstance(_ks, bool):
+                with app.state.serial_lock:
+                    if (app.state.last_seen_key_record_serial is None
+                            or _ks > app.state.last_seen_key_record_serial):
+                        app.state.last_seen_key_record_serial = _ks
+
         # The production verifier is the SOLE acceptance authority. A pinned
         # gate key is supplied, so the issuer signature is required and checked
-        # fail-closed before currency (the signed path). Currency is checked
-        # against the FETCHED record; the binding closes same-state replay.
-        skew = timedelta(seconds=_clock_skew_seconds())
+        # fail-closed before currency (the signed path); in signed key-record
+        # mode the key_record_view SUPERSEDES the static pin (record-exclusive).
+        # Currency is checked against the FETCHED record; the binding closes
+        # same-state replay.
         result = verify_envelope(
             envelope,
             interaction,
             config["target_url"],
             record_source=record,
             pinned_public_keys=config["pinned_public_keys"],
+            key_record_view=key_record_view,
             clock_skew=skew,
         )
         if not result["accepted"]:

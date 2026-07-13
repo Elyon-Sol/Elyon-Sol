@@ -33,12 +33,16 @@ their inline sequences until a later adopt-the-SDK refactor.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, NamedTuple, Optional
+from typing import Any, Callable, Dict, NamedTuple, Optional
 
 from IMPLEMENTATION.published_source import anchor_sha256, load_record_from_bytes
 from IMPLEMENTATION.replay_cache import InMemoryReplayCache
 from IMPLEMENTATION.reference_target import REF_TARGET_ANCHOR_MISMATCH
-from IMPLEMENTATION.verifier import verify_envelope, REF_VERIFY_REPLAY
+from IMPLEMENTATION.verifier import (
+    verify_envelope,
+    REF_VERIFY_REPLAY,
+    REF_VERIFY_KEY_RECORD_INVALID,
+)
 
 
 class Decision(NamedTuple):
@@ -73,9 +77,34 @@ class ExecutorGate:
         pinned_root: Optional[str] = None,
         replay_cache=None,
         clock_skew: timedelta = timedelta(0),
+        key_record_view: Optional[Dict[str, Any]] = None,
+        key_record_source: Optional[Callable[[], Dict[str, Any]]] = None,
     ) -> None:
+        """SES-9a (K-01, VL-110): optional SIGNED KEY-RECORD mode. When a
+        `key_record_view` (a validated trust view from
+        key_record_source.load_key_record_from_bytes) or a `key_record_source`
+        (a zero-arg callable returning that reader's result dict
+        {"trust_view", "reason"}, called per check() so freshness is
+        re-validated per decision) is supplied, `check` passes the view to
+        verify_envelope, which treats it as the SOLE issuer-key trust source
+        (record-exclusive, VL-042): the issuer key must be present, not
+        revoked, and in-window before the signature is checked, so a
+        compromised or rotated gate key is revocable IN-BAND. A source whose
+        result carries no trust view fails closed with the reader's
+        REF_VERIFY_KEY_RECORD_* reason. Supplying BOTH is a config error
+        (fail loud, parity with the record_source/record_bytes guard). With
+        neither (the default), the static-pin path is byte-behavior-identical.
+        A STATIC key_record_view has no per-check freshness re-validation; the
+        caller owns the refresh cadence (prefer key_record_source, or rebuild
+        the gate per request as authz_sidecar does)."""
         if record_source is None and record_bytes is None:
             raise ValueError("supply record_source (a fetched record) or record_bytes")
+        if key_record_view is not None and key_record_source is not None:
+            raise ValueError(
+                "supply key_record_view OR key_record_source, not both"
+            )
+        self.key_record_view = key_record_view
+        self._key_record_source = key_record_source
         self.pinned_public_keys = pinned_public_keys
         self.target_id = target_id
         self._record_source = record_source
@@ -110,6 +139,19 @@ class ExecutorGate:
         if record is None:
             return Decision(False, REF_TARGET_ANCHOR_MISMATCH)
 
+        # SES-9a: resolve the issuer-key trust view. A configured source is
+        # called per check() (fresh, reader-revalidated); a result without a
+        # trust view fails CLOSED with the reader's REF_VERIFY_KEY_RECORD_*
+        # reason - never a downgrade to the static pin (canon section 9).
+        key_record_view = self.key_record_view
+        if self._key_record_source is not None:
+            kres = self._key_record_source()
+            view = kres.get("trust_view") if isinstance(kres, dict) else None
+            if view is None:
+                reason = kres.get("reason") if isinstance(kres, dict) else None
+                return Decision(False, reason or REF_VERIFY_KEY_RECORD_INVALID)
+            key_record_view = view
+
         result = verify_envelope(
             envelope,
             interaction,
@@ -117,6 +159,7 @@ class ExecutorGate:
             record_source=record,
             pinned_public_keys=self.pinned_public_keys,
             now=now,
+            key_record_view=key_record_view,
             clock_skew=self.clock_skew,
         )
         if not result["accepted"]:

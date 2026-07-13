@@ -131,6 +131,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from IMPLEMENTATION.envelope import canonical_json
 from IMPLEMENTATION.executor_sdk import ExecutorGate
+from IMPLEMENTATION.key_record_source import load_key_record_from_bytes
 from IMPLEMENTATION.published_record_source import load_signed_record_from_bytes
 from IMPLEMENTATION.reference_target import (
     REF_TARGET_ANCHOR_MISMATCH,
@@ -167,6 +168,18 @@ ENV_CLOCK_SKEW_SECONDS = "ELYON_CLOCK_SKEW_SECONDS"
 ENV_PUBLISHER_KEY_ID = "ELYON_PUBLISHER_KEY_ID"
 ENV_PUBLISHER_KEY_HEX = "ELYON_PUBLISHER_KEY_HEX"
 ENV_SIGNED_RECORD_PATH = "ELYON_SIGNED_RECORD_PATH"
+# Optional SIGNED KEY-RECORD mode (SES-9a / K-01, VL-110; parity with
+# reference_target's ELYON_KEY_RECORD_URL trio, LOCAL-file flavored like this
+# sidecar's F-01 signed-record mode above). When ALL THREE are present the
+# sidecar resolves the GATE issuer key from the publisher-signed key record
+# (validated per request; issuer-key revocation + validity window enforced via
+# the verifier's record-exclusive key_record_view branch, VL-042) instead of
+# the static ELYON_GATE_* pin. The ROOT public key is the out-of-band pin.
+# Absent -> static-pin path unchanged. A partially-set trio fails closed
+# (REF_TARGET_NOT_CONFIGURED).
+ENV_KEY_RECORD_PATH = "ELYON_KEY_RECORD_PATH"
+ENV_KEY_RECORD_ROOT_ID = "ELYON_KEY_RECORD_ROOT_ID"
+ENV_KEY_RECORD_ROOT_HEX = "ELYON_KEY_RECORD_ROOT_HEX"
 # SES-6 (VL-144) inline-posture declaration + declarative body-extractor mapping.
 # An INLINE deployment (Envoy ext_authz in front of a body-carrying upstream)
 # MUST declare ELYON_EXT_AUTHZ_INLINE=1; under that declaration the header-read
@@ -271,6 +284,31 @@ def config_from_env() -> Optional[Dict[str, Any]]:
             return None
         config["pinned_publisher_keys"] = {pub_key_id: publisher_key}
         config["signed_record_bytes"] = signed_record_bytes
+
+    # Optional SIGNED KEY-RECORD mode (SES-9a): pin a key-record ROOT public
+    # key + a LOCAL key-record path (this sidecar's F-01 flavor: bytes are READ
+    # here - an unreadable file is a config fault -> None -> fail closed - and
+    # the signature/freshness decision is made per request in the handler so it
+    # surfaces the reader's REF_VERIFY_KEY_RECORD_* reason). ALL THREE or NONE:
+    # a partially-set trio, like a malformed root key, fails closed - never a
+    # silent downgrade to the static pin.
+    kr_path = os.environ.get(ENV_KEY_RECORD_PATH)
+    kr_root_id = os.environ.get(ENV_KEY_RECORD_ROOT_ID)
+    kr_root_hex = os.environ.get(ENV_KEY_RECORD_ROOT_HEX)
+    if kr_path or kr_root_id or kr_root_hex:
+        if not (kr_path and kr_root_id and kr_root_hex):
+            return None
+        try:
+            kr_root_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(kr_root_hex))
+        except Exception:
+            return None
+        try:
+            with open(kr_path, "rb") as f:
+                key_record_bytes = f.read()
+        except OSError:
+            return None
+        config["pinned_key_record_roots"] = {kr_root_id: kr_root_key}
+        config["key_record_bytes"] = key_record_bytes
 
     return config
 
@@ -641,6 +679,26 @@ def build_authz_sidecar_app(
             # RECORD_* reason (this is the freshness the byte-anchor path lacks).
             # BYTE-ANCHOR mode (default, no publisher key): the unchanged
             # record_bytes + pinned_root path (no temporal dimension).
+            # SIGNED KEY-RECORD mode (SES-9a / K-01): a key-record root is
+            # pinned, so validate the publisher-signed KEY record per request
+            # (publisher signature -> root status -> freshness -> trust view)
+            # and hand the view to the gate; the verifier then enforces
+            # issuer-key revocation + validity window (record-exclusive,
+            # VL-042) before the signature check. A stale/invalid key record
+            # fails CLOSED with the reader's REF_VERIFY_KEY_RECORD_* reason -
+            # never a downgrade to the static pin. Absent (default), the view
+            # stays None and the static-pin path is byte-behavior-unchanged.
+            key_record_view = None
+            if config.get("pinned_key_record_roots"):
+                kres = load_key_record_from_bytes(
+                    config["key_record_bytes"],
+                    config["pinned_key_record_roots"],
+                    clock_skew=config["clock_skew"],
+                )
+                if kres.get("trust_view") is None:
+                    return _deny(kres["reason"])
+                key_record_view = kres["trust_view"]
+
             if config.get("pinned_publisher_keys"):
                 signed = load_signed_record_from_bytes(
                     config["signed_record_bytes"],
@@ -655,6 +713,7 @@ def build_authz_sidecar_app(
                     record_source=signed["record"],
                     replay_cache=request.app.state.replay_cache,
                     clock_skew=config["clock_skew"],
+                    key_record_view=key_record_view,
                 )
             else:
                 gate = ExecutorGate(
@@ -664,6 +723,7 @@ def build_authz_sidecar_app(
                     pinned_root=config["pinned_root_sha256"],
                     replay_cache=request.app.state.replay_cache,
                     clock_skew=config["clock_skew"],
+                    key_record_view=key_record_view,
                 )
 
             # ExecutorGate.check loads + anchor-verifies the record, which for a
