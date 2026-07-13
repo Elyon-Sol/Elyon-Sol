@@ -2052,3 +2052,69 @@ Written via the VL-108/VL-126 mount-truncation discipline (bash heredoc/patcher 
 content grep + full-suite run, 593/593 with xdist); sandbox `git status` unreliable (null-sha1
 index) as documented — the AUTHOR verifies the working tree, re-verifies on a pristine extraction,
 and commits + pushes natively. GR-4: appended, not edited.
+
+## VL-145 — SES-9a resolved: signed key-record trust wired into the enforce path (2026-07-13)
+
+**Claim.** K-01 (VL-110): the enforcing target, the executor SDK, and the ext-authz sidecar
+resolved the gate issuer key from a STATIC PIN only, so revoking a compromised or rotated gate key
+required an out-of-band re-pin on every consumer. `verify_envelope` has had the record-exclusive
+`key_record_view` branch — issuer-key revocation + validity window — since VL-042, but no enforce
+surface ever passed it. Fixed: all three surfaces now optionally resolve the issuer key from the
+publisher-signed key record (build-then-wire, DEFAULT-OFF: with no `ELYON_KEY_RECORD_*` config
+every surface is byte-behavior-identical, anchored by a revert-safety test). Revocation latency
+drops from "re-pin N consumers out-of-band" to "flip `revoked` in one signed record."
+**Construct.** IMPLEMENTATION/executor_sdk.py: `ExecutorGate` accepts `key_record_view` (static)
+or `key_record_source` (zero-arg callable, invoked per `check()` so reader freshness re-validates
+per decision); a source result without a trust view fails closed with the reader's
+`REF_VERIFY_KEY_RECORD_*`; both supplied → ValueError. IMPLEMENTATION/reference_target.py:
+`ELYON_KEY_RECORD_URL / _ROOT_ID / _ROOT_HEX` trio (all-three-or-none; partial or malformed →
+`REF_TARGET_NOT_CONFIGURED`); per-request `fetch_key_record` + validate (the F-01/VL-091 cadence);
+SES-8-parity monotonic serial high-water mark for the KEY record (a rolled-back, still-fresh
+record cannot resurrect a revoked key). IMPLEMENTATION/authz_sidecar.py: same trio, LOCAL-file
+flavor (`ELYON_KEY_RECORD_PATH`, matching its F-01/VL-112 mode); per-request
+`load_key_record_from_bytes`; validated view threaded into both `ExecutorGate` constructions.
+IMPLEMENTATION/key_record_source.py (ADDITIVE only): success result also carries `"serial"`
+(enables the high-water mark; `trust_view`/`reason` contract unchanged). NOT touched: CANON/,
+verifier.py, evaluator, manifest. No new refusal code, no new cryptography, no new canonical
+invariant (canon section 14).
+**Referent.** TESTS/adversarial/test_target_key_record_mode.py (+18), all driving the real target
+handler / `ExecutorGate.check` / env-configured sidecar app with inline-built signed key records
+(the test_key_record.py construction): default-off byte-identical AND the key-record hop never
+consulted; revoked key refused at target, gate, and sidecar (`REF_VERIFY_KEY_REVOKED`, `/received`
+does not increment); out-of-window refused, clock-skew symmetric (VL-075); stale/tampered record
+fails closed with NO downgrade to the static pin; partial env trio fails closed (target +
+sidecar); root revoked/retired propagates (`REF_VERIFY_ROOT_REVOKED`/`_RETIRED`, VL-044); serial
+rollback refused with the high-water mark threaded; positive end-to-end honor equivalence.
+REVERT-CATCHER proven natively 2026-07-13: with the target wiring reverted
+(`key_record_view=None` in the verify call) `test_revoked_gate_key_refused_at_target` and
+`test_out_of_window_key_refused_at_target` FAIL — the revoked/expired key is honored 200 under the
+static pin — and go GREEN on re-fix. Suite 593 → 611 (native: Python 3.13.14 / pytest 9.0.2,
+single-process and `-n 8`).
+**Status.** RESOLVED (scheduled at VL-110, never built; the last open SES item). SINGLE-SOURCE,
+white-box. Committed + pushed natively: `1d6e777`. SES-9b (GL-01-refine, VL-124: pep approver
+keys from the signed chain) DEFERRED to a governance session — inert on the live flat manifest.
+**Honest scope.** NOT a live break: on the current surface (single gate key, ~300s envelope
+`not_after`) the static pin is not exploitable; K-01 only matters under gate-key compromise, an
+out-of-band floor (VL-110). This is assurance / revocation-latency hardening, not a CVE. Nothing
+was turned ON: enabling is a deployment config choice requiring a served signed key record plus
+the out-of-band ROOT pin (publisher-side gen already exists); no pinned file touched — canon
+d1c9d187 / evaluator e307fab2 / manifest ac18ac78 unchanged, verified via `build_record()`; no
+re-pin, no redeploy required. White-box, author-side; NOT G5 — found-and-fixed ≠ validated; G5
+remains OPEN.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-144. This block cites VL-110 (K-01 named), VL-042 (the
+`key_record_view` branch + reader this wires), VL-044/VL-049 (root-record gating), VL-075 (skew
+symmetry), VL-091/VL-112 (the F-01 signed-hash-record pattern mirrored per surface), VL-124
+(GL-01-refine, deferred), and the SES-8 serial high-water precedent it extends to the key record.
+Does not cite its own hashes (VL-012).
+
+#### Environment note (Cowork sandbox + native)
+Built in the Cowork sandbox under the VL-108/VL-126 mount-truncation discipline; the mount served
+truncated views of every edited file, so the suite was proven on a full sandbox copy and the host
+files then overwritten with the identical tested bytes. Process incident, recorded for honesty: a
+`git checkout -- reference_target.py` issued during the native RED proof (before any commit)
+restored that file to HEAD and erased its SES-9a wiring; it was re-applied from the tested content
+and the full suite re-verified natively (18/18 + 611/611) BEFORE the `1d6e777` commit — the
+committed tree is the verified tree. Author ran RED/GREEN and committed + pushed natively.
+GR-4: appended, not edited.
