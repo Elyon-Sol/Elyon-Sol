@@ -1,0 +1,17 @@
+[Unit]
+Description=Elyon-Sol alert notifier for %i (invoked via OnFailure=)
+
+# Optional generic notifier. Set ELYON_ALERT_WEBHOOK in the EnvironmentFile to a URL
+# (Slack/Discord/PagerDuty-Events/webhook) and a failing unit will POST a message.
+# Without a webhook it just writes an ERR journal line, which any journal-based
+# alerting (e.g. promtail/Loki, journald->SIEM) can pick up on tag 'elyon-alert'.
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/root/Elyon-Sol/deploy/.env
+ExecStart=/bin/bash -c 'msg="Elyon-Sol ALERT: unit %i failed on $(hostname) at $(date -u +%%FT%%TZ)"; \
+  logger -p user.err -t elyon-alert "$msg"; \
+  if [ -n "${ELYON_ALERT_WEBHOOK:-}" ]; then \
+    curl -fsS -m 10 -H "Content-Type: application/json" \
+      -d "{\"text\": \"$msg\"}" "$ELYON_ALERT_WEBHOOK" >/dev/null || true; \
+  fi'

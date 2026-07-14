@@ -1,0 +1,10 @@
+[Unit]
+Description=Elyon-Sol key-record freshness monitor (alerts if the sidecar's signed key record goes stale)
+# Alert on failure by pointing this at your notifier (see README.md):
+# OnFailure=elyon-alert@%n.service
+
+[Service]
+Type=oneshot
+# EnvironmentFile lets the check read ELYON_KEY_RECORD_PATH / thresholds from the sidecar's config.
+EnvironmentFile=-/root/Elyon-Sol/deploy/.env
+ExecStart=/usr/local/bin/keyrecord_freshness_check.sh

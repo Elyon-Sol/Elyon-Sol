@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Elyon-Sol key-record freshness monitor every 60s
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target
