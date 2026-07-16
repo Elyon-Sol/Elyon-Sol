@@ -158,12 +158,12 @@
     <p class="muted" style="font-size:.85rem;max-width:66ch;margin:0 0 22px">Plainly: allow only if the caller's authorities cover what the manifest requires (<b>AC³</b>), the operations are covered (<b>T²⁶</b>), and nothing the decision relied on has changed (<b>CCS</b>). Per the canon, the superscripts are legacy labels — <b>not exponents</b>.</p>
     <div class="btns">
       <a class="btn primary" href="#tryit">Try to break it →</a>
-      <a class="btn ghost" href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Read the Zenodo record</a>
+      <a class="btn ghost" href="https://doi.org/10.5281/zenodo.19367848" target="_blank" rel="noopener">Read the Zenodo record</a>
     </div>
     <div class="badges">
       <span class="badge"><b>Fail-closed</b> · refuses on any doubt</span>
       <span class="badge"><b>Ed25519</b>-signed admissibility envelopes</span>
-      <span class="badge"><b>553</b> tests green</span>
+      <span class="badge"><b>616</b> tests green</span>
       <span class="badge">Human-oversight <b>governance layer</b></span>
       <span class="badge">AGPL-3.0 open-core</span>
     </div>
@@ -314,7 +314,7 @@
         <div class="chip">Docker / Compose <span>· packaging</span></div>
         <div class="chip">GitHub Actions <span>· CI (suite + runners)</span></div>
         <div class="chip">Hetzner <span>· multi-continent nodes</span></div>
-        <div class="chip">553 tests <span>· incl. revert-catchers</span></div>
+        <div class="chip">616 tests <span>· incl. revert-catchers</span></div>
         <div class="chip">Cross-model review <span>· internal evidence — not external validation</span></div>
       </div>
     </div>
@@ -418,14 +418,15 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
       </div>
       <div class="card">
         <h3>Zenodo — Enforcement Evidence Addendum</h3>
-        <div class="kv"><b>Latest (Rev 6)</b> <a href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">10.5281/zenodo.21107731</a></div>
+        <div class="kv"><b>Always-latest DOI</b> <a href="https://doi.org/10.5281/zenodo.19367848" target="_blank" rel="noopener">10.5281/zenodo.19367848</a> — the concept DOI; always resolves to the current revision</div>
+        <div class="kv"><b>Current (Rev 8)</b> <a href="https://doi.org/10.5281/zenodo.21364720" target="_blank" rel="noopener">10.5281/zenodo.21364720</a></div>
         <div class="kv"><b>Author</b> Justin LaPorte · <a href="https://orcid.org/0009-0008-3785-3089" target="_blank" rel="noopener">ORCID</a></div>
-        <div class="kv"><b>Published</b> 1 Jul 2026 · Report · CC BY 4.0</div>
+        <div class="kv"><b>Published</b> 14 Jul 2026 · Report · CC BY 4.0</div>
         <div class="kv"><b>Code</b> AGPL-3.0 open-core · <a href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">source on GitHub</a></div>
-        <a class="btn ghost" style="margin-top:14px" href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Open the record →</a>
+        <a class="btn ghost" style="margin-top:14px" href="https://doi.org/10.5281/zenodo.19367848" target="_blank" rel="noopener">Open the record →</a>
       </div>
     </div>
-    <p class="muted" style="font-size:.85rem;margin-top:14px">Version chain: Rev 2 (zenodo.20387278) → Rev 3 (20600051) → Rev 4 (20740388) → Rev 5 (20751592) → <b>Rev 6 (21107731, current published — governance / human-oversight layer, suite 512/512)</b>.</p>
+    <p class="muted" style="font-size:.85rem;margin-top:14px">Version chain: Rev 2 (zenodo.20387278) → Rev 3 (20600051) → Rev 4 (20740388) → Rev 5 (20751592) → Rev 6 (21107731) → Rev 7 (21313671) → <b>Rev 8 (21364720, current published — internal red-team remediation SES-1…8, signed key-record trust enabled live, enforcement census re-run and third-party-confirmed at its own snapshot commit; suite 616)</b>. Cite the concept DOI (19367848) to always land on the current revision.</p>
   </div>
 </section>
 
@@ -551,9 +552,16 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
         <tr><td><span class="sev med">Med–High</span></td><td>Interaction binding covered only the declared fields; extra body fields were unbound</td><td>Binding is now exact — any field beyond the bound set is refused</td><td>Fixed &amp; deployed</td></tr>
         <tr><td><span class="sev med">Med</span></td><td>Single-use replay defense depended on a decision id being present</td><td>The enforcing target fails closed when it is absent</td><td>Fixed &amp; deployed</td></tr>
         <tr><td><span class="sev low">Low</span></td><td>Under a typed manifest, the interaction-type that selects the eligibility policy was not bound into the signed receipt (latent — the public surface runs a flat manifest)</td><td>The envelope now binds interaction_type (hashed, signed, verified target-side); the untyped path stays byte-identical</td><td>Fixed</td></tr>
+        <tr><td><span class="sev med">Med</span></td><td>A signed record could be rolled back to an earlier serial while still inside its freshness window</td><td>The enforcing target tracks a monotonic serial high-water mark and refuses a rollback-within-freshness</td><td>Fixed &amp; deployed</td></tr>
+        <tr><td><span class="sev low">Low</span></td><td>Two canonicalizations existed repo-wide — the receipt path and the envelope path disagreed on non-ASCII escaping</td><td>One canonicalization: the receipt reuses the envelope's, so every signature and hash is byte-unchanged</td><td>Fixed</td></tr>
+        <tr><td><span class="sev low">Low</span></td><td>The ext-authz sidecar's default extractor read the interaction from a client-controllable header — unsafe if run inline</td><td>Declare-or-fail: inline mode refuses the header default and requires a declared body-deriving mapping; standalone is byte-unchanged</td><td>Fixed</td></tr>
       </tbody>
     </table>
-    <p class="muted" style="font-size:.85rem;margin-top:12px">* Exploitable only where a non-zero clock-skew tolerance is configured. Two lower-severity hardening items remain tracked (a canonicalization-consistency cleanup; a safer default for one inline sidecar mode) — neither is a live bypass on the public surface.</p>
+    <p class="muted" style="font-size:.85rem;margin-top:12px">* Exploitable only where a non-zero clock-skew tolerance is configured. All eight findings from this pass are now closed; none was a live bypass on the public surface.</p>
+
+    <h3 style="margin-top:30px;font-size:1.05rem">Since that pass — gate-key revocation moved in-band</h3>
+    <p class="muted" style="font-size:.9rem;max-width:78ch">Signed key-record trust is now wired into the enforce path and <b>enabled on the live target and sidecar</b>. Revoking a gate key was previously an out-of-band re-pin of every consumer; it is now a <span class="mono">revoked</span> flip in a single publisher-signed record, verified per request against an out-of-band-pinned root. A revoked, expired, stale, invalid, or serial-rolled-back record fails <b>closed</b> — never a silent downgrade to the static pin. Exercised live over real transport: honored via the record, six of six tampering attacks refused, a revocation drill returning <span class="mono">REF_VERIFY_KEY_REVOKED</span>, then restore at a higher serial.</p>
+    <p class="muted" style="font-size:.85rem;max-width:78ch">Honest note: this is author-side white-box live-ops, not an external result. It also adds an availability dependency — key-record freshness is now on the critical path, so a publisher outage or a stalled sync fails the surface closed (<span class="mono">REF_VERIFY_KEY_RECORD_STALE</span>) rather than open. A freshness monitor covers it.</p>
   </div>
 </section>
 
@@ -566,7 +574,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
     <div>
       <div class="muted" style="margin-bottom:6px">Project</div>
       <div><a href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">Source on GitHub (AGPL-3.0)</a></div>
-      <div><a href="https://doi.org/10.5281/zenodo.21107731" target="_blank" rel="noopener">Zenodo record (DOI)</a></div>
+      <div><a href="https://doi.org/10.5281/zenodo.19367848" target="_blank" rel="noopener">Zenodo record (DOI)</a></div>
       <div><a href="#canon">Canon v0.9.8.4</a></div>
       <div><a href="#tryit">Break it in 60 seconds</a></div>
       <div><a href="#wall">Wall of fame</a></div>
