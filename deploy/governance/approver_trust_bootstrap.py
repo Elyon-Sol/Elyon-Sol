@@ -1,80 +1,46 @@
-"""
-Governance deployment shim - wire R1 (approver provenance + role) into a stock gate.
+"""Governance deployment entrypoint - R1 approver trust (now resolved IN pep).
 
-PROBLEM this solves. The gate runs `uvicorn IMPLEMENTATION.pep:app`. pep resolves
-approver trust from either a STATIC env pin (ELYON_APPROVER_KEY_ID +
-ELYON_APPROVER_PUBKEY_HEX) or the `_INJECTED_APPROVER_KEYS` seam. The STATIC pin
-has NO provenance and NO role - it is exactly the [FIX H5] weakness R1 closes.
-This module is the thin ASGI entrypoint that wires R1's load-bearing path: it
-resolves the approver public keys from the SIGNED key-record chain with
-ROLE-DISTINCTNESS (IMPLEMENTATION/approver_trust.resolve_approver_keys), injects
-the result into pep, and re-exposes pep's app. Run the gate as:
+HISTORY / GL-01-refine (VL-124). This module used to RESOLVE the signed key-record
+chain and INJECT the resulting approver map into pep (`pep._INJECTED_APPROVER_KEYS
+= resolve(...)`). That made provenance a property of the SHIM, not of the gate:
+pep could not tell a shim-resolved map from any other injected map, so the startup
+guard could only check injectedness, not provenance - the exact residual the review
+named (an injected gate-controlled map under a different key_id passed the guard).
+
+pep now resolves the pinned-root signed key-record chain IN-PROCESS from the SAME
+env trio (ELYON_APPROVER_KEY_RECORD_PATH + ELYON_PINNED_ROOT_KEY_ID +
+ELYON_PINNED_ROOT_PUBKEY_B64; ELYON_SIGNING_KEY_ID as the excluded gate key;
+ELYON_CLOCK_SKEW_SECONDS optional) and labels the map with SIGNED_CHAIN provenance,
+which the guard requires under a high-impact manifest. So this module no longer
+injects anything - it is a thin, back-compatible entrypoint that re-exports pep's
+app. The env contract and the run command are UNCHANGED, so existing deploy
+artifacts (docker-compose.governance.yml, GOVERNANCE_DEPLOYMENT.md) keep working:
 
     uvicorn deploy.governance.approver_trust_bootstrap:app --host 0.0.0.0 --port 8000
 
-Env contract (see deploy/governance.env.example):
+is now byte-equivalent to running `uvicorn IMPLEMENTATION.pep:app` with the trio
+set. New deployments may point straight at pep; this alias remains for the
+committed compose files and runbooks.
+
+Env contract (unchanged; see deploy/governance.env.example):
   ELYON_APPROVER_KEY_RECORD_PATH  - path to the publisher-SIGNED key record (JSON)
-                                    that carries the approver-role key (and may
-                                    carry the gate's issuer-role key too).
+                                    carrying the approver-role key.
   ELYON_PINNED_ROOT_KEY_ID        - the root_key_id this gate pins out-of-band.
   ELYON_PINNED_ROOT_PUBKEY_B64    - base64(raw Ed25519) of that pinned root key.
-  ELYON_SIGNING_KEY_ID            - the gate's issuer key id; passed as gate_key_id
-                                    so the resolver excludes it (belt-and-braces).
+  ELYON_SIGNING_KEY_ID            - the gate issuer key id (excluded from the map).
   ELYON_CLOCK_SKEW_SECONDS        - optional; cross-host skew for the key window.
 
-Fail-closed: if the record is missing/invalid, the pinned root does not verify it,
-or NO key in it carries the signed role "approver", the injected map is EMPTY -
-every grant is then REF_APPROVAL_KEY_UNKNOWN (no approval is honored). Custody
-([FIX H5]) is NOT this module's job and MUST hold in the deployment: the approver
-PRIVATE key lives only in the separate approver-CLI process (ELYON_APPROVER_KEY_HEX
-there), NEVER on the gate host. This shim only ever handles PUBLIC keys.
+Fail-closed (in pep now): a missing/invalid record, a non-verifying pinned root,
+or NO key carrying the signed role "approver" resolves to an EMPTY approver map -
+every grant is then REF_APPROVAL_KEY_UNKNOWN, and a high-impact gate refuses to
+start (G-06). Custody ([FIX H5]) is a DEPLOYMENT property, not this module's job:
+the approver PRIVATE key lives only in the separate approver-CLI process, NEVER on
+the gate host. The gate ever handles only PUBLIC keys.
 """
 
-import base64
-import os
-from datetime import timedelta
-
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-
 import IMPLEMENTATION.pep as pep
-from IMPLEMENTATION.key_record_source import load_key_record_from_bytes
-from IMPLEMENTATION.approver_trust import resolve_approver_keys
 
-
-def _pinned_root_keys():
-    root_id = os.environ.get("ELYON_PINNED_ROOT_KEY_ID")
-    root_b64 = os.environ.get("ELYON_PINNED_ROOT_PUBKEY_B64")
-    if not root_id or not root_b64:
-        return None
-    raw = base64.b64decode(root_b64, validate=True)
-    return {root_id: Ed25519PublicKey.from_public_bytes(raw)}
-
-
-def resolve_injected_approver_keys():
-    """Load the signed key record, validate it against the pinned root, and
-    resolve the role-distinct approver public-key map. Returns {} (fail-closed)
-    on any missing/invalid input rather than raising into app startup."""
-    record_path = os.environ.get("ELYON_APPROVER_KEY_RECORD_PATH")
-    pinned = _pinned_root_keys()
-    gate_key_id = os.environ.get("ELYON_SIGNING_KEY_ID")
-    if not record_path or pinned is None:
-        return {}
-    try:
-        with open(record_path, "rb") as fh:
-            record_bytes = fh.read()
-    except OSError:
-        return {}
-    skew_s = os.environ.get("ELYON_CLOCK_SKEW_SECONDS")
-    skew = timedelta(seconds=int(skew_s)) if skew_s else timedelta(0)
-    loaded = load_key_record_from_bytes(record_bytes, pinned, clock_skew=skew)
-    if loaded.get("trust_view") is None:
-        return {}
-    return resolve_approver_keys(
-        loaded["trust_view"], gate_key_id=gate_key_id, clock_skew=skew
-    )
-
-
-# Wire at import (startup): resolve role-distinct approver keys and inject them so
-# pep.verify_grant trusts ONLY signed "approver"-role keys, then re-export the app.
-pep._INJECTED_APPROVER_KEYS = resolve_injected_approver_keys()
+# pep resolves the signed-chain approver map natively (with SIGNED_CHAIN
+# provenance) from the env trio above - no injection here. Re-export the app so
+# the historical `...approver_trust_bootstrap:app` entrypoint still resolves.
 app = pep.app

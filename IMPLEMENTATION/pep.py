@@ -159,25 +159,100 @@ def _target_url_allowed(url):
 # no-op, so the default forward stays byte-behavior-identical.
 # ===========================================================================
 
-# Approver public-key trust map (key_id -> public_key with .verify). Injected
-# (a harness/deploy shim) then env. The approver PRIVATE key is NEVER resolvable
-# by the gate ([FIX H5] custody): the gate holds only public keys here. Provenance
-# via the signed key-record chain + an explicit approver role is the load-bearing
-# H5 refinement, scheduled (a static pin is the minimal viable now).
+# Approver public-key trust map (key_id -> public_key with .verify). The approver
+# PRIVATE key is NEVER resolvable by the gate ([FIX H5] custody): the gate holds
+# only public keys here.
+#
+# Provenance (GL-01-refine, VL-124). _get_approver_keys_with_provenance resolves,
+# in order, and labels WHERE the map came from so the startup guard can require
+# the load-bearing source under a high-impact manifest:
+#   1. _INJECTED_APPROVER_KEYS seam            -> APPROVER_PROV_INJECTED
+#      (tests/harness only; gate-controllable, so it does NOT satisfy G-01)
+#   2. the pinned-root signed key-record trio  -> APPROVER_PROV_SIGNED_CHAIN
+#      (the load-bearing path: pep resolves the map ITSELF from the signed chain
+#      with an explicit `approver` role - what a gate cannot forge; the analog,
+#      for the approver key, of SES-9a/K-01 for the issuer key)
+#   3. the bare ELYON_APPROVER_* static pin    -> APPROVER_PROV_STATIC_PIN
+#      (no provenance, no role; retained for back-compat, does NOT satisfy G-01)
+#   4. nothing configured                      -> APPROVER_PROV_NONE ({} map)
 _INJECTED_APPROVER_KEYS = None  # set to {key_id: public_key} by a harness/deploy
 
+# The in-process signed-chain approver trio (mirrors the deploy-shim contract, now
+# read natively by pep so provenance is intrinsic rather than shim-supplied).
+ENV_APPROVER_KEY_RECORD_PATH = "ELYON_APPROVER_KEY_RECORD_PATH"
+ENV_PINNED_ROOT_KEY_ID = "ELYON_PINNED_ROOT_KEY_ID"
+ENV_PINNED_ROOT_PUBKEY_B64 = "ELYON_PINNED_ROOT_PUBKEY_B64"
 
-def _get_approver_keys():
+
+def _resolve_signed_chain_approver_keys():
+    """Resolve the role-distinct approver map from the pinned-root SIGNED key
+    record, in-process. Returns (map, present): `present` is True iff the signed-
+    chain trio is configured (so the caller can label provenance SIGNED_CHAIN even
+    when the resolved map is empty - an empty map from a real record is a fail-
+    closed G-06 case, distinct from 'no signed-chain configured'). Fail-closed:
+    any missing/invalid/wrong-root/no-approver-role input yields ({}, present)
+    rather than raising into startup."""
+    import base64
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    from IMPLEMENTATION.key_record_source import load_key_record_from_bytes
+    from IMPLEMENTATION.approver_trust import resolve_approver_keys
+
+    record_path = os.environ.get(ENV_APPROVER_KEY_RECORD_PATH)
+    root_id = os.environ.get(ENV_PINNED_ROOT_KEY_ID)
+    root_b64 = os.environ.get(ENV_PINNED_ROOT_PUBKEY_B64)
+    if not record_path or not root_id or not root_b64:
+        return {}, False  # trio not configured -> not the signed-chain path
+
+    try:
+        pinned = {root_id: Ed25519PublicKey.from_public_bytes(
+            base64.b64decode(root_b64, validate=True))}
+        with open(record_path, "rb") as fh:
+            record_bytes = fh.read()
+    except (OSError, ValueError, TypeError):
+        return {}, True  # configured but unreadable/malformed pin -> fail closed
+
+    skew_s = os.environ.get("ELYON_CLOCK_SKEW_SECONDS")
+    skew = timedelta(seconds=int(skew_s)) if skew_s else timedelta(0)
+    gate_key_id = os.environ.get("ELYON_SIGNING_KEY_ID")
+    try:
+        loaded = load_key_record_from_bytes(record_bytes, pinned, clock_skew=skew)
+    except Exception:
+        return {}, True  # any validation failure -> fail closed (still signed-chain)
+    view = loaded.get("trust_view")
+    if view is None:
+        return {}, True
+    return resolve_approver_keys(view, gate_key_id=gate_key_id, clock_skew=skew), True
+
+
+def _get_approver_keys_with_provenance():
+    """Return (approver_map, provenance) where provenance is one of the
+    governance_wiring.APPROVER_PROV_* tokens. See the resolution order above."""
+    from IMPLEMENTATION.governance_wiring import (
+        APPROVER_PROV_SIGNED_CHAIN, APPROVER_PROV_INJECTED,
+        APPROVER_PROV_STATIC_PIN, APPROVER_PROV_NONE,
+    )
     if _INJECTED_APPROVER_KEYS is not None:
-        return _INJECTED_APPROVER_KEYS
+        return _INJECTED_APPROVER_KEYS, APPROVER_PROV_INJECTED
+
+    signed_map, signed_present = _resolve_signed_chain_approver_keys()
+    if signed_present:
+        return signed_map, APPROVER_PROV_SIGNED_CHAIN
+
     key_id = os.environ.get("ELYON_APPROVER_KEY_ID")
     pub_hex = os.environ.get("ELYON_APPROVER_PUBKEY_HEX")
     if key_id and pub_hex:
         from cryptography.hazmat.primitives.asymmetric.ed25519 import (
             Ed25519PublicKey,
         )
-        return {key_id: Ed25519PublicKey.from_public_bytes(bytes.fromhex(pub_hex))}
-    return {}  # no approver configured -> every grant is KEY_UNKNOWN (fail closed)
+        return ({key_id: Ed25519PublicKey.from_public_bytes(bytes.fromhex(pub_hex))},
+                APPROVER_PROV_STATIC_PIN)
+    return {}, APPROVER_PROV_NONE  # no approver -> every grant KEY_UNKNOWN (fail closed)
+
+
+def _get_approver_keys():
+    """The {key_id: public_key} map verify_grant trusts. Provenance-agnostic view
+    for the request path; the startup guard uses the provenance-aware resolver."""
+    return _get_approver_keys_with_provenance()[0]
 
 
 # The gate-side pending-request set ([FIX H4]) and the grant single-use cache
@@ -233,10 +308,11 @@ def _assert_governance_wiring_on_startup():
     this hook only gathers live gate state and calls it."""
     from IMPLEMENTATION.governance_wiring import assert_high_impact_wiring
 
+    approver_keys, approver_provenance = _get_approver_keys_with_provenance()
     assert_high_impact_wiring(
         manifest=load_manifest(),
-        approver_keys=_get_approver_keys(),
-        approver_from_injected=_INJECTED_APPROVER_KEYS is not None,
+        approver_keys=approver_keys,
+        approver_provenance=approver_provenance,
         approval_log_configured=_get_approval_log() is not None,
         pending_redis_url=os.environ.get("ELYON_PENDING_REDIS_URL"),
         replay_redis_url=os.environ.get("ELYON_REPLAY_REDIS_URL"),

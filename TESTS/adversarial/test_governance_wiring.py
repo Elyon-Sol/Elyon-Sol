@@ -13,6 +13,10 @@ import pytest
 from IMPLEMENTATION.governance_wiring import (
     assert_high_impact_wiring,
     high_impact_declared,
+    APPROVER_PROV_SIGNED_CHAIN,
+    APPROVER_PROV_INJECTED,
+    APPROVER_PROV_STATIC_PIN,
+    APPROVER_PROV_NONE,
 )
 
 # A manifest that DECLARES a high-impact action (token in AR u R, so safe_high_impact
@@ -30,7 +34,7 @@ def _ok_kwargs(**over):
     base = dict(
         manifest=HI,
         approver_keys=KEYS,
-        approver_from_injected=True,
+        approver_provenance=APPROVER_PROV_SIGNED_CHAIN,  # the only provenance that passes G-01
         approval_log_configured=True,
         pending_redis_url=None,
         replay_redis_url=None,
@@ -65,7 +69,7 @@ def test_empty_high_impact_is_noop_even_with_all_bad_wiring():
     assert_high_impact_wiring(
         manifest=EMPTY,
         approver_keys={},
-        approver_from_injected=False,
+        approver_provenance=APPROVER_PROV_NONE,
         approval_log_configured=False,
         pending_redis_url="redis://x",
         replay_redis_url=None,
@@ -88,8 +92,27 @@ def test_safe_wiring_ok():
 
 def test_G01_static_pin_refused():
     with pytest.raises(RuntimeError) as e:
-        assert_high_impact_wiring(**_ok_kwargs(approver_from_injected=False))
+        assert_high_impact_wiring(**_ok_kwargs(approver_provenance=APPROVER_PROV_STATIC_PIN))
     assert "G-01" in str(e.value)
+
+def test_G01_injected_refused_GL01_refine():
+    # THE load-bearing GL-01-refine (VL-124) catcher. Before this increment the
+    # guard accepted an INJECTED map (approver_from_injected=True). Injectedness is
+    # not provenance: a process that can set the injection seam can supply any
+    # gate-controlled keys under a different key_id. Only SIGNED_CHAIN passes now.
+    # Revert = accept 'injected' at G-01 -> this goes RED.
+    with pytest.raises(RuntimeError) as e:
+        assert_high_impact_wiring(**_ok_kwargs(approver_provenance=APPROVER_PROV_INJECTED))
+    assert "G-01" in str(e.value)
+
+def test_G01_none_provenance_refused():
+    with pytest.raises(RuntimeError) as e:
+        assert_high_impact_wiring(**_ok_kwargs(approver_provenance=APPROVER_PROV_NONE))
+    assert "G-01" in str(e.value)
+
+def test_G01_signed_chain_is_the_only_pass():
+    # Positive: signed-chain provenance with the rest wired is accepted.
+    assert_high_impact_wiring(**_ok_kwargs(approver_provenance=APPROVER_PROV_SIGNED_CHAIN))
 
 def test_G06_empty_approver_map_refused():
     with pytest.raises(RuntimeError) as e:
@@ -118,14 +141,14 @@ def test_malformed_high_impact_fails_closed():
     with pytest.raises(RuntimeError):
         assert_high_impact_wiring(
             manifest={"version": "1.0", "AR": ["identity"], "R": ["session"]},
-            approver_keys={}, approver_from_injected=False,
+            approver_keys={}, approver_provenance=APPROVER_PROV_STATIC_PIN,
             approval_log_configured=False, pending_redis_url=None, replay_redis_url=None,
         )
 
 def test_multiple_problems_reported_together():
     with pytest.raises(RuntimeError) as e:
         assert_high_impact_wiring(
-            manifest=HI, approver_keys={}, approver_from_injected=False,
+            manifest=HI, approver_keys={}, approver_provenance=APPROVER_PROV_STATIC_PIN,
             approval_log_configured=False, pending_redis_url="redis://x", replay_redis_url=None,
         )
     msg = str(e.value)

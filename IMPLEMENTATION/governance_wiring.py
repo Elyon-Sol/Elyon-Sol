@@ -9,9 +9,21 @@ FORCES the safe wiring exactly when the manifest declares high-impact actions:
 
   - G-01: the bare static approver pin (ELYON_APPROVER_PUBKEY_HEX) enforces SoD
     only as approver_key_id != gate_key_id - a gate can self-approve under a
-    DIFFERENT key_id with its own key material. R1 (role-distinctness from the
-    signed key-record chain, injected via approver_trust_bootstrap) is the fix,
-    but bare `uvicorn IMPLEMENTATION.pep:app` does not require it.
+    DIFFERENT key_id with its own key material. R1 (role-distinctness resolved
+    IN-PROCESS from the signed key-record chain) is the fix, but bare
+    `uvicorn IMPLEMENTATION.pep:app` does not require it.
+
+    GL-01-REFINE (VL-124, this increment): the earlier guard checked that the
+    approver map was INJECTED (not the static pin) rather than that it had
+    signed-chain PROVENANCE - so a gate-controlled map injected under a different
+    key_id passed both the guard and verify_grant. Injectedness is not provenance:
+    a process that can set the injection seam can supply any keys. The guard now
+    requires the resolved approver map to carry SIGNED_CHAIN provenance - i.e.
+    pep resolved it ITSELF from the pinned-root signed key record with an explicit
+    `approver` role (IMPLEMENTATION/approver_trust.resolve_approver_keys). A merely
+    INJECTED or STATIC_PIN map no longer satisfies G-01. This mirrors, for the
+    APPROVER key, what SES-9a/K-01 did for the ISSUER key: move trust onto the
+    signed chain the gate cannot forge, in-process.
   - G-06: an empty resolved approver map starts silently and REFUSES every grant
     at request time (fail-closed, but not loud).
   - G-04: the [FIX H8] approval log is optional, so a configured-issuance/
@@ -43,6 +55,18 @@ touch; no default-path behavior change.
 
 from IMPLEMENTATION.impact import safe_high_impact
 
+# Approver-trust provenance vocabulary. The guard is the authority on which
+# provenance is acceptable under a high-impact manifest; pep produces exactly one
+# of these for the resolved approver map. Only SIGNED_CHAIN satisfies G-01: it
+# means pep resolved the map IN-PROCESS from the pinned-root signed key record
+# with an explicit `approver` role, which a gate cannot forge. INJECTED (the
+# test/harness seam) and STATIC_PIN (the bare env pin) are gate-controllable and
+# do NOT satisfy G-01 (GL-01-refine, VL-124). NONE = nothing resolved.
+APPROVER_PROV_SIGNED_CHAIN = "signed_chain"
+APPROVER_PROV_INJECTED = "injected"
+APPROVER_PROV_STATIC_PIN = "static_pin"
+APPROVER_PROV_NONE = "none"
+
 
 def high_impact_declared(manifest) -> bool:
     """True iff the manifest declares any high-impact action. A malformed/missing
@@ -56,7 +80,7 @@ def assert_high_impact_wiring(
     *,
     manifest,
     approver_keys,
-    approver_from_injected,
+    approver_provenance,
     approval_log_configured,
     pending_redis_url,
     replay_redis_url,
@@ -68,8 +92,12 @@ def assert_high_impact_wiring(
     Args (all gathered by the pep startup hook from the live gate state):
       manifest                - the SHA-pinned manifest dict (load_manifest()).
       approver_keys           - the resolved {key_id: public_key} approver map.
-      approver_from_injected  - True iff the map came from the injection seam
-                                (R1 / a deploy shim), not the bare static env pin.
+      approver_provenance     - one of APPROVER_PROV_* : where the approver map
+                                came from. Only SIGNED_CHAIN (pep resolved it
+                                in-process from the pinned-root signed key record
+                                with an explicit `approver` role) satisfies G-01;
+                                INJECTED and STATIC_PIN are gate-controllable and
+                                do not (GL-01-refine, VL-124).
       approval_log_configured - True iff an approval log is configured/injected.
       pending_redis_url       - ELYON_PENDING_REDIS_URL (or None).
       replay_redis_url        - ELYON_REPLAY_REDIS_URL (or None).
@@ -78,11 +106,13 @@ def assert_high_impact_wiring(
         return
 
     problems = []
-    if not approver_from_injected:
+    if approver_provenance != APPROVER_PROV_SIGNED_CHAIN:
         problems.append(
-            "[G-01] approver trust must flow through the signed key-record chain (R1: the "
-            "approver_trust_bootstrap inject), not the static ELYON_APPROVER_PUBKEY_HEX pin - "
-            "the bare pin's SoD is only a key_id compare a gate can defeat under a different key_id"
+            "[G-01] approver trust must be resolved IN-PROCESS from the pinned-root signed "
+            "key-record chain with an explicit `approver` role (provenance 'signed_chain'), "
+            f"not '{approver_provenance}' - an injected or static-pinned map is gate-controllable, "
+            "so its SoD is only a key_id compare a gate can defeat under a different key_id. Set "
+            "ELYON_APPROVER_KEY_RECORD_PATH + ELYON_PINNED_ROOT_KEY_ID + ELYON_PINNED_ROOT_PUBKEY_B64"
         )
     if not approver_keys:
         problems.append(
