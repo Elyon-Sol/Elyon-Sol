@@ -189,3 +189,74 @@ ACTIVE | SUPERSEDED | RETIRED
   discipline as `canon.lock` and the published record. This is the sanctioned form of the
   GR-4 clause-3 archive split; it is NOT pruning, which GR-4 clause 2 forbids.
 - Honest ceiling: governs the record's storage, not the work; does not advance G5.
+
+### GR-6 - STATE.md carries current state; its history is archived under the GR-5 design
+- Date established: 2026-07-16
+- Originating record: commit-only (per GR-4 clause 1; archiving + reordering is
+  reorganization, not a verification event - no VL entry. GR-5 entered the same way).
+- Status: ACTIVE
+- Rule:
+  1. ORDER. The active `STATE.md` leads with `## Next open action`, then
+     `## Known open gaps`. These are the two fields the resume protocol actually
+     needs; a reader must reach them without reading the file in full. Remaining
+     sections follow in any order that serves the read. Section HEADING TEXT is
+     preserved VERBATIM and is never renamed - the `scripts/` apply-scripts match
+     headings on full-line equality (`scripts/update_state_vl011.sh` Edit 4), and
+     the protocol docs cite sections by name.
+  2. VOLUMES. STATE.md's `PREVIOUS:` history chain is MOVED verbatim - cut at a
+     `PREVIOUS:` line boundary, never mid-block - into a numbered volume under
+     `STATE_archive/`, named `vol_NNN__VL-<first>_to_VL-<last>.md`, delimited by
+     `<!-- entry-region-begin -->` / `<!-- entry-region-end -->`. Blocks are moved,
+     never rewritten. Nothing is deleted; `git log` retains every byte regardless.
+  3. IMMUTABILITY + VERSIONING. Each volume, once written, is append-CLOSED and
+     immutable. Its sha256, VL range, and block count are recorded in the manifest
+     `STATE_archive/INDEX.md` and in a sidecar `vol_NNN__*.md.sha256` (mirroring
+     `canon.lock`). A closed volume is never edited; a correction to an archived
+     block is a NEW note in the active STATE.md that cites it.
+  4. BYTE-PRESERVING RECONSTRUCTION (the invariant). Concatenating, in volume order,
+     every volume's entry region and then the active file's history region MUST
+     reproduce the pre-split history region byte-for-byte; and the pre-split file
+     MUST reassemble byte-for-byte from the archive's history region plus the ACTIVE
+     file's section bodies restored to their pre-split order. Every archiving commit
+     records this check. A split whose check fails is REJECTED and nothing is moved.
+     The check is executable: `python STATE_archive/reconstruct.py` (exit 0 = PASS).
+  5. REPRESENTATION. All recorded hashes are over the GIT BLOB (LF), never the
+     working-tree file. `.gitattributes` declares `*.md text eol=lf` while
+     `core.autocrlf=true` yields a CRLF working tree on Windows (`git ls-files --eol`
+     -> `i/lf w/crlf`); a working-tree hash would not reproduce on a Linux checkout.
+     Recompute with `git show <ref>:STATE.md | sha256sum`.
+  6. THE ACTIVE FILE. `STATE.md` always keeps its preamble, an `## Archived volumes`
+     pointer table (volume, range, sha256), and all un-archived content.
+- Scope: `STATE.md`; `STATE_archive/`; every STATE.md archiving event; the
+  SESSION_PROTOCOL resume read-order and close step 2.
+- Rationale: GR-4 clause 1 already assigns this file its role - "STATE.md is current
+  state" - with `git log` as the record of what was done and the ledger as verification
+  provenance. The `PREVIOUS:` chain is a fourth function the file was never assigned,
+  and accumulating it made the entry point unreadable: at the pre-split commit
+  (`61ad782`) STATE.md was 258,290 bytes / ~106k tokens, so the resume protocol's
+  "Read STATE.md in full" could not be executed inside a working context, and
+  `## Next open action` - the field the protocol itself calls the single most
+  important for continuity - sat at byte 225,092 behind all of it. Sessions therefore
+  oriented off the newest history blob instead of the ordered action list. That is
+  drift with a structural cause, not a discipline failure. GR-4 clause 2's append-only
+  bar is scoped to the LEDGER ("every candidate ledger entry"), and its rationale rests
+  on the cross-reference graph and external DOI citation - `docs/zenodo/` cites STATE.md
+  zero times - so it does not reach this file. GR-2 points the same way: "STATE.md and
+  the ledger REFERENCE the manifest; they do not restate readiness in prose (prose
+  drifts)." And `docs/restructure/07_continuity_recursion.md` names STATE.md's entry-point
+  role as Layer C, "how the framework makes itself legible" - an entry point that cannot
+  be loaded fails Layer C on the framework's own terms. This rule adopts GR-5's design
+  wholesale rather than inventing one: hash-anchored, byte-preserving, nothing deleted.
+- Honest ceiling: governs the record's storage and reading order, not the work; does not
+  advance G5. It does not make STATE.md's prose true - GR-2's "prose drifts" still holds,
+  and STATE.md remains model-authored prose that a reader verifies against primary
+  sources (VL-008), not a primary source itself.
+- Known open item recorded under this rule (2026-07-16, the establishing commit):
+  `## Current verified state` is 165,108 bytes - 64% of the pre-split file - and is
+  structurally history, not current state: 107 bullets, 100 of which name a `VL-N`,
+  spanning VL-008..VL-131 (90 distinct entries). It is also STALE - it stops at VL-131
+  while the file's head is VL-146, so the close protocol's "update Current verified
+  state" step has been skipped for ~15 entries. Deciding which of those 107 bullets
+  remain TRUE is author judgment against primary sources, not a mechanical cut, so it
+  was NOT archived in the establishing commit. A `vol_002` covering it is the scheduled
+  follow-up.

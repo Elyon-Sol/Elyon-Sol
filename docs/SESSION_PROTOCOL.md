@@ -22,10 +22,19 @@ the OUTPUT of these steps into the session - do not summarize them.
    mount/index artifact before assuming real corruption - see "Environment /
    sandbox recovery" at the end of this file.)
 
-2. Read STATE.md in full. It is the entry point. Specifically:
-   - "Current verified state" - what is true now
-   - "Next open action" - the ordered starting point
-   - "Known open gaps" - the full gap list
+2. Read STATE.md, BOUNDED. It is the entry point, but do NOT read it in
+   full: it is ~200k bytes and reading it whole leaves no room to work.
+   Under GR-6 the two fields you need lead the file, in this order:
+   - "Next open action" - the ordered starting point. The FIRST item is
+     the task. Read this section.
+   - "Known open gaps" - the full gap list. Read this section.
+   Everything below those is reference. Read further ON DEMAND, by grep,
+   for a specific question - notably "Current verified state", which is a
+   ~165k-byte historical bullet log and is NOT a primary source (GR-2:
+   prose drifts). Verify any claim it makes against code, a test run,
+   canon, or the live surface before building on it.
+   History older than the current entry is under `STATE_archive/`
+   (GR-6, byte-preserving; manifest `STATE_archive/INDEX.md`).
 
 3. Read the tail of the verification ledger:
        cat EVIDENCE/verification_ledger.md
@@ -59,6 +68,13 @@ these are done - an incomplete close breaks the next resume.
    - "Next open action" - re-order or rewrite so the FIRST item is
      literally the next thing to do. This is the single most important
      field for continuity.
+   Do NOT reorder or rename the section HEADINGS (GR-6 clause 1): the
+   `scripts/` apply-scripts match them on full-line equality and the
+   protocol docs cite them by name.
+   When the displaced entry is added to the "PREVIOUS:" chain and the
+   chain has grown past roughly 25 blocks, archive it into the next
+   volume per GR-6 and run `python STATE_archive/reconstruct.py` - the
+   split is rejected unless that check exits 0.
    Commit the STATE.md update as its own commit.
 
 3. If any claim was verified, corrected, retracted, or disputed this
