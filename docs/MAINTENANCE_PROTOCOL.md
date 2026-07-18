@@ -189,6 +189,16 @@ ACTIVE | SUPERSEDED | RETIRED
   discipline as `canon.lock` and the published record. This is the sanctioned form of the
   GR-4 clause-3 archive split; it is NOT pruning, which GR-4 clause 2 forbids.
 - Honest ceiling: governs the record's storage, not the work; does not advance G5.
+- **Amendment A1 (2026-07-16; commit-only bookkeeping-hygiene, no VL per GR-4 clause 1):**
+  clause 1's cut anchor is BROADENED from "a primary `### VL-N` header" to "a primary VL-N
+  header at heading depth 2 or 3 (`## VL-N` or `### VL-N`), matched as `^#{2,3} VL-N`".
+  CAUSE: entries VL-001..VL-133 use `### VL-N`; VL-135 onward use `## VL-N` — a heading-depth
+  drift at the VL-134 boundary, recorded at the VL-147 heading-format note. Under the original
+  clause the next volume split would match NO entry from VL-135 on and would mis-cut. In-place
+  normalisation of the existing headings is FORBIDDEN (GR-4 clause 2 — entries are immutable),
+  so the RULE is made tolerant of both depths rather than the entries rewritten. Reconstruction
+  (clause 3) is unaffected: it reproduces the byte-region between cut points, independent of
+  heading depth. `scripts/repo_health.py` reports the live census of each format.
 
 ### GR-6 - STATE.md carries current state; its history is archived under the GR-5 design
 - Date established: 2026-07-16
