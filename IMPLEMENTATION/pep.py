@@ -78,6 +78,7 @@ from fastapi.responses import JSONResponse
 from IMPLEMENTATION.evaluator import (
     load_manifest,
     evaluate,
+    decide,
     safe_manifest,
     resolve_required_sets,
     ac3_valid,
@@ -472,7 +473,7 @@ async def governed_call(request: Request):
     # ----- Evaluation -----
     try:
         manifest = load_manifest()
-        result = evaluate(normalized_interaction, manifest)
+        result, reason = decide(normalized_interaction, manifest)
     except Exception as e:
         raise HTTPException(
             status_code=403,
@@ -484,16 +485,15 @@ async def governed_call(request: Request):
         )
 
     if result != "ELIGIBLE":
-        # Evaluator-layer REFUSE. Refusal payload preserved from
-        # pre-VL-019 pep.py: {"terminal_state": "REFUSE"} without a
-        # refusal_reason_code, because VL-019's scope is schema-layer
-        # wiring and the evaluator-layer refusal vocabulary is not
-        # specified by SPEC/request_schema.md. Introducing an
-        # REF_EVAL_* code here would be vocabulary not derived from
-        # the spec this commit cites.
+        # Evaluator-layer REFUSE. The refusal now carries the evaluator's own
+        # G_ reason code (evaluator.decide/refusal_reason) naming WHICH condition
+        # failed - closing the gap this branch previously documented (it withheld
+        # any code because the evaluator-layer refusal vocabulary was unspecified).
+        # The G_ set is disjoint from the boundary REF_* vocabulary; additive -
+        # prior callers saw {"terminal_state": "REFUSE"} with no code.
         raise HTTPException(
             status_code=403,
-            detail={"terminal_state": "REFUSE"},
+            detail={"terminal_state": "REFUSE", "refusal_reason_code": reason},
         )
 
     # ----- Envelope construction (unsigned) - VL-029 build half; SPLIT from

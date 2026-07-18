@@ -180,29 +180,67 @@ def manifest_integrity_valid(ctx, manifest):
     return True
 
 
-def evaluate(ctx, manifest):
+# Refusal reason codes: a closed set naming WHICH condition caused a REFUSE.
+# The G_ namespace (from G(I), canon section 13) is DISJOINT from the boundary/
+# transport REF_* vocabulary emitted by pep.py / verifier.py / authz_sidecar.py
+# (those layers never call evaluate()). These annotate an already-determined
+# decision - they add no invariant and no gate (canon section 13/14). The first
+# three name conjuncts of G(I); the last three name fail-closed preconditions and
+# the catch-all, not invariants.
+G_MANIFEST_MALFORMED = "G_MANIFEST_MALFORMED"              # safe_manifest -> None
+G_REQUIRED_SETS_UNRESOLVED = "G_REQUIRED_SETS_UNRESOLVED"  # AR/R not derivable from M
+G_AC3 = "G_AC3"                                            # AC^3 conjunct (section 11.7)
+G_T26 = "G_T26"                                            # T^26 conjunct (section 11.8)
+G_MANIFEST_INTEGRITY = "G_MANIFEST_INTEGRITY"             # realized continuity check (section 6/12)
+G_INTERNAL = "G_INTERNAL"                                  # fail-closed catch-all (section 9)
+
+
+def decide(ctx, manifest):
+    """Single source of truth for the admissibility decision.
+
+    Returns (state, reason): state is "ELIGIBLE" or "REFUSE"; reason is the G_
+    code naming the FIRST failing condition on REFUSE, or None on ELIGIBLE.
+    Short-circuit order preserved (canon section 6). evaluate() and
+    refusal_reason() are thin projections of this function - one evaluation,
+    two views - so a bare-state caller and a reason-aware caller never disagree.
+    """
     try:
         manifest = safe_manifest(manifest)
         if manifest is None:
-            return "REFUSE"
+            return "REFUSE", G_MANIFEST_MALFORMED
 
         AR, R = resolve_required_sets(manifest, ctx)
         if AR is None or R is None:
-            return "REFUSE"
+            return "REFUSE", G_REQUIRED_SETS_UNRESOLVED
 
         if not ac3_valid(ctx, AR):
-            return "REFUSE"
+            return "REFUSE", G_AC3
 
         if not t26_valid(ctx, R):
-            return "REFUSE"
+            return "REFUSE", G_T26
 
         if not manifest_integrity_valid(ctx, manifest):
-            return "REFUSE"
+            return "REFUSE", G_MANIFEST_INTEGRITY
 
-        return "ELIGIBLE"
+        return "ELIGIBLE", None
 
     except Exception:
-        return "REFUSE"
+        return "REFUSE", G_INTERNAL
+
+
+def evaluate(ctx, manifest):
+    """The admissibility decision as a bare terminal state ("ELIGIBLE" /
+    "REFUSE"). Byte-behavior-IDENTICAL to every prior revision - a back-compat
+    projection of decide()[0] so existing callers and tests are unaffected."""
+    return decide(ctx, manifest)[0]
+
+
+def refusal_reason(ctx, manifest):
+    """The G_ refusal reason code for this interaction, or None if ELIGIBLE.
+    Additive diagnostic surface: closes the evaluator-layer refusal-vocabulary
+    gap pep.py documented (it withheld any code because none was specified).
+    Does not change any admissibility decision."""
+    return decide(ctx, manifest)[1]
 
 
 if __name__ == "__main__":
