@@ -148,6 +148,11 @@
   </div>
 </header>
 
+<!-- RETIREMENT BANNER -->
+<div class="wrap" style="margin-top:16px">
+  <div class="note"><b>Retired — 2026-07-20.</b> Active development of Elyon-Sol has ended and the public test nodes are offline. This site stays up as a reference and a self-serve guide: everything is open source (AGPL-3.0), and you can <a href="#tryit">spin up the entire surface yourself</a> in a couple of commands. The break-it challenge below is preserved as documentation — it is no longer a live, credited engagement.</div>
+</div>
+
 <!-- HERO -->
 <section class="hero" id="top">
   <div class="wrap">
@@ -330,15 +335,15 @@
 <!-- LIVE SURFACE -->
 <section id="surface">
   <div class="wrap">
-    <div class="eyebrow">Live surface</div>
-    <h2>Four nodes, real CA, two continents <span class="live" style="margin-left:8px">live</span></h2>
-    <p class="lead">The public test surface runs under real Let's Encrypt TLS. These are the only hosts in scope for the red-team challenge below.</p>
-    <p class="muted" style="max-width:82ch;margin-top:10px"><b>Honest scope.</b> Elyon-Sol has not yet been validated by any external party — this challenge is how we seek that; a confirmed break would be the first such result, not a re-confirmation of prior review. The public nodes enforce the cryptographic admission core (signing, freshness, single-use, action/target binding). The human-oversight governance (<span class="mono">202 PENDING_APPROVAL</span>) and mTLS non-bypass layers are implemented and tested in the codebase but are <b>not deployed on these public nodes</b>, and are out of scope for the live challenge.</p>
+    <div class="eyebrow">Reference surface</div>
+    <h2>Four services you can stand up yourself</h2>
+    <p class="lead"><b>The public test surface (four Let's Encrypt nodes) was retired on 2026-07-20.</b> The same four-service admission surface is open source — run it on your own machine in about two commands, or on your own hosts. See <a href="#tryit">Spin it up &amp; break it</a> below, or <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> in the repo.</p>
+    <p class="muted" style="max-width:82ch;margin-top:10px"><b>Honest scope.</b> Elyon-Sol was never validated by any external party — the challenge was how we sought that, and no confirmed external break was ever recorded. The reference nodes enforce the cryptographic admission core (signing, freshness, single-use, action/target binding). The human-oversight governance (<span class="mono">202 PENDING_APPROVAL</span>) and mTLS non-bypass layers are in the codebase as compose overlays but were not on the public nodes.</p>
     <div class="grid g4" style="margin-top:20px">
-      <div class="node"><div class="role">Gate — mints/signs tokens</div><div class="host">gate.elyon-sol.io:8443</div></div>
-      <div class="node"><div class="role">Target — the thing that acts</div><div class="host">target.elyon-sol.io:9443</div></div>
-      <div class="node"><div class="role">Sidecar — ALLOW / DENY</div><div class="host">authz.elyon-sol.io:9243</div></div>
-      <div class="node"><div class="role">Publisher — serves the record</div><div class="host">pub.elyon-sol.io:9143</div></div>
+      <div class="node"><div class="role">Gate — mints/signs tokens</div><div class="host">localhost:8000</div></div>
+      <div class="node"><div class="role">Target — the thing that acts</div><div class="host">localhost:9000</div></div>
+      <div class="node"><div class="role">Sidecar — ALLOW / DENY</div><div class="host">localhost:9200 · overlay</div></div>
+      <div class="node"><div class="role">Publisher — serves the record</div><div class="host">localhost:9100</div></div>
     </div>
   </div>
 </section>
@@ -346,10 +351,19 @@
 <!-- TRY IT / BREAK IT IN 60 SECONDS -->
 <section id="tryit">
   <div class="wrap">
-    <div class="eyebrow">Try it now — no signup</div>
-    <h2>Break it in 60 seconds</h2>
-    <p class="lead">The attacking surface is public. Poke it right now with nothing but <span class="mono">curl</span> and <span class="mono">jq</span> — no signup, no gatekeeping. See a valid flow work, then try to break it; crediting a confirmed break is one email away.</p>
-    <p class="muted" style="max-width:80ch;margin-top:8px">A confirmed break — making the target act, or the sidecar answer <span class="mono">ALLOW</span>, on a call that should be refused — would be the first external result this project has ever had. Confirm your break with the inspector (the tool decides, not us), then email <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>.</p>
+    <div class="eyebrow">Try it — self-host</div>
+    <h2>Spin it up, then break it</h2>
+    <p class="lead">The public nodes are retired, but the whole surface is open source — stand up your own instance in a couple of commands, then try to break it with nothing but <span class="mono">curl</span> and <span class="mono">jq</span>.</p>
+    <p class="muted" style="max-width:80ch;margin-top:8px">Preserved as documentation. The credited red-team challenge is closed; adjudicate a suspected break against your own instance with the inspector (the tool decides — <span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>).</p>
+
+    <div class="step">0 · Spin up your own gate + target + publisher</div>
+    <pre class="code">git clone https://github.com/Elyon-Sol/Elyon-Sol.git &amp;&amp; cd Elyon-Sol
+python deploy/bootstrap_config.py            <span class="c"># gate keypair + pinned anchor -&gt; deploy/.env</span>
+cd deploy &amp;&amp; docker compose up --build       <span class="c"># gate:8000  target:9000  publisher:9100</span>
+
+<span class="c"># in another shell, point the walkthrough at your instance:</span>
+export GATE=http://localhost:8000  TARGET=http://localhost:9000  AUTHZ=http://localhost:9200
+<span class="c"># full guide: deploy/SPIN_UP_YOUR_OWN.md   (AUTHZ needs the docker-compose.authz.yml overlay)</span></pre>
 
     <div class="step">1 · Make a governed call — the gate signs, forwards, and the target acts once</div>
     <pre class="code">INTERACTION='{
@@ -363,15 +377,15 @@
   "expected_manifest_sha256": "ac18ac78c39dfed3d202964ab5e88d34a87ddebf8b41c1abda49bf75a0bcaeb1"
 }'
 
-ENV=$(curl -s https://gate.elyon-sol.io:8443/governed-call \
+ENV=$(curl -s $GATE/governed-call \
   -H 'content-type: application/json' \
-  -d "{\"target_url\":\"https://target.elyon-sol.io:9443/target\",\"interaction\":$INTERACTION}" \
+  -d "{\"target_url\":\"$TARGET/target\",\"interaction\":$INTERACTION}" \
   | jq -c '.envelope')</pre>
 
     <div class="step">2 · That governed call already acted — so re-presenting the token is a replay</div>
     <pre class="code"><span class="c"># the /governed-call above admitted, signed, AND forwarded to the target, which acted once</span>
 <span class="c"># (GET /received went up by 1). The envelope is single-use, so presenting it again is a replay:</span>
-curl -s https://target.elyon-sol.io:9443/target \
+curl -s $TARGET/target \
   -H "X-Elyon-Sol-Envelope: $ENV" \
   -H 'content-type: application/json' \
   -d "$INTERACTION" | jq
@@ -379,32 +393,32 @@ curl -s https://target.elyon-sol.io:9443/target \
 
     <div class="step">3 · Now try to break it — every one of these SHOULD be refused</div>
     <pre class="code"><span class="c"># a) no token at all</span>
-curl -s https://target.elyon-sol.io:9443/target -H 'content-type: application/json' -d "$INTERACTION" | jq
+curl -s $TARGET/target -H 'content-type: application/json' -d "$INTERACTION" | jq
 
 <span class="c"># b) replay the same valid token a second time</span>
-curl -s https://target.elyon-sol.io:9443/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: application/json' -d "$INTERACTION" | jq
+curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: application/json' -d "$INTERACTION" | jq
 
 <span class="c"># c) forge — tamper one byte of the signed envelope</span>
 FORGED=$(echo "$ENV" | jq -c '.decision_sha256 = "deadbeef"')
-curl -s https://target.elyon-sol.io:9443/target -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: application/json' -d "$INTERACTION" | jq
+curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: application/json' -d "$INTERACTION" | jq
 
 <span class="c"># d) rebind — reuse the token but claim a different action</span>
 REBIND=$(echo "$INTERACTION" | jq -c '.context.tool = "delete_database"')
-curl -s https://target.elyon-sol.io:9443/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: application/json' -d "$REBIND" | jq
+curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: application/json' -d "$REBIND" | jq
 
 <span class="c"># e) sidecar — get authz to ALLOW any of the above (200 = finding, 403 = working)</span>
-curl -s -o /dev/null -w "%{http_code}\n" https://authz.elyon-sol.io:9243/authz \
+curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
   -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: application/json' -d "$INTERACTION"</pre>
 
     <p class="muted" style="margin-top:16px">Expected: <b>b–e all refuse</b> — <span class="mono">REF_VERIFY_REPLAY</span>, <span class="mono">REF_VERIFY_SIGNATURE_INVALID</span>, <span class="mono">REF_VERIFY_BINDING_MISMATCH</span>, and a <span class="mono">403</span> from the sidecar. Make any of them act, and you take first blood.</p>
 
     <p class="muted" style="max-width:82ch;margin-top:14px"><b>The sharper edges.</b> Those five are the easy cases and they refuse. A real break in a system like this lives in an implementation <i>seam</i> &mdash; where the gate and the target disagree about what a request means. The classes worth your time: <b>canonicalization mismatch</b> (reordered or duplicate JSON keys, raw vs escaped unicode, NFC vs NFD, <span class="mono">1</span> vs <span class="mono">1.0</span>), <b>a field the signature does not cover</b> (mutate one field at a time), <b>single-use under real concurrency</b> (present the same token many times at once, not in sequence), <b>validity-window edges</b> (a token expired to one host but not another), and <b>cross-binding</b> (a token minted for A honored for B). Full attack brief: <span class="mono">deploy/BREAK_IT.md</span>.</p>
 
-    <div class="note" style="margin-top:18px"><b>Note.</b> The token above is pinned to the currently deployed build. If a command returns a manifest / pin error, the surface was redeployed — grab fresh pins from the gate and see the full walkthrough in the repo (<span class="mono">deploy/BREAK_IT_IN_60_SECONDS.md</span>) and the self-check (<span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>).</div>
+    <div class="note" style="margin-top:18px"><b>Note.</b> The <span class="mono">expected_manifest_sha256</span> above matches the repo's committed <span class="mono">MANIFEST/manifest.json</span>, so it is valid against any instance you build from this checkout. Full walkthrough: <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> + <span class="mono">deploy/BREAK_IT_IN_60_SECONDS.md</span>; self-check: <span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>.</div>
 
     <div class="btns" style="margin-top:22px">
-      <a class="btn primary" href="#redteam">See the full challenge &amp; rewards →</a>
-      <a class="btn ghost" href="mailto:security@elyon-sol.io">I broke it → email security@elyon-sol.io</a>
+      <a class="btn primary" href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">Get the code (AGPL-3.0) →</a>
+      <a class="btn ghost" href="#redteam">Read the challenge design</a>
     </div>
   </div>
 </section>
