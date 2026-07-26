@@ -5,6 +5,8 @@ ORCID: 0009-0008-3785-3089 · justin@elyon-sol.io · https://elyon-sol.io
 
 *Preprint, July 2026 (v1). Implementation snapshot: commit 9645fb8, canon v0.9.8.4, test suite 512/512. Companion enforcement evidence: Zenodo DOI 10.5281/zenodo.21107731.*
 
+> **Status note (added 2026-07-20).** This is a July 2026 snapshot (commit 9645fb8). The project has since been **retired** and everything **open-sourced under AGPL-3.0** — the core and the companion operator console GLESAC (https://github.com/Elyon-Sol/GLESAC). The public test surface and the red-team challenge described below are **closed**; external adversarial validation was never obtained and remains the unmet open problem. The distribution described in §8 and §10 (private repository, access-on-request, a proprietary administration SDK, a commercial license) is **superseded**: the repository is public and there are **no commercial or proprietary components**. The technical content and honest-scope limitations otherwise stand as written for the snapshot.
+
 ---
 
 ## Abstract
@@ -109,7 +111,7 @@ We report development-side, referent-bound evidence — the test suite and runna
 - **The oversight guarantee is deployment-gated, not certified.** The end-to-end property — that the only path to a high-impact execution is through the gate *and* with a human grant — is claimable only inside a deployment that wires all of the operator-controlled non-bypass layers (inline body binding, mutual-TLS, and network/egress isolation) together with a shared single-use store. That deployment is the operator's to stand up and is not certified here.
 - **Off-gate callers (A1).** A caller that simply does not route through the gate is closeable only by a target-side admission policy plus network isolation, not by the gate alone.
 - **Root/publisher key compromise** is an out-of-band trust-floor concern common to any PKI-rooted system and is not claimed as recovered.
-- **Distribution.** The core implementation is released under AGPL-3.0 (open-core) with the source repository private and access granted on request; a separate administration/tooling SDK is proprietary. AGPL grants every recipient redistribution rights, so access-on-request governs initial, not eventual, visibility.
+- **Distribution.** The core implementation and the companion operator console (GLESAC) are released under **AGPL-3.0**, and the source repository is public. There are no commercial or proprietary components.
 
 ## 9. Related work
 
@@ -117,9 +119,9 @@ Elyon-Sol draws on several traditions. The principle that authority should be le
 
 ## 10. Availability, reproducibility, and an open challenge
 
-The canonical model (v0.9.8.4) is published for citation and locked by SHA-256. The implementation is AGPL-3.0 licensed with the source repository private; access is granted on request (`admin@elyon-sol.io` / `justin@elyon-sol.io`). The internal-consistency result is reproducible from the repository at the snapshot commit: verify the canon lock, then run the suite to `512 passed`. Companion enforcement evidence, with the filename-level inventory, is deposited on Zenodo (DOI 10.5281/zenodo.21107731), superseding revisions 2–5 in a documented version chain.
+The canonical model (v0.9.8.4) is published for citation and locked by SHA-256. The implementation is **AGPL-3.0** licensed and the source repository is public (https://github.com/Elyon-Sol/Elyon-Sol). The internal-consistency result is reproducible from the repository at the snapshot commit: verify the canon lock, then run the suite to `512 passed`. Companion enforcement evidence, with the filename-level inventory, is deposited on Zenodo (DOI 10.5281/zenodo.21107731), superseding revisions 2–5 in a documented version chain.
 
-Because external validation is the stated open problem, Elyon-Sol runs a private, invite-only red-team engagement against a live four-node public surface. It is recognition-based rather than a cash bounty: a confirmed break earns permanent, named credit in the project's public verification record, co-credit on the next evidence deposit, and authorship of the fix. Researchers with authorization, protocol, or cryptography backgrounds can request access at `security@elyon-sol.io`; details are at https://elyon-sol.io.
+External validation was the stated open problem, and Elyon-Sol ran a recognition-based red-team challenge against a live four-node public surface toward it. That engagement is now **closed** and the public surface retired; no external break or validation was ever recorded. The open-source code (AGPL-3.0) remains available to run and test locally — see the repository's `deploy/SPIN_UP_YOUR_OWN.md`.
 
 ## 11. Conclusion
 
