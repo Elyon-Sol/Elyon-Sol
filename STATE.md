@@ -1,10 +1,14 @@
 # Elyon-Sol - Project State
 
-> **RETIRED - 2026-07-20.** Active development of Elyon-Sol has ended. The public test nodes are
-> offline; the README, SECURITY, site, and licensing files reflect the retirement, and everything
-> (the core and the GLESAC operator console) is AGPL-3.0. The "Next open action" and backlog below
-> are the pre-retirement state, preserved for anyone who forks the project - they are no longer
-> being worked. The "never externally validated (G5)" finish line was never reached.
+> **PUBLIC PROGRAM RETIRED (2026-07-20); SOLE-AUTHOR RESEARCH CONTINUES.** The commercial layer, the
+> live public test surface, and external engagement are wound down; everything (core + GLESAC) is
+> AGPL-3.0, and the README/SECURITY/site/licensing reflect that. Single author, no forks or clones.
+> **FORWARD DIRECTION (the committed next evolution):** make the gate *more than a gate* by adding a
+> domain-semantic validity invariant that expands `G(I) = AC^3 ∧ T^26 ∧ CCS ∧ D(I, domain)` and thereby
+> **advances the canon** - a deliberate canon-version event (GR-1). Full plan:
+> `docs/design/future_directions_domain_semantic_evaluation.md`. The "Next open action" backlog below
+> is the pre-retirement engineering reference for that build. G5 (external validation) was never
+> reached and no new capability closes it.
 
 **This file is the entry point. A fresh session - the author, a new AI
 session, Grok, or any collaborator - should read this file first.**
