@@ -1,7 +1,7 @@
 # Elyon-Sol
 
-> **Retired — 2026-07-20.** Active development of Elyon-Sol has ended and the public test nodes
-> are offline. The code is open source (AGPL-3.0) and preserved for anyone to read, run, fork, or
+> **Paused — 2026-07-20.** Active development of Elyon-Sol is paused, not ended — the author may
+> resume it. The public test nodes are offline. The code is open source (AGPL-3.0) and preserved for anyone to read, run, fork, or
 > carry forward — you can stand up the whole surface yourself (see
 > [`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md)). The break-it challenge below is
 > preserved as documentation: it is no longer a live, credited engagement, and the four public
@@ -194,14 +194,12 @@ site/            the public one-pager
 
 ## License
 
-**AGPL-3.0.** The core here — admission gate, admissibility envelope, target-side verifier, ext-authz
+**AGPL-3.0.** Everything here — admission gate, admissibility envelope, target-side verifier, ext-authz
 sidecar, and supporting modules — is licensed under **AGPL-3.0** (see `LICENSE`), including the network-use
 source-disclosure obligation. The companion operator console
-[GLESAC](https://github.com/Elyon-Sol/GLESAC) is AGPL-3.0 as well. The project is **retired**, and the
-former open-core commercial/dual-licensing arrangement — including the once-proprietary administration
-SDK, now open-sourced as GLESAC — is wound down (`LICENSING.md`, `COMMERCIAL.md`). Contributions require a
-DCO sign-off (`CONTRIBUTING.md`). "Elyon-Sol" is a trademark of Justin LaPorte (application pending); the
-license covers the code, not the name.
+[GLESAC](https://github.com/Elyon-Sol/GLESAC) is AGPL-3.0 as well. There are **no commercial, proprietary,
+or dual-licensed components** (`LICENSING.md`). Contributions require a DCO sign-off (`CONTRIBUTING.md`).
+"Elyon-Sol" is a trademark of Justin LaPorte (application pending); the license covers the code, not the name.
 
 ## Security & contact
 

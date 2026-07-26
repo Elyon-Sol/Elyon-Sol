@@ -1,6 +1,6 @@
 # Security Policy
 
-> **Retired — 2026-07-20.** Active development has ended and the public test nodes are offline. The
+> **Paused — 2026-07-20.** Active development is paused, not ended — the author may resume it. The public test nodes are offline. The
 > credited red-team challenge is **closed** — there is no live public surface, no active engagement,
 > and no CVE / safe-harbor program for one. You can still stand up the open-source surface yourself
 > and test it ([`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md)); a genuine security report
