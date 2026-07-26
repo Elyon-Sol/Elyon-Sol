@@ -1,12 +1,20 @@
 # Elyon-Sol
 
+> **Retired — 2026-07-20.** Active development of Elyon-Sol has ended and the public test nodes
+> are offline. The code is open source (AGPL-3.0) and preserved for anyone to read, run, fork, or
+> carry forward — you can stand up the whole surface yourself (see
+> [`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md)). The break-it challenge below is
+> preserved as documentation: it is no longer a live, credited engagement, and the four public
+> hosts referenced further down are **down**. The companion operator console
+> [GLESAC](https://github.com/Elyon-Sol/GLESAC) is also open source (AGPL-3.0).
+
 **A deterministic, fail-closed admission gate for actions.** Before an action runs, Elyon-Sol
 decides — cryptographically — whether it is *authorized* under an explicit, hash-pinned policy,
 and refuses everything else. Every allowed action leaves a signed, single-use receipt of exactly
 why it was allowed.
 
-Open-core (AGPL-3.0) · canon v0.9.8.4 · full test suite green · live public test surface ·
-**not yet externally validated** (that's the open challenge — see below).
+AGPL-3.0 · canon v0.9.8.4 · full test suite green (645) · **retired 2026-07-20** ·
+**never externally validated** (the open finish line the project never reached — see below).
 
 ---
 
@@ -22,21 +30,24 @@ target and a read-only token inspector (`IMPLEMENTATION/envelope_inspector.py`) 
 token the way the target does, so you can self-check before you submit. Try to break it — see
 [`SECURITY.md`](SECURITY.md).
 
-## Try it (the live surface is open — no signup)
+## Try it — self-host (the public surface is retired)
 
-Four public nodes run under real TLS:
+The four public TLS nodes were retired on 2026-07-20 and are offline. The same admission surface
+is open source: stand it up yourself in a couple of commands and run the same "break-it"
+walkthrough against your own instance.
 
-| Node | Role | Host |
-|---|---|---|
-| Gate | mints/signs tokens | `https://gate.elyon-sol.io:8443` (`POST /governed-call`) |
-| Target | the thing that acts | `https://target.elyon-sol.io:9443` (`POST /target`, `GET /received`) |
-| Sidecar | ALLOW / DENY | `https://authz.elyon-sol.io:9243` |
-| Publisher | serves the signed record | `https://pub.elyon-sol.io:9143` |
+```bash
+git clone https://github.com/Elyon-Sol/Elyon-Sol.git && cd Elyon-Sol
+python deploy/bootstrap_config.py            # gate keypair + pinned anchor -> deploy/.env
+cd deploy && docker compose up --build       # gate:8000  target:9000  publisher:9100
+```
 
-Mint a token from the gate, present it once to the target/sidecar to see a valid flow, then attack
-the edges — drop the header, alter a field, replay it, expire it, point it at a different action or
-target. A confirmed break is credited and published (`SECURITY.md`). Copy-paste "break it in 60
-seconds" commands live on the project site.
+Then follow [`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md) and
+[`deploy/BREAK_IT_IN_60_SECONDS.md`](deploy/BREAK_IT_IN_60_SECONDS.md): mint a token, present it
+once to see a valid flow, then attack the edges — drop the header, alter a field, replay, expire,
+point it at a different action or target. The credited red-team challenge is **closed**; the
+read-only token inspector (`deploy/INSPECT_YOUR_BREAK.md`) adjudicates a suspected break against
+your own instance the way the target does.
 
 ---
 
@@ -135,15 +146,15 @@ ext-authz + a signing step?": [`docs/COMPARISON_capability_tokens.md`](docs/COMP
 
 We report exactly what we can back with a referent, and no more.
 
-- **Proven in-repo:** the full test suite passes (541 at HEAD; the authoritative count is pinned in
-  `STATE.md`), including revert-catchers that fail when the guard they defend is removed. A carried-forward
-  enforcement run showed 102 refusals → 403 with zero external executions and 102 eligible calls → 200
-  with exactly 102 executions, each gate-signed.
-- **Live self-test:** the four public nodes pass the author's attack suite (positive control honored,
-  adversarial cases refused).
-- **NOT yet proven:** **no external, third-party adversary has broken — or failed to break — the live
-  surface.** That external validation is the single open finish line, and the reason the challenge above
-  exists. The human-oversight guarantee is also deployment-gated (it holds inside a deployment that wires
+- **Proven in-repo:** the full test suite passes (645 at the final HEAD; the authoritative count is
+  pinned in `STATE.md`), including revert-catchers that fail when the guard they defend is removed. A
+  carried-forward enforcement run showed 102 refusals → 403 with zero external executions and 102
+  eligible calls → 200 with exactly 102 executions, each gate-signed.
+- **Live self-test (while the surface ran):** the four public nodes passed the author's attack suite
+  (positive control honored, adversarial cases refused). Those nodes are now retired.
+- **NEVER externally validated:** **no external, third-party adversary ever broke — or failed to break —
+  the live surface.** That external validation was the single open finish line the project never reached;
+  it is the reason the (now-closed) challenge existed. The human-oversight guarantee is also deployment-gated (it holds inside a deployment that wires
   the non-bypass layers). And the gate is **opt-in**: a caller that doesn't route through it isn't
   governed by it — non-bypass is a deployment-topology property (mTLS + network isolation), not the gate
   alone.
@@ -183,12 +194,14 @@ site/            the public one-pager
 
 ## License
 
-**Open-core.** The core here — admission gate, admissibility envelope, target-side verifier, ext-authz
+**AGPL-3.0.** The core here — admission gate, admissibility envelope, target-side verifier, ext-authz
 sidecar, and supporting modules — is licensed under **AGPL-3.0** (see `LICENSE`), including the network-use
-source-disclosure obligation. A **commercial license** is available for uses that can't accept AGPL's terms
-(`COMMERCIAL.md`); a separate administration/tooling SDK is proprietary and sold separately. Full model:
-`LICENSING.md`. Contributions require a DCO sign-off (`CONTRIBUTING.md`). "Elyon-Sol" is a trademark of
-Justin LaPorte (application pending); the license covers the code, not the name.
+source-disclosure obligation. The companion operator console
+[GLESAC](https://github.com/Elyon-Sol/GLESAC) is AGPL-3.0 as well. The project is **retired**, and the
+former open-core commercial/dual-licensing arrangement — including the once-proprietary administration
+SDK, now open-sourced as GLESAC — is wound down (`LICENSING.md`, `COMMERCIAL.md`). Contributions require a
+DCO sign-off (`CONTRIBUTING.md`). "Elyon-Sol" is a trademark of Justin LaPorte (application pending); the
+license covers the code, not the name.
 
 ## Security & contact
 

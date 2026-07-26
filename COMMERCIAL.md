@@ -1,22 +1,15 @@
 # Commercial licensing — Elyon-Sol
 
-The Elyon-Sol core is available under AGPL-3.0 (see `LICENSE` and `LICENSING.md`). AGPL
-requires that if you modify the core and distribute it, or offer its functionality over a
-network, you make your modified source available under AGPL-3.0.
+> **Retired — 2026-07-20.** Elyon-Sol's active development has ended. The core and the companion
+> operator console are both open source under **AGPL-3.0**, and commercial / dual-licensing is
+> **no longer offered**. This file is kept for the record.
 
-If that does not fit your use, a commercial license is available. A commercial license
-typically suits you if you want to:
+The Elyon-Sol core is licensed under **AGPL-3.0** (see `LICENSE` and `LICENSING.md`). The
+administration / operator tooling that was formerly proprietary and sold separately has been
+open-sourced as **GLESAC** (https://github.com/Elyon-Sol/GLESAC), also AGPL-3.0.
 
-- embed the core in a closed-source product or service without AGPL's source-disclosure
-  obligation;
-- offer a hosted/SaaS product built on the core without publishing your modifications;
-- receive the administration / tooling SDK (proprietary; sold separately) for management
-  and operations at scale;
-- obtain support, an SLA, or indemnification.
-
-Commercial licenses are offered by the copyright holder. To discuss terms, contact:
+There is no separate commercial license, closed SDK, support contract, or SLA on offer. You may
+use, run, modify, and redistribute everything under the terms of AGPL-3.0. If you have a question
+about the project or its history, contact:
 
 **Justin Laporte — justin@elyon-sol.io**
-
-Please include: your company, the intended use, and whether you need the closed
-administration SDK, support/SLA, or only an AGPL exemption for the core.

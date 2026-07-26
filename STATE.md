@@ -1,5 +1,11 @@
 # Elyon-Sol - Project State
 
+> **RETIRED - 2026-07-20.** Active development of Elyon-Sol has ended. The public test nodes are
+> offline; the README, SECURITY, site, and licensing files reflect the retirement, and everything
+> (the core and the GLESAC operator console) is AGPL-3.0. The "Next open action" and backlog below
+> are the pre-retirement state, preserved for anyone who forks the project - they are no longer
+> being worked. The "never externally validated (G5)" finish line was never reached.
+
 **This file is the entry point. A fresh session - the author, a new AI
 session, Grok, or any collaborator - should read this file first.**
 
