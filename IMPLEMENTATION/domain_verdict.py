@@ -305,10 +305,22 @@ def verify_verdict(
     not_after_raw = verdict.get("not_after")
     if not_after_raw is None:
         return _reject(REF_VERDICT_EXPIRED)
+    #
+    # *** THE UNSAFE CONDITION IS LOAD-BEARING - DO NOT REMOVE IT. ***
+    # An earlier revision waived freshness for ANY verdict whose id the caller
+    # named. That was an authentication bypass, reproduced by execution: the id
+    # is read from an UNSIGNED request header, and a SAFE verdict PASSes without
+    # ever reaching grant verification - so a captured, long-expired,
+    # authority-signed SAFE verdict could be replayed indefinitely by appending
+    # a header the attacker wrote themselves. The waiver exists ONLY to let a
+    # human release an UNSAFE hold; a SAFE verdict never needs overriding. Gating
+    # on the attested value confines the waiver to the path that does require a
+    # verified grant before anything is admitted.
     _waived = (
         isinstance(freshness_waived_for_verdict_id, str)
         and freshness_waived_for_verdict_id
         and freshness_waived_for_verdict_id == verdict_id
+        and value == VERDICT_UNSAFE
     )
     if not _waived and not not_after_valid(not_after_raw, now=now, clock_skew=clock_skew):
         return _reject(REF_VERDICT_EXPIRED)

@@ -21,7 +21,9 @@ from fastapi.testclient import TestClient
 
 from IMPLEMENTATION.evaluator import manifest_sha256
 from IMPLEMENTATION.approval import build_grant, sign_grant
-from IMPLEMENTATION.domain_verdict import build_verdict, sign_verdict, VERDICT_UNSAFE
+from IMPLEMENTATION.domain_verdict import (
+    build_verdict, sign_verdict, VERDICT_UNSAFE, VERDICT_SAFE,
+)
 
 SHA = manifest_sha256()
 TARGET = "https://example.invalid/x"
@@ -335,3 +337,68 @@ def test_F1_consumption_record_names_what_was_overridden(monkeypatch, tmp_path, 
     assert used[0]["hold_reason"] == "D_VERDICT_UNSAFE"
     assert used[0]["overridden_verdict_id"] == "vd-unsafe"
     assert used[0]["approver_key_id"] == APPROVER_KEY_ID
+
+
+# --- REVERT-CATCHER: the freshness waiver must never admit a stale SAFE verdict ---
+
+def test_SEC_unsigned_override_cannot_revive_an_expired_SAFE_verdict(monkeypatch, tmp_path, authority):
+    """AUTHENTICATION BYPASS, reproduced by execution before the fix.
+
+    The override id is read from an UNSIGNED request header, and a SAFE verdict
+    PASSes without ever reaching grant verification. So an attacker holding a
+    captured, long-expired, authority-signed SAFE verdict could replay it forever
+    by appending a header they wrote themselves — the gate admitted the call to
+    the upstream, repeatedly. The waiver is now gated on the attested value being
+    UNSAFE, confining it to the path that demands a verified grant.
+
+    PRE-FIX: 200, upstream called. POST-FIX: 202 hold, upstream never called."""
+    _, apk = authority
+    client, pep = _client(monkeypatch, _manifest(tmp_path), authority_pk=apk)
+    forwarded = []
+    pep.post_to_target = lambda *a, **k: (forwarded.append(True) or type(
+        "R", (), {"status_code": 200, "text": "ok", "headers": {},
+                  "json": lambda self: {"ok": True}})())
+    dsha = _decision_sha(client)
+
+    sk, _ = authority
+    stale_safe = sign_verdict(build_verdict(
+        decision_sha256=dsha, domain="healthcare_admin", verdict=VERDICT_SAFE,
+        verdict_id="v-stale",
+        not_after=datetime.now(timezone.utc) - timedelta(hours=1)), sk, AUTH_KEY_ID)
+
+    for _ in range(2):                     # replayability was half the finding
+        r = client.post("/governed-call", json=_body(), headers={
+            "X-Elyon-Sol-Domain-Verdict": json.dumps(stale_safe),
+            # entirely unsigned, attacker-authored:
+            "X-Elyon-Sol-Approval-Grant": json.dumps({"overrides_verdict_id": "v-stale"})})
+        assert r.status_code == 202, f"stale SAFE verdict was admitted: {r.status_code}"
+    assert not forwarded, "upstream was called on an expired SAFE verdict"
+
+
+def test_SEC_waiver_still_works_for_a_genuine_UNSAFE_override(monkeypatch, tmp_path, authority, approver):
+    """The fix must not break the feature it guards: an expired UNSAFE verdict
+    named by a VALID signed grant still releases."""
+    _, apk = authority; ask, ppk = approver
+    client, _ = _client(monkeypatch, _manifest(tmp_path), authority_pk=apk, approver_pk=ppk)
+    dsha = _decision_sha(client); rid = _open_hold(client, authority, dsha)
+    r = client.post("/governed-call", json=_body(), headers={
+        "X-Elyon-Sol-Domain-Verdict": json.dumps(_expired_unsafe(authority, dsha)),
+        "X-Elyon-Sol-Approval-Grant": json.dumps(_grant(ask, dsha, rid, "g-sec", "vd-unsafe"))})
+    assert r.status_code != 202, "the legitimate human override path regressed"
+
+
+def test_SEC_unsigned_override_on_UNSAFE_still_requires_a_valid_grant(monkeypatch, tmp_path, authority):
+    """Waiving freshness on an UNSAFE verdict gains an attacker nothing: it
+    reaches a 202 hold, and release still demands a verified grant."""
+    _, apk = authority
+    client, pep = _client(monkeypatch, _manifest(tmp_path), authority_pk=apk)
+    forwarded = []
+    pep.post_to_target = lambda *a, **k: (forwarded.append(True) or type(
+        "R", (), {"status_code": 200, "text": "ok", "headers": {},
+                  "json": lambda self: {"ok": True}})())
+    dsha = _decision_sha(client)
+    r = client.post("/governed-call", json=_body(), headers={
+        "X-Elyon-Sol-Domain-Verdict": json.dumps(_expired_unsafe(authority, dsha)),
+        "X-Elyon-Sol-Approval-Grant": json.dumps({"overrides_verdict_id": "vd-unsafe"})})
+    assert r.status_code in (202, 403)
+    assert not forwarded, "an unsigned grant admitted an UNSAFE-held call"
