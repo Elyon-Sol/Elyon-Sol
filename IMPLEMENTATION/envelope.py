@@ -327,23 +327,6 @@ def build_envelope(
     if _it is not None:
         envelope["request_context"]["interaction_type"] = _it
 
-    # Domain (D): bind the declared domain for the same reason SES-7 binds
-    # interaction_type - it selects which domain ruleset the interaction is
-    # judged against, so it belongs inside the signed, hashed receipt. This also
-    # makes decision_sha256 cover the domain declaration, so a domain-verdict
-    # bound to decision_sha256 is transitively bound to the domain it was issued
-    # for. Omitted when absent -> the undomained path stays byte-identical.
-    _dom = normalized_interaction.get("domain")
-    if _dom is not None:
-        envelope["request_context"]["domain"] = _dom
-
-    # The caller's domain-ruleset pin, bound for the same reason
-    # expected_manifest_sha256 is: it records WHICH ruleset the caller expected
-    # this decision to be judged against, so the receipt is self-describing.
-    _dmp = normalized_interaction.get("expected_domain_manifest_sha256")
-    if _dmp is not None:
-        envelope["request_context"]["expected_domain_manifest_sha256"] = _dmp
-
     # Compute decision_sha256 last, over the envelope minus
     # decision_sha256 itself and minus timestamp_utc (per artifact 05).
     hashable = {k: v for k, v in envelope.items() if k not in _HASH_EXCLUDED_KEYS}

@@ -158,20 +158,18 @@ The PEP accepts a single object at `POST /governed-call`:
     "expected_manifest_version":  "<string>",
     "expected_manifest_sha256":   "<64-char lowercase hex string>",
 
-    "interaction_type":                   "<string, OPTIONAL>",
-    "domain":                             "<string, OPTIONAL>",
-    "expected_domain_manifest_sha256":    "<64-char lowercase hex, OPTIONAL>"
+    "interaction_type":                   "<string, OPTIONAL>"
   }
 }
 ```
 
 The first five `interaction` members are REQUIRED and are the original
-schema. The three that follow are OPTIONAL, additive, and backward-compatible:
-a request omitting all three is byte-identical in treatment to a request under
-the pre-extension schema. Each is a declared SELECTOR or PIN, never payload —
+schema. The one that follows is OPTIONAL, additive, and backward-compatible:
+a request omitting it is byte-identical in treatment to a request under
+the pre-extension schema. It is a declared SELECTOR, never payload —
 `context` remains the only free-form member. Any other key inside `interaction`
-is REFUSED with `REF_SCHEMA_UNKNOWN_KEY`; the optional members are part of the
-known-key set, so their presence is not an unknown-key violation.
+is REFUSED with `REF_SCHEMA_UNKNOWN_KEY`; the optional member is part of the
+known-key set, so its presence is not an unknown-key violation.
 
 `target_url` is a PEP-wire concern, not part of canonical `I`. It
 addresses the upstream the PEP forwards to on ELIGIBLE. It is OUTSIDE
@@ -282,41 +280,6 @@ conservative choice, since covering the full vocabulary is the
 stricter requirement. Bound into the envelope's `request_context` when
 present, so it is inside `decision_sha256` and the issuer signature.
 
-#### `interaction.domain` (string, OPTIONAL)
-
-The declared domain whose ruleset the interaction is evaluated against
-by the domain-validity layer. A SELECTOR, not payload: the values it
-selects over live in the deployed domain ruleset, and the data assessed
-is `context`.
-
-Resolution is fail-closed and depends on what is deployed. With NO
-domain ruleset deployed the field is ignored entirely. With an ARMED
-ruleset: an undeclared domain is REFUSED (`D_DOMAIN_UNDECLARED`) unless
-the ruleset sets `require_domain: false`; an unknown declared domain is
-REFUSED (`D_DOMAIN_UNKNOWN`); and a declared domain whose ruleset pins
-`interaction_types` must match the caller's declared `interaction_type`
-(`D_DOMAIN_MISBOUND`), which is what prevents a caller selecting a
-weaker domain for stricter content. Bound into the envelope's
-`request_context` when present.
-
-#### `interaction.expected_domain_manifest_sha256` (string, OPTIONAL)
-
-Caller-asserted DOMAIN-ruleset hash: the SHA256 of the deployed domain
-ruleset file's bytes. The domain-layer analogue of
-`expected_manifest_sha256`, and load-bearing for the same reason - the
-ruleset decides domain refusals, so a caller must be able to refuse
-evaluation against a ruleset it did not audit. Without it a substituted
-ruleset silently changes policy while a substituted
-`MANIFEST/manifest.json` is detected.
-
-Checked BEFORE any content evaluation (assessing content against an
-unexpected ruleset is meaningless): missing when an armed ruleset
-requires a pin is `D_MANIFEST_UNPINNED`, a mismatch is
-`D_MANIFEST_PIN_MISMATCH`, and an inability to digest the deployed
-ruleset is `D_MANIFEST_PIN_UNVERIFIABLE`. Required by default whenever
-the deployed ruleset is armed; a deployment may waive it with
-`require_pin: false`. Bound into the envelope's `request_context` when
-present.
 
 ---
 

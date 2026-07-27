@@ -76,7 +76,6 @@ def build_grant(
     approval_request_id: str,
     grant_id: str,
     not_after: datetime,
-    overrides_verdict_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Construct an UNSIGNED approval grant.
@@ -93,36 +92,18 @@ def build_grant(
       verify_grant - single-use can never be skipped.
     - not_after ([FIX H7]): a tz-AWARE expiry (approval freshness). Naive ->
       ValueError here, mirroring sign_envelope's refusal of a naive not_after.
-    - overrides_verdict_id (OPTIONAL): present only on a DOMAIN-OVERRIDE grant.
-      It names the `verdict_id` of the authority-signed UNSAFE domain verdict
-      this approval overrules. Because sign_grant covers every field but the
-      signature, the approver is CRYPTOGRAPHICALLY asserting which safety
-      finding they are overruling - not merely approving an opaque decision
-      hash. Two consequences downstream:
-        * a grant WITHOUT this field cannot satisfy the domain layer, so a
-          HIGH_IMPACT approval can never launder a domain verdict requirement;
-        * the named verdict's freshness window is waived (and only that one's),
-          because human re-determination takes longer than a verdict lives.
-      Absent -> an ordinary approval grant, byte-identical to prior revisions.
     """
     if not isinstance(grant_id, str) or not grant_id:
         raise ValueError("grant_id is mandatory and must be a non-empty string")
     if not_after.tzinfo is None:
         raise ValueError("not_after must be timezone-aware (UTC)")
-    if overrides_verdict_id is not None and (
-        not isinstance(overrides_verdict_id, str) or not overrides_verdict_id
-    ):
-        raise ValueError("overrides_verdict_id must be a non-empty string when present")
-    grant = {
+    return {
         "grant_version": GRANT_VERSION,
         "decision_sha256": decision_sha256,
         "approval_request_id": approval_request_id,
         "grant_id": grant_id,
         "not_after": not_after.isoformat(),
     }
-    if overrides_verdict_id is not None:
-        grant["overrides_verdict_id"] = overrides_verdict_id
-    return grant
 
 
 def sign_grant(grant: Dict[str, Any], signing_key: Any, key_id: str) -> Dict[str, Any]:

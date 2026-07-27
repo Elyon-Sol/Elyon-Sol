@@ -170,9 +170,8 @@ For teams that want to go deeper than a single finding, there is a path to real
 ownership: authorship of a named hardening module carried in the codebase and the
 Zenodo record; a co-maintainer / advisory track on the governance layer with input
 to the roadmap and design reviews; and, for substantial ongoing collaboration, a
-documented partnership arrangement (including a stake in commercial-license outcomes
-of work you author, discussed case by case). We would rather share the credit and the
-direction with people who helped earn it than pay a flat rate for a report.
+documented partnership arrangement, discussed case by case. We would rather share the
+credit and the direction with people who helped earn it than pay a flat rate for a report.
 
 A written reference/recommendation from the author - describing exactly what you found
 and built - is available to any contributor for use with employers, grants, or

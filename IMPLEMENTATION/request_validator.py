@@ -191,15 +191,7 @@ _REQUIRED_INTERACTION_FIELDS = frozenset(
 # `interaction_type` (typed-impact, step 8.2) selects the manifest interaction
 # type whose required sets the caller must cover; under a flat manifest it is
 # carried but ignored by the evaluator. A caller may omit it entirely.
-# `domain` (domain-semantic validity, D) names the domain whose ruleset the
-# interaction is evaluated against. Like interaction_type it is a declared
-# SELECTOR, not payload: it is carried through normalization and bound into the
-# envelope, and it is ignored entirely when no domain ruleset is deployed. A
-# caller may omit it (an armed ruleset then refuses with D_DOMAIN_UNDECLARED
-# rather than silently skipping the domain layer).
-_OPTIONAL_INTERACTION_FIELDS = frozenset(
-    {"interaction_type", "domain", "expected_domain_manifest_sha256"}
-)
+_OPTIONAL_INTERACTION_FIELDS = frozenset({"interaction_type"})
 
 # Named continuity-token patterns (literal key matches), per
 # SPEC/request_schema.md "CCS-shaped fields." These are matched
@@ -428,19 +420,6 @@ def validate_request(
     ):
         return None, REF_SCHEMA_TYPE_MISMATCH
 
-    # domain (OPTIONAL): a string when present. Absent -> undeclared (an armed
-    # domain ruleset refuses; no ruleset deployed -> ignored).
-    if "domain" in interaction and not isinstance(interaction["domain"], str):
-        return None, REF_SCHEMA_TYPE_MISMATCH
-
-    # expected_domain_manifest_sha256 (OPTIONAL): the caller's assertion of WHICH
-    # domain ruleset it expects to be evaluated against - the ruleset analogue of
-    # expected_manifest_sha256. A string when present.
-    if "expected_domain_manifest_sha256" in interaction and not isinstance(
-        interaction["expected_domain_manifest_sha256"], str
-    ):
-        return None, REF_SCHEMA_TYPE_MISMATCH
-
     # ----- Accept -----
     # Normalize AP and OP (sort + dedupe) for canonical JSON
     # serialization downstream per open question 3 of the spec.
@@ -454,10 +433,4 @@ def validate_request(
     }
     if "interaction_type" in interaction:
         normalized["interaction_type"] = interaction["interaction_type"]
-    if "domain" in interaction:
-        normalized["domain"] = interaction["domain"]
-    if "expected_domain_manifest_sha256" in interaction:
-        normalized["expected_domain_manifest_sha256"] = interaction[
-            "expected_domain_manifest_sha256"
-        ]
     return normalized, None

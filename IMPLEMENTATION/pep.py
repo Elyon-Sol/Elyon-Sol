@@ -94,18 +94,6 @@ from IMPLEMENTATION.approval import (
     REF_APPROVAL_REQUEST_UNKNOWN,
 )
 from IMPLEMENTATION.replay_cache import InMemoryReplayCache, replay_cache_from_env
-from IMPLEMENTATION.domain_validity import (
-    resolve_domain_manifest, DM_STATUS_MALFORMED,
-)
-from IMPLEMENTATION.domain_control import (
-    control as domain_control,
-    CONTROL_PASS, CONTROL_HOLD_FOR_VERDICT, CONTROL_HOLD_FOR_HIL, CONTROL_REFUSE,
-    D_OVERRIDE_MISMATCH,
-)
-from IMPLEMENTATION.domain_verdict import claim_verdict_once
-from IMPLEMENTATION.domain_authority import (
-    resolve_domain_authority_keys, PROVENANCE_SIGNED_KEY_RECORD,
-)
 from IMPLEMENTATION.pending_store import (
     pending_store_from_env,
     InMemoryPendingApprovals,
@@ -283,87 +271,6 @@ _PendingApprovals = InMemoryPendingApprovals
 
 _PENDING = pending_store_from_env()
 _GRANT_REPLAY = replay_cache_from_env()
-
-
-# ---------------------------------------------------------------------------
-# Domain-validity gate (D) - OPT-IN wiring. See
-# docs/design/domain_validity_D_architecture.md.
-#
-# Enabled ONLY when ELYON_DOMAIN_MANIFEST names a path. Unset -> _DOMAIN_ENABLED
-# is False and every code path below is skipped, so the default deployment is
-# byte-behavior-identical to the pre-D gate. This is PEP-layer enforcement, NOT a
-# canon change: evaluator.decide() and G(I) are untouched, evaluator_sha256 does
-# not move, and D is not (yet) an admissibility conjunct. The canon increment
-# that makes D an invariant is a separate, author-ratified event (GR-1).
-#
-# The determinism firewall holds: the domain VERDICT is read off the REQUEST (a
-# header, exactly like the approval grant) and passed INTO domain_control. The
-# gate never calls a policy agent inline, so the decision path stays deterministic
-# and non-blocking; obtaining the verdict is the caller's / monitor's job.
-# ---------------------------------------------------------------------------
-
-_DOMAIN_MANIFEST_PATH = os.environ.get("ELYON_DOMAIN_MANIFEST")
-_DOMAIN_ENABLED = bool(_DOMAIN_MANIFEST_PATH)
-_VERDICT_REPLAY = replay_cache_from_env()
-
-
-def _extract_domain_verdict(request):
-    """Read a domain-compliance verdict off the request, or None if absent
-    (-> HOLD_FOR_VERDICT when the domain requires one). A present-but-unparseable
-    verdict returns the raw string so verify_verdict maps it to
-    REF_VERDICT_MALFORMED - junk is a refusal, not a free pass."""
-    raw = request.headers.get("X-Elyon-Sol-Domain-Verdict")
-    if raw is None:
-        return None
-    try:
-        return json.loads(raw)
-    except (json.JSONDecodeError, ValueError):
-        return raw
-
-
-def _domain_authority_keys():
-    """Trust map for domain-verdict signers, resolved from the pinned-root SIGNED
-    key record in-process - the same chain and the same discipline
-    _resolve_signed_chain_approver_keys() uses for approvers, but selecting the
-    `domain_authority` role instead of `approver`.
-
-    Fail-closed at every step: trio not configured, unreadable pin, validation
-    failure, or no domain_authority role published -> {} -> no verdict can verify
-    -> HOLD, never PASS. Role-distinctness (one signed role per key) is what keeps
-    a policy authority from being an issuer or an approver."""
-    import base64
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-    from IMPLEMENTATION.key_record_source import load_key_record_from_bytes
-
-    record_path = os.environ.get(ENV_APPROVER_KEY_RECORD_PATH)
-    root_id = os.environ.get(ENV_PINNED_ROOT_KEY_ID)
-    root_b64 = os.environ.get(ENV_PINNED_ROOT_PUBKEY_B64)
-    if not record_path or not root_id or not root_b64:
-        return {}
-
-    try:
-        pinned = {root_id: Ed25519PublicKey.from_public_bytes(
-            base64.b64decode(root_b64, validate=True))}
-        with open(record_path, "rb") as fh:
-            record_bytes = fh.read()
-    except (OSError, ValueError, TypeError):
-        return {}
-
-    skew_s = os.environ.get("ELYON_CLOCK_SKEW_SECONDS")
-    skew = timedelta(seconds=int(skew_s)) if skew_s else timedelta(0)
-    try:
-        loaded = load_key_record_from_bytes(record_bytes, pinned, clock_skew=skew)
-    except Exception:
-        return {}
-    view = loaded.get("trust_view")
-    if view is None:
-        return {}
-    return resolve_domain_authority_keys(
-        view,
-        provenance=PROVENANCE_SIGNED_KEY_RECORD,
-        gate_key_id=os.environ.get("ELYON_SIGNING_KEY_ID"),
-        clock_skew=skew,
-    )
 
 
 def _extract_grant(request):
@@ -621,127 +528,6 @@ async def governed_call(request: Request):
             },
         )
 
-    # ----- Domain-validity gate (D) - OPT-IN, default-off -----
-    # Runs AFTER the ELIGIBLE envelope exists (so decision_sha256 is available to
-    # bind a verdict to) and BEFORE the approval gate, as EXPLICIT early
-    # returns/raises so no outcome can be swallowed by a fail-closed except. A
-    # domain REFUSE must not consume a 202 approval slot, and a domain HOLD must
-    # not reach post_to_target. When ELYON_DOMAIN_MANIFEST is unset this whole
-    # block is skipped and the path is byte-behavior-unchanged.
-    _domain_hil = False
-    _domain_hil_code = None
-    _domain_hil_verdict_id = None
-    _pre_grant = None
-    _override_vid = None
-    if _DOMAIN_ENABLED:
-        try:
-            dmanifest, dstatus, dm_sha = resolve_domain_manifest(_DOMAIN_MANIFEST_PATH)
-            if dstatus == DM_STATUS_MALFORMED:
-                # Deployed-but-broken ruleset: fail closed. Never degrade a
-                # config error into "no domain policy" (S5b).
-                raise HTTPException(
-                    status_code=403,
-                    detail={"terminal_state": "REFUSE",
-                            "refusal_reason_code": "D_MANIFEST_MALFORMED"},
-                )
-            dverdict = _extract_domain_verdict(request)
-            # A DOMAIN-OVERRIDE grant names, inside its signed region, the
-            # UNSAFE verdict it overrules. Read that id here and hand it to
-            # domain_control, which waives the freshness window for that one
-            # verdict. The grant is NOT trusted at this point - it is verified
-            # in the approval block below - but reading the id early cannot
-            # weaken anything: an unverified grant only ever waives the
-            # freshness of a verdict that must still pass signature, pinned
-            # authority, decision binding and domain binding, and the release
-            # itself still requires that grant to verify.
-            _pre_grant = _extract_grant(request)
-            _override_vid = (
-                _pre_grant.get("overrides_verdict_id")
-                if isinstance(_pre_grant, dict) else None
-            )
-            d_out, d_code, d_detail = domain_control(
-                normalized_interaction,
-                dmanifest,
-                domain_manifest_sha256=dm_sha,
-                verdict=dverdict,
-                expected_decision_sha256=envelope["decision_sha256"],
-                authority_public_keys=_domain_authority_keys(),
-                gate_key_id=(_get_signing_key() or (None, None))[1],
-                override_verdict_id=_override_vid,
-            )
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=403,
-                detail={"terminal_state": "REFUSE",
-                        "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
-                        "error": str(e)},
-            )
-
-        if d_out == CONTROL_REFUSE:
-            raise HTTPException(
-                status_code=403,
-                detail={"terminal_state": "REFUSE", "refusal_reason_code": d_code},
-            )
-
-        if d_out == CONTROL_HOLD_FOR_VERDICT:
-            # 202 HOLD for a signed POLICY-AUTHORITY attestation. This is NOT a
-            # human-approval hold: it does not open an approval slot, because the
-            # thing missing is a machine-verifiable verdict, not a human decision.
-            # Do NOT sign, issuance-log a forward, or post_to_target.
-            return JSONResponse(
-                status_code=202,
-                content={
-                    "terminal_state": "PENDING_DOMAIN_VERDICT",
-                    "refusal_reason_code": d_code,
-                    "decision_sha256": envelope["decision_sha256"],
-                    "domain": (d_detail or {}).get("domain"),
-                },
-            )
-
-        if d_out == CONTROL_HOLD_FOR_HIL:
-            # An AUTHENTIC verdict attests UNSAFE: a HUMAN must re-determine
-            # out-of-band. Rather than dead-ending in a bare 202 (which reported
-            # the need but opened no slot a grant could fill, leaving the
-            # interaction stuck), route it into the EXISTING approval machinery by
-            # requiring approval for this call. The approval block below then
-            # issues the approval_request_id, records the hold, and - when the
-            # human presents a grant - verifies provenance/binding/SoD/freshness,
-            # consumes the 202 slot and claims grant_id single-use before forward.
-            # One release path, not two.
-            _domain_hil = True
-            _domain_hil_code = d_code
-            _domain_hil_verdict_id = (d_detail or {}).get("verdict_id")
-            # ANTI-LAUNDERING. A domain hold may be released ONLY by a grant that
-            # explicitly overrides THIS verdict. A plain approval grant - e.g. one
-            # a human signed for a HIGH_IMPACT hold - carries no
-            # overrides_verdict_id and therefore cannot discharge a safety
-            # finding it never referred to. Mismatch or absence is refused here
-            # rather than falling through to the approval block, so the two hold
-            # types can never substitute for one another.
-            if isinstance(_pre_grant, dict) and _pre_grant.get("approval_request_id"):
-                if _override_vid != _domain_hil_verdict_id:
-                    raise HTTPException(
-                        status_code=403,
-                        detail={
-                            "terminal_state": "REFUSE",
-                            "refusal_reason_code": D_OVERRIDE_MISMATCH,
-                        },
-                    )
-
-        if d_out == CONTROL_PASS and isinstance(dverdict, dict):
-            # A verdict that RELEASED this call is single-use: claim verdict_id
-            # exactly once, BEFORE any forward, so a captured SAFE verdict cannot
-            # release the same decision twice within its freshness window.
-            claimed = claim_verdict_once(dverdict, _VERDICT_REPLAY)
-            if not claimed["accepted"]:
-                raise HTTPException(
-                    status_code=403,
-                    detail={"terminal_state": "REFUSE",
-                            "refusal_reason_code": claimed["reason"]},
-                )
-
     # ----- Approval gate (governance Feature 1; design 1.3; [FIX H6]) -----
     # Placed AFTER the ELIGIBLE+envelope build and BEFORE the sign/forward
     # try-blocks, as EXPLICIT early returns/raises, so (a) a 202 hold can never
@@ -756,10 +542,6 @@ async def governed_call(request: Request):
         needs_approval = requires_approval(normalized_interaction, manifest)
     except Exception:
         needs_approval = True  # fail closed
-    # A domain re-determination hold is a HUMAN-approval hold: same machinery,
-    # same SoD, same single-use, same audit - only the REASON differs.
-    if _domain_hil:
-        needs_approval = True
     if needs_approval:
         decision_sha256 = envelope["decision_sha256"]
         grant = _extract_grant(request)
@@ -779,15 +561,6 @@ async def governed_call(request: Request):
                         "type": "approval_request",
                         "decision_sha256": decision_sha256,
                         "approval_request_id": approval_request_id,
-                        # WHY this is held. reconcile_approvals keys only on
-                        # type/decision_sha256/approval_request_id, so this is
-                        # additive - but an operator surface must be able to tell
-                        # "a human must re-determine a domain-compliance failure"
-                        # from "this interaction type is HIGH_IMPACT".
-                        "hold_reason": (_domain_hil_code if _domain_hil
-                                        else "HIGH_IMPACT"),
-                        **({"overridden_verdict_id": _domain_hil_verdict_id}
-                           if _domain_hil and _domain_hil_verdict_id else {}),
                         # PUBLIC decision context (already in the envelope) so an
                         # operator surface can show a human what is being held -
                         # additive keys; reconcile_approvals keys only on
@@ -813,10 +586,6 @@ async def governed_call(request: Request):
                     "terminal_state": "PENDING_APPROVAL",
                     "approval_request_id": approval_request_id,
                     "decision_sha256": decision_sha256,
-                    # Additive: names WHY a human is being asked. Absent-safe for
-                    # existing clients, which only read the three fields above.
-                    "hold_reason": (_domain_hil_code if _domain_hil
-                                    else "HIGH_IMPACT"),
                 },
             )
         # A grant is present: verify provenance/binding/SoD/freshness (pure),
@@ -872,9 +641,6 @@ async def governed_call(request: Request):
                     "approval_request_id": grant_req_id,
                     "grant_id": grant["grant_id"],
                     "approver_key_id": grant.get("approver_key_id"),
-                    "hold_reason": (_domain_hil_code if _domain_hil else "HIGH_IMPACT"),
-                    **({"overridden_verdict_id": grant.get("overrides_verdict_id")}
-                       if grant.get("overrides_verdict_id") else {}),
                 })
             except Exception as e:
                 raise HTTPException(
