@@ -337,6 +337,13 @@ def build_envelope(
     if _dom is not None:
         envelope["request_context"]["domain"] = _dom
 
+    # The caller's domain-ruleset pin, bound for the same reason
+    # expected_manifest_sha256 is: it records WHICH ruleset the caller expected
+    # this decision to be judged against, so the receipt is self-describing.
+    _dmp = normalized_interaction.get("expected_domain_manifest_sha256")
+    if _dmp is not None:
+        envelope["request_context"]["expected_domain_manifest_sha256"] = _dmp
+
     # Compute decision_sha256 last, over the envelope minus
     # decision_sha256 itself and minus timestamp_utc (per artifact 05).
     hashable = {k: v for k, v in envelope.items() if k not in _HASH_EXCLUDED_KEYS}

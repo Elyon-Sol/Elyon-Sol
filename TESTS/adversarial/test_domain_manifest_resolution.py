@@ -27,14 +27,14 @@ def _tmp(content, *, raw=False):
 # --- ABSENT: D was never deployed -> inert, NOT refuse-all -------------------
 
 def test_absent_resolves_unarmed_not_error():
-    m, status = resolve_domain_manifest(os.path.join(tempfile.mkdtemp(), "nope.json"))
+    m, status, _sha = resolve_domain_manifest(os.path.join(tempfile.mkdtemp(), "nope.json"))
     assert status == DM_STATUS_ABSENT
     assert m == UNARMED_DOMAIN_MANIFEST
 
 
 def test_absent_manifest_passes_everything_through():
     """The anti-brick property: with no ruleset deployed, D must not refuse."""
-    m, _ = resolve_domain_manifest(os.path.join(tempfile.mkdtemp(), "nope.json"))
+    m, _, _sha2 = resolve_domain_manifest(os.path.join(tempfile.mkdtemp(), "nope.json"))
     for ctx in ({}, {"domain": "anything", "context": {"whatever": False}},
                 {"context": {}}, {"domain": "healthcare_admin", "context": {}}):
         assert assess(ctx, m) == ("VALID", None, None)
@@ -45,27 +45,27 @@ def test_absent_manifest_passes_everything_through():
 @pytest.mark.parametrize("bad", [
     ("{not json", True),
     ({"version": 1}, False),                                        # version not str
-    ({"version": "1.0", "domains": "nope"}, False),                 # domains not dict
-    ({"version": "1.0", "domains": {"d": {"predicates": "no"}}}, False),
-    ({"version": "1.0", "domains": {"d": {"predicates": [], "requires_verdict": True}}}, False),
+    ({"version": "1.0", "require_pin": False, "domains": "nope"}, False),                 # domains not dict
+    ({"version": "1.0", "require_pin": False, "domains": {"d": {"predicates": "no"}}}, False),
+    ({"version": "1.0", "require_pin": False, "domains": {"d": {"predicates": [], "requires_verdict": True}}}, False),
 ])
 def test_malformed_resolves_none_for_fail_closed(bad):
     content, raw = bad
-    m, status = resolve_domain_manifest(_tmp(content, raw=raw))
+    m, status, _sha = resolve_domain_manifest(_tmp(content, raw=raw))
     assert status == DM_STATUS_MALFORMED
     assert m is None, "a broken ruleset must NOT degrade to 'no ruleset'"
 
 
 def test_malformed_is_not_silently_unarmed():
     """The dangerous conflation: a broken config must never be read as inert."""
-    m, status = resolve_domain_manifest(_tmp({"version": "1.0", "domains": "broken"}))
+    m, status, _sha = resolve_domain_manifest(_tmp({"version": "1.0", "require_pin": False, "domains": "broken"}))
     assert (m, status) != (UNARMED_DOMAIN_MANIFEST, DM_STATUS_ABSENT)
 
 
 # --- LOADED: a real ruleset is in force --------------------------------------
 
 def test_armed_example_loads():
-    m, status = resolve_domain_manifest("MANIFEST/domain_manifest.example.json")
+    m, status, _sha = resolve_domain_manifest("MANIFEST/domain_manifest.example.json")
     assert status == DM_STATUS_LOADED
     assert safe_domain_manifest(m) is not None
     assert m["domains"]
@@ -74,7 +74,7 @@ def test_armed_example_loads():
 def test_tracked_default_is_wellformed_and_unarmed():
     """The tracked default must be inert so a checkout that never configured D
     behaves exactly as it did before D existed."""
-    m, status = resolve_domain_manifest(DOMAIN_MANIFEST_DEFAULT_PATH)
+    m, status, _sha = resolve_domain_manifest(DOMAIN_MANIFEST_DEFAULT_PATH)
     assert status == DM_STATUS_LOADED
     assert safe_domain_manifest(m) is not None
     assert not m.get("domains"), "the tracked default must declare no domains"
@@ -82,7 +82,7 @@ def test_tracked_default_is_wellformed_and_unarmed():
 
 
 def test_default_path_used_when_none_given():
-    m, status = resolve_domain_manifest()
+    m, status, _sha = resolve_domain_manifest()
     assert status == DM_STATUS_LOADED and not m.get("domains")
 
 

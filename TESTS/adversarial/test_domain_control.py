@@ -40,7 +40,7 @@ def _manifest(requires_verdict, authority_key_id=AUTH_KEY_ID):
     if requires_verdict:
         spec["requires_verdict"] = True
         spec["authority_key_id"] = authority_key_id
-    return {"version": "1.0", "domains": {DOMAIN: spec}}
+    return {"version": "1.0", "require_pin": False, "domains": {DOMAIN: spec}}
 
 
 def _ctx(record=True):
@@ -135,19 +135,19 @@ def test_stale_verdict_fails_closed(authority):
 # --- S3 schema: requires_verdict demands a pinned authority_key_id -------------
 
 def test_schema_requires_verdict_without_authority_is_malformed():
-    bad = {"version": "1.0", "domains": {DOMAIN: {
+    bad = {"version": "1.0", "require_pin": False, "domains": {DOMAIN: {
         "bind_interaction_type": False, "predicates": [], "requires_verdict": True}}}   # no authority_key_id
     assert safe_domain_manifest(bad) is None
 
 
 def test_schema_requires_verdict_with_authority_is_valid():
-    ok = {"version": "1.0", "domains": {DOMAIN: {
+    ok = {"version": "1.0", "require_pin": False, "domains": {DOMAIN: {
         "bind_interaction_type": False, "predicates": [], "requires_verdict": True, "authority_key_id": AUTH_KEY_ID}}}
     assert safe_domain_manifest(ok) is not None
 
 
 def test_schema_non_bool_requires_verdict_rejected():
-    bad = {"version": "1.0", "domains": {DOMAIN: {"bind_interaction_type": False, "predicates": [], "requires_verdict": "yes"}}}
+    bad = {"version": "1.0", "require_pin": False, "domains": {DOMAIN: {"bind_interaction_type": False, "predicates": [], "requires_verdict": "yes"}}}
     assert safe_domain_manifest(bad) is None
 
 

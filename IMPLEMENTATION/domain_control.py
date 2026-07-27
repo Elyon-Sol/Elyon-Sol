@@ -75,12 +75,18 @@ D_VERDICT_REQUIRED = "D_VERDICT_REQUIRED"      # requires_verdict, none supplied
 D_VERDICT_UNVERIFIED = "D_VERDICT_UNVERIFIED"  # a verdict was supplied but failed verification (fail-closed)
 D_VERDICT_UNSAFE = "D_VERDICT_UNSAFE"          # authentic verdict attests UNSAFE -> HOLD_FOR_HIL
 D_VERDICT_CONTRACT = "D_VERDICT_CONTRACT"      # DV-03/DV-04: caller omitted a load-bearing input
+# Ruleset-integrity codes: the domain ruleset decides refusals, so it is pinned
+# by the caller exactly as the governing manifest is.
+D_MANIFEST_UNPINNED = "D_MANIFEST_UNPINNED"                  # armed ruleset, caller asserted no pin
+D_MANIFEST_PIN_MISMATCH = "D_MANIFEST_PIN_MISMATCH"          # caller expected a different ruleset
+D_MANIFEST_PIN_UNVERIFIABLE = "D_MANIFEST_PIN_UNVERIFIABLE"  # gate cannot digest the deployed ruleset
 
 
 def control(
     ctx: Any,
     domain_manifest: Any,
     *,
+    domain_manifest_sha256: Optional[str] = None,
     verdict: Optional[Dict[str, Any]] = None,
     expected_decision_sha256: Optional[str] = None,
     authority_public_keys: Optional[Dict[str, Any]] = None,
@@ -101,17 +107,40 @@ def control(
     and `gate_key_id` MUST be supplied; a missing/invalid verdict input fails
     CLOSED to HOLD_FOR_VERDICT (never PASS).
     """
-    # 1. D-structural first: is the CONTENT structurally domain-valid? A missing
+    dm = safe_domain_manifest(domain_manifest)
+    if dm is None:
+        return CONTROL_REFUSE, D_MANIFEST_MALFORMED, None
+
+    # 1. RULESET INTEGRITY, before any content evaluation. Evaluating content
+    #    against a ruleset the caller did not expect is meaningless, so the pin
+    #    is checked FIRST. This closes the asymmetry with the governing manifest
+    #    (caller-pinned via expected_manifest_sha256 and refused on mismatch):
+    #    without it a swapped domain ruleset silently changes policy while a
+    #    swapped manifest.json is detected.
+    #
+    #    Required by DEFAULT when the manifest is armed - the caller must assert
+    #    which ruleset it expects, exactly as it must for the manifest. A
+    #    deployment that genuinely wants unpinned rulesets sets require_pin:
+    #    false explicitly (an eyes-open, recorded choice), matching the
+    #    require_domain / bind_interaction_type inversions.
+    if (dm.get("domains") or {}) and dm.get("require_pin") is not False:
+        expected_dm = (ctx.get("expected_domain_manifest_sha256")
+                       if isinstance(ctx, dict) else None)
+        if not isinstance(expected_dm, str) or not expected_dm:
+            return CONTROL_REFUSE, D_MANIFEST_UNPINNED, None
+        if not isinstance(domain_manifest_sha256, str) or not domain_manifest_sha256:
+            # The gate cannot produce the deployed ruleset's digest, so the
+            # caller's assertion cannot be checked -> fail closed.
+            return CONTROL_REFUSE, D_MANIFEST_PIN_UNVERIFIABLE, None
+        if expected_dm != domain_manifest_sha256:
+            return CONTROL_REFUSE, D_MANIFEST_PIN_MISMATCH, None
+
+    # 2. D-structural: is the CONTENT structurally domain-valid? A missing
     #    required attestation (e.g. a CAT scan assigned but not approved) is a
     #    structural REFUSE - caught here without any out-of-band call.
     dstate, dcode, detail = assess(ctx, domain_manifest)
     if dstate != "VALID":
         return CONTROL_REFUSE, dcode, detail
-
-    # assess() already validated the manifest; re-derive the spec (None-safe).
-    dm = safe_domain_manifest(domain_manifest)
-    if dm is None:
-        return CONTROL_REFUSE, D_MANIFEST_MALFORMED, None
 
     declared = ctx.get("domain") if isinstance(ctx, dict) else None
     domains = dm.get("domains") or {}

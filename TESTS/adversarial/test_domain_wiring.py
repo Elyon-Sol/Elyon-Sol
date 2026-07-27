@@ -24,7 +24,8 @@ SHA = manifest_sha256()
 TARGET = "https://example.invalid/x"
 
 
-def _armed_manifest(tmp_path, *, requires_verdict=False, authority_key_id=None):
+def _armed_manifest(tmp_path, *, requires_verdict=False, authority_key_id=None,
+                    require_pin=True):
     spec = {
         "predicates": [{"path": "patient_consent", "rule": "equals", "value": True}],
         "interaction_types": ["chart_write"],
@@ -33,12 +34,21 @@ def _armed_manifest(tmp_path, *, requires_verdict=False, authority_key_id=None):
         spec["requires_verdict"] = True
         spec["authority_key_id"] = authority_key_id
     dm = {"version": "1.0", "domains": {"healthcare_admin": spec}}
+    if not require_pin:
+        dm["require_pin"] = False
     p = tmp_path / "dm.json"
     p.write_text(json.dumps(dm), encoding="utf-8")
     return str(p)
 
 
-def _body(*, domain=None, itype=None, consent=True):
+def _sha_of(path):
+    """The digest a caller pins - the deployed file's BYTES."""
+    import hashlib
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def _body(*, domain=None, itype=None, consent=True, dm_pin=None):
     interaction = {
         "AP": ["identity", "role"],
         "OP": ["session", "request"],
@@ -50,6 +60,8 @@ def _body(*, domain=None, itype=None, consent=True):
         interaction["domain"] = domain
     if itype is not None:
         interaction["interaction_type"] = itype
+    if dm_pin is not None:
+        interaction["expected_domain_manifest_sha256"] = dm_pin
     return {"target_url": TARGET, "interaction": interaction}
 
 
@@ -115,7 +127,7 @@ def test_disabled_gate_ignores_domain_fields(monkeypatch):
 # --- enabled: structural domain refusal --------------------------------------
 
 def test_enabled_refuses_domain_invalid_content(monkeypatch, tmp_path):
-    client, pep = _client(monkeypatch, _armed_manifest(tmp_path))
+    client, pep = _client(monkeypatch, _armed_manifest(tmp_path, require_pin=False))
     assert pep._DOMAIN_ENABLED is True
     r = client.post("/governed-call",
                     json=_body(domain="healthcare_admin", itype="chart_write", consent=False))
@@ -124,14 +136,14 @@ def test_enabled_refuses_domain_invalid_content(monkeypatch, tmp_path):
 
 
 def test_enabled_refuses_undeclared_domain(monkeypatch, tmp_path):
-    client, _ = _client(monkeypatch, _armed_manifest(tmp_path))
+    client, _ = _client(monkeypatch, _armed_manifest(tmp_path, require_pin=False))
     r = client.post("/governed-call", json=_body(consent=True))   # no domain declared
     assert r.status_code == 403
     assert r.json()["detail"]["refusal_reason_code"] == "D_DOMAIN_UNDECLARED"
 
 
 def test_enabled_refuses_domain_shopping(monkeypatch, tmp_path):
-    client, _ = _client(monkeypatch, _armed_manifest(tmp_path))
+    client, _ = _client(monkeypatch, _armed_manifest(tmp_path, require_pin=False))
     r = client.post("/governed-call",
                     json=_body(domain="healthcare_admin", itype="wrong_type", consent=True))
     assert r.status_code == 403
@@ -139,7 +151,7 @@ def test_enabled_refuses_domain_shopping(monkeypatch, tmp_path):
 
 
 def test_enabled_refuses_unknown_domain(monkeypatch, tmp_path):
-    client, _ = _client(monkeypatch, _armed_manifest(tmp_path))
+    client, _ = _client(monkeypatch, _armed_manifest(tmp_path, require_pin=False))
     r = client.post("/governed-call",
                     json=_body(domain="no_such", itype="chart_write", consent=True))
     assert r.status_code == 403
@@ -169,7 +181,7 @@ def test_absent_deployed_manifest_is_inert_not_refuse_all(monkeypatch, tmp_path)
 # --- enabled: requires_verdict -> 202 hold, upstream never reached ------------
 
 def test_requires_verdict_holds_202_without_verdict(monkeypatch, tmp_path):
-    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1")
+    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1", require_pin=False)
     client, _ = _client(monkeypatch, path)
     r = client.post("/governed-call",
                     json=_body(domain="healthcare_admin", itype="chart_write", consent=True))
@@ -183,7 +195,7 @@ def test_requires_verdict_holds_202_without_verdict(monkeypatch, tmp_path):
 def test_unverifiable_verdict_holds_not_passes(monkeypatch, tmp_path):
     """No signed key record is configured, so the authority trust map is empty:
     even a well-formed verdict cannot verify -> HOLD, never PASS."""
-    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1")
+    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1", require_pin=False)
     client, _ = _client(monkeypatch, path)
     sk = Ed25519PrivateKey.generate()
     v = sign_verdict(build_verdict(decision_sha256="d" * 64, domain="healthcare_admin",
@@ -198,7 +210,7 @@ def test_unverifiable_verdict_holds_not_passes(monkeypatch, tmp_path):
 
 
 def test_junk_verdict_header_holds_closed(monkeypatch, tmp_path):
-    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1")
+    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1", require_pin=False)
     client, _ = _client(monkeypatch, path)
     r = client.post("/governed-call",
                     json=_body(domain="healthcare_admin", itype="chart_write", consent=True),
@@ -213,7 +225,7 @@ def test_no_gate_identity_holds_closed(monkeypatch, tmp_path):
     """A gate with no signing identity cannot run the SoD id-check, so a
     verdict-requiring domain must HOLD rather than release (DV-03 at the wiring
     layer: a load-bearing input missing -> oversight, never bypass)."""
-    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1")
+    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1", require_pin=False)
     client, _ = _client(monkeypatch, path, gate_key=False)
     r = client.post("/governed-call",
                     json=_body(domain="healthcare_admin", itype="chart_write", consent=True))
@@ -223,9 +235,81 @@ def test_no_gate_identity_holds_closed(monkeypatch, tmp_path):
 
 def test_structural_refuse_precedes_verdict_hold(monkeypatch, tmp_path):
     """Invalid content must REFUSE outright, not consume a verdict/approval slot."""
-    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1")
+    path = _armed_manifest(tmp_path, requires_verdict=True, authority_key_id="AUTH1", require_pin=False)
     client, _ = _client(monkeypatch, path)
     r = client.post("/governed-call",
                     json=_body(domain="healthcare_admin", itype="chart_write", consent=False))
     assert r.status_code == 403
     assert r.json()["detail"]["refusal_reason_code"] == "D_FIELD_INVALID"
+
+
+# --- (1) RULESET PINNING: the domain ruleset is caller-pinned like the manifest ---
+
+def test_pin_required_by_default_unpinned_refused(monkeypatch, tmp_path):
+    """The integrity gap: previously nothing verified WHICH ruleset was deployed,
+    so a swapped ruleset silently changed policy while a swapped manifest.json was
+    detected. An armed ruleset now demands the caller's pin."""
+    client, _ = _client(monkeypatch, _armed_manifest(tmp_path))
+    r = client.post("/governed-call",
+                    json=_body(domain="healthcare_admin", itype="chart_write", consent=True))
+    assert r.status_code == 403
+    assert r.json()["detail"]["refusal_reason_code"] == "D_MANIFEST_UNPINNED"
+
+
+def test_pin_mismatch_refused(monkeypatch, tmp_path):
+    """A caller pinning a DIFFERENT ruleset than the one deployed is refused -
+    this is what detects substitution."""
+    path = _armed_manifest(tmp_path)
+    client, _ = _client(monkeypatch, path)
+    r = client.post("/governed-call",
+                    json=_body(domain="healthcare_admin", itype="chart_write",
+                               consent=True, dm_pin="0" * 64))
+    assert r.status_code == 403
+    assert r.json()["detail"]["refusal_reason_code"] == "D_MANIFEST_PIN_MISMATCH"
+
+
+def test_correct_pin_proceeds(monkeypatch, tmp_path):
+    path = _armed_manifest(tmp_path)
+    client, _ = _client(monkeypatch, path)
+    r = client.post("/governed-call",
+                    json=_body(domain="healthcare_admin", itype="chart_write",
+                               consent=True, dm_pin=_sha_of(path)))
+    code = (r.json().get("detail") or {}).get("refusal_reason_code", "")
+    assert not str(code).startswith("D_MANIFEST")
+
+
+def test_pin_checked_before_content(monkeypatch, tmp_path):
+    """Evaluating content against an unexpected ruleset is meaningless, so the
+    pin is checked FIRST: invalid content + wrong pin reports the PIN failure."""
+    path = _armed_manifest(tmp_path)
+    client, _ = _client(monkeypatch, path)
+    r = client.post("/governed-call",
+                    json=_body(domain="healthcare_admin", itype="chart_write",
+                               consent=False, dm_pin="0" * 64))
+    assert r.json()["detail"]["refusal_reason_code"] == "D_MANIFEST_PIN_MISMATCH"
+
+
+def test_substituted_ruleset_is_detected(monkeypatch, tmp_path):
+    """End-to-end substitution: a caller pins the ruleset it audited; the file on
+    disk is then swapped for a permissive one. The call refuses."""
+    path = _armed_manifest(tmp_path)
+    original_pin = _sha_of(path)
+    with open(path, "w", encoding="utf-8") as f:            # swap in a weaker ruleset
+        json.dump({"version": "1.0", "domains": {"healthcare_admin": {
+            "predicates": [], "interaction_types": ["chart_write"]}}}, f)
+    client, _ = _client(monkeypatch, path)
+    r = client.post("/governed-call",
+                    json=_body(domain="healthcare_admin", itype="chart_write",
+                               consent=False, dm_pin=original_pin))
+    assert r.status_code == 403
+    assert r.json()["detail"]["refusal_reason_code"] == "D_MANIFEST_PIN_MISMATCH"
+
+
+def test_unarmed_ruleset_needs_no_pin(monkeypatch, tmp_path):
+    """No domains configured -> nothing to substitute -> no pin demanded."""
+    p = tmp_path / "unarmed.json"
+    p.write_text(json.dumps({"version": "1.0", "domains": {}}), encoding="utf-8")
+    client, _ = _client(monkeypatch, str(p))
+    r = client.post("/governed-call", json=_body(domain="x", consent=False))
+    code = (r.json().get("detail") or {}).get("refusal_reason_code", "")
+    assert not str(code).startswith("D_")

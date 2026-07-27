@@ -159,10 +159,16 @@ DM_STATUS_LOADED = "loaded"        # a well-formed ruleset is in force
 DM_STATUS_MALFORMED = "malformed"  # a ruleset was deployed but is broken -> fail closed
 
 
-def resolve_domain_manifest(path: Optional[str] = None) -> Tuple[Optional[Dict[str, Any]], str]:
+def resolve_domain_manifest(
+    path: Optional[str] = None,
+) -> Tuple[Optional[Dict[str, Any]], str, Optional[str]]:
     """
     Resolve the domain manifest a deployment is actually running under.
-    Returns (manifest, status).
+    Returns (manifest, status, sha256) where sha256 is the hex digest of the
+    file's BYTES (None when absent/malformed). The digest is what a caller's
+    expected_domain_manifest_sha256 is checked against, closing the integrity
+    asymmetry with the governing manifest: the ruleset that decides domain
+    refusals is now verifiable, not merely shape-validated.
 
     The load-bearing distinction - and the whole point of this function - is
     between ABSENT and MALFORMED, which a naive `load()` conflates:
@@ -187,16 +193,22 @@ def resolve_domain_manifest(path: Optional[str] = None) -> Tuple[Optional[Dict[s
     if path is None:
         path = DOMAIN_MANIFEST_DEFAULT_PATH
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            raw = json.load(f)
+        with open(path, "rb") as f:
+            data = f.read()
     except FileNotFoundError:
-        return UNARMED_DOMAIN_MANIFEST, DM_STATUS_ABSENT
-    except (OSError, ValueError):
-        # present but unreadable / not JSON -> deployed-and-broken
-        return None, DM_STATUS_MALFORMED
+        return UNARMED_DOMAIN_MANIFEST, DM_STATUS_ABSENT, None
+    except OSError:
+        return None, DM_STATUS_MALFORMED, None
+    try:
+        raw = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        # present but not parseable -> deployed-and-broken
+        return None, DM_STATUS_MALFORMED, None
     if safe_domain_manifest(raw) is None:
-        return None, DM_STATUS_MALFORMED
-    return raw, DM_STATUS_LOADED
+        return None, DM_STATUS_MALFORMED, None
+    # Hash the BYTES on disk (not a re-serialization), so the digest a caller
+    # pins is reproducible from the deployed file exactly like manifest_sha256().
+    return raw, DM_STATUS_LOADED, hashlib.sha256(data).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +257,10 @@ def safe_domain_manifest(dm: Any) -> Optional[Dict[str, Any]]:
     if not isinstance(dm.get("version"), str):
         return None
     if "require_domain" in dm and not isinstance(dm["require_domain"], bool):
+        return None
+    # require_pin (ruleset integrity): callers must pin the ruleset unless a
+    # deployment explicitly waives it. Bool when present.
+    if "require_pin" in dm and not isinstance(dm["require_pin"], bool):
         return None
     domains = dm.get("domains")
     if domains is None:

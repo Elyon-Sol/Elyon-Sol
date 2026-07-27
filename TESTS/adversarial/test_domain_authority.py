@@ -102,7 +102,7 @@ def test_resolved_map_drives_domain_control_end_to_end():
     trusted = _resolve(view, gate_key_id=GATE_KEY_ID)
 
     decision = "d" * 64
-    manifest = {"version": "1.0", "domains": {"healthcare_admin": {
+    manifest = {"version": "1.0", "require_pin": False, "domains": {"healthcare_admin": {
         "predicates": [{"path": "record_basis", "rule": "present"}],
         "interaction_types": ["chart_write"],
         "requires_verdict": True, "authority_key_id": AUTH_KEY_ID}}}

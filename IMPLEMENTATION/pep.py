@@ -627,9 +627,11 @@ async def governed_call(request: Request):
     # domain REFUSE must not consume a 202 approval slot, and a domain HOLD must
     # not reach post_to_target. When ELYON_DOMAIN_MANIFEST is unset this whole
     # block is skipped and the path is byte-behavior-unchanged.
+    _domain_hil = False
+    _domain_hil_code = None
     if _DOMAIN_ENABLED:
         try:
-            dmanifest, dstatus = resolve_domain_manifest(_DOMAIN_MANIFEST_PATH)
+            dmanifest, dstatus, dm_sha = resolve_domain_manifest(_DOMAIN_MANIFEST_PATH)
             if dstatus == DM_STATUS_MALFORMED:
                 # Deployed-but-broken ruleset: fail closed. Never degrade a
                 # config error into "no domain policy" (S5b).
@@ -642,6 +644,7 @@ async def governed_call(request: Request):
             d_out, d_code, d_detail = domain_control(
                 normalized_interaction,
                 dmanifest,
+                domain_manifest_sha256=dm_sha,
                 verdict=dverdict,
                 expected_decision_sha256=envelope["decision_sha256"],
                 authority_public_keys=_domain_authority_keys(),
@@ -663,24 +666,33 @@ async def governed_call(request: Request):
                 detail={"terminal_state": "REFUSE", "refusal_reason_code": d_code},
             )
 
-        if d_out in (CONTROL_HOLD_FOR_VERDICT, CONTROL_HOLD_FOR_HIL):
-            # 202 HOLD: do NOT sign, do NOT issuance-log a forward, do NOT
-            # post_to_target. HOLD_FOR_VERDICT wants a signed policy-authority
-            # attestation; HOLD_FOR_HIL means an AUTHENTIC verdict said UNSAFE and
-            # a human must re-determine out-of-band. They are reported distinctly
-            # so an operator surface (and reconcile) can tell a missing attestation
-            # from a substantive domain refusal.
+        if d_out == CONTROL_HOLD_FOR_VERDICT:
+            # 202 HOLD for a signed POLICY-AUTHORITY attestation. This is NOT a
+            # human-approval hold: it does not open an approval slot, because the
+            # thing missing is a machine-verifiable verdict, not a human decision.
+            # Do NOT sign, issuance-log a forward, or post_to_target.
             return JSONResponse(
                 status_code=202,
                 content={
-                    "terminal_state": ("PENDING_DOMAIN_VERDICT"
-                                       if d_out == CONTROL_HOLD_FOR_VERDICT
-                                       else "PENDING_DOMAIN_REDETERMINATION"),
+                    "terminal_state": "PENDING_DOMAIN_VERDICT",
                     "refusal_reason_code": d_code,
                     "decision_sha256": envelope["decision_sha256"],
                     "domain": (d_detail or {}).get("domain"),
                 },
             )
+
+        if d_out == CONTROL_HOLD_FOR_HIL:
+            # An AUTHENTIC verdict attests UNSAFE: a HUMAN must re-determine
+            # out-of-band. Rather than dead-ending in a bare 202 (which reported
+            # the need but opened no slot a grant could fill, leaving the
+            # interaction stuck), route it into the EXISTING approval machinery by
+            # requiring approval for this call. The approval block below then
+            # issues the approval_request_id, records the hold, and - when the
+            # human presents a grant - verifies provenance/binding/SoD/freshness,
+            # consumes the 202 slot and claims grant_id single-use before forward.
+            # One release path, not two.
+            _domain_hil = True
+            _domain_hil_code = d_code
 
         if d_out == CONTROL_PASS and isinstance(dverdict, dict):
             # A verdict that RELEASED this call is single-use: claim verdict_id
@@ -708,6 +720,10 @@ async def governed_call(request: Request):
         needs_approval = requires_approval(normalized_interaction, manifest)
     except Exception:
         needs_approval = True  # fail closed
+    # A domain re-determination hold is a HUMAN-approval hold: same machinery,
+    # same SoD, same single-use, same audit - only the REASON differs.
+    if _domain_hil:
+        needs_approval = True
     if needs_approval:
         decision_sha256 = envelope["decision_sha256"]
         grant = _extract_grant(request)
@@ -727,6 +743,13 @@ async def governed_call(request: Request):
                         "type": "approval_request",
                         "decision_sha256": decision_sha256,
                         "approval_request_id": approval_request_id,
+                        # WHY this is held. reconcile_approvals keys only on
+                        # type/decision_sha256/approval_request_id, so this is
+                        # additive - but an operator surface must be able to tell
+                        # "a human must re-determine a domain-compliance failure"
+                        # from "this interaction type is HIGH_IMPACT".
+                        "hold_reason": (_domain_hil_code if _domain_hil
+                                        else "HIGH_IMPACT"),
                         # PUBLIC decision context (already in the envelope) so an
                         # operator surface can show a human what is being held -
                         # additive keys; reconcile_approvals keys only on
@@ -752,6 +775,10 @@ async def governed_call(request: Request):
                     "terminal_state": "PENDING_APPROVAL",
                     "approval_request_id": approval_request_id,
                     "decision_sha256": decision_sha256,
+                    # Additive: names WHY a human is being asked. Absent-safe for
+                    # existing clients, which only read the three fields above.
+                    "hold_reason": (_domain_hil_code if _domain_hil
+                                    else "HIGH_IMPACT"),
                 },
             )
         # A grant is present: verify provenance/binding/SoD/freshness (pure),
