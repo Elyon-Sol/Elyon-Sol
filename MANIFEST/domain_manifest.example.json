@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "require_domain": false,
+  "domains": {
+    "healthcare_admin": {
+      "predicates": [
+        {"path": "patient_consent", "rule": "equals", "value": true, "label": "patient consent must be on record"},
+        {"path": "compliance.hipaa_attestation", "rule": "equals", "value": "current", "label": "HIPAA attestation must be current"},
+        {"path": "record_basis", "rule": "present", "label": "an administrative record basis must be provided"},
+        {"path": "purpose", "rule": "in", "value": ["treatment", "payment", "operations"], "label": "purpose must be a permitted use"}
+      ]
+    },
+    "finance_transfer": {
+      "predicates": [
+        {"path": "sanctions.ofac_cleared", "rule": "equals", "value": true, "label": "counterparty must be OFAC-cleared"},
+        {"path": "amount_currency", "rule": "in", "value": ["USD", "EUR", "GBP"], "label": "currency must be supported"},
+        {"path": "counterparty_jurisdiction", "rule": "not_in", "value": ["EMBARGOED"], "label": "jurisdiction must not be embargoed"}
+      ]
+    }
+  }
+}
