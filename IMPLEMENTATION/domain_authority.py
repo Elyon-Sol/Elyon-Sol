@@ -35,10 +35,22 @@ from typing import Any, Dict, Optional
 # treated as NOT-a-domain-authority (fail-closed).
 DOMAIN_AUTHORITY_ROLE = "domain_authority"
 
+# Provenance tokens (H1 mitigation, cross-model review). This module CANNOT
+# verify that the trust view it is handed actually came from a validated signed
+# key record - that validation happened (or did not) in the caller. Leaving that
+# assumption silent means an integrator can pass a hand-built dict and get keys
+# back. The caller must therefore ASSERT the view's provenance explicitly; only
+# the signed-key-record assertion yields keys, and anything else fails closed to
+# an empty map. This does not prove validation occurred - nothing inside this
+# module could - but it removes the ACCIDENTAL path and makes the assumption an
+# auditable statement at the call site rather than an unwritten precondition.
+PROVENANCE_SIGNED_KEY_RECORD = "signed_key_record"
+
 
 def resolve_domain_authority_keys(
     key_record_trust_view: Any,
     *,
+    provenance: Optional[str] = None,
     gate_key_id: Optional[str] = None,
     now: Optional[datetime] = None,
     clock_skew: timedelta = timedelta(0),
@@ -49,11 +61,16 @@ def resolve_domain_authority_keys(
     map of keys eligible to SIGN a domain-compliance verdict. Drop-in for
     domain_verdict.verify_verdict()'s / domain_control()'s `authority_public_keys`.
 
+    The caller MUST assert the view's provenance
+    (provenance=PROVENANCE_SIGNED_KEY_RECORD); any other value - including the
+    default None - returns {} (H1 fail-closed; see the token's comment above).
+
     A key is eligible IFF ALL hold (each fail-closed; anything not provably an
     active domain-authority key is excluded, never raised into an accepted verdict):
       - its signed record-role is EXACTLY DOMAIN_AUTHORITY_ROLE
         [ROLE-DISTINCTNESS - the load-bearing separation from issuer/approver];
-      - it is NOT revoked;
+      - `revoked` is explicitly False (a missing or non-bool value is malformed
+        and excluded - stricter than approver_trust's `is True` test);
       - now is within [not_before - clock_skew, not_after + clock_skew)
         (mirrors verify_envelope's VL-075 issuer-key window and approver_trust);
       - key_id != gate_key_id (belt-and-braces: a key sharing the gate's id is
@@ -66,6 +83,11 @@ def resolve_domain_authority_keys(
     """
     if clock_skew < timedelta(0):
         raise ValueError("clock_skew must be non-negative")
+    # H1: the provenance assertion is MANDATORY and fail-closed. An omitted or
+    # unrecognized provenance yields no keys, so an unvetted dict cannot become
+    # a trust map by default.
+    if provenance != PROVENANCE_SIGNED_KEY_RECORD:
+        return {}
     if not isinstance(key_record_trust_view, dict):
         return {}
     if now is None:
@@ -79,7 +101,10 @@ def resolve_domain_authority_keys(
             continue
         if info.get("role") != DOMAIN_AUTHORITY_ROLE:
             continue
-        if info.get("revoked") is True:
+        # STRICTER than approver_trust's `is True` check: a missing or non-bool
+        # `revoked` is a malformed entry, not an implicit "not revoked". A view
+        # carrying revoked: "yes" must not resolve to an active key.
+        if info.get("revoked") is not False:
             continue
         public_key = info.get("public_key")
         if public_key is None:

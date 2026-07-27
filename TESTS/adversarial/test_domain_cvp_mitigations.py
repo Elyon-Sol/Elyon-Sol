@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from IMPLEMENTATION.domain_validity import (
     assess, safe_domain_manifest,
-    D_DOMAIN_UNDECLARED, D_DOMAIN_MISBOUND, D_FIELD_INVALID,
+    D_DOMAIN_UNDECLARED, D_DOMAIN_MISBOUND, D_DOMAIN_UNBOUND, D_FIELD_INVALID,
 )
 from IMPLEMENTATION.domain_verdict import (
     build_verdict, sign_verdict, verify_verdict, claim_verdict_once,
@@ -36,7 +36,7 @@ def _sk():
 
 
 def _armed(**spec_extra):
-    spec = {"predicates": [{"path": "patient_consent", "rule": "equals", "value": True}],
+    spec = {"bind_interaction_type": False, "predicates": [{"path": "patient_consent", "rule": "equals", "value": True}],
             "requires_verdict": True, "authority_key_id": AUTH}
     spec.update(spec_extra)
     return {"version": "1.0", "domains": {"healthcare_admin": spec}}
@@ -76,9 +76,31 @@ def test_DV02_correct_binding_passes():
     assert assess(ctx, m) == ("VALID", None, None)
 
 
-def test_DV02_unbound_domain_backward_compatible():
-    m = {"version": "1.0", "domains": {"d": {"predicates": []}}}   # no interaction_types pin
+def test_DV02_unbound_domain_now_fails_closed():
+    """H2 (cross-model review): binding was OPT-IN, so omitting the pin left the
+    anti-shopping protection off. It is now REQUIRED - an unbound domain with no
+    explicit waiver is INVALID, matching the require_domain inversion."""
+    m = {"version": "1.0", "domains": {"d": {"predicates": []}}}   # no pin, no waiver
+    assert assess({"domain": "d", "context": {}}, m)[:2] == ("INVALID", D_DOMAIN_UNBOUND)
+
+
+def test_DV02_unbound_permitted_only_on_explicit_waiver():
+    m = {"version": "1.0", "domains": {"d": {"predicates": [],
+                                             "bind_interaction_type": False}}}
     assert assess({"domain": "d", "context": {}}, m) == ("VALID", None, None)
+
+
+def test_DV02_waiver_and_pin_together_is_contradictory():
+    bad = {"version": "1.0", "domains": {"d": {"predicates": [],
+                                               "bind_interaction_type": False,
+                                               "interaction_types": ["t"]}}}
+    assert safe_domain_manifest(bad) is None
+
+
+def test_DV02_non_bool_waiver_rejected():
+    bad = {"version": "1.0", "domains": {"d": {"predicates": [],
+                                               "bind_interaction_type": "no"}}}
+    assert safe_domain_manifest(bad) is None
 
 
 def test_DV02_malformed_type_binding_rejected():
@@ -110,7 +132,7 @@ def test_DV03_gate_signed_verdict_still_sod_refused_when_contract_met():
 def test_DV03_control_without_gate_key_id_holds_not_passes():
     """PRE-FIX: control() with gate_key_id omitted -> PASS on a gate-signed verdict."""
     sk = _sk()
-    m = {"version": "1.0", "domains": {"d": {"predicates": [], "requires_verdict": True,
+    m = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [], "requires_verdict": True,
                                              "authority_key_id": GATE}}}
     v = sign_verdict(build_verdict(decision_sha256=DEC, domain="d", verdict=VERDICT_SAFE,
                                    verdict_id="v1", not_after=FUT()), sk, GATE)
@@ -135,7 +157,7 @@ def test_DV04_none_expected_decision_fails_closed():
 def test_DV04_control_without_expected_decision_holds():
     """PRE-FIX: control() with no expected_decision_sha256 -> PASS."""
     sk = _sk()
-    m = {"version": "1.0", "domains": {"d": {"predicates": [], "requires_verdict": True,
+    m = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [], "requires_verdict": True,
                                              "authority_key_id": AUTH}}}
     v = sign_verdict(build_verdict(decision_sha256=None, domain="d", verdict=VERDICT_SAFE,
                                    verdict_id="v2", not_after=FUT()), sk, AUTH)
@@ -193,7 +215,7 @@ def test_DV05_cache_error_fails_closed():
 
 def test_DV06_int_one_does_not_satisfy_equals_true():
     """PRE-FIX: consent=1 satisfied equals:true (Python True == 1)."""
-    m = {"version": "1.0", "domains": {"d": {"predicates": [
+    m = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [
         {"path": "consent", "rule": "equals", "value": True}]}}}
     assert assess({"domain": "d", "context": {"consent": 1}}, m)[:2] == ("INVALID", D_FIELD_INVALID)
     assert assess({"domain": "d", "context": {"consent": True}}, m) == ("VALID", None, None)
@@ -201,14 +223,14 @@ def test_DV06_int_one_does_not_satisfy_equals_true():
 
 def test_DV06_false_does_not_match_numeric_membership():
     """PRE-FIX: level=False satisfied in:[0,1,2]."""
-    m = {"version": "1.0", "domains": {"d": {"predicates": [
+    m = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [
         {"path": "level", "rule": "in", "value": [0, 1, 2]}]}}}
     assert assess({"domain": "d", "context": {"level": False}}, m)[:2] == ("INVALID", D_FIELD_INVALID)
     assert assess({"domain": "d", "context": {"level": 1}}, m) == ("VALID", None, None)
 
 
 def test_DV06_not_in_is_type_strict_too():
-    m = {"version": "1.0", "domains": {"d": {"predicates": [
+    m = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [
         {"path": "flag", "rule": "not_in", "value": [1]}]}}}
     # True must NOT be treated as the excluded 1 -> not_in holds -> VALID
     assert assess({"domain": "d", "context": {"flag": True}}, m) == ("VALID", None, None)

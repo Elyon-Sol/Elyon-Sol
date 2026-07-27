@@ -1,8 +1,9 @@
 {
   "version": "1.0",
-  "require_domain": false,
+  "require_domain": true,
   "domains": {
     "healthcare_admin": {
+      "interaction_types": ["chart_write", "order_place"],
       "predicates": [
         {"path": "patient_consent", "rule": "equals", "value": true, "label": "patient consent must be on record"},
         {"path": "compliance.hipaa_attestation", "rule": "equals", "value": "current", "label": "HIPAA attestation must be current"},
@@ -11,6 +12,7 @@
       ]
     },
     "finance_transfer": {
+      "interaction_types": ["transfer"],
       "predicates": [
         {"path": "sanctions.ofac_cleared", "rule": "equals", "value": true, "label": "counterparty must be OFAC-cleared"},
         {"path": "amount_currency", "rule": "in", "value": ["USD", "EUR", "GBP"], "label": "currency must be supported"},

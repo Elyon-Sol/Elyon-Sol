@@ -29,7 +29,7 @@ def _armed():
         "version": "1.0",
         "domains": {
             "healthcare_admin": {
-                "predicates": [
+                "bind_interaction_type": False, "predicates": [
                     {"path": "patient_consent", "rule": "equals", "value": True},
                     {"path": "compliance.hipaa_attestation", "rule": "equals", "value": "current"},
                     {"path": "record_basis", "rule": "present"},
@@ -107,14 +107,14 @@ def test_first_failing_predicate_wins():
 
 
 def test_not_in_rule():
-    dm = {"version": "1.0", "domains": {"fx": {"predicates": [
+    dm = {"version": "1.0", "domains": {"fx": {"bind_interaction_type": False, "predicates": [
         {"path": "jurisdiction", "rule": "not_in", "value": ["EMBARGOED"]}]}}}
     assert domain_valid({"domain": "fx", "context": {"jurisdiction": "US"}}, dm) is True
     assert domain_reason({"domain": "fx", "context": {"jurisdiction": "EMBARGOED"}}, dm) == D_FIELD_INVALID
 
 
 def test_absent_rule():
-    dm = {"version": "1.0", "domains": {"d": {"predicates": [
+    dm = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [
         {"path": "override", "rule": "absent"}]}}}
     assert domain_valid({"domain": "d", "context": {}}, dm) is True
     assert domain_reason({"domain": "d", "context": {"override": "x"}}, dm) == D_FIELD_INVALID
@@ -157,11 +157,11 @@ def test_armed_undeclared_passes_only_on_explicit_opt_out():
     {"version": 1},                                               # version not a string
     {"version": "1.0", "require_domain": "yes"},                  # require_domain not bool
     {"version": "1.0", "domains": "nope"},                        # domains not a dict
-    {"version": "1.0", "domains": {"d": {"predicates": "nope"}}}, # predicates not a list
-    {"version": "1.0", "domains": {"d": {"predicates": [{"rule": "present"}]}}},       # no path
-    {"version": "1.0", "domains": {"d": {"predicates": [{"path": "x", "rule": "??"}]}}}, # bad rule
-    {"version": "1.0", "domains": {"d": {"predicates": [{"path": "x", "rule": "equals"}]}}}, # equals w/o value
-    {"version": "1.0", "domains": {"d": {"predicates": [{"path": "x", "rule": "in", "value": "no"}]}}}, # in w/o list
+    {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": "nope"}}}, # predicates not a list
+    {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [{"rule": "present"}]}}},       # no path
+    {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [{"path": "x", "rule": "??"}]}}}, # bad rule
+    {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [{"path": "x", "rule": "equals"}]}}}, # equals w/o value
+    {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": [{"path": "x", "rule": "in", "value": "no"}]}}}, # in w/o list
 ])
 def test_malformed_manifest_is_D_MANIFEST_MALFORMED(bad):
     assert safe_domain_manifest(bad) is None
@@ -176,7 +176,7 @@ def test_internal_catch_all_on_pathological_predicate_value():
     class Exploding(list):
         def __iter__(self):
             raise RuntimeError("boom")
-    dm = {"version": "1.0", "domains": {"d": {"predicates": Exploding()}}}
+    dm = {"version": "1.0", "domains": {"d": {"bind_interaction_type": False, "predicates": Exploding()}}}
     # safe_domain_manifest iterates predicates -> the RuntimeError is caught -> D_INTERNAL
     assert assess({"domain": "d", "context": {}}, dm)[:2] == ("INVALID", D_INTERNAL)
 

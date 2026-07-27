@@ -89,6 +89,7 @@ D_MANIFEST_MALFORMED = "D_MANIFEST_MALFORMED"    # domain manifest not well-form
 D_DOMAIN_UNKNOWN = "D_DOMAIN_UNKNOWN"            # declared domain absent from an armed manifest
 D_DOMAIN_UNDECLARED = "D_DOMAIN_UNDECLARED"      # armed manifest + require_domain, none declared
 D_DOMAIN_MISBOUND = "D_DOMAIN_MISBOUND"          # declared domain not bound to the interaction type
+D_DOMAIN_UNBOUND = "D_DOMAIN_UNBOUND"            # domain declares no binding and no explicit waiver
 D_FIELD_ABSENT = "D_FIELD_ABSENT"                # a `present` predicate's path did not resolve
 D_FIELD_INVALID = "D_FIELD_INVALID"              # an equals/in/not_in/absent predicate failed
 D_INTERNAL = "D_INTERNAL"                         # fail-closed catch-all
@@ -195,11 +196,20 @@ def safe_domain_manifest(dm: Any) -> Optional[Dict[str, Any]]:
         rv = spec.get("requires_verdict")
         if rv is not None and not isinstance(rv, bool):
             return None
-        # DV-02: optional domain<->interaction_type binding (list of str tokens).
+        # DV-02: domain<->interaction_type binding (list of str tokens). Binding is
+        # REQUIRED at assess() time unless bind_interaction_type is explicitly
+        # False; the schema validates the shape of both.
         bt = spec.get("interaction_types")
         if bt is not None:
             if not isinstance(bt, list) or not all(isinstance(x, str) and x for x in bt):
                 return None
+        bind = spec.get("bind_interaction_type")
+        if bind is not None and not isinstance(bind, bool):
+            return None
+        # An explicit waiver AND a pin together are contradictory - fail closed
+        # rather than silently letting one win.
+        if bind is False and isinstance(bt, list):
+            return None
         if "authority_key_id" in spec and not isinstance(spec["authority_key_id"], str):
             return None
         if rv is True and not (isinstance(spec.get("authority_key_id"), str)
@@ -305,15 +315,20 @@ def assess(ctx: Any, domain_manifest: Any) -> Tuple[str, Optional[str], Optional
         if not isinstance(spec, dict):
             return "INVALID", D_DOMAIN_UNKNOWN, {"domain": declared}
 
-        # DV-02 mitigation - domain-shopping. The declared domain is CALLER
-        # input; without a binding, a caller carrying healthcare-shaped content
-        # could declare a weaker armed domain and skip the strict predicates and
-        # the verdict requirement. A domain MAY therefore pin `interaction_types`
-        # (the same token the manifest/evaluator resolve required sets by): the
-        # caller's declared interaction_type must then be in that set, so the
-        # domain is bound to WHAT the interaction is, not to what it claims.
-        # Absent the pin the domain is unbound (backward-compatible); binding is
-        # the deployment's explicit act.
+        # DV-02 / H1-review mitigation - domain-shopping. The declared domain is
+        # CALLER input; without a binding, a caller carrying healthcare-shaped
+        # content could declare a weaker armed domain and skip the strict
+        # predicates and the verdict requirement. A domain pins `interaction_types`
+        # (the same token the manifest/evaluator resolve required sets by) and the
+        # caller's declared interaction_type must be in that set - so the domain is
+        # bound to WHAT the interaction is, not to what it claims.
+        #
+        # The default is FAIL-CLOSED: binding is REQUIRED. An earlier revision made
+        # the pin optional, which left the anti-shopping protection opt-in - the
+        # same fail-open-by-omission shape already corrected for require_domain
+        # (a cross-model review flagged the inconsistency). A deployment that
+        # genuinely wants an unbound domain must say so explicitly with
+        # bind_interaction_type: false, an eyes-open recorded choice.
         bound_types = spec.get("interaction_types")
         if isinstance(bound_types, list):
             itype = ctx.get("interaction_type") if isinstance(ctx, dict) else None
@@ -321,6 +336,8 @@ def assess(ctx: Any, domain_manifest: Any) -> Tuple[str, Optional[str], Optional
                 return "INVALID", D_DOMAIN_MISBOUND, {
                     "domain": declared, "interaction_type": itype,
                 }
+        elif spec.get("bind_interaction_type") is not False:
+            return "INVALID", D_DOMAIN_UNBOUND, {"domain": declared}
 
         content = ctx.get("context")
         if not isinstance(content, dict):
