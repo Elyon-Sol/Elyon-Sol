@@ -174,6 +174,7 @@ def verify_verdict(
     now: Optional[datetime] = None,
     clock_skew: timedelta = timedelta(0),
     require_version: str = VERDICT_VERSION,
+    freshness_waived_for_verdict_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Decide whether a domain-verdict is an authentic, bound, fresh attestation for
@@ -287,10 +288,29 @@ def verify_verdict(
         return _reject(REF_VERDICT_VALUE_INVALID)
 
     # 9. freshness - mandatory presence, then the shared primitive.
+    #
+    # WAIVER (human-override path only). When a valid domain-override grant names
+    # THIS verdict_id, not_after is waived. Rationale: a verdict lives minutes;
+    # human re-determination does not. Without the waiver the verdict that
+    # triggered the hold expires before the approver can act, and the grant they
+    # signed becomes unusable - the override path would be decorative.
+    #
+    # The waiver is deliberately NARROW and cannot be turned into a bypass:
+    #   * it is keyed to one exact verdict_id, supplied by the CALLER of this
+    #     function (pep, from the signed grant) - not by the verdict itself;
+    #   * every other check still runs first - signature, pinned authority, SoD,
+    #     decision binding, domain binding, value - so the waived verdict is
+    #     still a genuine authority-signed attestation about THIS decision;
+    #   * an expired verdict with no matching override is still REF_VERDICT_EXPIRED.
     not_after_raw = verdict.get("not_after")
     if not_after_raw is None:
         return _reject(REF_VERDICT_EXPIRED)
-    if not not_after_valid(not_after_raw, now=now, clock_skew=clock_skew):
+    _waived = (
+        isinstance(freshness_waived_for_verdict_id, str)
+        and freshness_waived_for_verdict_id
+        and freshness_waived_for_verdict_id == verdict_id
+    )
+    if not _waived and not not_after_valid(not_after_raw, now=now, clock_skew=clock_skew):
         return _reject(REF_VERDICT_EXPIRED)
 
     # 10. accept - surface the authenticated SAFE/UNSAFE value.

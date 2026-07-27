@@ -41,11 +41,19 @@ conjunct of G(I), and making it one is an author-ratified canon event (GR-1).
 The frozen core (evaluator.py, manifest.json, published_hashes.json, CANON/) is
 untouched by either.
 
-KNOWN GAP (do not read the outcomes below as a complete loop). CONTROL_HOLD_FOR_HIL
-reports that a human must re-determine, but the pep wiring does NOT yet issue an
-approval_request_id into the pending-approval set. So an authentic UNSAFE verdict
-currently produces a 202 that the existing signed-grant release path cannot act
-on. The out-of-band re-determination loop is REPORTED, not CLOSED.
+THE RE-DETERMINATION LOOP IS CLOSED. CONTROL_HOLD_FOR_HIL causes pep to require
+approval for the call, so the EXISTING machinery issues the approval_request_id,
+records the hold durably with a distinguishing hold_reason, and releases only on
+a grant that passes provenance/binding/SoD/freshness, consumes the 202 slot and
+claims grant_id single-use. One release path, not two.
+
+The override is EXPLICIT and ATTESTED. A grant discharging a domain hold must
+carry `overrides_verdict_id` naming the UNSAFE verdict it overrules, inside its
+signed region - so the approver cryptographically asserts WHICH safety finding
+they are overruling. A grant lacking it (e.g. one signed for a HIGH_IMPACT hold)
+is refused with D_OVERRIDE_MISMATCH, which is what stops one hold type from
+laundering the other. `override_verdict_id` below waives the freshness window for
+that one verdict only; every other check on it still runs.
 """
 
 from datetime import datetime, timedelta
@@ -80,6 +88,10 @@ D_VERDICT_CONTRACT = "D_VERDICT_CONTRACT"      # DV-03/DV-04: caller omitted a l
 D_MANIFEST_UNPINNED = "D_MANIFEST_UNPINNED"                  # armed ruleset, caller asserted no pin
 D_MANIFEST_PIN_MISMATCH = "D_MANIFEST_PIN_MISMATCH"          # caller expected a different ruleset
 D_MANIFEST_PIN_UNVERIFIABLE = "D_MANIFEST_PIN_UNVERIFIABLE"  # gate cannot digest the deployed ruleset
+# A grant was presented against a domain hold but does not name the UNSAFE verdict
+# being overridden (absent, or naming a different one). Stops a HIGH_IMPACT
+# approval from laundering a domain safety finding.
+D_OVERRIDE_MISMATCH = "D_OVERRIDE_MISMATCH"
 
 
 def control(
@@ -93,6 +105,7 @@ def control(
     gate_key_id: Optional[str] = None,
     now: Optional[datetime] = None,
     clock_skew: timedelta = timedelta(0),
+    override_verdict_id: Optional[str] = None,
 ) -> Tuple[str, Optional[str], Optional[Dict[str, Any]]]:
     """
     Decide the domain-control outcome for an admissible interaction.
@@ -180,6 +193,10 @@ def control(
         gate_key_id=gate_key_id,
         now=now,
         clock_skew=clock_skew,
+        # Human-override path: the caller (pep) passes the verdict_id named
+        # inside a signed domain-override grant. Only that exact verdict has its
+        # freshness waived; every other check still applies.
+        freshness_waived_for_verdict_id=override_verdict_id,
     )
     if not v["accepted"]:
         # Forged / stale / rebound / wrong-authority / wrong-domain verdict:
@@ -191,7 +208,12 @@ def control(
     if v["verdict"] == VERDICT_UNSAFE:
         # Authentic UNSAFE -> a human must re-determine out-of-band (not an
         # automatic refuse, not an automatic pass): route to the 202/grant path.
-        return CONTROL_HOLD_FOR_HIL, D_VERDICT_UNSAFE, {"domain": declared}
+        # The verdict_id travels in `detail` so the caller can bind the override
+        # to it in the hold record and the consumption record - that is what
+        # makes the eventual override auditable rather than an opaque approval.
+        return CONTROL_HOLD_FOR_HIL, D_VERDICT_UNSAFE, {
+            "domain": declared, "verdict_id": verdict.get("verdict_id"),
+        }
 
     # Authentic + SAFE.
     return CONTROL_PASS, None, None

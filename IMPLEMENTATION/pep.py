@@ -100,6 +100,7 @@ from IMPLEMENTATION.domain_validity import (
 from IMPLEMENTATION.domain_control import (
     control as domain_control,
     CONTROL_PASS, CONTROL_HOLD_FOR_VERDICT, CONTROL_HOLD_FOR_HIL, CONTROL_REFUSE,
+    D_OVERRIDE_MISMATCH,
 )
 from IMPLEMENTATION.domain_verdict import claim_verdict_once
 from IMPLEMENTATION.domain_authority import (
@@ -629,6 +630,9 @@ async def governed_call(request: Request):
     # block is skipped and the path is byte-behavior-unchanged.
     _domain_hil = False
     _domain_hil_code = None
+    _domain_hil_verdict_id = None
+    _pre_grant = None
+    _override_vid = None
     if _DOMAIN_ENABLED:
         try:
             dmanifest, dstatus, dm_sha = resolve_domain_manifest(_DOMAIN_MANIFEST_PATH)
@@ -641,6 +645,20 @@ async def governed_call(request: Request):
                             "refusal_reason_code": "D_MANIFEST_MALFORMED"},
                 )
             dverdict = _extract_domain_verdict(request)
+            # A DOMAIN-OVERRIDE grant names, inside its signed region, the
+            # UNSAFE verdict it overrules. Read that id here and hand it to
+            # domain_control, which waives the freshness window for that one
+            # verdict. The grant is NOT trusted at this point - it is verified
+            # in the approval block below - but reading the id early cannot
+            # weaken anything: an unverified grant only ever waives the
+            # freshness of a verdict that must still pass signature, pinned
+            # authority, decision binding and domain binding, and the release
+            # itself still requires that grant to verify.
+            _pre_grant = _extract_grant(request)
+            _override_vid = (
+                _pre_grant.get("overrides_verdict_id")
+                if isinstance(_pre_grant, dict) else None
+            )
             d_out, d_code, d_detail = domain_control(
                 normalized_interaction,
                 dmanifest,
@@ -649,6 +667,7 @@ async def governed_call(request: Request):
                 expected_decision_sha256=envelope["decision_sha256"],
                 authority_public_keys=_domain_authority_keys(),
                 gate_key_id=(_get_signing_key() or (None, None))[1],
+                override_verdict_id=_override_vid,
             )
         except HTTPException:
             raise
@@ -693,6 +712,23 @@ async def governed_call(request: Request):
             # One release path, not two.
             _domain_hil = True
             _domain_hil_code = d_code
+            _domain_hil_verdict_id = (d_detail or {}).get("verdict_id")
+            # ANTI-LAUNDERING. A domain hold may be released ONLY by a grant that
+            # explicitly overrides THIS verdict. A plain approval grant - e.g. one
+            # a human signed for a HIGH_IMPACT hold - carries no
+            # overrides_verdict_id and therefore cannot discharge a safety
+            # finding it never referred to. Mismatch or absence is refused here
+            # rather than falling through to the approval block, so the two hold
+            # types can never substitute for one another.
+            if isinstance(_pre_grant, dict) and _pre_grant.get("approval_request_id"):
+                if _override_vid != _domain_hil_verdict_id:
+                    raise HTTPException(
+                        status_code=403,
+                        detail={
+                            "terminal_state": "REFUSE",
+                            "refusal_reason_code": D_OVERRIDE_MISMATCH,
+                        },
+                    )
 
         if d_out == CONTROL_PASS and isinstance(dverdict, dict):
             # A verdict that RELEASED this call is single-use: claim verdict_id
@@ -750,6 +786,8 @@ async def governed_call(request: Request):
                         # from "this interaction type is HIGH_IMPACT".
                         "hold_reason": (_domain_hil_code if _domain_hil
                                         else "HIGH_IMPACT"),
+                        **({"overridden_verdict_id": _domain_hil_verdict_id}
+                           if _domain_hil and _domain_hil_verdict_id else {}),
                         # PUBLIC decision context (already in the envelope) so an
                         # operator surface can show a human what is being held -
                         # additive keys; reconcile_approvals keys only on
@@ -834,6 +872,9 @@ async def governed_call(request: Request):
                     "approval_request_id": grant_req_id,
                     "grant_id": grant["grant_id"],
                     "approver_key_id": grant.get("approver_key_id"),
+                    "hold_reason": (_domain_hil_code if _domain_hil else "HIGH_IMPACT"),
+                    **({"overridden_verdict_id": grant.get("overrides_verdict_id")}
+                       if grant.get("overrides_verdict_id") else {}),
                 })
             except Exception as e:
                 raise HTTPException(

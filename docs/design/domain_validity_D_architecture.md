@@ -188,13 +188,25 @@ lapses *after* issuance). The design:
 - It **should** route into the existing `202 PENDING_APPROVAL` + signed-grant path
   (`pep.governed_call`, VL-114/115/119/148), keyed to **domain-compliance** rather than the
   `HIGH_IMPACT` designation.
-  > **NOT BUILT — the loop is open.** `HOLD_FOR_HIL` currently returns a 202 with a distinct
-  > terminal state, but the wiring does **not** call `_PENDING.issue(...)` and emits no
-  > `approval_request_id`. Nothing binds that decision into the pending set, so the existing
-  > grant path cannot release it: an authentic `UNSAFE` verdict leaves the interaction reported
-  > but stuck. Closing this — issuing the pending request with a domain-compliance hold reason
-  > that `reconcile_approvals` can distinguish from a `HIGH_IMPACT` hold — is the next increment.
-  > Do not describe the re-determination loop as operational until it lands.
+  > **BUILT.** `HOLD_FOR_HIL` sets the approval requirement for the call, so the existing
+  > machinery issues the `approval_request_id`, records the hold durably with a `hold_reason`
+  > that distinguishes it from a `HIGH_IMPACT` hold, and releases only on a grant that passes
+  > provenance / binding / SoD / freshness, consumes the 202 slot, and claims `grant_id`
+  > single-use. One release path, not two.
+  >
+  > **The override is explicit and attested.** A grant releasing a domain hold carries
+  > `overrides_verdict_id` — the id of the UNSAFE verdict it overrides — inside the signed
+  > region. So the approver is cryptographically asserting *which* safety finding they are
+  > overruling, not merely approving an opaque decision hash, and `grant_consumed` records it.
+  > A grant without that field cannot satisfy the domain layer, which is what stops a
+  > `HIGH_IMPACT` approval from laundering a domain verdict requirement.
+  >
+  > **Freshness is waived only for the overridden verdict.** The overridden UNSAFE verdict must
+  > still be presented and must still verify (signature, pinned authority, decision binding,
+  > domain binding) — but its `not_after` is waived when a valid grant names that exact
+  > `verdict_id`. Without this, human approval would be unusable in practice: verdict freshness
+  > is minutes and human re-determination is not, so the triggering verdict expires before the
+  > approver can act and the grant becomes worthless.
 - **Keep the verifier pure.** The drift *signal* comes from a stateful **monitor** (§7), never
   from inside `verify_envelope`. Defining what the envelope may "become aware" of without making
   the verifier stateful is the core open design problem — carried forward honestly.

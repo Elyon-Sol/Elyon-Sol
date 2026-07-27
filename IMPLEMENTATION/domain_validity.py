@@ -15,11 +15,16 @@ Build-then-wire / default-off (GR-2)
 ===============================================================================
 
 This module is ABOVE G(I) and imports NOTHING from evaluator.py's hashed core.
-It is UNWIRED: evaluator.decide()/pep.governed_call do not call it, so
-evaluator_sha256, manifest_sha256, canon_sha256 and the published record are
-byte-unchanged and the default admissibility path is byte-behavior-identical.
-Composing D into the decision is a deliberate, canon-ratified step (VL-115
-re-pin discipline), not a side effect of adding this file.
+
+WIRING STATUS (keep this accurate - a stale claim here misleads every reader):
+  - WIRED at the PEP layer. pep.governed_call resolves a domain manifest and
+    calls domain_control (which calls assess) whenever ELYON_DOMAIN_MANIFEST
+    names a ruleset. With that env unset the block is skipped entirely and the
+    path is byte-behavior-identical to the pre-D gate.
+  - NOT wired into evaluator.decide()/G(I). evaluator_sha256, manifest_sha256,
+    canon_sha256 and the published record are byte-unchanged. Composing D into
+    the admissibility decision is a deliberate, canon-ratified step (GR-1 +
+    VL-115 re-pin discipline), not a side effect of adding this file.
 
 ===============================================================================
 Determinism and fail-closed (load-bearing)
@@ -113,21 +118,18 @@ def domain_manifest_sha256(path: str) -> str:
     The pinning primitive so a domain ruleset is hash-verifiable exactly like
     MANIFEST/manifest.json (canon 11.9).
 
-    *** UNWIRED - A KNOWN INTEGRITY GAP, NOT A COMPLETED CONTROL. ***
-    This function has NO caller. resolve_domain_manifest() reads the ruleset off
-    disk and validates only its SHAPE; nothing verifies its HASH. That is an
-    asymmetry with the governing manifest, which the caller pins via
-    expected_manifest_sha256 and which manifest_integrity_valid REFUSES on
-    mismatch: a swapped MANIFEST/manifest.json is detected, a swapped domain
-    ruleset is not. Since the ruleset decides domain refusals, an undetected
-    substitution silently changes policy.
+    Standalone helper. The ENFORCED digest is produced by resolve_domain_manifest(),
+    which hashes the deployed file's bytes and hands the value to domain_control;
+    control checks it against the caller's expected_domain_manifest_sha256 BEFORE
+    any content evaluation, and an armed ruleset requires that pin by default
+    (require_pin: false is the explicit waiver). So the caller-asserted half of
+    the integrity story is wired and enforced.
 
-    Closing it means a caller-asserted expected_domain_manifest_sha256 (mirroring
-    the manifest pin) and/or a domain_manifest_sha256 entry in
-    published_hashes.json + the envelope. The published-record half moves the
-    pinned record and REDs the verify-against-pinned family until regeneration
-    (VL-115 discipline), so it sequences with the canon increment - but the
-    caller-asserted half does not depend on that and should not wait for it.
+    RESIDUAL (still open): the domain ruleset is NOT in EVIDENCE/published_hashes.json.
+    The governing manifest has both a caller pin AND a published-record entry; the
+    domain ruleset has only the caller pin. Adding a domain_manifest_sha256 entry
+    moves the pinned record and REDs the verify-against-pinned family until
+    regeneration (VL-115 discipline), so it sequences with the canon increment.
     """
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()
