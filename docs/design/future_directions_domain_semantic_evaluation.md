@@ -1,3 +1,46 @@
+> # ⛔ SUPERSEDED — ATTEMPTED, BUILT, AND WITHDRAWN (2026-07-27)
+>
+> **This document no longer describes the project's direction. It is retained, unedited below
+> this header, as the record of a direction that was taken and then reversed.** Deleting it
+> would hide a decision that has more value stated than erased.
+>
+> **What happened.** The `D(I, domain)` layer described below was built in full: four modules,
+> a signed out-of-band policy-verdict protocol, a third trust role, a hash-pinned domain ruleset,
+> and an attested human-override path — with 168 tests. It was then removed in its entirety.
+>
+> **Why it was withdrawn.** The expansion added seams and holes and pulled the project off its
+> own thesis:
+>
+> - **It competed on planes where the project loses.** A five-predicate vocabulary duplicating
+>   what OPA, Cedar and Rego do far better — the opposite of the stated position that Elyon-Sol
+>   *composes with* policy engines rather than replacing them.
+> - **Its most-praised distinction was prior art.** "Post-authorization structural refuse" is
+>   Gatekeeper/Kyverno since 2019 and Kubernetes VAP+CEL since 2024.
+> - **New surface produced a real hole.** An authentication bypass — an unsigned request header
+>   reviving an expired SAFE verdict, admitting the call and replayable — which the layer's own
+>   168 tests did not catch. Found by adversarial review, reproduced by execution, fixed, and
+>   then removed with the rest.
+> - **Nothing consumed it.** Absent from every runbook, compose file, Dockerfile, env example,
+>   the README, `readiness.json`, the ext-authz sidecar and the MCP server. Built capability,
+>   zero deployed capability.
+> - **The claimed advantage was inflated.** An in-session estimate of "+7" against comparable
+>   stacks did not survive adversarial analysis, which put it at +1 to +2 in novelty and 0
+>   deployed.
+>
+> **What was preserved.** The frozen core was never touched: `evaluator.py`, `MANIFEST/manifest.json`,
+> `EVIDENCE/published_hashes.json` and `CANON/*` are byte-identical across the entire attempt.
+> `G(I) = AC^3 ∧ T^26 ∧ CCS` is unchanged and no canon-version event occurred. The suite returned
+> to exactly its pre-attempt count of 645. Build-then-wire and the GR-1 canon boundary held under
+> pressure — the discipline worked even where the judgment did not.
+>
+> **The lesson, stated plainly.** The failure was not in the engineering; the modules were
+> competent and tested. It was in scope: an admission gate that starts inspecting content is on
+> its way to becoming a policy engine, and every new plane of competition is new surface to
+> defend. A mistake found and removed is worth more than a mistake erased — provided it is
+> stated. This is the statement.
+>
+> Full record: `docs/design/domain_validity_withdrawal.md`. Code history is preserved in git.
+
 # Canon advancement — domain-semantic validity as a new invariant
 
 > **Status: the author's committed forward direction.** Elyon-Sol is developed by a single author

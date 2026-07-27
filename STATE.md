@@ -3,12 +3,17 @@
 > **PUBLIC PROGRAM RETIRED (2026-07-20); SOLE-AUTHOR RESEARCH CONTINUES.** The commercial layer, the
 > live public test surface, and external engagement are wound down; everything (core + GLESAC) is
 > AGPL-3.0, and the README/SECURITY/site/licensing reflect that. Single author, no forks or clones.
-> **FORWARD DIRECTION (the committed next evolution):** make the gate *more than a gate* by adding a
-> domain-semantic validity invariant that expands `G(I) = AC^3 ∧ T^26 ∧ CCS ∧ D(I, domain)` and thereby
-> **advances the canon** - a deliberate canon-version event (GR-1). Full plan:
-> `docs/design/future_directions_domain_semantic_evaluation.md`. The "Next open action" backlog below
-> is the pre-retirement engineering reference for that build. G5 (external validation) was never
-> reached and no new capability closes it.
+> **FORWARD DIRECTION - CORRECTED 2026-07-27. The domain-semantic validity ("D") expansion was
+> BUILT AND WITHDRAWN.** It is no longer the trajectory. `docs/design/future_directions_domain_semantic_evaluation.md`
+> is retained as a superseded record and carries the withdrawal header; the build is recorded in
+> `docs/design/domain_validity_withdrawal.md`. The invariant set is unchanged:
+> `G(I) = AC^3 ∧ T^26 ∧ CCS`. No canon-version event occurred; canon, manifest, evaluator and the
+> published record were never touched by the attempt.
+>
+> **The direction is now: do one thing well.** Deterministic, fail-closed, pre-execution
+> admissibility - and depth on the surfaces that already exist rather than new planes of
+> competition. G5 (external validation) was never reached and no new capability closes it; that
+> remains true and was one of the reasons the expansion was not worth its surface.
 
 **This file is the entry point. A fresh session - the author, a new AI
 session, Grok, or any collaborator - should read this file first.**
