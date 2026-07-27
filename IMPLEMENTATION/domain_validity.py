@@ -111,10 +111,23 @@ def domain_manifest_sha256(path: str) -> str:
     """SHA-256 hex of a domain manifest file's bytes.
 
     The pinning primitive so a domain ruleset is hash-verifiable exactly like
-    MANIFEST/manifest.json (canon 11.9). Wiring this into published_hashes.json
-    (a new domain_manifest_sha256 pin) is deferred to the canon-increment step -
-    adding it now would move the published record and RED the verify-against-
-    pinned family (VL-115), which is the compose-in step, not this build step.
+    MANIFEST/manifest.json (canon 11.9).
+
+    *** UNWIRED - A KNOWN INTEGRITY GAP, NOT A COMPLETED CONTROL. ***
+    This function has NO caller. resolve_domain_manifest() reads the ruleset off
+    disk and validates only its SHAPE; nothing verifies its HASH. That is an
+    asymmetry with the governing manifest, which the caller pins via
+    expected_manifest_sha256 and which manifest_integrity_valid REFUSES on
+    mismatch: a swapped MANIFEST/manifest.json is detected, a swapped domain
+    ruleset is not. Since the ruleset decides domain refusals, an undetected
+    substitution silently changes policy.
+
+    Closing it means a caller-asserted expected_domain_manifest_sha256 (mirroring
+    the manifest pin) and/or a domain_manifest_sha256 entry in
+    published_hashes.json + the envelope. The published-record half moves the
+    pinned record and REDs the verify-against-pinned family until regeneration
+    (VL-115 discipline), so it sequences with the canon increment - but the
+    caller-asserted half does not depend on that and should not wait for it.
     """
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()

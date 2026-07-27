@@ -52,11 +52,23 @@ and it is exactly where a gate silently fails:
   OFAC-flagged transfer, a purpose outside permitted use. The authority set was never the
   problem; the *data inside the envelope* was.
 
-`D` closes this. Composed as `eligible ⟺ G(I) ∧ D`, a domain-invalid interaction is **REFUSED
-even with a valid authority set and a signed human grant** — the human cannot wave `D` through,
-because `D` is a deterministic gate evaluated independently of the approval. **Policy adherence
-is enforced on the content, not assumed from the stamp.** That is the precise sense in which `D`
-guards the *admissible envelope state*.
+`D` closes this — with a limit that must be stated precisely, because the unqualified version of
+the claim is false.
+
+**The structural half is un-waveable.** A domain-invalid *content* check (`D_FIELD_INVALID`,
+`D_DOMAIN_UNDECLARED`, `D_DOMAIN_MISBOUND`, …) refuses deterministically, independently of any
+approval, and no human grant releases it. For that half, policy adherence is genuinely enforced
+on the content rather than assumed from the stamp.
+
+**The verdict half re-introduces a trusted party, by construction.** Once a domain sets
+`requires_verdict`, a correctly-signed `SAFE` attestation from the pinned authority *does*
+release the call. `D` does not eliminate trust there; it *relocates* it — from an implicit human
+stamp to an explicit, role-distinct, cryptographically bound, freshness-windowed, single-use
+attestation that is verified deterministically. That is a real improvement in accountability and
+auditability, but it is **not** a claim that no party can wave the call through.
+
+So: `D` guards the admissible envelope state against rubber-stamping **structurally**, and makes
+the substantive judgment an attributable signed act rather than an invisible one.
 
 ## 3. Recursive assessment of envelope content
 
@@ -74,7 +86,14 @@ yields the identical verdict. `D` is a **bounded predicate set, not a policy eng
 README is explicit that Elyon-Sol composes *with* OPA, not replacing it; a Rego runtime inside
 `D` is resisted on purpose.
 
-## 4. What is built this session (default-off, unwired, proven)
+## 4. What is built (default-off, PEP-enforced, proven)
+
+> **Wiring status (current).** D is wired at the **PEP layer** and enforces at runtime when
+> `ELYON_DOMAIN_MANIFEST` names a domain ruleset; unset, the block is skipped and the path is
+> byte-behavior-identical. D is **NOT** wired into `evaluator.decide()` / `G(I)` — that is the
+> admissibility-semantics change and remains an author-ratified canon-version event (§5, §8).
+> So the gate genuinely refuses domain-invalid interactions, while canon does not yet claim `D`
+> as an invariant. Both halves are asserted by tests so neither drifts silently.
 
 | Artifact | What it is |
 |---|---|
@@ -84,10 +103,21 @@ README is explicit that Elyon-Sol composes *with* OPA, not replacing it; a Rego 
 | `MANIFEST/domain_manifest.example.json` | An **example** (not live/armed) domain ruleset — the author's `healthcare_admin` worked example + `finance_transfer`. Hash-pinnable via `domain_manifest_sha256()`. |
 | `TESTS/adversarial/test_domain_validity.py` | 32 proof tests: unarmed no-op, every rule, recursive nested paths, fail-closed malformation, unknown/undeclared domain, the rubber-stamp scenario, determinism, `D_/G_/REF_` disjointness, and an **unwired-guard** asserting evaluator/pep never import `D`. |
 
-**Frozen (GR-2 build-then-wire):** `evaluator.py` (`evaluator_sha256 ca7c922c…` unchanged),
+Also built since: `domain_verdict.py` (signed out-of-band attestation + `claim_verdict_once`),
+`domain_control.py` (the PASS / HOLD_FOR_VERDICT / HOLD_FOR_HIL / REFUSE state machine),
+`domain_authority.py` (verdict-signer trust by signed-chain role), `resolve_domain_manifest()`
+(the ABSENT-vs-MALFORMED compose-in contract), a tracked **unarmed**
+`MANIFEST/domain_manifest.json`, and the pep-layer wiring.
+
+**Frozen (the canon boundary):** `evaluator.py` (`evaluator_sha256 ca7c922c…` unchanged),
 `MANIFEST/manifest.json` (`manifest_sha256` unchanged), `EVIDENCE/published_hashes.json`,
-`CANON/*` (GR-1). `D` imports nothing into the hashed core; the default admissibility path is
-byte-behavior-identical. Suite 645 → 677 green.
+`CANON/*` (GR-1). `D` imports nothing into the hashed core. `pep.py` and `envelope.py` are not
+hash-pinned, so PEP-layer enforcement moves no pin.
+
+**Request-schema change:** `domain` is an OPTIONAL declared selector inside `interaction`
+(mirroring `interaction_type`), carried through normalization and bound into the envelope — so
+`decision_sha256` covers the domain declaration and a verdict bound to that hash is transitively
+bound to the domain it was issued for. Undomained requests stay byte-identical.
 
 ### Domain manifest shape (hash-pinnable, versioned — canon §11.9 discipline)
 
@@ -131,8 +161,20 @@ Composing it moves `evaluator_sha256` and REDs the ~49-test verify-against-pinne
 the record is regenerated via its generator (VL-115 discipline — expected churn, not breakage).
 It also adds a **`domain_manifest_sha256` / `domain_manifest_version` pin** to
 `published_hashes_gen.py` and the envelope, so the domain ruleset is pinned exactly like the
-manifest. **None of that is done this session** — it is the compose-in step that belongs to the
-ratified canon version, not to the build.
+manifest. **None of that is done** — it belongs to the ratified canon version.
+
+**What IS done instead is Wiring B: enforcement one layer out, in `pep.governed_call`.** D runs
+after the ELIGIBLE envelope is built (so `decision_sha256` exists to bind a verdict to) and
+before the approval gate, as explicit early returns so no outcome can be swallowed by a
+fail-closed `except`. `REFUSE` → 403 carrying the `D_` code; `HOLD_FOR_VERDICT` /
+`HOLD_FOR_HIL` → 202 with distinct terminal states; `PASS` → claim `verdict_id` once via the
+`ReplayCache`, then fall through to the unchanged sign-and-forward. The verdict arrives on a
+request header and is passed *into* `domain_control`, so the gate never calls a policy agent
+inline — the determinism firewall, in the wiring as well as the module.
+
+**The distinction that matters:** Wiring B makes D *enforced*; only Wiring A makes D *canonical*.
+A deployment running Wiring B genuinely refuses domain-invalid interactions, but `G(I)` is still
+`AC³ ∧ T²⁶ ∧ CCS` and no artifact should claim otherwise.
 
 ## 6. Mid-stream domain drift → out-of-band re-determination (design, next increment)
 
@@ -143,9 +185,16 @@ lapses *after* issuance). The design:
 - A **new reassertion outcome — `RE-DETERMINE-OUT-OF-BAND`** — distinct from
   `RE-EVALUATE-REQUIRED`. It means: a domain-compliance change needs a **human/authority grant**,
   not an automatic re-pin.
-- It routes into the **existing** `202 PENDING_APPROVAL` + signed-grant path
+- It **should** route into the existing `202 PENDING_APPROVAL` + signed-grant path
   (`pep.governed_call`, VL-114/115/119/148), keyed to **domain-compliance** rather than the
   `HIGH_IMPACT` designation.
+  > **NOT BUILT — the loop is open.** `HOLD_FOR_HIL` currently returns a 202 with a distinct
+  > terminal state, but the wiring does **not** call `_PENDING.issue(...)` and emits no
+  > `approval_request_id`. Nothing binds that decision into the pending set, so the existing
+  > grant path cannot release it: an authentic `UNSAFE` verdict leaves the interaction reported
+  > but stuck. Closing this — issuing the pending request with a domain-compliance hold reason
+  > that `reconcile_approvals` can distinguish from a `HIGH_IMPACT` hold — is the next increment.
+  > Do not describe the re-determination loop as operational until it lands.
 - **Keep the verifier pure.** The drift *signal* comes from a stateful **monitor** (§7), never
   from inside `verify_envelope`. Defining what the envelope may "become aware" of without making
   the verifier stateful is the core open design problem — carried forward honestly.
@@ -181,11 +230,14 @@ incoherent because it added an invariant while claiming not to). Expand the inva
 
 | # | Step | Status |
 |---|---|---|
-| 1 | Domain manifest schema + validator (data + validator, no decision-path change) | **DONE** this session |
-| 2 | `D(I, domain)` evaluator — new module above `G(I)`, own reason codes, unwired | **DONE** this session |
+| 1 | Domain manifest schema + validator (data + validator, no decision-path change) | **DONE** |
+| 2 | `D(I, domain)` evaluator — new module above `G(I)`, own reason codes | **DONE** |
+| 2b | Signed domain-verdict + `domain_authority` role + `domain_control` state machine | **DONE** |
+| 2c | Compose-in contract (ABSENT vs MALFORMED) + unarmed tracked default | **DONE** |
+| 2d | **Wiring B** — PEP-layer enforcement, opt-in; REFUSE→403, HOLD→202, single-use claim on release | **DONE** |
 | 3 | **Canon increment** — author v0.9.8.6-or-9 adopting `G(I)=…∧D`, restate §14/D.4 (§8) | **AUTHOR-locus** (PDF + lock + ledger) |
-| 4 | Composition — `eligible ⟺ G(I) ∧ D` in `decide()`; add `domain_manifest_sha256` pin; re-pin per VL-115 | pending (rides step 3) |
-| 5 | Domain-drift reassertion outcome → `202`/signed-grant path (§6) | pending (design above) |
+| 4 | **Wiring A** — `eligible ⟺ G(I) ∧ D` in `decide()`; add `domain_manifest_sha256` pin; re-pin per VL-115 | pending (rides step 3) |
+| 5 | Domain-drift reassertion outcome → `202`/signed-grant path (§6). **Partial:** `HOLD_FOR_HIL` returns a distinct 202 but does not yet issue an `approval_request_id` into the pending set, so the re-determination loop is not closed end-to-end. | partial |
 | 6 | Monitor agent — operator-locus, read-only, non-authoritative, fail-safe (§7) | pending (build last) |
 
 ## 10. Honest ceiling (unchanged)

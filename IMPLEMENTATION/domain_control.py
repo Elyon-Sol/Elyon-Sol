@@ -34,7 +34,18 @@ Layering / namespaces (three clean layers)
 control() returns a D_* code; a failed verdict's REF_VERDICT_* reason is carried
 in `detail` for audit, never conflated with the admissibility code.
 
-Build-then-wire: NO caller on the default pep path. Frozen core untouched.
+WIRING STATUS. control() IS called by pep.governed_call when ELYON_DOMAIN_MANIFEST
+names a domain ruleset; with that env unset the pep block is skipped and the path
+is byte-behavior-identical. It is NOT called by evaluator.decide() - D is not a
+conjunct of G(I), and making it one is an author-ratified canon event (GR-1).
+The frozen core (evaluator.py, manifest.json, published_hashes.json, CANON/) is
+untouched by either.
+
+KNOWN GAP (do not read the outcomes below as a complete loop). CONTROL_HOLD_FOR_HIL
+reports that a human must re-determine, but the pep wiring does NOT yet issue an
+approval_request_id into the pending-approval set. So an authentic UNSAFE verdict
+currently produces a 202 that the existing signed-grant release path cannot act
+on. The out-of-band re-determination loop is REPORTED, not CLOSED.
 """
 
 from datetime import datetime, timedelta

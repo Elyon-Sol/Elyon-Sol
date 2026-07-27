@@ -22,7 +22,11 @@ and not before, re-open G5.
 
 ## Current position
 
-**Phase 1. DONE: S1, S2, S3, S4, S5a (landing = VL-151; S1/S3/S4 = VL-152; S2 = VL-153 draft; S5a CVP mitigation = VL-154 draft). Remaining in Phase 1: S5b. Full suite 742 green; frozen core (`evaluator_sha256 ca7c922c…`, manifest, published_hashes, canon) intact.**
+**Phase 1 COMPLETE (S1–S5b). D now ENFORCES at the PEP layer, default-off via `ELYON_DOMAIN_MANIFEST`.** Full suite 785 green; frozen core (`evaluator_sha256 ca7c922c…`, manifest, published_hashes, canon) intact — the canon boundary is now guarded by a test rather than by absence of wiring.
+
+Ledger drafts: VL-151 (landing), VL-152 (S1/S3/S4), VL-153 (S2), VL-154 (S5a CVP mitigation + cross-model strengthening), VL-155 (S5b + Wiring B).
+
+**Deployed separation moved off the pre-D baseline for the first time:** axes F/G/H contribute at runtime when armed, not just as built capability. Phase 2 (canon adoption) remains author-locus.
 
 Total stairs: **11** across 3 phases. (Landing 0 is pre-Staircase and already done.)
 
@@ -42,7 +46,8 @@ Total stairs: **11** across 3 phases. (Landing 0 is pre-Staircase and already do
 | **S3** | Domain-manifest schema: per-domain `requires_verdict` + pinned `authority_key_id` (data + validator). | schema validates fail-closed; `requires_verdict` demands an `authority_key_id`; existing tests unaffected. | **DONE** |
 | **S4** | `domain_control(...)` state machine: `PASS` / `HOLD_FOR_VERDICT` / `HOLD_FOR_HIL` / `REFUSE`. Pure given inputs (verdict passed IN — the determinism firewall in code shape). | D-structural + verdict compose deterministically; verdict is never fetched inline; own `D_` codes; fail-closed. | **DONE** |
 | **S5a** | **CVP mitigation** of the D layer: DV-01 (undeclared-domain bypass), DV-02 (domain-shopping), DV-03 (`gate_key_id=None` disables SoD), DV-04 (`expected_decision_sha256=None` satisfies binding), DV-05 (single-use unenforced), DV-06 (bool/int predicate confusion), DV-07 (version ungated), DV-08 (unbounded findings). | each finding's pre-fix behavior is a named revert-catcher; the original probes that returned PASS now REFUSE/HOLD. | **DONE** |
-| **S5b** | Compose-in contract: a default UNARMED `MANIFEST/domain_manifest.json` + absence-handling so naive composition never fail-closed-bricks the flat path (closes the trap found at VL-151 review). | composing `D` against the default manifest leaves the flat path byte-behavior-identical; absent file → unarmed, not REFUSE-ALL. | TODO |
+| **S5b** | Compose-in contract: a default UNARMED `MANIFEST/domain_manifest.json` + `resolve_domain_manifest()` separating ABSENT (inert) from MALFORMED (fail-closed). | absent → unarmed, not REFUSE-ALL; malformed → refuses; tracked default is inert. Proven at unit and HTTP layer. | **DONE** |
+| **S5c** | **Wiring B** — D enforces at the PEP layer, opt-in via `ELYON_DOMAIN_MANIFEST`. REFUSE→403, HOLD→202 (distinct terminal states), PASS→single-use verdict claim then unchanged forward. `domain` added as an optional request selector + envelope binding. | 13 end-to-end tests; default-off path byte-behavior-identical; canon boundary asserted by test. | **DONE** |
 
 ## Phase 2 — compose & ratify (author-locus canon events; assistant preps, author executes)
 
