@@ -156,10 +156,22 @@ The PEP accepts a single object at `POST /governed-call`:
     "OP":                         [<string>, ...],
     "context":                    {<canon C, free-form key/value>},
     "expected_manifest_version":  "<string>",
-    "expected_manifest_sha256":   "<64-char lowercase hex string>"
+    "expected_manifest_sha256":   "<64-char lowercase hex string>",
+
+    "interaction_type":                   "<string, OPTIONAL>",
+    "domain":                             "<string, OPTIONAL>",
+    "expected_domain_manifest_sha256":    "<64-char lowercase hex, OPTIONAL>"
   }
 }
 ```
+
+The first five `interaction` members are REQUIRED and are the original
+schema. The three that follow are OPTIONAL, additive, and backward-compatible:
+a request omitting all three is byte-identical in treatment to a request under
+the pre-extension schema. Each is a declared SELECTOR or PIN, never payload —
+`context` remains the only free-form member. Any other key inside `interaction`
+is REFUSED with `REF_SCHEMA_UNKNOWN_KEY`; the optional members are part of the
+known-key set, so their presence is not an unknown-key violation.
 
 `target_url` is a PEP-wire concern, not part of canonical `I`. It
 addresses the upstream the PEP forwards to on ELIGIBLE. It is OUTSIDE
@@ -256,6 +268,55 @@ hardcoded path rather than hashing the manifest argument that
 itself is passed in. The asymmetry is bookkeeping-batch (G11); it does
 not affect this schema, but the schema's `expected_manifest_sha256`
 semantics will become tighter once G11 is resolved.
+
+#### `interaction.interaction_type` (string, OPTIONAL)
+
+The declared interaction type. Selects which per-type required sets
+(`AR`/`R`) the caller must cover, via
+`evaluator.resolve_required_sets()`. Under a FLAT manifest (no
+`interaction_types` map) it is carried but not used for set selection,
+and behavior is identical to its absence. Under a TYPED manifest an
+UNKNOWN declared type is fail-closed (`G_REQUIRED_SETS_UNRESOLVED`),
+while ABSENCE resolves to the top-level (union) sets - the
+conservative choice, since covering the full vocabulary is the
+stricter requirement. Bound into the envelope's `request_context` when
+present, so it is inside `decision_sha256` and the issuer signature.
+
+#### `interaction.domain` (string, OPTIONAL)
+
+The declared domain whose ruleset the interaction is evaluated against
+by the domain-validity layer. A SELECTOR, not payload: the values it
+selects over live in the deployed domain ruleset, and the data assessed
+is `context`.
+
+Resolution is fail-closed and depends on what is deployed. With NO
+domain ruleset deployed the field is ignored entirely. With an ARMED
+ruleset: an undeclared domain is REFUSED (`D_DOMAIN_UNDECLARED`) unless
+the ruleset sets `require_domain: false`; an unknown declared domain is
+REFUSED (`D_DOMAIN_UNKNOWN`); and a declared domain whose ruleset pins
+`interaction_types` must match the caller's declared `interaction_type`
+(`D_DOMAIN_MISBOUND`), which is what prevents a caller selecting a
+weaker domain for stricter content. Bound into the envelope's
+`request_context` when present.
+
+#### `interaction.expected_domain_manifest_sha256` (string, OPTIONAL)
+
+Caller-asserted DOMAIN-ruleset hash: the SHA256 of the deployed domain
+ruleset file's bytes. The domain-layer analogue of
+`expected_manifest_sha256`, and load-bearing for the same reason - the
+ruleset decides domain refusals, so a caller must be able to refuse
+evaluation against a ruleset it did not audit. Without it a substituted
+ruleset silently changes policy while a substituted
+`MANIFEST/manifest.json` is detected.
+
+Checked BEFORE any content evaluation (assessing content against an
+unexpected ruleset is meaningless): missing when an armed ruleset
+requires a pin is `D_MANIFEST_UNPINNED`, a mismatch is
+`D_MANIFEST_PIN_MISMATCH`, and an inability to digest the deployed
+ruleset is `D_MANIFEST_PIN_UNVERIFIABLE`. Required by default whenever
+the deployed ruleset is armed; a deployment may waive it with
+`require_pin: false`. Bound into the envelope's `request_context` when
+present.
 
 ---
 
