@@ -163,8 +163,9 @@ def test_control_is_deterministic(authority):
 
 # --- module unwired from evaluator/pep ----------------------------------------
 
-def test_control_modules_unwired():
+def test_control_not_wired_into_evaluator_but_is_wired_into_pep():
+    """D enforces at the PEP layer; it must NOT enter the evaluator (canon
+    boundary, GR-1). Both halves are asserted so neither drifts silently."""
     from IMPLEMENTATION import evaluator, pep
-    for mod in (evaluator, pep):
-        src = inspect.getsource(mod)
-        assert "domain_control" not in src
+    assert "domain_control" not in inspect.getsource(evaluator)
+    assert "domain_control" in inspect.getsource(pep)

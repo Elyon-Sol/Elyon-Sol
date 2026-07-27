@@ -121,9 +121,69 @@ def domain_manifest_sha256(path: str) -> str:
 
 
 def load_domain_manifest(path: str = DOMAIN_MANIFEST_EXAMPLE_PATH) -> Dict[str, Any]:
-    """Load a domain manifest from disk. Not called on any default path."""
+    """Load a domain manifest from disk. Raises on absent/unparseable input.
+    Callers on a decision path should use resolve_domain_manifest() instead,
+    which distinguishes 'not deployed' from 'deployed but broken'."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+# ---------------------------------------------------------------------------
+# Deployment resolution (the compose-in contract)
+# ---------------------------------------------------------------------------
+
+# The default location a deployment places its domain ruleset. The tracked file
+# at this path is UNARMED ({"domains": {}}), so a checkout that has never
+# configured D behaves exactly as it did before D existed.
+DOMAIN_MANIFEST_DEFAULT_PATH = "MANIFEST/domain_manifest.json"
+
+# The inert manifest: well-formed, no domains, so assess() is a pass-through.
+UNARMED_DOMAIN_MANIFEST: Dict[str, Any] = {"version": "1.0", "domains": {}}
+
+# resolve_domain_manifest statuses.
+DM_STATUS_ABSENT = "absent"        # no ruleset deployed -> D inert (safe)
+DM_STATUS_LOADED = "loaded"        # a well-formed ruleset is in force
+DM_STATUS_MALFORMED = "malformed"  # a ruleset was deployed but is broken -> fail closed
+
+
+def resolve_domain_manifest(path: Optional[str] = None) -> Tuple[Optional[Dict[str, Any]], str]:
+    """
+    Resolve the domain manifest a deployment is actually running under.
+    Returns (manifest, status).
+
+    The load-bearing distinction - and the whole point of this function - is
+    between ABSENT and MALFORMED, which a naive `load()` conflates:
+
+      - ABSENT (no file at `path`): D was never deployed here. Returns
+        (UNARMED_DOMAIN_MANIFEST, DM_STATUS_ABSENT) so assess() passes
+        everything through. This is what keeps composing D from bricking a
+        flat deployment into refuse-all: no ruleset means no domain policy to
+        violate, not "policy violated". Fail-OPEN is correct ONLY here, because
+        nothing was ever configured to enforce.
+
+      - MALFORMED (file present but unreadable, non-JSON, or failing
+        safe_domain_manifest): the operator INTENDED domain enforcement and the
+        configuration is broken. Returns (None, DM_STATUS_MALFORMED) and the
+        caller MUST fail closed. Treating a broken ruleset as "no ruleset" would
+        turn a config error into a silent bypass - exactly the failure this
+        function exists to prevent.
+
+    `path` defaults to DOMAIN_MANIFEST_DEFAULT_PATH. A caller may point it
+    elsewhere (e.g. from an env var) without changing these semantics.
+    """
+    if path is None:
+        path = DOMAIN_MANIFEST_DEFAULT_PATH
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except FileNotFoundError:
+        return UNARMED_DOMAIN_MANIFEST, DM_STATUS_ABSENT
+    except (OSError, ValueError):
+        # present but unreadable / not JSON -> deployed-and-broken
+        return None, DM_STATUS_MALFORMED
+    if safe_domain_manifest(raw) is None:
+        return None, DM_STATUS_MALFORMED
+    return raw, DM_STATUS_LOADED
 
 
 # ---------------------------------------------------------------------------

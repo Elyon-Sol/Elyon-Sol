@@ -327,6 +327,16 @@ def build_envelope(
     if _it is not None:
         envelope["request_context"]["interaction_type"] = _it
 
+    # Domain (D): bind the declared domain for the same reason SES-7 binds
+    # interaction_type - it selects which domain ruleset the interaction is
+    # judged against, so it belongs inside the signed, hashed receipt. This also
+    # makes decision_sha256 cover the domain declaration, so a domain-verdict
+    # bound to decision_sha256 is transitively bound to the domain it was issued
+    # for. Omitted when absent -> the undomained path stays byte-identical.
+    _dom = normalized_interaction.get("domain")
+    if _dom is not None:
+        envelope["request_context"]["domain"] = _dom
+
     # Compute decision_sha256 last, over the envelope minus
     # decision_sha256 itself and minus timestamp_utc (per artifact 05).
     hashable = {k: v for k, v in envelope.items() if k not in _HASH_EXCLUDED_KEYS}

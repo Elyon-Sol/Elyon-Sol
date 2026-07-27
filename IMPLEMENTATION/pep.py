@@ -94,6 +94,17 @@ from IMPLEMENTATION.approval import (
     REF_APPROVAL_REQUEST_UNKNOWN,
 )
 from IMPLEMENTATION.replay_cache import InMemoryReplayCache, replay_cache_from_env
+from IMPLEMENTATION.domain_validity import (
+    resolve_domain_manifest, DM_STATUS_MALFORMED,
+)
+from IMPLEMENTATION.domain_control import (
+    control as domain_control,
+    CONTROL_PASS, CONTROL_HOLD_FOR_VERDICT, CONTROL_HOLD_FOR_HIL, CONTROL_REFUSE,
+)
+from IMPLEMENTATION.domain_verdict import claim_verdict_once
+from IMPLEMENTATION.domain_authority import (
+    resolve_domain_authority_keys, PROVENANCE_SIGNED_KEY_RECORD,
+)
 from IMPLEMENTATION.pending_store import (
     pending_store_from_env,
     InMemoryPendingApprovals,
@@ -271,6 +282,87 @@ _PendingApprovals = InMemoryPendingApprovals
 
 _PENDING = pending_store_from_env()
 _GRANT_REPLAY = replay_cache_from_env()
+
+
+# ---------------------------------------------------------------------------
+# Domain-validity gate (D) - OPT-IN wiring. See
+# docs/design/domain_validity_D_architecture.md.
+#
+# Enabled ONLY when ELYON_DOMAIN_MANIFEST names a path. Unset -> _DOMAIN_ENABLED
+# is False and every code path below is skipped, so the default deployment is
+# byte-behavior-identical to the pre-D gate. This is PEP-layer enforcement, NOT a
+# canon change: evaluator.decide() and G(I) are untouched, evaluator_sha256 does
+# not move, and D is not (yet) an admissibility conjunct. The canon increment
+# that makes D an invariant is a separate, author-ratified event (GR-1).
+#
+# The determinism firewall holds: the domain VERDICT is read off the REQUEST (a
+# header, exactly like the approval grant) and passed INTO domain_control. The
+# gate never calls a policy agent inline, so the decision path stays deterministic
+# and non-blocking; obtaining the verdict is the caller's / monitor's job.
+# ---------------------------------------------------------------------------
+
+_DOMAIN_MANIFEST_PATH = os.environ.get("ELYON_DOMAIN_MANIFEST")
+_DOMAIN_ENABLED = bool(_DOMAIN_MANIFEST_PATH)
+_VERDICT_REPLAY = replay_cache_from_env()
+
+
+def _extract_domain_verdict(request):
+    """Read a domain-compliance verdict off the request, or None if absent
+    (-> HOLD_FOR_VERDICT when the domain requires one). A present-but-unparseable
+    verdict returns the raw string so verify_verdict maps it to
+    REF_VERDICT_MALFORMED - junk is a refusal, not a free pass."""
+    raw = request.headers.get("X-Elyon-Sol-Domain-Verdict")
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return raw
+
+
+def _domain_authority_keys():
+    """Trust map for domain-verdict signers, resolved from the pinned-root SIGNED
+    key record in-process - the same chain and the same discipline
+    _resolve_signed_chain_approver_keys() uses for approvers, but selecting the
+    `domain_authority` role instead of `approver`.
+
+    Fail-closed at every step: trio not configured, unreadable pin, validation
+    failure, or no domain_authority role published -> {} -> no verdict can verify
+    -> HOLD, never PASS. Role-distinctness (one signed role per key) is what keeps
+    a policy authority from being an issuer or an approver."""
+    import base64
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    from IMPLEMENTATION.key_record_source import load_key_record_from_bytes
+
+    record_path = os.environ.get(ENV_APPROVER_KEY_RECORD_PATH)
+    root_id = os.environ.get(ENV_PINNED_ROOT_KEY_ID)
+    root_b64 = os.environ.get(ENV_PINNED_ROOT_PUBKEY_B64)
+    if not record_path or not root_id or not root_b64:
+        return {}
+
+    try:
+        pinned = {root_id: Ed25519PublicKey.from_public_bytes(
+            base64.b64decode(root_b64, validate=True))}
+        with open(record_path, "rb") as fh:
+            record_bytes = fh.read()
+    except (OSError, ValueError, TypeError):
+        return {}
+
+    skew_s = os.environ.get("ELYON_CLOCK_SKEW_SECONDS")
+    skew = timedelta(seconds=int(skew_s)) if skew_s else timedelta(0)
+    try:
+        loaded = load_key_record_from_bytes(record_bytes, pinned, clock_skew=skew)
+    except Exception:
+        return {}
+    view = loaded.get("trust_view")
+    if view is None:
+        return {}
+    return resolve_domain_authority_keys(
+        view,
+        provenance=PROVENANCE_SIGNED_KEY_RECORD,
+        gate_key_id=os.environ.get("ELYON_SIGNING_KEY_ID"),
+        clock_skew=skew,
+    )
 
 
 def _extract_grant(request):
@@ -527,6 +619,80 @@ async def governed_call(request: Request):
                 "error": str(e),
             },
         )
+
+    # ----- Domain-validity gate (D) - OPT-IN, default-off -----
+    # Runs AFTER the ELIGIBLE envelope exists (so decision_sha256 is available to
+    # bind a verdict to) and BEFORE the approval gate, as EXPLICIT early
+    # returns/raises so no outcome can be swallowed by a fail-closed except. A
+    # domain REFUSE must not consume a 202 approval slot, and a domain HOLD must
+    # not reach post_to_target. When ELYON_DOMAIN_MANIFEST is unset this whole
+    # block is skipped and the path is byte-behavior-unchanged.
+    if _DOMAIN_ENABLED:
+        try:
+            dmanifest, dstatus = resolve_domain_manifest(_DOMAIN_MANIFEST_PATH)
+            if dstatus == DM_STATUS_MALFORMED:
+                # Deployed-but-broken ruleset: fail closed. Never degrade a
+                # config error into "no domain policy" (S5b).
+                raise HTTPException(
+                    status_code=403,
+                    detail={"terminal_state": "REFUSE",
+                            "refusal_reason_code": "D_MANIFEST_MALFORMED"},
+                )
+            dverdict = _extract_domain_verdict(request)
+            d_out, d_code, d_detail = domain_control(
+                normalized_interaction,
+                dmanifest,
+                verdict=dverdict,
+                expected_decision_sha256=envelope["decision_sha256"],
+                authority_public_keys=_domain_authority_keys(),
+                gate_key_id=(_get_signing_key() or (None, None))[1],
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=403,
+                detail={"terminal_state": "REFUSE",
+                        "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
+                        "error": str(e)},
+            )
+
+        if d_out == CONTROL_REFUSE:
+            raise HTTPException(
+                status_code=403,
+                detail={"terminal_state": "REFUSE", "refusal_reason_code": d_code},
+            )
+
+        if d_out in (CONTROL_HOLD_FOR_VERDICT, CONTROL_HOLD_FOR_HIL):
+            # 202 HOLD: do NOT sign, do NOT issuance-log a forward, do NOT
+            # post_to_target. HOLD_FOR_VERDICT wants a signed policy-authority
+            # attestation; HOLD_FOR_HIL means an AUTHENTIC verdict said UNSAFE and
+            # a human must re-determine out-of-band. They are reported distinctly
+            # so an operator surface (and reconcile) can tell a missing attestation
+            # from a substantive domain refusal.
+            return JSONResponse(
+                status_code=202,
+                content={
+                    "terminal_state": ("PENDING_DOMAIN_VERDICT"
+                                       if d_out == CONTROL_HOLD_FOR_VERDICT
+                                       else "PENDING_DOMAIN_REDETERMINATION"),
+                    "refusal_reason_code": d_code,
+                    "decision_sha256": envelope["decision_sha256"],
+                    "domain": (d_detail or {}).get("domain"),
+                },
+            )
+
+        if d_out == CONTROL_PASS and isinstance(dverdict, dict):
+            # A verdict that RELEASED this call is single-use: claim verdict_id
+            # exactly once, BEFORE any forward, so a captured SAFE verdict cannot
+            # release the same decision twice within its freshness window.
+            claimed = claim_verdict_once(dverdict, _VERDICT_REPLAY)
+            if not claimed["accepted"]:
+                raise HTTPException(
+                    status_code=403,
+                    detail={"terminal_state": "REFUSE",
+                            "refusal_reason_code": claimed["reason"]},
+                )
 
     # ----- Approval gate (governance Feature 1; design 1.3; [FIX H6]) -----
     # Placed AFTER the ELIGIBLE+envelope build and BEFORE the sign/forward

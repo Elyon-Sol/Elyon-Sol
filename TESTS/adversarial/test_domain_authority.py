@@ -157,7 +157,6 @@ def test_H1b_revoked_false_resolves():
     assert _resolve({AUTH_KEY_ID: _entry(DOMAIN_AUTHORITY_ROLE, revoked=False)}) != {}
 
 
-def test_module_unwired():
-    from IMPLEMENTATION import evaluator, pep
-    for mod in (evaluator, pep):
-        assert "domain_authority" not in inspect.getsource(mod)
+def test_not_wired_into_evaluator_canon_boundary():
+    from IMPLEMENTATION import evaluator
+    assert "domain_authority" not in inspect.getsource(evaluator)

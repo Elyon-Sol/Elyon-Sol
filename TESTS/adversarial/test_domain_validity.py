@@ -223,13 +223,24 @@ def test_D_namespace_disjoint_from_G_and_REF():
 
 # --- the module is UNWIRED: evaluator/pep do not import it --------------------
 
-def test_module_is_unwired_from_the_decision_path():
+def test_D_is_NOT_wired_into_the_evaluator_canon_boundary():
+    """LOAD-BEARING (GR-1). D is wired at the PEP layer (enforcement) but must NOT
+    enter evaluator.decide()/G(I) - that is an admissibility-semantics change and
+    therefore an author-ratified canon-version event. If this fails, either the
+    canon increment happened (update this test with it) or the boundary was
+    crossed by accident."""
     import inspect
-    from IMPLEMENTATION import evaluator, pep
-    for mod in (evaluator, pep):
-        assert "domain_validity" not in inspect.getsource(mod), (
-            f"{mod.__name__} references domain_validity - D must stay UNWIRED "
-            f"until the canon-increment compose-in step")
+    from IMPLEMENTATION import evaluator
+    assert "domain_validity" not in inspect.getsource(evaluator)
+    assert "domain_control" not in inspect.getsource(evaluator)
+
+
+def test_evaluator_sha256_still_matches_the_pinned_record():
+    """The same boundary, checked against the pin rather than the source text."""
+    import hashlib, json
+    live = hashlib.sha256(open("IMPLEMENTATION/evaluator.py", "rb").read()).hexdigest()
+    with open("EVIDENCE/published_hashes.json", "r", encoding="utf-8") as f:
+        assert live == json.load(f)["evaluator_sha256"]
 
 
 # --- example domain manifest on disk is well-formed and hash-pinnable ---------

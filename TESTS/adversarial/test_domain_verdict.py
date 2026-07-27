@@ -170,6 +170,5 @@ def test_ref_verdict_namespace_and_unwired():
     import IMPLEMENTATION.domain_verdict as dv
     codes = {v for k, v in vars(dv).items() if k.startswith("REF_VERDICT_") and isinstance(v, str)}
     assert codes and all(c.startswith("REF_VERDICT_") for c in codes)
-    from IMPLEMENTATION import evaluator, pep
-    for mod in (evaluator, pep):
-        assert "domain_verdict" not in inspect.getsource(mod)
+    from IMPLEMENTATION import evaluator
+    assert "domain_verdict" not in inspect.getsource(evaluator)
