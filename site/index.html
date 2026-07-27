@@ -57,6 +57,7 @@
   .badge{font-family:var(--mono);font-size:.76rem;color:var(--muted);background:var(--panel);
     border:1px solid var(--line);border-radius:999px;padding:6px 13px}
   .badge b{color:var(--ink)}
+  .badge .sub{color:var(--faint)}   /* qualifier inside a badge: published-vs-HEAD, etc. */
 
   /* GRID CARDS */
   .grid{display:grid;gap:16px}
@@ -168,13 +169,17 @@
     <div class="badges">
       <span class="badge"><b>Fail-closed</b> · refuses on any doubt</span>
       <span class="badge"><b>Ed25519</b>-signed admissibility envelopes</span>
-      <!-- Test-count convention (VL-147): this figure tracks the current PUBLISHED Zenodo
-           revision (Rev 8 = 616 tests), NOT repo HEAD, so every number on the page is citable
-           to a DOI and the count advances per-publication, not per-commit. Repo HEAD runs
-           higher after later increments (e.g. 630 at VL-148, SES-9b) — bump this ONLY when a
-           new Enforcement-Evidence Addendum publishes with the new figure. Same value appears
-           in the Technology chip and the Rev-8 line under Canon & Zenodo; move all three together. -->
-      <span class="badge"><b>616</b> tests green</span>
+      <!-- Test-count convention (VL-147/VL-149), AMENDED: TWO figures, deliberately distinct.
+             * PUBLISHED  — tracks the current published Zenodo revision (Rev 8 = 616), so it is
+               always citable to a DOI. Bump ONLY when a new Enforcement-Evidence Addendum
+               publishes with a new figure. Also appears in the Rev-8 line under Canon & Zenodo,
+               which is a historical statement about Rev 8 and must NOT be re-pointed at HEAD.
+             * AT HEAD — the live suite on the public repo. Advances per-commit and is NOT
+               citable to a DOI; it is labelled as unpublished for exactly that reason.
+           Showing only the published figure understated the work by ~200 tests; showing only
+           HEAD would break citability. Both, labelled, is the honest form. -->
+      <span class="badge"><b>616</b> tests green <span class="sub">· published (Rev 8)</span></span>
+      <span class="badge"><b>813</b> at repo HEAD <span class="sub">· unpublished</span></span>
       <span class="badge">Human-oversight <b>governance layer</b></span>
       <span class="badge">AGPL-3.0 open-core</span>
     </div>
@@ -256,13 +261,13 @@
         <tr><td><b>Single-use / replay-proof</b> authorization</td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td></tr>
         <tr><td>Human approval with <b>cryptographic separation of duties</b></td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="p">prompt</td></tr>
         <tr><td>Policy <b>pinned by hash + version</b></td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="p">partial</td><td class="n">&#10007;</td></tr>
-        <tr><td><b>Falsifiable</b> &mdash; live target + inspector + open break-it challenge</td><td class="y">&#10003;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td></tr>
+        <tr><td><b>Falsifiable</b> &mdash; self-hostable target + inspector + open break-it challenge</td><td class="y">&#10003;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td></tr>
       </tbody>
     </table>
     </div>
 
     <h3 style="font-size:1.05rem;margin-top:40px">vs capability-token systems — the honest comparison</h3>
-    <p class="lead" style="max-width:82ch">The table above is against access-control <i>styles</i>. The sharper question is against systems that already issue signed, bound tokens &mdash; <b>macaroons, biscuit, SPIFFE/SVID, GNAP, and the IETF Transaction Tokens draft</b>. Stated plainly: an admissibility envelope <b>is</b> a capability token &mdash; signed, action-bound, single-use &mdash; and Elyon-Sol claims <b>no new cryptographic primitive</b>. What it adds is <b>behavioral</b>: the envelope is a receipt of a policy <i>decision</i> (it pins the exact canon, manifest, and evaluator that decided), it self-invalidates when that policy changes, it makes human approval a cryptographic separation-of-duties primitive, and it ships with a live public break-it challenge. It composes <i>with</i> these systems &mdash; it can run on top of a biscuit rather than instead of one.</p>
+    <p class="lead" style="max-width:82ch">The table above is against access-control <i>styles</i>. The sharper question is against systems that already issue signed, bound tokens &mdash; <b>macaroons, biscuit, SPIFFE/SVID, GNAP, and the IETF Transaction Tokens draft</b>. Stated plainly: an admissibility envelope <b>is</b> a capability token &mdash; signed, action-bound, single-use &mdash; and Elyon-Sol claims <b>no new cryptographic primitive</b>. What it adds is <b>behavioral</b>: the envelope is a receipt of a policy <i>decision</i> (it pins the exact canon, manifest, and evaluator that decided), it self-invalidates when that policy changes, it makes human approval a cryptographic separation-of-duties primitive, and it ships with a reproducible, self-hostable break-it challenge. It composes <i>with</i> these systems &mdash; it can run on top of a biscuit rather than instead of one.</p>
     <div class="scroll">
     <table class="rw" style="min-width:760px">
       <thead><tr>
@@ -281,7 +286,10 @@
         <tr><td><b>Self-invalidates on policy-version change</b></td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td></tr>
         <tr><td><b>Decision-provenance receipt</b> (pins policy + evaluator)</td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="p">partial</td></tr>
         <tr><td>Human approval = crypto separation of duties</td><td class="y">&#10003;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="n">&#10007;</td><td class="p">in-proto</td><td class="n">&#10007;</td></tr>
-        <tr><td>Live public break-it challenge</td><td class="y">&#10003;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td></tr>
+        <!-- The public nodes were retired 2026-07-20. This row previously claimed a LIVE
+             challenge as a differentiator, which contradicted the retirement notice elsewhere
+             on this page. It is not a checkmark: the challenge is self-hostable, not hosted. -->
+        <tr><td>Public break-it challenge <span class="muted">(self-hosted since 2026-07-20)</span></td><td class="p">self-host</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td><td class="d">&mdash;</td></tr>
       </tbody>
     </table>
     </div>
@@ -325,7 +333,9 @@
         <div class="chip">Docker / Compose <span>· packaging</span></div>
         <div class="chip">GitHub Actions <span>· CI (suite + runners)</span></div>
         <div class="chip">Hetzner <span>· multi-continent nodes</span></div>
-        <div class="chip">616 tests <span>· incl. revert-catchers</span></div>
+        <div class="chip">813 tests at HEAD <span>· 616 published (Rev 8) · incl. revert-catchers</span></div>
+        <div class="chip">72 test files <span>· 735 adversarial</span></div>
+        <div class="chip">168 domain-validity tests <span>· new layer, default-off</span></div>
         <div class="chip">Cross-model review <span>· internal evidence — not external validation</span></div>
       </div>
     </div>
@@ -469,8 +479,12 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
       <div>
         <h3 style="font-size:1.05rem">What counts as a break</h3>
         <ul class="clean">
-          <li><b>Target break</b> — get <span class="mono">target.elyon-sol.io</span> to act (its <span class="mono">GET /received</span> count increments) on a request whose token is absent, forged, expired, replayed, altered, or bound to a different action/target.</li>
-          <li><b>Sidecar break</b> — get <span class="mono">authz.elyon-sol.io</span> to return <span class="mono">200 / ALLOW</span> for a request that is not a currently-valid, correctly-bound, single-use, validly-signed token.</li>
+          <!-- The four public nodes were retired 2026-07-20. These definitions named the live
+               hostnames, which no longer resolve to a running surface; they now name the roles
+               in a self-hosted instance. The falsifiable claim itself is unchanged. -->
+          <li><b>Target break</b> — get the <b>target</b> node to act (its <span class="mono">GET /received</span> count increments) on a request whose token is absent, forged, expired, replayed, altered, or bound to a different action/target.</li>
+          <li><b>Sidecar break</b> — get the <b>ext-authz sidecar</b> to return <span class="mono">200 / ALLOW</span> for a request that is not a currently-valid, correctly-bound, single-use, validly-signed token.</li>
+          <li class="muted">Run both against your own instance — <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> stands the four services up in a couple of commands.</li>
           <li>Reproducible from your steps — one reproduction beats any description.</li>
         </ul>
       </div>
