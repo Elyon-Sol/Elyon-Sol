@@ -1,20 +1,55 @@
-# Governance-substrate overlay (R1 + R2). Compose WITH the base (+ tls):
+# Governance-substrate overlay (R1 + R2 + Feature-2 layer 2). Compose WITH the base + tls:
 #   cd deploy && docker compose \
 #       -f docker-compose.yml -f docker-compose.tls.yml -f docker-compose.governance.yml \
 #       up -d --build redis gate gate2 target publisher
 #
+# Setup (all outputs git-ignored; see deploy/GOVERNANCE_DEPLOYMENT.md section 0):
+#   python deploy/bootstrap_config.py                                 # deploy/.env
+#   python deploy/tls/gen_certs.py localhost 127.0.0.1                # deploy/tls/certs/
+#   python deploy/governance/make_approver_key_record.py --out-dir deploy/governance \
+#       --gate-key-id <ELYON_SIGNING_KEY_ID>                          # R1 ceremony
+#   PYTHONPATH=. python deploy/governance/make_governance_record.py   # record + anchor
+#   ... then add the printed public values to deploy/.env.
+#
 # What it adds:
+#   - a DEPLOYMENT manifest, deploy/governance/manifest.governance.json, mounted over
+#     MANIFEST/manifest.json in the gates and the publisher. It declares HIGH_IMPACT, so
+#     every eligible call through these gates is held for a human approval grant. The
+#     committed reference manifest (HIGH_IMPACT: []) is untouched and stays the default for
+#     every other stack. The publisher serves this manifest's own published record and the
+#     target anchors to it (ELYON_GOV_PINNED_ROOT_SHA256).
 #   - redis           : the SHARED store for R2 (grant single-use + the 202 pending-set).
 #   - gate / gate2     : TWO gate replicas sharing redis, each run via the R1 wiring shim
 #                        (deploy.governance.approver_trust_bootstrap:app) so approver trust
 #                        is role-distinct from the signed key record, and the 202 slot +
-#                        grant single-use are GLOBAL across both replicas (R2).
+#                        grant single-use are GLOBAL across both replicas (R2). Each writes
+#                        its own issuance + approval log (G-04) to the governance-runtime
+#                        volume, and presents the gate leaf as its client certificate.
+#   - target          : requires a CA-signed CLIENT certificate (mTLS, Feature 2 layer 2), so
+#                        a direct call that does not come through a gate fails at the TLS
+#                        handshake before any app logic runs.
 #   - approver-cli     : the SEPARATE approver process (profile "approver"); holds the
 #                        approver PRIVATE key (custody) and mints a grant on demand.
+# Single-host compromise, stated: every service (and the approver key file) is on one machine
+# here; in production the approver key lives only on the approver host.
 # Env comes from deploy/.env (see deploy/governance.env.example).
 services:
   redis:
     image: redis:7-alpine
+
+  publisher:
+    environment:
+      ELYON_PUBLISHED_RECORD: /app/deploy/governance/published_hashes.governance.json
+    volumes:
+      - ./governance/published_hashes.governance.json:/app/deploy/governance/published_hashes.governance.json:ro
+      - ./governance/manifest.governance.json:/app/MANIFEST/manifest.json:ro
+
+  target:
+    command: ["uvicorn", "IMPLEMENTATION.reference_target:app", "--host", "0.0.0.0", "--port", "9000",
+              "--ssl-certfile", "/certs/target.crt", "--ssl-keyfile", "/certs/target.key",
+              "--ssl-cert-reqs", "2", "--ssl-ca-certs", "/certs/ca.crt"]
+    environment:
+      ELYON_PINNED_ROOT_SHA256: ${ELYON_GOV_PINNED_ROOT_SHA256}
 
   gate:
     command: ["uvicorn", "deploy.governance.approver_trust_bootstrap:app",
@@ -30,9 +65,14 @@ services:
       ELYON_REPLAY_MULTI_INSTANCE: "1"
       ELYON_PENDING_REDIS_URL: redis://redis:6379/0
       ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+      ELYON_ISSUANCE_LOG_PATH: /app/EVIDENCE/runtime/gate.issuance.log
+      ELYON_APPROVAL_LOG_PATH: /app/EVIDENCE/runtime/gate.approval.log
+      ELYON_TLS_CLIENT_CERT: /certs/gate.crt:/certs/gate.key
     volumes:
       # The signed key record from the R1 ceremony (git-ignored; see GOVERNANCE_DEPLOYMENT.md).
       - ./governance/approver_key_record.json:/app/deploy/governance/approver_key_record.json:ro
+      - ./governance/manifest.governance.json:/app/MANIFEST/manifest.json:ro
+      - governance-runtime:/app/EVIDENCE/runtime
     depends_on: [redis, target]
 
   gate2:
@@ -52,14 +92,19 @@ services:
       ELYON_REPLAY_MULTI_INSTANCE: "1"
       ELYON_PENDING_REDIS_URL: redis://redis:6379/0
       ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+      ELYON_ISSUANCE_LOG_PATH: /app/EVIDENCE/runtime/gate2.issuance.log
+      ELYON_APPROVAL_LOG_PATH: /app/EVIDENCE/runtime/gate2.approval.log
       ELYON_TARGET_URL_ALLOWLIST: target
       # gate2 is defined only here, so it does not inherit the TLS overlay's CA bundle
       # and /certs mount the way `gate` does; without them its forward to the TLS
       # target fails closed (CERTIFICATE_VERIFY_FAILED -> REF_PEP_FAIL_CLOSED).
       ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+      ELYON_TLS_CLIENT_CERT: /certs/gate.crt:/certs/gate.key
     volumes:
       - ./governance/approver_key_record.json:/app/deploy/governance/approver_key_record.json:ro
+      - ./governance/manifest.governance.json:/app/MANIFEST/manifest.json:ro
       - ./tls/certs:/certs:ro
+      - governance-runtime:/app/EVIDENCE/runtime
     depends_on: [redis, target]
     ports:
       - "8001:8001"
@@ -69,12 +114,14 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    # Runs the human approver surface on demand:
-    #   docker compose -f ... --profile approver run --rm approver-cli \
-    #       --decision-sha256 <X> --approval-request-id <Y> --grant-id <Z> --yes
+    # Runs the human approver surface on demand; reads the gate's 202 JSON on stdin:
+    #   docker compose -f ... --profile approver run --rm -T approver-cli --yes < pending.json
+    # (omit --yes to be prompted to type 'approve'). Prints the signed grant JSON.
     entrypoint: ["python", "-m", "IMPLEMENTATION.approver_cli"]
     environment:
       # CUSTODY: the approver PRIVATE key lives ONLY in this process, never on the gate.
       ELYON_APPROVER_KEY_HEX: ${ELYON_APPROVER_KEY_HEX}
       ELYON_APPROVER_KEY_ID: ${ELYON_APPROVER_KEY_ID}
 
+volumes:
+  governance-runtime:

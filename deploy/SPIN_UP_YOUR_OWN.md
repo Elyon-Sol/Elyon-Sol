@@ -37,9 +37,11 @@ cd deploy && docker compose up --build
 > walkthrough below run verbatim; the `authz` overlay (sidecar ALLOW control + DENY attempts; Envoy config
 > validated); the `tls` overlay (the same walkthrough over the dev CA); the `replay` overlay (a token
 > used at one target instance refused at the other); and the `governance` overlay (both gate replicas
-> forward over TLS; a replica declared multi-instance without Redis refuses to start). NOT yet run:
-> the governance approval legs (202 -> grant -> single forward), which need a manifest that declares
-> high-impact actions, and the `authz.tls` overlay.
+> forward over TLS; a replica declared multi-instance without Redis refuses to start). The governance
+> approval legs also ran, under the overlay's own deployment manifest: a direct call without the gate's
+> client certificate fails at TLS; a routed call is held `202`; an approver-CLI grant presented at the
+> OTHER replica forwards exactly once; the replayed grant is refused on both. NOT yet run: the
+> `authz.tls` overlay.
 
 That's the three-service core on `localhost:8000 / :9000 / :9100`. To add the ext-authz sidecar
 (`localhost:9200`) as well:

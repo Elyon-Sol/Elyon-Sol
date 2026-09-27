@@ -248,6 +248,7 @@ deploy/tls/certs/
 # + the per-deployment signed record. Out-of-band material, never committed.
 deploy/governance/*.hex
 deploy/governance/approver_key_record.json
+deploy/governance/published_hashes.governance.json
 !EVIDENCE/proofs/**/*.log
 
 # Private business / career / IP working docs — MUST stay out of the public repo.

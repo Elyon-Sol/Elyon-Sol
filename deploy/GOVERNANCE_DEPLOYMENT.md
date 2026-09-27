@@ -41,7 +41,11 @@ key, even if well-signed and carrying a different key_id, can NEVER authorize an
    are git-ignored there; `docker-compose.governance.yml` mounts the record into both gate
    replicas at `/app/deploy/governance/approver_key_record.json`. Add the printed public
    values to `deploy/.env`. On separate hosts, move `approver_signing_key.hex` to the
-   approver host and `root_signing_key.hex` to the publisher host.
+   approver host and `root_signing_key.hex` to the publisher host. Then
+   `PYTHONPATH=. python deploy/governance/make_governance_record.py` writes the published
+   record for `deploy/governance/manifest.governance.json` (the overlay's DEPLOYMENT manifest,
+   which declares `HIGH_IMPACT`) and prints the `ELYON_GOV_PINNED_ROOT_SHA256` anchor for
+   `deploy/.env`. The committed `MANIFEST/manifest.json` stays the default for other stacks.
 1. **Publish a key record with an `approver`-role entry.** Add the approver public key to
    the publisher-signed key record (the same record format `key_record_source` validates),
    with `"role": "approver"`. The gate's issuer key, if present in the record, carries
@@ -59,9 +63,12 @@ key, even if well-signed and carrying a different key_id, can NEVER authorize an
 
 **Acceptance (R1).**
 - A grant signed by the `approver`-role key for the held decision -> forwarded (200).
-- A grant signed by the gate's `issuer`-role key (a self-approval) -> `REF_APPROVAL_KEY_UNKNOWN`
-  (the role-distinct map never contains it), even though `approver_key_id != gate_key_id`
-  alone would pass. A role-less key -> same refusal.
+- A grant signed by the gate's `issuer`-role key (a self-approval): under the gate's own key id
+  -> `REF_APPROVAL_SOD` (separation of duties is checked first); under any OTHER key id ->
+  `REF_APPROVAL_KEY_UNKNOWN` (the role-distinct map never contains it), even though
+  `approver_key_id != gate_key_id` alone would pass; claiming the real approver's key id ->
+  `REF_APPROVAL_SIGNATURE_INVALID`. A role-less key -> `REF_APPROVAL_KEY_UNKNOWN`.
+  (All three observed on the compose governance stack, 2026-09-27.)
 - Revoke the approver key in the record (or expire its window) -> its grants stop being
   honored without any gate redeploy beyond re-reading the record.
 
@@ -83,7 +90,9 @@ A horizontally-scaled gate must keep ONE shared store, or it must refuse to star
   desired fail-closed: no per-process pending set / replay cache under declared scale.
 - **Cross-instance single-use:** issue a 202 on `gate` (instance A); present the approved
   grant to `gate2` (instance B) -> forwarded EXACTLY once. Replay the SAME grant to either
-  replica -> `REF_APPROVAL_REPLAY`, no second execution. Without the shared store each
+  replica -> refused, no second execution: `REF_APPROVAL_REQUEST_UNKNOWN`, because the shared
+  202 slot is consumed before the grant is claimed (pep.py order); grant single-use
+  (`REF_APPROVAL_REPLAY`) is the backstop behind it. Without the shared store each
   replica would honor it once (the gap R2 closes).
 - **Pending visibility:** a 202 issued on A is consumable on B (no `REF_APPROVAL_REQUEST_UNKNOWN`
   purely from hitting a different replica).
