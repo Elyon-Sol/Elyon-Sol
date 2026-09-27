@@ -2264,3 +2264,9 @@ Native Linux clone of `origin/main` (Python 3.14.4, `.venv`), the new developmen
 **Referent.** GitHub Actions run 36289068922 on push `7115c5f` (build `a043304` + the VL-151 close): CPython 3.14.7 installed from `requirements-dev.txt`; `645 passed`; `PASS: EVIDENCE/proofs/g5_multiprocess_tls_001_runner.py`; "All hermetic runners passed."; conclusion `success`. This runner had been skipped in CI as a runner-networking incompatibility. It now passes on a hosted runner with only its test-CA extensions changed, which confirms VL-151 (b)'s diagnosis in CI and not only locally. `authz_sidecar_tls_001_runner` stays skipped (cause undiagnosed). Still NOT confirmed: `docker compose up` (docker-group access pending) and the live-site republish (the live page still lacks the footer G5 line at the time of this entry).
 
 **Honest scope.** CI characterization of the author's own code. NOT external validation; NOT G5. GR-4: appended, not edited.
+
+## VL-151 follow-up 2 — live elyon-sol.io republished from the full site/index.html; (c) resolved on the live surface (2026-09-27)
+
+**Referent.** Cache-busted fetch of https://elyon-sol.io (unique query string, `Cache-Control: no-cache`; Cloudflare `cf-cache-status: MISS`; `last-modified` Sun, 27 Sep 2026 02:46:00 GMT), per the VL-149 lesson. The footer honest-scope line "No external validation yet — G5 is the open finish line." is present (1 occurrence; 0 before the republish). Visible text split into 148 sentences on both sides matches `site/index.html` at `4789838`. The one difference is the WordPress page-title prefix that the host adds. All four `<pre>` code blocks (the self-host and break-it commands) are byte-identical to the repo after entity-unescaping, so WordPress did not convert their quotes to typographic ones.
+
+**Honest scope.** Public-surface currency check of the author's own site. NOT external validation; NOT G5. GR-4: appended, not edited.

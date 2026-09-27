@@ -49,7 +49,7 @@ current state only - `git log --oneline` is the record of what was done.
 
 **(0) DONE - CI confirmed on Python 3.14** (run 36289068922 on `7115c5f`: 645 passed, all hermetic runners passed including `g5_multiprocess_tls_001_runner`; VL-151 follow-up). Still open, AUTHOR decision: whether the 2026-07-27 D-layer freshness-waiver bypass reproduced by execution (`docs/design/domain_validity_withdrawal.md`) warranted a VL entry (`d41434d` says not).
 
-**(1) REPUBLISH elyon-sol.io from the WHOLE `site/index.html`.** The live WordPress page is a copy truncated mid-sentence at "(REF_VERIFY_KEY_RECORD_STALE"; the footer, including "No external validation yet - G5 is the open finish line.", is missing. After publishing, confirm the live page ends with that footer line.
+**(1) DONE - elyon-sol.io republished from the full `site/index.html`** and verified live with a cache-busted fetch: the footer G5 line is present, the text matches the repo, and the code blocks are byte-identical (VL-151 follow-up 2). The next item is (2).
 
 **(2) RUN THE COMPOSE STACK FOR REAL.** Add the account to the `docker` group (`sudo usermod -aG docker $USER`, re-login), then `deploy/SPIN_UP_YOUR_OWN.md` end-to-end (base; then the tls / authz / replay / governance overlays). Replace the "docker compose not yet run" caveats in README / SPIN_UP / BREAK_IT_IN_60_SECONDS / site / compose + Dockerfile headers with the result.
 
