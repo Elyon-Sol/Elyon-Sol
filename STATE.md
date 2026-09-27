@@ -51,7 +51,7 @@ current state only - `git log --oneline` is the record of what was done.
 
 **(0) DONE - CI confirmed on Python 3.14** (run 36289068922 on `7115c5f`: 645 passed, all hermetic runners passed including `g5_multiprocess_tls_001_runner`; VL-151 follow-up). Still open, AUTHOR decision: whether the 2026-07-27 D-layer freshness-waiver bypass reproduced by execution (`docs/design/domain_validity_withdrawal.md`) warranted a VL entry (`d41434d` says not).
 
-**(1) REPUBLISH elyon-sol.io AGAIN from the whole `site/index.html`.** The 2026-09-27 republish (VL-151 follow-up 2) predates `fdc3ed9`, which corrected the site's sidecar step (e) and its verification note. After publishing, confirm with a cache-busted fetch that the footer G5 line is present and that the `#tryit` code blocks match the repo byte for byte.
+**(1) DONE - elyon-sol.io republished with the step-(e) fix** and verified live (cache-busted: footer G5 line present, the text matches `site/index.html` at `88a32ca`, and the code blocks are byte-identical; VL-152 follow-up). The next actionable item is (3); the open parts of (2) need an author decision on a high-impact manifest.
 
 **(2) DONE - the compose stack was run for real (VL-152).** Base, tls, replay and governance overlays; authz with the sidecar ALLOW control; Envoy config validated. Still open under this heading: the governance approval legs (202 -> grant -> single forward, cross-replica grant single-use; they need a manifest that declares high-impact actions, and the committed one is hash-pinned with none); the `authz.tls` overlay; the request path through Envoy (:10000).
 

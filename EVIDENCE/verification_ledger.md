@@ -2291,3 +2291,9 @@ Prior substantive entry: VL-151 (whose self-host fix (a) confirms). Cites VL-104
 
 #### Environment note
 Native Linux clone (Python 3.14.4 host, 3.14.7 in the image). The assistant ran the stacks, noticed that step (e)'s DENY had no positive control, diagnosed (b) and (c), wrote the fixes and this block; the author granted docker-group access and asked for the run. GR-4: appended, not edited.
+
+## VL-152 follow-up — live elyon-sol.io republished with the step-(e) fix; verified (2026-09-27)
+
+**Referent.** Cache-busted fetch of https://elyon-sol.io (`cf-cache-status: MISS`; `last-modified` Sun, 27 Sep 2026 03:11:19 GMT). The footer G5 honest-scope line is present. The corrected sidecar step (e), which sends `X-Elyon-Sol-Interaction: $I_HDR`, is live (3 occurrences). Visible text matches `site/index.html` at `88a32ca` sentence for sentence (148 each); the one difference is the WordPress title prefix. All four `<pre>` code blocks are byte-identical to the repo.
+
+**Honest scope.** Public-surface currency check of the author's own site. NOT external validation; NOT G5. GR-4: appended, not edited.
