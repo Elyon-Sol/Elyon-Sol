@@ -2297,3 +2297,29 @@ Native Linux clone (Python 3.14.4 host, 3.14.7 in the image). The assistant ran 
 **Referent.** Cache-busted fetch of https://elyon-sol.io (`cf-cache-status: MISS`; `last-modified` Sun, 27 Sep 2026 03:11:19 GMT). The footer G5 honest-scope line is present. The corrected sidecar step (e), which sends `X-Elyon-Sol-Interaction: $I_HDR`, is live (3 occurrences). Visible text matches `site/index.html` at `88a32ca` sentence for sentence (148 each); the one difference is the WordPress title prefix. All four `<pre>` code blocks are byte-identical to the repo.
 
 **Honest scope.** Public-surface currency check of the author's own site. NOT external validation; NOT G5. GR-4: appended, not edited.
+
+## VL-153 — Governance approval legs A–D run under docker compose against a deployment manifest; two documented refusal codes CORRECTED to the code's order (2026-09-27)
+
+**Claim.** `deploy/GOVERNANCE_DEPLOYMENT.md` sections 1, 2 and 4: with the governance substrate wired (R1 signed-chain approver trust, R2 shared Redis, Feature 2 layer 2 mTLS), (A) a direct call that bypasses the gate is refused at TLS; (B) a routed, unapproved high-impact call is held `202 PENDING_APPROVAL` and the target is never called; (C) a human grant releases it exactly once, including when the 202 came from a different replica; (D) a replayed grant is refused with no second execution. Also (R1) a self-approval with the gate's issuer key is refused, and (R2) replay yields `REF_APPROVAL_REPLAY`.
+
+**Construct.** `docker compose -f docker-compose.yml -f docker-compose.tls.yml -f docker-compose.governance.yml` (commit `9628ddb`), with gate, gate2, Redis, a TLS target requiring client certificates, and the publisher. The overlay runs a DEPLOYMENT manifest, `deploy/governance/manifest.governance.json` (`HIGH_IMPACT: ["role"]`, version `1.0-governance`), mounted over `MANIFEST/manifest.json`. The publisher serves that manifest's record from `make_governance_record.py`, and the target anchors to it. The committed reference manifest, published record, canon and evaluator are untouched. R1 key ceremony via `make_approver_key_record.py`. The grant for C was minted by the separate `approver-cli` container (profile `approver`) from the gate's 202 JSON on stdin. Keys were read from the git-ignored files into process environment only and never printed.
+
+**Referent.** Execution, 2026-09-27. Both gates STARTED with `HIGH_IMPACT` declared, which the wiring guard permits only with signed-chain approver provenance (G-01), a non-empty approver map (G-06), an approval log (G-04) and paired shared stores (G-03). Publisher `manifest_version` = `1.0-governance`. `/received` began at 0.
+(A) Direct `POST /target` without the gate client certificate: curl exit 56 (handshake refused); `/received` 0; the target log shows no request from the attempt.
+(B) `POST` gate :8000 → 202 `PENDING_APPROVAL`; `/received` 0. The same call at gate2 without a grant → 202.
+(C) `approver-cli --yes` minted a grant (`approver_key_id` `approver-2026-09-27`); presented at gate2 (:8001) → 200 ELIGIBLE; `/received` 1 (the 202 issued on gate was consumed on gate2 via the shared pending set).
+(D) The same grant at :8000 and at :8001 → 403 `REF_APPROVAL_REQUEST_UNKNOWN` on both; `/received` still 1.
+(R1) Gate issuer key as `approver_key_id` = the gate's own id → `REF_APPROVAL_SOD`; under another id → `REF_APPROVAL_KEY_UNKNOWN`; claiming the real approver's id → `REF_APPROVAL_SIGNATURE_INVALID`. No execution for any of these.
+(pin) A client pinned to the reference manifest, against the governance gate → 403 `G_MANIFEST_INTEGRITY`.
+(audit) `reconcile_approvals` over both replicas' issuance + approval logs → `{"forwarded": 1, "held": 1, "consumed": 1, "violations": 0, "clean": true}`.
+DISPUTED (documentation only). The doc said a replayed grant yields `REF_APPROVAL_REPLAY`. The code consumes the shared 202 slot BEFORE claiming the grant (`pep.py`), so a replay stops at `REF_APPROVAL_REQUEST_UNKNOWN`, and grant single-use is the backstop. The doc said a self-approval yields `REF_APPROVAL_KEY_UNKNOWN`. That holds only under a different key id; `verify_grant` checks separation of duties first (step 3), so the gate's own id yields `REF_APPROVAL_SOD`. Both lines were corrected in `9628ddb`. The security outcome was as claimed in every case.
+
+**Status.** RECORDED. The legs VL-118 proved in-process now hold across real containers, two replicas, Redis and mTLS. NOT run: Feature 2 layer 1 (inline body-binding through Envoy with the body extractor) and layer 3 (network ACL/egress, an operator topology); the `authz.tls` overlay. Suite 645; repo_health green.
+
+**Honest scope.** Single host: every service, and the approver key file, is on one machine, so custody separation is simulated by process and container, not by host. The client certificate used for operator reads of `/received` is the gate leaf. White-box and author-side. NOT external validation; NOT G5.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-152. Cites VL-118 (the in-process integration proof whose four legs this repeats over containers), VL-119/VL-148 (R1 signed-chain approver trust), VL-120 (R2 shared store), VL-117 (Feature 2 layer 2 mTLS), VL-123 (the G-01/03/04/06 wiring guard exercised at start-up). Does not cite its own hashes.
+
+#### Environment note
+Native Linux clone; Docker 29.1.3; image Python 3.14.7. The author chose a separate deployment manifest over changing the committed default (it would force approval on every call and stop the base quickstart starting, via the wiring guard). The assistant built the manifest, generator and overlay, ran the legs, and wrote this block. GR-4: appended, not edited.
