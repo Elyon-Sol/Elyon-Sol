@@ -24,6 +24,12 @@ record).
 | `IMPLEMENTATION/envelope.py` | `build_envelope` / `sign_envelope` / `reassert` - the admissibility envelope and canonical CCS reassertion. (Artifact 05; VL-029/040/041/066) | library |
 | `IMPLEMENTATION/verifier.py` | `verify_envelope`: signature -> currency -> binding; the `REF_VERIFY_*` vocabulary's canonical home. (Artifact 08; VL-037/040/042/075) | library |
 | `IMPLEMENTATION/transport.py` | TLS-aware HTTP seam for the gate push and record fetch (CA bundle / client cert config). (Artifact 12 step 1) | library; env per artifact 12 |
+| `IMPLEMENTATION/impact.py` | Governance Feature 1a: impact classification of an interaction (fail-closed on missing/malformed `HIGH_IMPACT`). (docs/design/governance_layer_design.md 1.2-1.3; VL-113) | library (called by pep.py) |
+| `IMPLEMENTATION/approval.py` | Governance Feature 1b: the out-of-band approval grant - mandatory `grant_id`, single-use, bound to the decision. (Design 1.4; VL-114/115) | library (called by pep.py) |
+| `IMPLEMENTATION/approver_trust.py` | Governance R1: approver provenance + role, resolved from the signed key-record chain. (Design 1.4; VL-119/148) | library (called by pep.py) |
+| `IMPLEMENTATION/pending_store.py` | Governance R2: shared pending-approval set (`202 PENDING_APPROVAL` slot), sibling of the replay-cache seam. (Design 1.4; VL-120) | library; env `ELYON_PENDING_REDIS_URL` |
+| `IMPLEMENTATION/governance_wiring.py` | Deployment-wiring guard: refuses to start a governance deployment whose wiring defeats the mechanisms (G-01/03/04/06). (Design 1.2-1.6; VL-123/148) | library (called at pep start-up) |
+| `IMPLEMENTATION/approver_cli.py` | The human approver surface: mints a grant with a key the gate cannot reach. ([FIX H5]; VL-116) | `python -m IMPLEMENTATION.approver_cli --pending <202.json> [--ttl 300] [--yes]` (key from `ELYON_APPROVER_KEY_HEX`) |
 
 ## 2. Target side (executors)
 
@@ -33,6 +39,8 @@ record).
 | `IMPLEMENTATION/executor_sdk.py` | `ExecutorGate.check(envelope, interaction) -> Decision` - the whole executor sequence (record + verify + replay) in one component for integrators. (Artifact 18; VL-078) | library |
 | `IMPLEMENTATION/replay_cache.py` | The exactly-once seam: `InMemoryReplayCache` / `ExternalStoreReplayCache` / `RedisReplayStore` + `replay_cache_from_env()`. (Artifact 16/24; VL-076/094) | library; env: `ELYON_REPLAY_REDIS_URL` |
 | `IMPLEMENTATION/mcp_server.py` | Real MCP server (JSON-RPC 2.0 / stdio) with the admissibility gate on `tools/call` - a tool fires once or not at all. (Artifact 17; VL-077) | `python -m IMPLEMENTATION.mcp_server` (stdio; see artifact 17) |
+| `IMPLEMENTATION/authz_sidecar.py` | HTTP ext-authz sidecar: the shipped envelope verifier as an OPA/Envoy-style ALLOW/DENY (fails closed). (docs/design/opa_sidecar_design.md; VL-104/105) | `uvicorn IMPLEMENTATION.authz_sidecar:app` (port 9200 in compose) |
+| `IMPLEMENTATION/replay/receipt.py` | Replay receipts, canonicalized with `envelope.canonical_json`. (SES-5 / VL-143) | library |
 
 ## 3. Trust records (publish + read)
 
@@ -69,15 +77,21 @@ record).
 | `deploy/Dockerfile` + `docker-compose.yml` / `.tls.yml` / `.replay.yml` | The packaged stack: gate + reference target + publisher; TLS overlay; shared-Redis replay overlay. (Artifacts 20/21; VL-081/082/094) | `docker compose -f deploy/docker-compose.yml [-f ...tls.yml] [-f ...replay.yml] up --build` per `deploy/runbook.md` |
 | `deploy/bootstrap_config.py` | Generates a coherent deployment config (keys, records, env) that round-trips admit->verify. (VL-081) | `python deploy/bootstrap_config.py` per runbook |
 | `deploy/tls/gen_certs.py` + `trust_bootstrap.md` | Dev-CA certificate generation and the trust bootstrap procedure. (Artifact 21; VL-082) | `python deploy/tls/gen_certs.py` |
-| `deploy/runbook.md` / `docker-compose*.yml` | The single-box + containerized live procedures (the author's live tier: VL-085..096). | documents |
+| `deploy/runbook.md` / `docker-compose*.yml` | Stand-up procedures and the compose stack: base (gate/target/publisher) + overlays `tls`, `replay` (Redis, second target), `authz` / `authz.tls` (sidecar + Envoy + OPA), `governance` (HIL + two gate replicas). Self-host guide: `deploy/SPIN_UP_YOUR_OWN.md`. | `cd deploy && docker compose -f docker-compose.yml [-f <overlay>] up --build` |
+| `requirements.txt` / `requirements-dev.txt` | Pinned runtime / test dependencies; the same set is used by `.venv`, CI, and `deploy/Dockerfile`. | `.venv/bin/pip install -r requirements-dev.txt` |
+| `deploy/rotate_publisher_key.py` | Publisher signing-key rotation helper for the signed published-record endpoint. (VL-108/122) | run on the publisher host; never prints the private key |
+| `deploy/governance/make_approver_key_record.py` + `approver_trust_bootstrap.py` | Governance key ceremony (approver + root keypairs, signed key record, self-check) and the governance-overlay gate entrypoint. (deploy/GOVERNANCE_DEPLOYMENT.md) | per GOVERNANCE_DEPLOYMENT.md |
+| `deploy/monitoring/` + `deploy/tools/safe_env.sh` | Key-record freshness monitor (systemd timer + alert unit) and secret-safe `.env` helpers. (VL-146) | per the READMEs in each directory |
 
 ## 7. Repository governance (method on record)
 
 | Tool | What it does | Invocation |
 |---|---|---|
 | `scripts/lock_canon.sh`, `establish_ledger.sh`, `append_vl*.sh`, `update_state_vl011.sh` | The scripts that built the canon lock and the early ledger entries - kept as method-on-record, not for re-running. (VL-006..VL-011) | historical |
-| `POE/generate_poe_hashes.py` | Proof-of-existence hash manifest generator for the POE record. | `python POE/generate_poe_hashes.py` |
-| `docs/methodology/` | The reusable procedure artifacts: verification-request template (+ the committed VL-100 request), build-resumption template, apply-script template, session mechanics lessons, deposit-readiness audit, falsifiable claim sheet. | documents |
+| `POE/generate_poe_hashes.py` | HISTORICAL: generated the 2026-05-04 proof-of-existence snapshot `POE/POE_SHA256_HASHES.txt`. Not re-runnable (its inputs were moved to `EVIDENCE/archive/`) and the snapshot does not match the current tree - see `POE/README.md`. | method on record, not for re-running |
+| `docs/methodology/` | The reusable procedure artifacts: verification-request, build-resumption and cross-model evaluation templates, the apply-script template, the cross-model adversarial audit method, the deposit-readiness audit, the external-verification-readiness checklist, and the falsifiable claim sheet. | documents |
+| `scripts/repo_health.py` | Read-only continuity checks: GR-6 STATE-archive reconstruction, ledger-index currency, STATE.md section ordering. Run at resume and close. | `python scripts/repo_health.py` (exit 0 = green) |
+| `STATE_archive/reconstruct.py` | The GR-6 byte-preserving reconstruction proof for the STATE.md archive (called by repo_health). | `python STATE_archive/reconstruct.py` |
 
 ---
 

@@ -83,6 +83,11 @@ def gen_certs(tmp):
         .not_valid_before(_now() - datetime.timedelta(days=1))
         .not_valid_after(_now() + datetime.timedelta(days=2))
         .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+        .add_extension(x509.KeyUsage(
+            digital_signature=True, content_commitment=False, key_encipherment=False,
+            data_encipherment=False, key_agreement=False, key_cert_sign=True,
+            crl_sign=True, encipher_only=False, decipher_only=False), critical=True)
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()), critical=False)
         .sign(ca_key, hashes.SHA256())
     )
     leaf_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -100,6 +105,12 @@ def gen_certs(tmp):
         .not_valid_after(_now() + datetime.timedelta(days=2))
         .add_extension(san, critical=False)
         .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+        # Python >= 3.13 verifies with VERIFY_X509_STRICT, which rejects a CA without
+        # KeyUsage and a leaf without an Authority Key Identifier. That, not
+        # GitHub-runner loopback reachability, is why this runner failed. Same
+        # extension set as deploy/tls/gen_certs.py.
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(leaf_key.public_key()), critical=False)
+        .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key()), critical=False)
         .sign(ca_key, hashes.SHA256())
     )
     ca_path = os.path.join(tmp, "ca.pem")

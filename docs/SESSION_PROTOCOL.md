@@ -18,9 +18,8 @@ the OUTPUT of these steps into the session - do not summarize them.
        git status
    Confirm: working tree clean, up to date with origin. If not, resolve
    that first - a dirty tree from a prior session means the prior close
-   protocol was not completed. (In the sandbox, first rule out a
-   mount/index artifact before assuming real corruption - see "Environment /
-   sandbox recovery" at the end of this file.)
+   protocol was not completed. Then run the continuity checks:
+       python scripts/repo_health.py      # exit 0 = green
 
 2. Read STATE.md, BOUNDED. It is the entry point, but do NOT read it in
    full: it is ~200k bytes and reading it whole leaves no room to work.
@@ -36,9 +35,11 @@ the OUTPUT of these steps into the session - do not summarize them.
    History older than the current entry is under `STATE_archive/`
    (GR-6, byte-preserving; manifest `STATE_archive/INDEX.md`).
 
-3. Read the tail of the verification ledger:
-       cat EVIDENCE/verification_ledger.md
-   Read at minimum the last 2-3 entries. This tells you what was most
+3. Read the tail of the verification ledger, BOUNDED (it is too large to
+   read whole):
+       grep -nE '^#{2,3} VL-' EVIDENCE/verification_ledger.md | tail -3
+   then `sed -n '<start>,$p'` from the third-last heading. Read at minimum
+   the last 2-3 entries. This tells you what was most
    recently verified and how.
 
 4. If working with a model: give it the primary sources for whatever
@@ -87,7 +88,8 @@ these are done - an incomplete close breaks the next resume.
        git log --oneline -5                  # confirm origin matches HEAD
 
 5. Confirm the close is clean:
-       git status        # must be: clean, up to date with origin
+       git status                    # must be: clean, up to date with origin
+       python scripts/repo_health.py # must exit 0
    If git status is not clean and synced, the close protocol is not
    complete. Finish it before stopping.
 
@@ -106,7 +108,23 @@ before anything else.
 
 ---
 
+## Environment (current)
+
+From 2026-09-27 the development environment is a native Linux clone of
+`origin/main` (Python 3.14 in `.venv/`, dependencies from
+`requirements-dev.txt`; CI and `deploy/Dockerfile` use the same Python and
+pins). The former native Windows checkout, and the Windows-mounted container
+sandbox described below, are deprecated. Git and push work directly; none of
+the recovery rules below are needed. Machine specifics (docker group, `gh`
+auth, the WordPress-hosted site) are in `CLAUDE.md` "Environment".
+
+---
+
 ## Environment / sandbox recovery
+
+**HISTORICAL - deprecated 2026-09-27 with the Windows environment.** Kept as
+method-on-record (it encodes VL-069's recovery); it does not apply to the
+current Linux checkout.
 
 Applies ONLY when running in the a container sandbox - a Linux container
 with this repo mounted from Windows. A native git checkout can ignore this

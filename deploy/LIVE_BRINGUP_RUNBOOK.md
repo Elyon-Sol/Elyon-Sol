@@ -1,5 +1,10 @@
 # Live public-surface bring-up runbook (artifact 29 Phase 1)
 
+> **HISTORICAL (2026-09-27).** The procedure that brought up the public surface
+> (VL-108). Those nodes were retired on 2026-07-20 and the project is paused. It references
+> `deploy/G5_GO_LIVE.md` and an attacker pack that are no longer in the repository. To stand
+> up your own instance, start from `deploy/SPIN_UP_YOUR_OWN.md`.
+
 Two real VPS hosts + your domain + Let's Encrypt. Closes Gate 1 and retires the
 dev-CA ceiling. Consolidates deploy/runbook.md section 3, deploy/tls/trust_bootstrap.md
 Path B, and EVIDENCE/proofs/attack_suite_live_runner.py into one ordered procedure.

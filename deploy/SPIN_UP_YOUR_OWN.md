@@ -1,7 +1,7 @@
 # Spin up your own Elyon-Sol surface
 
-The public demo surface at **elyon-sol.io** (gate / target / sidecar / publisher) was retired on
-**2026-07-20**. Everything it ran is open source (AGPL-3.0), so you can stand up the identical
+The public demo surface at **elyon-sol.io** (gate / target / sidecar / publisher) was taken offline
+on **2026-07-20**, when active development was paused. Everything it ran is open source (AGPL-3.0), so you can stand up the identical
 four-service admission surface yourself — locally in about two commands, or on your own hosts —
 and run the same "break-it" walkthrough against your own instance.
 
@@ -33,6 +33,10 @@ python deploy/bootstrap_config.py
 cd deploy && docker compose up --build
 ```
 
+> **Verification status.** The walkthrough below was verified with these three services run as local
+> `uvicorn` processes (same configuration, loopback addresses). The docker compose path itself has not
+> yet been run end-to-end by the author on the current environment.
+
 That's the three-service core on `localhost:8000 / :9000 / :9100`. To add the ext-authz sidecar
 (`localhost:9200`) as well:
 
@@ -54,8 +58,14 @@ export TARGET=http://localhost:9000
 export AUTHZ=http://localhost:9200     # only if you brought up the sidecar overlay
 ```
 
-Then follow **`deploy/BREAK_IT_IN_60_SECONDS.md`**: mint a governed call at `$GATE/governed-call`,
-present the returned envelope to `$TARGET/target` (it acts once), then try the refusals — no token,
+One detail matters: the gate forwards to the target **inside the compose network**, so the
+`target_url` you send to `$GATE/governed-call` is the target's in-network identity,
+`http://target:9000/target` (the only host the compose gate's `ELYON_TARGET_URL_ALLOWLIST` admits).
+Tokens you present yourself go to `$TARGET/target` on your host; the target binds to its configured
+identity, not to the address you reached it by.
+
+Then follow **`deploy/BREAK_IT_IN_60_SECONDS.md`**: mint a governed call at `$GATE/governed-call`
+(the gate forwards it and the target acts once), then try the refusals — no token,
 replay, forge a byte, rebind the action, or get the sidecar to ALLOW. The manifest pin in that
 walkthrough (`expected_manifest_sha256`) matches the repo's committed `MANIFEST/manifest.json`, so
 it is valid against any instance you build from this checkout. Adjudicate a suspected break with
@@ -79,6 +89,9 @@ bring-up the public surface used, and `deploy/tls/` + `docker-compose.tls.yml` a
 
 ## Note
 
-Active development of this project is retired; the code is AGPL-3.0 and yours to run, fork, and
-build on. Spinning this up reproduces the reference surface — it does **not** re-open the credited
-red-team challenge, which is closed.
+Active development of this project is paused, not ended — the author may resume it. The code is
+AGPL-3.0 and yours to run, fork, and build on. Spinning this up reproduces the reference surface — it
+does **not** re-open the credited red-team challenge, which is closed.
+
+**Honest scope:** Elyon-Sol has never been validated by an external party (G5 is not met). A
+self-hosted run is your own test, not an external validation of the project.

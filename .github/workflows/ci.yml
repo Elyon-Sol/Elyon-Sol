@@ -5,7 +5,7 @@ name: CI
 # exit-coded EVIDENCE/proofs runner; any non-zero exit fails the build.
 #
 # Some runners are deliberately excluded (see the skip cases below): the external
-# webhook runner, the multi-process-TLS runner, and the AUTHOR-executed live attack
+# webhook runner, the sidecar loopback-TLS runner, and the AUTHOR-executed live attack
 # runner. external_interception_webhook_001_runner.py
 # is NON-HERMETIC (it posts to the third-party webhook.site receiver) and is not
 # reproducible in CI. Every other runner is loopback / in-process and self-contained.
@@ -28,13 +28,13 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # cryptography is pinned (VL-040); the rest are the gate's runtime + test deps.
-          pip install pytest "cryptography==44.0.0" fastapi httpx requests uvicorn
+          # Same pinned set as the development environment (cryptography per VL-040).
+          pip install -r requirements-dev.txt
 
       - name: Run the pytest suite
         run: python -m pytest TESTS/ -q
@@ -57,23 +57,18 @@ jobs:
                 # is the author's, on real hosts.
                 echo "::notice::SKIP AUTHOR-executed live attack runner (needs a real surface): $r"
                 continue ;;
-              *g5_multiprocess_tls*)
-                # Stands up three long-lived uvicorn+TLS OS-process servers and
-                # polls them. On GitHub hosted runners the servers start cleanly
-                # (empty logs, no crash) but are not reachable over loopback TLS
-                # within the readiness budget - an environment incompatibility,
-                # not a logic bug. Run locally; the cross-host / divergent-disk
-                # evidence class is still gated in CI by g5_cross_host,
-                # g5_signed_cross_host, and root_recovery_cross_host.
-                echo "::notice::SKIP CI-env-sensitive multi-process-TLS (verified locally): $r"
-                continue ;;
+              # g5_multiprocess_tls was skipped here as a "GitHub loopback-TLS
+              # reachability" failure. The real cause was Python >= 3.13 strict
+              # X.509 verification rejecting its test CA (no KeyUsage / no
+              # Authority Key Identifier); fixed 2026-09-27, so it runs in CI again.
               *authz_sidecar_tls*)
-                # Serves the ext-authz sidecar on a loopback uvicorn+TLS socket and
-                # drives ALLOW/DENY over an HTTPS client (VL-105). Same GitHub-hosted
-                # loopback-TLS reachability sensitivity as the multi-process-TLS
-                # runner; the CI-gated equivalent is the in-memory handshake test
-                # TESTS/deploy/test_authz_sidecar_tls.py. Run locally / on the VMs.
-                echo "::notice::SKIP CI-env-sensitive sidecar loopback-TLS (verified locally): $r"
+                # Serves the ext-authz sidecar on a loopback uvicorn+TLS socket
+                # (fixed port 9247) and drives ALLOW/DENY over HTTPS (VL-105). Its
+                # certs come from deploy/tls/gen_certs.py (already strict-X.509
+                # clean) and it passes on the development machine (Python 3.14);
+                # the cause of its CI failure is NOT diagnosed. The CI-gated
+                # equivalent is TESTS/deploy/test_authz_sidecar_tls.py.
+                echo "::notice::SKIP sidecar loopback-TLS (CI failure undiagnosed; passes locally): $r"
                 continue ;;
             esac
             echo "===== $r ====="

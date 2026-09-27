@@ -1,5 +1,12 @@
 # Break Gargoyle - open challenge
 
+> **ARCHIVED - not an active challenge.** This is the draft recruiting asset from the live
+> period (before 2026-07-20). Active development is paused, the public test hosts listed below are
+> **offline**, and no rewards, credit mechanics, or safe harbor are on offer - see `SECURITY.md`
+> for current reporting. To test, self-host (`deploy/SPIN_UP_YOUR_OWN.md`). **Honest scope:**
+> Elyon-Sol has never been validated by an external party (G5 is not met). The body below is
+> preserved unedited as a record, including its unfinished final line.
+
 DRAFT - public recruiting asset, uncommitted. This is the ONLY document an
 external attacker receives (the decontaminated pack, Gate 4). It contains no
 internal framing: no design rationale, no test results, no confidence claims, no

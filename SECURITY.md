@@ -43,18 +43,18 @@ self-check before you submit.
 - Acting on a genuinely valid, unused token — that is correct behavior.
 - "An authorized action could be unwise" — the gate checks authorization, not wisdom.
 - Stealing the signing key, or compromising the host OS / cloud / TLS by means outside the
-  request protocol. These are welcome as separate, credited infrastructure reports.
+  request protocol. These are welcome as separate infrastructure reports.
 
-## Reports (project retired)
+## Reports (project paused)
 
-The project is retired, so the former credited-challenge mechanics — the 90-day coordinated-
+The project is paused, so the former credited-challenge mechanics — the 90-day coordinated-
 disclosure window, ledger / CVE credit, and acknowledgment in a next Zenodo Enforcement-Evidence
 Addendum — are wound down. A genuine security report is still welcome at the address above and
 will be handled on a best-effort basis.
 
 ## Testing (self-host)
 
-The four-node public test surface is **retired**; there are no in-scope live hosts. The whole
+The four-node public test surface is **retired** (offline); there are no in-scope live hosts. The whole
 admission surface is open source — stand it up locally
 ([`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md)) and test your own instance; testing
 the open-source code locally needs no authorization. There is no live public surface, and

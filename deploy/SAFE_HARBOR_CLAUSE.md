@@ -1,8 +1,13 @@
 # Safe-harbor clause
 
-> Not legal advice. This is the good-faith safe harbor for security research on the in-scope
-> hosts, surfaced in `SECURITY.md` and on the site. Have counsel review the wording for your
-> jurisdiction before relying on it; the counsel-reviewed version governs.
+> **UNADOPTED DRAFT - not in force.** This clause was drafted for the public test surface, which
+> went offline on 2026-07-20 when active development was paused. It was never counsel-reviewed and
+> is not surfaced as a program: `SECURITY.md` states there is no safe-harbor program. Kept as a
+> draft for any future engagement. **Honest scope:** Elyon-Sol has never been validated by an
+> external party (G5 is not met).
+>
+> Not legal advice. Have counsel review the wording for your jurisdiction before relying on it; a
+> counsel-reviewed version would govern.
 
 ---
 

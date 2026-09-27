@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Elyon-Sol — Deterministic, Fail-Closed Admission Gate</title>
-<meta name="description" content="Elyon-Sol is a deterministic, fail-closed HTTP admission gate derived from a formal admissibility specification (canon v0.9.8.4). Human-oversight governance layer, ext-authz sidecar, and an open red-team challenge." />
+<meta name="description" content="Elyon-Sol is a deterministic, fail-closed HTTP admission gate derived from a formal admissibility specification (canon v0.9.8.4). Human-oversight governance layer, ext-authz sidecar, and a self-hostable break-it walkthrough. Development paused; never externally validated." />
 <style>
   :root{
     --bg:#0a0e14; --bg2:#0e131c; --panel:#121926; --panel2:#161f30;
@@ -139,7 +139,7 @@
       <a href="#features">Features</a>
       <a href="#compare">Compare</a>
       <a href="#tech">Technology</a>
-      <a href="#surface">Live Surface</a>
+      <a href="#surface">Self-host</a>
       <a href="#tryit">Break it in 60s</a>
       <a href="#canon">Canon &amp; Zenodo</a>
       <a href="#redteam">Red-Team Challenge</a>
@@ -181,7 +181,7 @@
       <span class="badge"><b>616</b> tests green <span class="sub">· published (Rev 8)</span></span>
       <span class="badge"><b>645</b> at repo HEAD <span class="sub">· unpublished</span></span>
       <span class="badge">Human-oversight <b>governance layer</b></span>
-      <span class="badge">AGPL-3.0 open-core</span>
+      <span class="badge">AGPL-3.0 open source</span>
     </div>
   </div>
 </section>
@@ -332,9 +332,9 @@
         <div class="chip">Let's Encrypt TLS <span>· real CA</span></div>
         <div class="chip">Docker / Compose <span>· packaging</span></div>
         <div class="chip">GitHub Actions <span>· CI (suite + runners)</span></div>
-        <div class="chip">Hetzner <span>· multi-continent nodes</span></div>
+        <div class="chip">Hetzner <span>· multi-continent nodes (2026, now offline)</span></div>
         <div class="chip">645 tests at HEAD <span>· 616 published (Rev 8) · incl. revert-catchers</span></div>
-        <div class="chip">72 test files <span>· 735 adversarial</span></div>
+        <div class="chip">63 test files <span>· 49 adversarial</span></div>
         <div class="chip">Cross-model review <span>· internal evidence — not external validation</span></div>
       </div>
     </div>
@@ -386,9 +386,10 @@ export GATE=http://localhost:8000  TARGET=http://localhost:9000  AUTHZ=http://lo
   "expected_manifest_sha256": "ac18ac78c39dfed3d202964ab5e88d34a87ddebf8b41c1abda49bf75a0bcaeb1"
 }'
 
+<span class="c"># target_url is the target's IN-NETWORK identity — the compose gate only forwards to `target`</span>
 ENV=$(curl -s $GATE/governed-call \
   -H 'content-type: application/json' \
-  -d "{\"target_url\":\"$TARGET/target\",\"interaction\":$INTERACTION}" \
+  -d "{\"target_url\":\"http://target:9000/target\",\"interaction\":$INTERACTION}" \
   | jq -c '.envelope')</pre>
 
     <div class="step">2 · That governed call already acted — so re-presenting the token is a replay</div>
@@ -398,7 +399,7 @@ curl -s $TARGET/target \
   -H "X-Elyon-Sol-Envelope: $ENV" \
   -H 'content-type: application/json' \
   -d "$INTERACTION" | jq
-<span class="c"># expect: {"honored": false, "reason": "REF_VERIFY_REPLAY"} — single-use working</span></pre>
+<span class="c"># expect: {"detail": {"honored": false, "reason": "REF_VERIFY_REPLAY"}} — single-use working</span></pre>
 
     <div class="step">3 · Now try to break it — every one of these SHOULD be refused</div>
     <pre class="code"><span class="c"># a) no token at all</span>
@@ -419,11 +420,11 @@ curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: applica
 curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
   -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: application/json' -d "$INTERACTION"</pre>
 
-    <p class="muted" style="margin-top:16px">Expected: <b>b–e all refuse</b> — <span class="mono">REF_VERIFY_REPLAY</span>, <span class="mono">REF_VERIFY_SIGNATURE_INVALID</span>, <span class="mono">REF_VERIFY_BINDING_MISMATCH</span>, and a <span class="mono">403</span> from the sidecar. Make any of them act, and you take first blood.</p>
+    <p class="muted" style="margin-top:16px">Expected: <b>a–e all refuse</b> — <span class="mono">REF_VERIFY_ENVELOPE_ABSENT</span>, <span class="mono">REF_VERIFY_REPLAY</span>, <span class="mono">REF_VERIFY_SIGNATURE_INVALID</span>, <span class="mono">REF_VERIFY_BINDING_MISMATCH</span>, and a <span class="mono">403</span> from the sidecar. Make any of them act, and you have found a real gap — report it per <span class="mono">SECURITY.md</span>.</p>
 
-    <p class="muted" style="max-width:82ch;margin-top:14px"><b>The sharper edges.</b> Those five are the easy cases and they refuse. A real break in a system like this lives in an implementation <i>seam</i> &mdash; where the gate and the target disagree about what a request means. The classes worth your time: <b>canonicalization mismatch</b> (reordered or duplicate JSON keys, raw vs escaped unicode, NFC vs NFD, <span class="mono">1</span> vs <span class="mono">1.0</span>), <b>a field the signature does not cover</b> (mutate one field at a time), <b>single-use under real concurrency</b> (present the same token many times at once, not in sequence), <b>validity-window edges</b> (a token expired to one host but not another), and <b>cross-binding</b> (a token minted for A honored for B). Full attack brief: <span class="mono">deploy/BREAK_IT.md</span>.</p>
+    <p class="muted" style="max-width:82ch;margin-top:14px"><b>The sharper edges.</b> Those five are the easy cases and they refuse. A real break in a system like this lives in an implementation <i>seam</i> &mdash; where the gate and the target disagree about what a request means. The classes worth your time: <b>canonicalization mismatch</b> (reordered or duplicate JSON keys, raw vs escaped unicode, NFC vs NFD, <span class="mono">1</span> vs <span class="mono">1.0</span>), <b>a field the signature does not cover</b> (mutate one field at a time), <b>single-use under real concurrency</b> (present the same token many times at once, not in sequence), <b>validity-window edges</b> (a token expired to one host but not another), and <b>cross-binding</b> (a token minted for A honored for B). Archived attack brief from the live period: <span class="mono">deploy/BREAK_IT.md</span>.</p>
 
-    <div class="note" style="margin-top:18px"><b>Note.</b> The <span class="mono">expected_manifest_sha256</span> above matches the repo's committed <span class="mono">MANIFEST/manifest.json</span>, so it is valid against any instance you build from this checkout. Full walkthrough: <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> + <span class="mono">deploy/BREAK_IT_IN_60_SECONDS.md</span>; self-check: <span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>.</div>
+    <div class="note" style="margin-top:18px"><b>Note.</b> The <span class="mono">expected_manifest_sha256</span> above matches the repo's committed <span class="mono">MANIFEST/manifest.json</span>, so it is valid against any instance you build from this checkout. The flow above was verified with the same three services run as local <span class="mono">uvicorn</span> processes; the docker compose path itself has not yet been run end-to-end by the author on the current environment. Full walkthrough: <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> + <span class="mono">deploy/BREAK_IT_IN_60_SECONDS.md</span>; self-check: <span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>.</div>
 
     <div class="btns" style="margin-top:22px">
       <a class="btn primary" href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">Get the code (AGPL-3.0) →</a>
@@ -451,7 +452,7 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
         <div class="kv"><b>Current (Rev 8)</b> <a href="https://doi.org/10.5281/zenodo.21364720" target="_blank" rel="noopener">10.5281/zenodo.21364720</a></div>
         <div class="kv"><b>Author</b> Justin LaPorte · <a href="https://orcid.org/0009-0008-3785-3089" target="_blank" rel="noopener">ORCID</a></div>
         <div class="kv"><b>Published</b> 14 Jul 2026 · Report · CC BY 4.0</div>
-        <div class="kv"><b>Code</b> AGPL-3.0 open-core · <a href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">source on GitHub</a></div>
+        <div class="kv"><b>Code</b> AGPL-3.0 open source · <a href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">source on GitHub</a></div>
         <a class="btn ghost" style="margin-top:14px" href="https://doi.org/10.5281/zenodo.19367848" target="_blank" rel="noopener">Open the record →</a>
       </div>
     </div>
@@ -462,9 +463,10 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
 <!-- RED TEAM -->
 <section id="redteam" class="rt">
   <div class="wrap">
-    <div class="eyebrow">Red-team solicitation</div>
-    <h2>Break Elyon-Sol — open challenge for security freelancers</h2>
-    <p class="lead">We run a gate that refuses any action that does not carry a valid permission to act. We think you cannot make it act on something it should not. We are asking you to try — a confirmed break is a real result, and it is credited, named, and written permanently into the project's public record.</p>
+    <div class="eyebrow">Red-team challenge — archived</div>
+    <h2>Break Elyon-Sol — the open challenge (closed 2026-07-20)</h2>
+    <div class="note" style="margin-bottom:16px"><b>Archived.</b> This section records the challenge as it ran while the public nodes were live. Development is paused, the nodes are offline, and the credit, co-authorship and disclosure-window terms below are <b>not on offer</b> now. Current reporting: <a href="https://github.com/Elyon-Sol/Elyon-Sol/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a> (best-effort). The claim itself still stands — test it on your own instance.</div>
+    <p class="lead">Elyon-Sol is a gate that refuses any action that does not carry a valid permission to act. The challenge asked security researchers to make it act on something it should not — a confirmed break would have been credited, named, and written permanently into the project's public record.</p>
 
     <div class="claimbox">
       <b>The claim to disprove.</b> Without the gate's signing key, there is no request you can craft that (a) makes the target perform an action, or (b) makes the sidecar answer <code>ALLOW</code>, unless the token in the <code>X-Elyon-Sol-Envelope</code> header is <b>validly signed</b>, <b>currently valid</b>, <b>bound to exactly that action and target</b>, and <b>not previously used</b>. Using a real token once, as intended, is not a break — that is it working.
@@ -498,8 +500,8 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
       </div>
     </div>
 
-    <h3 style="font-size:1.05rem;margin-top:34px">What you earn — recognition &amp; ownership, not a bounty</h3>
-    <p class="lead" style="max-width:78ch">Elyon-Sol is a deterministic admission gate for AI-agent and API actions. We are not buying findings; we are recruiting people and teams who want their name on that work. Every reward here is durable credit, real authorship, and a documented stake in what the project becomes.</p>
+    <h3 style="font-size:1.05rem;margin-top:34px">What the challenge offered — recognition &amp; ownership, not a bounty (archived)</h3>
+    <p class="lead" style="max-width:78ch">Elyon-Sol is a deterministic admission gate for AI-agent and API actions. The challenge did not buy findings; it recruited people and teams who wanted their name on that work. While it ran, every reward was durable credit and real authorship. These terms are archived and not currently offered.</p>
 
     <div class="grid g3" style="margin-top:22px">
       <div class="card"><h3><span class="ic">📜</span> Named in the ledger</h3><p>A confirmed break becomes a permanent, citable entry in the public verification ledger — attributed to you by name or handle. "The &lt;you&gt; finding" is part of the project's record of record, forever.</p></div>
@@ -522,31 +524,31 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
     </table>
 
     <div class="claimbox" style="margin-top:26px;border-left-color:var(--acc2)">
-      <b>For teams — creative ownership.</b> If your team wants to go deeper than a single finding, there is a path to real ownership: authorship of a named hardening module carried in the codebase and the Zenodo record; a co-maintainer / advisory track on the governance layer with input to the roadmap and design reviews; and, for substantial ongoing collaboration, a documented partnership arrangement, discussed case by case. We would rather share the credit and the direction with people who helped earn it than pay a flat rate for a report.
+      <b>For teams — creative ownership (archived).</b> While the challenge ran: if your team wanted to go deeper than a single finding, there was a path to real ownership: authorship of a named hardening module carried in the codebase and the Zenodo record; a co-maintainer / advisory track on the governance layer with input to the roadmap and design reviews; and, for substantial ongoing collaboration, a documented partnership arrangement, discussed case by case. We would rather share the credit and the direction with people who helped earn it than pay a flat rate for a report.
     </div>
 
     <div class="two" style="margin-top:26px">
       <div class="card">
-        <h3 style="font-size:1.02rem">Engagement details</h3>
-        <div class="kv"><b>Format</b> Open to security researchers — no bug-bounty platform, no signup, no gatekeeping. The test surface is public.</div>
-        <div class="kv"><b>How to start</b> Poke it right now — see <a href="#tryit">Break it in 60 seconds</a>. Found something, or want to collaborate? Email <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>.</div>
-        <div class="kv"><b>Disclosure</b> Coordinated, 90-day fix window</div>
-        <div class="kv"><b>Scope</b> The four hosts above — nothing else</div>
+        <h3 style="font-size:1.02rem">Engagement details (as run, now closed)</h3>
+        <div class="kv"><b>Format</b> Open to security researchers — no bug-bounty platform, no signup, no gatekeeping. The test surface was public; it is now offline.</div>
+        <div class="kv"><b>How to start now</b> Self-host it — see <a href="#tryit">Break it in 60 seconds</a>. Found something? Email <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>.</div>
+        <div class="kv"><b>Disclosure</b> Was: coordinated, 90-day fix window. Now: best-effort (project paused)</div>
+        <div class="kv"><b>Scope</b> Was: the four public hosts. Now: no in-scope public hosts — test your own instance</div>
         <div class="kv"><b>Rules</b> No DoS, no social engineering, no attacks on other systems/tenants</div>
-        <div class="kv"><b>Good faith</b> We support good-faith research within scope and won't pursue researchers acting in good faith. Full terms in the <a href="https://github.com/Elyon-Sol/Elyon-Sol/blob/main/SECURITY.md" target="_blank" rel="noopener">security policy</a>.</div>
+        <div class="kv"><b>Good faith</b> There is no safe-harbor program while no public surface runs; testing the open-source code on your own machine needs no authorization. Details in the <a href="https://github.com/Elyon-Sol/Elyon-Sol/blob/main/SECURITY.md" target="_blank" rel="noopener">security policy</a>.</div>
       </div>
       <div class="card">
-        <h3 style="font-size:1.02rem">How to start &amp; submit</h3>
+        <h3 style="font-size:1.02rem">How to test &amp; report</h3>
         <ul class="clean" style="margin-top:2px">
-          <li>Mint a sample token: <span class="mono">POST /governed-call</span> on the gate, present it once to the target/sidecar to see a valid flow.</li>
+          <li>Mint a sample token on your own instance: <span class="mono">POST /governed-call</span> on the gate — it forwards and the target acts once, the valid flow.</li>
           <li>Then attack the edges — drop the header, alter a field, replay, expire, re-point at another action/target, fabricate.</li>
-          <li>Confirm a break with the inspector before you submit — <b>the tool decides, not us</b>: <span class="mono">python IMPLEMENTATION/envelope_inspector.py inspect token.json</span>. If it rates your token invalid, expired, replayed, or rebound and the target acted anyway, that gap is the finding — settled before we even reply.</li>
-          <li>Send it to <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>: the class (target / sidecar), the exact requests in order, and what you saw (status codes, the <span class="mono">/received</span> count). We reproduce, classify, and respond.</li>
+          <li>Confirm a break with the inspector before you submit — <b>the tool decides, not us</b>: <span class="mono">python IMPLEMENTATION/envelope_inspector.py inspect token.json</span>. If it rates your token invalid, expired, replayed, or rebound and the target acted anyway, that gap is the finding.</li>
+          <li>Send it to <a href="mailto:security@elyon-sol.io">security@elyon-sol.io</a>: the class (target / sidecar), the exact requests in order, and what you saw (status codes, the <span class="mono">/received</span> count). Handled best-effort while the project is paused.</li>
         </ul>
       </div>
     </div>
 
-    <div class="note" style="margin-top:24px"><b>Honest scope.</b> No outside party has broken — or independently validated — Elyon-Sol yet. This challenge is how we seek that; a confirmed break would be the first such result. A run that finds nothing is recorded as exactly that, never as "unbreakable."</div>
+    <div class="note" style="margin-top:24px"><b>Honest scope.</b> No outside party has broken — or independently validated — Elyon-Sol. The challenge was how we sought that, and it closed without such a result: external validation (G5) is not met. A confirmed break would be the first such result. A run that finds nothing is recorded as exactly that, never as "unbreakable."</div>
   </div>
 </section>
 
@@ -554,8 +556,8 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
 <section id="wall">
   <div class="wrap">
     <div class="eyebrow">Wall of fame</div>
-    <h2>Nobody has broken it yet <span class="live" style="margin-left:8px">open</span></h2>
-    <p class="lead">Every confirmed finding is recorded here permanently — by name or handle, your choice — and mirrored into the project's public verification ledger, the record of record. The first person to make the target act, or the sidecar answer ALLOW, on a call that must be refused takes first blood.</p>
+    <h2>Nobody broke it while the challenge ran <span class="live" style="margin-left:8px">closed</span></h2>
+    <p class="lead">While the challenge ran, every confirmed finding was to be recorded here permanently — by name or handle — and mirrored into the project's public verification ledger. No external finding was recorded before the challenge closed on 2026-07-20.</p>
     <table class="rw" style="margin-top:18px">
       <thead><tr><th>#</th><th>Finder</th><th>Date</th><th>Class</th><th>Finding</th><th>Status</th></tr></thead>
       <tbody>
@@ -571,10 +573,10 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
   <div class="wrap">
     <div class="eyebrow">Security changelog</div>
     <h2>We red-teamed ourselves — found and fixed</h2>
-    <p class="lead">Before widening the challenge, we ran a structured internal red-team against the live surface and the code. The cryptographic core held: every forged, tampered, replayed, rebound, or cross-target token was refused. The findings were in the surrounding contract and deployment wiring — where implementation seams live — and every high-severity one is fixed and deployed across all four public nodes.</p>
+    <p class="lead">Before widening the challenge, we ran a structured internal red-team against the live surface and the code. The cryptographic core held: every forged, tampered, replayed, rebound, or cross-target token was refused. The findings were in the surrounding contract and deployment wiring — where implementation seams live — and every high-severity one was fixed and deployed across all four public nodes while they ran.</p>
 
     <div class="claimbox" style="border-left-color:var(--acc2)">
-      <b>This is internal, author-side work — not external validation.</b> We publish our own findings because the entire premise is that you can trust what we claim. Finding these ourselves strengthens the surface; it does not replace an external break. The open break-it challenge is still the finish line.
+      <b>This is internal, author-side work — not external validation.</b> We publish our own findings because the entire premise is that you can trust what we claim. Finding these ourselves strengthens the surface; it does not replace an external break. External validation (G5) remains the unmet finish line.
     </div>
 
     <table class="rw" style="margin-top:22px">
@@ -593,7 +595,7 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
     <p class="muted" style="font-size:.85rem;margin-top:12px">* Exploitable only where a non-zero clock-skew tolerance is configured. All eight findings from this pass are now closed; none was a live bypass on the public surface.</p>
 
     <h3 style="margin-top:30px;font-size:1.05rem">Since that pass — gate-key revocation moved in-band</h3>
-    <p class="muted" style="font-size:.9rem;max-width:78ch">Signed key-record trust is now wired into the enforce path and <b>enabled on the live target and sidecar</b>. Revoking a gate key was previously an out-of-band re-pin of every consumer; it is now a <span class="mono">revoked</span> flip in a single publisher-signed record, verified per request against an out-of-band-pinned root. A revoked, expired, stale, invalid, or serial-rolled-back record fails <b>closed</b> — never a silent downgrade to the static pin. Exercised live over real transport: honored via the record, six of six tampering attacks refused, a revocation drill returning <span class="mono">REF_VERIFY_KEY_REVOKED</span>, then restore at a higher serial.</p>
+    <p class="muted" style="font-size:.9rem;max-width:78ch">Signed key-record trust is now wired into the enforce path and <b>was enabled on the former live target and sidecar</b>. Revoking a gate key was previously an out-of-band re-pin of every consumer; it is now a <span class="mono">revoked</span> flip in a single publisher-signed record, verified per request against an out-of-band-pinned root. A revoked, expired, stale, invalid, or serial-rolled-back record fails <b>closed</b> — never a silent downgrade to the static pin. Exercised live over real transport: honored via the record, six of six tampering attacks refused, a revocation drill returning <span class="mono">REF_VERIFY_KEY_REVOKED</span>, then restore at a higher serial.</p>
     <p class="muted" style="font-size:.85rem;max-width:78ch">Honest note: this is author-side white-box live-ops, not an external result. It also adds an availability dependency — key-record freshness is now on the critical path, so a publisher outage or a stalled sync fails the surface closed (<span class="mono">REF_VERIFY_KEY_RECORD_STALE</span>) rather than open. A freshness monitor covers it.</p>
   </div>
 </section>
@@ -602,7 +604,7 @@ curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
   <div class="wrap fgrid">
     <div>
       <div class="brand" style="margin-bottom:8px"><span class="dot"></span> Elyon-Sol</div>
-      <div class="muted" style="max-width:46ch;font-size:.85rem">A deterministic, fail-closed admission gate for agent and API actions. AGPL-3.0 open-core.</div>
+      <div class="muted" style="max-width:46ch;font-size:.85rem">A deterministic, fail-closed admission gate for agent and API actions. AGPL-3.0 open source.</div>
     </div>
     <div>
       <div class="muted" style="margin-bottom:6px">Project</div>

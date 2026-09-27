@@ -49,6 +49,7 @@ services:
       ELYON_REPLAY_MULTI_INSTANCE: "1"
       ELYON_PENDING_REDIS_URL: redis://redis:6379/0
       ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+      ELYON_TARGET_URL_ALLOWLIST: target
     depends_on: [redis, target]
     ports:
       - "8001:8001"

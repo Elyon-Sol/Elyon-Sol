@@ -1,5 +1,10 @@
 # Manual test: the ext-authz sidecar over real TLS on your two VMs (VL-105)
 
+> **HISTORICAL (2026-09-27).** Written for the author's former two-VM (VirtualBox)
+> setup, which was retired with the Windows environment. Kept as method on record; for a
+> current TLS stand-up use `deploy/docker-compose.tls.yml` + `deploy/tls/` (see
+> `deploy/SPIN_UP_YOUR_OWN.md`).
+
 A step-by-step to stand up `elyon-authz` (the admissibility sidecar) under real TLS
 on your existing two-VM cross-host setup and confirm ALLOW/DENY over HTTPS with a
 real gate-minted envelope. Companion to `deploy/tls/trust_bootstrap.md` (trust material) and

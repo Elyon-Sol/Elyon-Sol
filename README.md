@@ -13,7 +13,7 @@ decides — cryptographically — whether it is *authorized* under an explicit, 
 and refuses everything else. Every allowed action leaves a signed, single-use receipt of exactly
 why it was allowed.
 
-AGPL-3.0 · canon v0.9.8.4 · full test suite green (645) · **retired 2026-07-20** ·
+AGPL-3.0 · canon v0.9.8.4 · test suite green (616 published at Rev 8; 645 at repo HEAD, unpublished — count of record in `STATE.md`) · **paused 2026-07-20** ·
 **never externally validated** (the open finish line the project never reached — see below).
 
 ---
@@ -25,12 +25,12 @@ AGPL-3.0 · canon v0.9.8.4 · full test suite green (645) · **retired 2026-07-2
 > `X-Elyon-Sol-Envelope` header is **validly signed**, **currently valid**, **bound to exactly
 > that action and target**, and **not previously used**.
 
-Using a real token once, as intended, is not a break — that's the gate working. We ship a live
-target and a read-only token inspector (`IMPLEMENTATION/envelope_inspector.py`) that adjudicates a
-token the way the target does, so you can self-check before you submit. Try to break it — see
-[`SECURITY.md`](SECURITY.md).
+Using a real token once, as intended, is not a break — that's the gate working. The repo ships a
+reference target you can self-host and a read-only token inspector
+(`IMPLEMENTATION/envelope_inspector.py`) that adjudicates a token the way the target does, so you
+can check a suspected break yourself. Reporting: [`SECURITY.md`](SECURITY.md).
 
-## Try it — self-host (the public surface is retired)
+## Try it — self-host (the public test nodes are offline)
 
 The four public TLS nodes were retired on 2026-07-20 and are offline. The same admission surface
 is open source: stand it up yourself in a couple of commands and run the same "break-it"
@@ -41,6 +41,12 @@ git clone https://github.com/Elyon-Sol/Elyon-Sol.git && cd Elyon-Sol
 python deploy/bootstrap_config.py            # gate keypair + pinned anchor -> deploy/.env
 cd deploy && docker compose up --build       # gate:8000  target:9000  publisher:9100
 ```
+
+When you mint a token, send the target's **in-network** address as `target_url`
+(`http://target:9000/target` — the compose gate only forwards to the `target` service); present
+tokens directly from your host at `http://localhost:9000/target`. The flow was verified with the same
+three services run as local `uvicorn` processes; the docker compose path itself has not yet been run
+end-to-end by the author on the current environment.
 
 Then follow [`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md) and
 [`deploy/BREAK_IT_IN_60_SECONDS.md`](deploy/BREAK_IT_IN_60_SECONDS.md): mint a token, present it
@@ -120,7 +126,7 @@ forge — separation of duties is a cryptographic property, not a UI checkbox.
 | **Single-use / replay-proof** authorization | ✓ | ✗ | ✗ | ✗ |
 | Human approval with **cryptographic separation of duties** | ✓ | ✗ | ✗ | server-side prompt |
 | Policy **pinned by hash + version** (tamper-evident) | ✓ | ✗ | partial | ✗ |
-| **Falsifiable**: live target + inspector + open break-it challenge | ✓ | — | — | — |
+| **Falsifiable**: self-hostable target + inspector + break-it walkthrough | ✓ | — | — | — |
 
 This compares *design properties in the authorization-attestation niche* — not a claim that policy
 engines or runtime hooks are worse at what they do. They're complementary: Elyon-Sol runs happily as
@@ -136,7 +142,8 @@ adds over a raw capability token is behavioral: the envelope is a **receipt of a
 (it pins the exact canon, manifest, and evaluator that decided), it **self-invalidates when that
 policy changes** (reassertion/continuity — most capability tokens stay valid until expiry regardless
 of policy drift), it makes **human approval a cryptographic separation-of-duties primitive**, and it
-ships with a **live public break-it challenge**. It composes *with* these systems — it can run on top
+ships with a self-hostable **break-it walkthrough** (the public challenge ran until 2026-07-20 and is
+now closed). It composes *with* these systems — it can run on top
 of a biscuit rather than instead of one. Full treatment, including "why not just use biscuit +
 ext-authz + a signing step?": [`docs/COMPARISON_capability_tokens.md`](docs/COMPARISON_capability_tokens.md).
 
@@ -146,8 +153,8 @@ ext-authz + a signing step?": [`docs/COMPARISON_capability_tokens.md`](docs/COMP
 
 We report exactly what we can back with a referent, and no more.
 
-- **Proven in-repo:** the full test suite passes (645 at the final HEAD; the authoritative count is
-  pinned in `STATE.md`), including revert-catchers that fail when the guard they defend is removed. A
+- **Proven in-repo:** the full test suite passes (616 published at Rev 8; 645 at repo HEAD,
+  unpublished; the authoritative count is pinned in `STATE.md`), including revert-catchers that fail when the guard they defend is removed. A
   carried-forward enforcement run showed 102 refusals → 403 with zero external executions and 102
   eligible calls → 200 with exactly 102 executions, each gate-signed.
 - **Live self-test (while the surface ran):** the four public nodes passed the author's attack suite
@@ -203,6 +210,7 @@ or dual-licensed components** (`LICENSING.md`). Contributions require a DCO sign
 
 ## Security & contact
 
-Report findings privately to **security@elyon-sol.io** — coordinated disclosure, 90-day window, credited
-by name or handle. Please don't open public issues for security findings. Full policy and the in/out-of-scope
+Report findings privately to **security@elyon-sol.io** — handled best-effort while the project is
+paused (the former 90-day window and credit mechanics are wound down). Please don't open public issues
+for security findings. Full policy and the in/out-of-scope
 list: [`SECURITY.md`](SECURITY.md).
