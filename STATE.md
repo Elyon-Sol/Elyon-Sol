@@ -47,7 +47,7 @@ current state only - `git log --oneline` is the record of what was done.
 
 **At 2026-09-27 — development resumes on the Linux environment. The literal next actions, in order. This block supersedes every block below; those are the dated PRE-PAUSE record (2026-07-16 and earlier) and are NOT the task.**
 
-**(0) CONFIRM CI ON PYTHON 3.14.** The reconciliation is committed (build `a043304` + the VL-151 STATE/ledger close). Check the GitHub Actions run for that push: the suite plus every hermetic runner, including `g5_multiprocess_tls_001_runner`, which runs in CI for the first time since its fix. If it fails, the failure is the task. Still open from 2026-07-27: whether the D-layer freshness-waiver bypass reproduced by execution (`docs/design/domain_validity_withdrawal.md`) warranted a VL entry (`d41434d` says not). AUTHOR decision.
+**(0) DONE - CI confirmed on Python 3.14** (run 36289068922 on `7115c5f`: 645 passed, all hermetic runners passed including `g5_multiprocess_tls_001_runner`; VL-151 follow-up). Still open, AUTHOR decision: whether the 2026-07-27 D-layer freshness-waiver bypass reproduced by execution (`docs/design/domain_validity_withdrawal.md`) warranted a VL entry (`d41434d` says not).
 
 **(1) REPUBLISH elyon-sol.io from the WHOLE `site/index.html`.** The live WordPress page is a copy truncated mid-sentence at "(REF_VERIFY_KEY_RECORD_STALE"; the footer, including "No external validation yet - G5 is the open finish line.", is missing. After publishing, confirm the live page ends with that footer line.
 

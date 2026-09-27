@@ -2258,3 +2258,9 @@ Prior substantive entry: VL-150. Cites VL-149 (cache-bust a live read before tre
 
 #### Environment note
 Native Linux clone of `origin/main` (Python 3.14.4, `.venv`), the new development environment; the former native Windows checkout is deprecated (CLAUDE.md "Environment"). The assistant ran the executions, diagnosed (b), wrote the fixes and this block, and a sub-agent carried out the public-docs wording pass under the assistant's review; the author directed the reconciliation, chose the commit identity, and asked for this entry. GR-4: appended, not edited.
+
+## VL-151 follow-up — CI on Python 3.14 confirms the fix: g5_multiprocess_tls passes on a GitHub-hosted runner (2026-09-27)
+
+**Referent.** GitHub Actions run 36289068922 on push `7115c5f` (build `a043304` + the VL-151 close): CPython 3.14.7 installed from `requirements-dev.txt`; `645 passed`; `PASS: EVIDENCE/proofs/g5_multiprocess_tls_001_runner.py`; "All hermetic runners passed."; conclusion `success`. This runner had been skipped in CI as a runner-networking incompatibility. It now passes on a hosted runner with only its test-CA extensions changed, which confirms VL-151 (b)'s diagnosis in CI and not only locally. `authz_sidecar_tls_001_runner` stays skipped (cause undiagnosed). Still NOT confirmed: `docker compose up` (docker-group access pending) and the live-site republish (the live page still lacks the footer G5 line at the time of this entry).
+
+**Honest scope.** CI characterization of the author's own code. NOT external validation; NOT G5. GR-4: appended, not edited.
