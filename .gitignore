@@ -244,6 +244,10 @@ __marimo__/
 /published_keys*.json
 deploy/.env
 deploy/tls/certs/
+# R1 key ceremony outputs (deploy/governance/make_approver_key_record.py): two PRIVATE keys
+# + the per-deployment signed record. Out-of-band material, never committed.
+deploy/governance/*.hex
+deploy/governance/approver_key_record.json
 !EVIDENCE/proofs/**/*.log
 
 # Private business / career / IP working docs — MUST stay out of the public repo.

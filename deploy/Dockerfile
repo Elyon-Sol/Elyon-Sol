@@ -1,7 +1,7 @@
 # Elyon-Sol service image (C1 / VL-081). One image serves any of the three
 # uvicorn entrypoints (gate / target / publisher) by command override in
-# docker-compose.yml. The image has not yet been built on the current environment;
-# the stand-up is the author's (artifact 13 C1, locus AUTHOR).
+# docker-compose.yml. Built and run with every compose overlay except authz.tls on
+# 2026-09-27 (Python 3.14.7 in the image).
 FROM python:3.14-slim
 
 WORKDIR /app

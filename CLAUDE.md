@@ -124,10 +124,14 @@ apply.
   hashes of record are still defined over the **git blob**
   (`git show HEAD:<path>`, GR-6 clause 5); on this checkout the working-tree
   file hashes the same, but use the blob form in anything you record.
-- Docker is installed, but the account is not in the `docker` group, so the
-  compose stack cannot be run without `sudo usermod -aG docker $USER` (then
-  re-login). Until that is done, `docker compose ... config` (no daemon)
-  validates the compose files.
+- Docker: `elyon` is in the `docker` group (since 2026-09-27; only `vboxuser`
+  has sudo). A shell started before that change lacks the group - wrap
+  commands as `sg docker -c "docker compose ..."` until the next login.
+  Compose reads `deploy/.env` (from `deploy/bootstrap_config.py`); the TLS
+  overlay needs `deploy/tls/certs/` (`gen_certs.py localhost 127.0.0.1` so
+  host-side curl verifies); the governance overlay needs the R1 ceremony
+  outputs in `deploy/governance/` (see `deploy/GOVERNANCE_DEPLOYMENT.md`).
+  All three are git-ignored and hold private keys - never print them.
 - `gh` is not authenticated; read CI status from the public API
   (`https://api.github.com/repos/Elyon-Sol/Elyon-Sol/actions/runs`), or run
   `gh auth login`.

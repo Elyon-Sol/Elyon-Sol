@@ -16,7 +16,8 @@
 # times out, or errors DENIES the request - never opens. This is the Envoy-level
 # expression of the project's fail-closed invariant (canon section 9).
 #
-# UNVALIDATED in the build sandbox (no envoy binary). Validate before deploy:
+# `envoy --mode validate` passes on this file (envoy v1.31, 2026-09-27). Validate
+# again after any edit:
 #     envoy --mode validate -c deploy/envoy.example.yaml
 # Stand up via deploy/docker-compose.authz.yml. This is an EXAMPLE: addresses,
 # ports, and timeouts are illustrative and tuned per deployment.

@@ -115,7 +115,7 @@ def main(argv=None) -> int:
           f"expires {record['not_after']})")
     print()
     print("GATE deploy/.env additions (public material only):")
-    print(f"  ELYON_APPROVER_KEY_RECORD_PATH=/root/Elyon-Sol/deploy/governance/approver_key_record.json")
+    print(f"  ELYON_APPROVER_KEY_RECORD_PATH=/app/deploy/governance/approver_key_record.json   (the path docker-compose.governance.yml mounts it at)")
     print(f"  ELYON_PINNED_ROOT_KEY_ID={args.root_key_id}")
     print(f"  ELYON_PINNED_ROOT_PUBKEY_B64={root_pub_b64}")
     print("  (and REMOVE any ELYON_APPROVER_PUBKEY_HEX / ELYON_APPROVER_KEY_ID line)")

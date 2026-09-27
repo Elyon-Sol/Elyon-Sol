@@ -7,9 +7,9 @@
 #   cd deploy && python bootstrap_config.py \
 #     && docker compose -f docker-compose.yml -f docker-compose.authz.yml up --build
 #
-# UNVALIDATED in the build sandbox (no docker / no envoy binary); the container
-# stand-up + `envoy --mode validate -c envoy.example.yaml` is the author's, the
-# same locus as C1/C2 (artifact 13). The sidecar image is the existing
+# Run 2026-09-27: all seven containers up; the sidecar ALLOWs a fresh valid token
+# and DENYs forged / replayed / rebound ones; `envoy --mode validate` passes on
+# envoy.example.yaml. The request path THROUGH Envoy (:10000) was not exercised. The sidecar image is the existing
 # deploy/Dockerfile with a command override to the new entrypoint - no new image.
 #
 # Trust material (gate public-key pin, the published-record anchor) arrives by

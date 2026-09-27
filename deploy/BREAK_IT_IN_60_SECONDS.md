@@ -82,16 +82,27 @@ curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: appl
 REBIND=$(echo "$INTERACTION" | jq -c '.context.tool = "delete_database"')
 curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: application/json' -d "$REBIND" | jq
 
-# e) Sidecar — get authz to say ALLOW on any of the above
-curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
-  -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: application/json' -d "$INTERACTION"
-# 200 = ALLOW (a finding). 403 = DENY (working as intended).
+# e) Sidecar — ALLOW/DENY only (it does not act). It reads the interaction from the
+#    X-Elyon-Sol-Interaction HEADER (one line), not from the body.
+I_HDR=$(echo "$INTERACTION" | jq -c .)
+#    Control: a fresh, never-presented token -> 200 ALLOW (the sidecar working, not a break).
+#    (Minting it goes through the gate, so the target acts once more: /received +1.)
+FRESH=$(curl -s $GATE/governed-call -H 'content-type: application/json' \
+  -d "{\"target_url\":\"http://target:9000/target\",\"interaction\":$INTERACTION}" | jq -c '.envelope')
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH" -H "X-Elyon-Sol-Interaction: $I_HDR" | grep -i '^x-elyon'
+#    Now try to get ALLOW without a valid token — forged, replayed, rebound:
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FORGED" -H "X-Elyon-Sol-Interaction: $I_HDR" | grep -i '^x-elyon'
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH" -H "X-Elyon-Sol-Interaction: $I_HDR" | grep -i '^x-elyon'
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH" -H "X-Elyon-Sol-Interaction: $(echo "$REBIND" | jq -c .)" | grep -i '^x-elyon'
+# ALLOW on any of these three = a finding. DENY = working as intended.
 ```
 
-Expected: **a–e all refuse** — `REF_VERIFY_ENVELOPE_ABSENT`, `REF_VERIFY_REPLAY`,
-`REF_VERIFY_SIGNATURE_INVALID`, `REF_VERIFY_BINDING_MISMATCH`, and a 403 from the sidecar.
-(a–d verified against the three services run as local processes; the docker compose path and the
-sidecar overlay have not yet been run end-to-end by the author on the current environment.)
+Expected: **a–d all refuse** — `REF_VERIFY_ENVELOPE_ABSENT`, `REF_VERIFY_REPLAY`,
+`REF_VERIFY_SIGNATURE_INVALID`, `REF_VERIFY_BINDING_MISMATCH`. For **e**, the control prints
+`x-elyon-decision: ALLOW` and the three attempts print `DENY` with `REF_VERIFY_SIGNATURE_INVALID`,
+`REF_VERIFY_REPLAY`, `REF_VERIFY_BINDING_MISMATCH`. (Run verbatim against `docker compose` with
+the `docker-compose.authz.yml` overlay on 2026-09-27. Without the control, a DENY proves nothing:
+a sidecar that never sees the interaction denies everything.)
 
 ## 3. Go deeper
 

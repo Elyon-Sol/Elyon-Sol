@@ -35,6 +35,13 @@ The gate must trust approver keys ONLY through the signed key record, by an expl
 `approver` role - never a static pin. This closes [FIX H5]: an issuer-role (or role-less)
 key, even if well-signed and carrying a different key_id, can NEVER authorize an approval.
 
+0. **Single-box compose.** `python deploy/governance/make_approver_key_record.py --out-dir
+   deploy/governance --gate-key-id <ELYON_SIGNING_KEY_ID>` does steps 1-2 in one go and
+   self-checks the chain. Its three outputs (two private `.hex` keys + the signed record)
+   are git-ignored there; `docker-compose.governance.yml` mounts the record into both gate
+   replicas at `/app/deploy/governance/approver_key_record.json`. Add the printed public
+   values to `deploy/.env`. On separate hosts, move `approver_signing_key.hex` to the
+   approver host and `root_signing_key.hex` to the publisher host.
 1. **Publish a key record with an `approver`-role entry.** Add the approver public key to
    the publisher-signed key record (the same record format `key_record_source` validates),
    with `"role": "approver"`. The gate's issuer key, if present in the record, carries

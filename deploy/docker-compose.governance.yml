@@ -30,6 +30,9 @@ services:
       ELYON_REPLAY_MULTI_INSTANCE: "1"
       ELYON_PENDING_REDIS_URL: redis://redis:6379/0
       ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+    volumes:
+      # The signed key record from the R1 ceremony (git-ignored; see GOVERNANCE_DEPLOYMENT.md).
+      - ./governance/approver_key_record.json:/app/deploy/governance/approver_key_record.json:ro
     depends_on: [redis, target]
 
   gate2:
@@ -50,6 +53,13 @@ services:
       ELYON_PENDING_REDIS_URL: redis://redis:6379/0
       ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
       ELYON_TARGET_URL_ALLOWLIST: target
+      # gate2 is defined only here, so it does not inherit the TLS overlay's CA bundle
+      # and /certs mount the way `gate` does; without them its forward to the TLS
+      # target fails closed (CERTIFICATE_VERIFY_FAILED -> REF_PEP_FAIL_CLOSED).
+      ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+    volumes:
+      - ./governance/approver_key_record.json:/app/deploy/governance/approver_key_record.json:ro
+      - ./tls/certs:/certs:ro
     depends_on: [redis, target]
     ports:
       - "8001:8001"

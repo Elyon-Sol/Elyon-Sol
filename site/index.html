@@ -416,15 +416,22 @@ curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: appl
 REBIND=$(echo "$INTERACTION" | jq -c '.context.tool = "delete_database"')
 curl -s $TARGET/target -H "X-Elyon-Sol-Envelope: $ENV" -H 'content-type: application/json' -d "$REBIND" | jq
 
-<span class="c"># e) sidecar — get authz to ALLOW any of the above (200 = finding, 403 = working)</span>
-curl -s -o /dev/null -w "%{http_code}\n" $AUTHZ/authz \
-  -H "X-Elyon-Sol-Envelope: $FORGED" -H 'content-type: application/json' -d "$INTERACTION"</pre>
+<span class="c"># e) sidecar — ALLOW/DENY only; it reads the interaction from a one-line HEADER, not the body</span>
+I_HDR=$(echo "$INTERACTION" | jq -c .)
+<span class="c"># control: a fresh, never-presented token -&gt; ALLOW (minting it makes the target act once more)</span>
+FRESH=$(curl -s $GATE/governed-call -H 'content-type: application/json' \
+  -d "{\"target_url\":\"http://target:9000/target\",\"interaction\":$INTERACTION}" | jq -c '.envelope')
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH" -H "X-Elyon-Sol-Interaction: $I_HDR" | grep -i '^x-elyon'
+<span class="c"># now try for ALLOW without a valid token: forged, replayed, rebound (ALLOW = finding)</span>
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FORGED" -H "X-Elyon-Sol-Interaction: $I_HDR" | grep -i '^x-elyon'
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH" -H "X-Elyon-Sol-Interaction: $I_HDR" | grep -i '^x-elyon'
+curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH" -H "X-Elyon-Sol-Interaction: $(echo "$REBIND" | jq -c .)" | grep -i '^x-elyon'</pre>
 
-    <p class="muted" style="margin-top:16px">Expected: <b>a–e all refuse</b> — <span class="mono">REF_VERIFY_ENVELOPE_ABSENT</span>, <span class="mono">REF_VERIFY_REPLAY</span>, <span class="mono">REF_VERIFY_SIGNATURE_INVALID</span>, <span class="mono">REF_VERIFY_BINDING_MISMATCH</span>, and a <span class="mono">403</span> from the sidecar. Make any of them act, and you have found a real gap — report it per <span class="mono">SECURITY.md</span>.</p>
+    <p class="muted" style="margin-top:16px">Expected: <b>a–d all refuse</b> — <span class="mono">REF_VERIFY_ENVELOPE_ABSENT</span>, <span class="mono">REF_VERIFY_REPLAY</span>, <span class="mono">REF_VERIFY_SIGNATURE_INVALID</span>, <span class="mono">REF_VERIFY_BINDING_MISMATCH</span>; for <b>e</b>, the control prints <span class="mono">ALLOW</span> and the three attempts print <span class="mono">DENY</span> (<span class="mono">REF_VERIFY_SIGNATURE_INVALID</span>, <span class="mono">REF_VERIFY_REPLAY</span>, <span class="mono">REF_VERIFY_BINDING_MISMATCH</span>). Make any of them act, and you have found a real gap — report it per <span class="mono">SECURITY.md</span>.</p>
 
     <p class="muted" style="max-width:82ch;margin-top:14px"><b>The sharper edges.</b> Those five are the easy cases and they refuse. A real break in a system like this lives in an implementation <i>seam</i> &mdash; where the gate and the target disagree about what a request means. The classes worth your time: <b>canonicalization mismatch</b> (reordered or duplicate JSON keys, raw vs escaped unicode, NFC vs NFD, <span class="mono">1</span> vs <span class="mono">1.0</span>), <b>a field the signature does not cover</b> (mutate one field at a time), <b>single-use under real concurrency</b> (present the same token many times at once, not in sequence), <b>validity-window edges</b> (a token expired to one host but not another), and <b>cross-binding</b> (a token minted for A honored for B). Archived attack brief from the live period: <span class="mono">deploy/BREAK_IT.md</span>.</p>
 
-    <div class="note" style="margin-top:18px"><b>Note.</b> The <span class="mono">expected_manifest_sha256</span> above matches the repo's committed <span class="mono">MANIFEST/manifest.json</span>, so it is valid against any instance you build from this checkout. The flow above was verified with the same three services run as local <span class="mono">uvicorn</span> processes; the docker compose path itself has not yet been run end-to-end by the author on the current environment. Full walkthrough: <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> + <span class="mono">deploy/BREAK_IT_IN_60_SECONDS.md</span>; self-check: <span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>.</div>
+    <div class="note" style="margin-top:18px"><b>Note.</b> The <span class="mono">expected_manifest_sha256</span> above matches the repo's committed <span class="mono">MANIFEST/manifest.json</span>, so it is valid against any instance you build from this checkout. The commands above were run verbatim against <span class="mono">docker compose</span> (base stack + the sidecar overlay) on 2026-09-27 and behave as documented. Full walkthrough: <span class="mono">deploy/SPIN_UP_YOUR_OWN.md</span> + <span class="mono">deploy/BREAK_IT_IN_60_SECONDS.md</span>; self-check: <span class="mono">deploy/INSPECT_YOUR_BREAK.md</span>.</div>
 
     <div class="btns" style="margin-top:22px">
       <a class="btn primary" href="https://github.com/Elyon-Sol/Elyon-Sol" target="_blank" rel="noopener">Get the code (AGPL-3.0) →</a>

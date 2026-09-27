@@ -5,8 +5,9 @@
 #   docker compose -f docker-compose.yml -f docker-compose.tls.yml up --build
 #
 # Each service now serves under TLS (uvicorn --ssl-*) and the gate/target clients
-# verify their peers via the transport.py ELYON_TLS_CA_BUNDLE hook. UNVALIDATED in
-# the build sandbox (no docker); the cert MATERIAL is validated by
+# verify their peers via the transport.py ELYON_TLS_CA_BUNDLE hook. Run 2026-09-27
+# (single host, dev CA from tls/gen_certs.py with extra SANs `localhost 127.0.0.1`
+# so host-side curl can verify); the cert MATERIAL is also validated by
 # TESTS/deploy/test_tls_certs.py. Real cross-host TLS + a real CA are the author's.
 services:
   publisher:

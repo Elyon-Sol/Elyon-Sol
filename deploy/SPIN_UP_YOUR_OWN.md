@@ -33,9 +33,13 @@ python deploy/bootstrap_config.py
 cd deploy && docker compose up --build
 ```
 
-> **Verification status.** The walkthrough below was verified with these three services run as local
-> `uvicorn` processes (same configuration, loopback addresses). The docker compose path itself has not
-> yet been run end-to-end by the author on the current environment.
+> **Verification status (2026-09-27).** Run end-to-end with `docker compose`: the base stack with the
+> walkthrough below run verbatim; the `authz` overlay (sidecar ALLOW control + DENY attempts; Envoy config
+> validated); the `tls` overlay (the same walkthrough over the dev CA); the `replay` overlay (a token
+> used at one target instance refused at the other); and the `governance` overlay (both gate replicas
+> forward over TLS; a replica declared multi-instance without Redis refuses to start). NOT yet run:
+> the governance approval legs (202 -> grant -> single forward), which need a manifest that declares
+> high-impact actions, and the `authz.tls` overlay.
 
 That's the three-service core on `localhost:8000 / :9000 / :9100`. To add the ext-authz sidecar
 (`localhost:9200`) as well:

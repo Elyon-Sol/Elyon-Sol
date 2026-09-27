@@ -44,9 +44,8 @@ cd deploy && docker compose up --build       # gate:8000  target:9000  publisher
 
 When you mint a token, send the target's **in-network** address as `target_url`
 (`http://target:9000/target` — the compose gate only forwards to the `target` service); present
-tokens directly from your host at `http://localhost:9000/target`. The flow was verified with the same
-three services run as local `uvicorn` processes; the docker compose path itself has not yet been run
-end-to-end by the author on the current environment.
+tokens directly from your host at `http://localhost:9000/target`. This path was run end-to-end with
+`docker compose` on 2026-09-27: the walkthrough commands, verbatim, behave as documented.
 
 Then follow [`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md) and
 [`deploy/BREAK_IT_IN_60_SECONDS.md`](deploy/BREAK_IT_IN_60_SECONDS.md): mint a token, present it
