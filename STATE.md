@@ -2,7 +2,7 @@
 
 > **PUBLIC PROGRAM PAUSED (2026-07-20); SOLE-AUTHOR RESEARCH CONTINUES.** The commercial layer, the
 > live public test surface, and external engagement are wound down (the test nodes are retired and
-> offline; the project is paused, not ended - the public docs say "paused" since aeb0ebc); everything (core + GLESAC) is
+> offline; from 2026-10-07 the public docs no longer describe development as paused - bda5ad6, b9ff212 and the LICENSING/deploy-notes commit after them; the frozen preprint note still does); everything (core + GLESAC) is
 > AGPL-3.0, and the README/SECURITY/site/licensing reflect that. Single author, no forks or clones.
 > **FORWARD DIRECTION - CORRECTED 2026-07-27. The domain-semantic validity ("D") expansion was
 > BUILT AND WITHDRAWN.** It is no longer the trajectory. `docs/design/future_directions_domain_semantic_evaluation.md`
