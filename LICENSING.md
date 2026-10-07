@@ -1,6 +1,6 @@
 # Licensing — Elyon-Sol
 
-> **Paused — 2026-07-20** (development paused, not ended; the author may resume it). Everything is open source under **AGPL-3.0** — the core in this
+> Everything is open source under **AGPL-3.0** — the core in this
 > repository and the companion operator console [GLESAC](https://github.com/Elyon-Sol/GLESAC).
 > There are **no commercial, proprietary, or dual-licensed components**.
 

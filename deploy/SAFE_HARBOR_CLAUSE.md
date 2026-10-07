@@ -1,7 +1,7 @@
 # Safe-harbor clause
 
 > **UNADOPTED DRAFT - not in force.** This clause was drafted for the public test surface, which
-> went offline on 2026-07-20 when active development was paused. It was never counsel-reviewed and
+> went offline on 2026-07-20. It was never counsel-reviewed and
 > is not surfaced as a program: `SECURITY.md` states there is no safe-harbor program. Kept as a
 > draft for any future engagement. **Honest scope:** Elyon-Sol has never been validated by an
 > external party (G5 is not met).

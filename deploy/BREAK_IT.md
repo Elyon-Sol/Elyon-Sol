@@ -1,7 +1,7 @@
 # Break Gargoyle - open challenge
 
 > **ARCHIVED - not an active challenge.** This is the draft recruiting asset from the live
-> period (before 2026-07-20). Active development is paused, the public test hosts listed below are
+> period (before 2026-07-20). The public test hosts listed below were retired on 2026-07-20 and are
 > **offline**, and no rewards, credit mechanics, or safe harbor are on offer - see `SECURITY.md`
 > for current reporting. To test, self-host (`deploy/SPIN_UP_YOUR_OWN.md`). **Honest scope:**
 > Elyon-Sol has never been validated by an external party (G5 is not met). The body below is
