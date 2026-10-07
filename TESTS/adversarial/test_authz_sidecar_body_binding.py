@@ -65,7 +65,7 @@ def _admit(tool, args):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         return _R()
 
     orig = pep.requests.post
@@ -271,3 +271,21 @@ def test_body_extractor_tool_header_absent_fail_closed(gate_signing):
     r = _post_body(client, env, {"amount": 1, "to": "x"})
     assert r.status_code == 403
     assert r.headers[DECISION_HEADER] == DECISION_DENY
+
+
+def test_body_extractor_tool_from_path_binds_query(gate_signing):
+    """tool={"from": "path"} includes the query string: an envelope minted for
+    the bare path is DENIED when the forwarded request adds a query (the
+    upstream would execute a different action)."""
+    args = {"amount": 5, "to": "acct-9"}
+    tool_path = "/authz/transfer_funds"
+    env = _admit(tool_path, args)
+    client = TestClient(
+        _app(_config(gate_signing), _body_extractor(tool={"from": "path"}))
+    )
+    r = client.post(
+        tool_path + "?all=1", content=json.dumps(args),
+        headers={ENVELOPE_HEADER: canonical_json(env)},
+    )
+    assert r.status_code == 403
+    assert r.headers[REASON_HEADER] == REF_VERIFY_BINDING_MISMATCH

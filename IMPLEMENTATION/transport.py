@@ -120,6 +120,10 @@ def post_to_target(
     when called with default TLS arguments and no environment override. The body
     and header contract are unchanged; only the TLS verification policy and an
     optional client certificate are added, resolved fail-closed.
+
+    Redirects are NOT followed: the SSRF guard vetted only `url`, and following a
+    3xx would carry the signed envelope to a host it never checked (e.g. a public
+    host answering 307 -> 127.0.0.1). A 3xx is returned as-is, unfollowed.
     """
     return requests.post(
         url,
@@ -128,6 +132,7 @@ def post_to_target(
         verify=_resolve_verify(verify),
         cert=_resolve_cert(client_cert),
         timeout=timeout,
+        allow_redirects=False,
     )
 
 

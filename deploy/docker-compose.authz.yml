@@ -33,6 +33,15 @@ services:
       ELYON_GATE_PUBLIC_KEY_HEX: ${ELYON_GATE_PUBLIC_KEY_HEX}
       # Optional: a shared Redis for cross-instance exactly-once replay defense.
       # ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
+      # Requests Envoy forwards (/authz/<path>) are never decided from the
+      # client-controllable X-Elyon-Sol-Interaction header: they are DENIED
+      # (REF_TARGET_NOT_CONFIGURED) until the body-binding mapping is declared.
+      # The direct decision endpoint (POST :9200/authz) is unaffected. To admit
+      # traffic through Envoy (:10000), declare it:
+      # ELYON_EXT_AUTHZ_INLINE: "1"
+      # ELYON_INLINE_AP / _OP / _MANIFEST_VERSION / _MANIFEST_SHA256: the route's pins
+      # ELYON_INLINE_TOOL: path            # binds the forwarded path + query
+      # ELYON_INLINE_ARGS_FIELD: ""         # optional: digest body[field]
     ports:
       - "9200:9200"
 

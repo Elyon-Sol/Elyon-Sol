@@ -112,7 +112,7 @@ class InProcSurface:
             status_code = 200
             text = "{}"
 
-        def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+        def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
             return _R()
 
         prev_age, prev_post = pep.DECISION_MAX_AGE_SECONDS, pep.requests.post

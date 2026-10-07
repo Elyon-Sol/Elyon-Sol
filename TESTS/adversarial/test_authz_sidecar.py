@@ -69,7 +69,7 @@ def _admit(tool, args):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         return _R()
 
     orig = pep.requests.post
@@ -292,10 +292,14 @@ def test_replay_shared_across_two_sidecar_instances(gate_signing):
 # Liveness (not a trust surface)
 # --------------------------------------------------------------------------- #
 
-def test_allow_on_envoy_forwarded_suffix_path(gate_signing):
+def test_header_extractor_denied_on_envoy_forwarded_suffix_path(gate_signing):
     """Envoy's HTTP ext_authz appends the original request path to the path_prefix
-    (/authz + /api/transfer -> /authz/api/transfer); the sidecar answers any path
-    under /authz, reading the decision from headers only."""
+    (/authz + /api/transfer -> /authz/api/transfer). A suffix-path request is
+    inline by construction, so the client-controllable interaction header must
+    not decide it: with the header-read default it is DENIED, even for a valid,
+    matching envelope (it would otherwise ALLOW any path/body upstream). The
+    body-deriving extractor is the inline binding source
+    (test_authz_sidecar_body_binding)."""
     client = TestClient(_app(_config(gate_signing)))
     env = _admit("transfer_funds", {"amount": 100, "to": "acct-42"})
     headers = {
@@ -305,8 +309,12 @@ def test_allow_on_envoy_forwarded_suffix_path(gate_signing):
         ),
     }
     r = client.post("/authz/api/transfer", headers=headers)
-    assert r.status_code == 200
-    assert r.headers[DECISION_HEADER] == DECISION_ALLOW
+    assert r.status_code == 403
+    assert r.headers[DECISION_HEADER] == DECISION_DENY
+    assert r.headers[REASON_HEADER] == REF_TARGET_NOT_CONFIGURED
+    # The same envelope is still honored on the standalone decision endpoint:
+    # the suffix-path refusal did not consume it.
+    assert client.post("/authz", headers=headers).status_code == 200
 
 
 def test_healthz_is_live_even_when_unconfigured():

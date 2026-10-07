@@ -61,7 +61,7 @@ def admit(tool, args, max_age=300):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         return _R()
 
     pep._INJECTED_SIGNING_KEY = (_priv, GATE_KID)

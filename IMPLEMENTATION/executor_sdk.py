@@ -167,9 +167,14 @@ class ExecutorGate:
 
         decision_id = envelope.get("decision_id")
         if decision_id is not None:
-            if not self.replay_cache.check_and_claim(
-                decision_id, _parse_not_after(envelope), now=now
-            ):
+            # Retain the claim through the whole HONORED window: verify_envelope
+            # accepts until not_after + clock_skew, so expiring the claim at the
+            # bare not_after would let the id be re-claimed inside the skew (the
+            # reference_target F3 rule).
+            exp = _parse_not_after(envelope)
+            if exp is not None:
+                exp = exp + self.clock_skew
+            if not self.replay_cache.check_and_claim(decision_id, exp, now=now):
                 return Decision(False, REF_VERIFY_REPLAY)
 
         return Decision(True, result["reason"])

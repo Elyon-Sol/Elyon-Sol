@@ -46,7 +46,7 @@ def test_governed_call_refuse_blocks_upstream(monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append({"url": url, "json": json, "timeout": timeout, "headers": headers})
         return FakeResponse()
 
@@ -90,7 +90,7 @@ def test_governed_call_eligible_forwards_once(monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append({
             "url": url,
             "json": json,
@@ -139,7 +139,7 @@ def test_governed_call_upstream_error_fails_closed(monkeypatch):
     reached; the upstream call raises TimeoutError. The PEP MUST convert
     this to a 403 REFUSE with REF_PEP_FAIL_CLOSED.
     """
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         raise TimeoutError("upstream timeout")
 
     monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
@@ -176,7 +176,7 @@ def test_governed_call_manifest_version_drift_refuses(monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append({"url": url, "json": json, "timeout": timeout, "headers": headers})
         return FakeResponse()
 
@@ -261,7 +261,7 @@ def test_pep_eligible_response_contains_envelope(monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append({"url": url, "json": json, "timeout": timeout, "headers": headers})
         return FakeResponse()
 
@@ -361,7 +361,7 @@ def test_default_path_is_signed_and_forge_refused(gate_signing, monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append({"url": url, "headers": headers})
         return FakeResponse()
 
@@ -410,7 +410,7 @@ def test_default_forward_no_key_fails_closed(monkeypatch):
     """
     calls = []
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append(url)
 
         class _R:

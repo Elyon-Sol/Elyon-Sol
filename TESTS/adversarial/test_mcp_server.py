@@ -61,7 +61,7 @@ def _admit(tool, args):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         return _R()
 
     orig = pep.requests.post

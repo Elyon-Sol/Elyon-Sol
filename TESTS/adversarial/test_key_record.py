@@ -32,6 +32,7 @@ from IMPLEMENTATION.verifier import (
     REF_VERIFY_KEY_UNKNOWN,
     REF_VERIFY_KEY_REVOKED,
     REF_VERIFY_KEY_OUT_OF_WINDOW,
+    REF_VERIFY_KEY_ROLE_NOT_ISSUER,
     REF_VERIFY_SIGNATURE_INVALID,
 )
 
@@ -326,3 +327,42 @@ def test_unsigned_path_unchanged():
     result = verify_envelope(env, interaction, TARGET_URL)
     assert result["accepted"] is True
     assert result["reason"] == ACCEPT_REASSERTED_AND_BOUND
+
+
+# --------------------------------------------------------------------------
+# Role separation (2026-10-07 review): an approver-role key never issues
+# --------------------------------------------------------------------------
+
+def test_approver_role_key_cannot_sign_envelopes():
+    """A key the signed record designates role=approver (the R1 approver key) is
+    REFUSED as an envelope issuer, even though it is present, unrevoked, in
+    window and its signature is valid. Fails if the verifier's role check is
+    reverted (the approver holder could then mint gate envelopes)."""
+    root = Ed25519PrivateKey.generate()
+    gate_key = Ed25519PrivateKey.generate()
+    approver = Ed25519PrivateKey.generate()
+    nb, na = _valid_window()
+    ap_entry = _key_entry("ap", approver.public_key(), nb, na)
+    ap_entry["role"] = "approver"
+    loaded = _trust_view(root, [_key_entry("gate", gate_key.public_key(), nb, na),
+                                ap_entry])
+    assert loaded["reason"] is None
+    signed, interaction = _signed_envelope(approver, "ap")
+    result = verify_envelope(signed, interaction, TARGET_URL,
+                            key_record_view=loaded["trust_view"], now=NOW)
+    assert result["accepted"] is False
+    assert result["reason"] == REF_VERIFY_KEY_ROLE_NOT_ISSUER
+
+
+def test_issuer_role_key_accepted():
+    """An explicit role=issuer key signs exactly as a role-less key does."""
+    root = Ed25519PrivateKey.generate()
+    issuer = Ed25519PrivateKey.generate()
+    nb, na = _valid_window()
+    entry = _key_entry("issuer-1", issuer.public_key(), nb, na)
+    entry["role"] = "issuer"
+    loaded = _trust_view(root, [entry])
+    signed, interaction = _signed_envelope(issuer, "issuer-1")
+    result = verify_envelope(signed, interaction, TARGET_URL,
+                            key_record_view=loaded["trust_view"], now=NOW)
+    assert result["accepted"] is True

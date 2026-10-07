@@ -49,6 +49,13 @@ static_resources:
                       transport_api_version: V3
                       # Fail CLOSED: a down/erroring sidecar denies, never allows.
                       failure_mode_allow: false
+                      # Inline body binding: forward the request body so the
+                      # sidecar's body-deriving extractor binds the envelope to
+                      # the bytes the upstream executes. An over-size body is
+                      # rejected (413), never truncated and partially checked.
+                      with_request_body:
+                        max_request_bytes: 65536
+                        allow_partial_message: false
                       http_service:
                         server_uri:
                           uri: elyon-authz:9200

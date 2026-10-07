@@ -55,7 +55,7 @@ def governed(tmp_path, monkeypatch):
         text = '{"ok": true}'
 
     monkeypatch.setattr("IMPLEMENTATION.pep.requests.post",
-                        lambda url, json, timeout, headers=None, verify=None, cert=None: R())
+                        lambda url, json, timeout, headers=None, verify=None, cert=None, **_: R())
     return iss, appr
 
 

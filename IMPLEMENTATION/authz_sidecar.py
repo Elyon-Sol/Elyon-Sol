@@ -394,7 +394,8 @@ def _resolve_tool(
     tool_spec is one of:
       - a literal str                  -> a constant tool identity (one tool per
                                           route).
-      - {"from": "path"}               -> the request path (request.url.path).
+      - {"from": "path"}               -> the request path plus its query
+                                          string, if any ("/p?q").
       - {"from": "header", "name": H}  -> the value of request header H.
 
     Anything that does not resolve to a non-empty str returns None (the gate then
@@ -405,7 +406,11 @@ def _resolve_tool(
     if isinstance(tool_spec, dict):
         src = tool_spec.get("from")
         if src == "path":
-            return request.url.path or None
+            # The query string is part of the action the upstream executes, so
+            # it is part of the bound tool identity (absent -> the bare path).
+            path = request.url.path
+            query = request.url.query
+            return (f"{path}?{query}" if query else path) or None
         if src == "header":
             name = tool_spec.get("name")
             if isinstance(name, str):
@@ -656,8 +661,15 @@ def build_authz_sidecar_app(
             extractor = (interaction_extractor
                          if interaction_extractor is not None
                          else resolve_interaction_extractor_from_env())
+            # A request on the /authz/<rest> suffix route was forwarded by Envoy's
+            # path_prefix, i.e. the sidecar IS inline in front of an upstream -
+            # topology the process CAN see. The client-controllable header must
+            # never bind that request (it would ALLOW any path/body the upstream
+            # then executes), declared or not; standalone callers use /authz.
+            forwarded_inline = request.url.path != "/authz"
             if extractor is None or (
-                inline_declared() and extractor is default_interaction_extractor
+                (inline_declared() or forwarded_inline)
+                and extractor is default_interaction_extractor
             ):
                 return _deny(REF_TARGET_NOT_CONFIGURED)
             interaction = extractor(request)
@@ -743,7 +755,8 @@ def build_authz_sidecar_app(
     # Register the handler on the bare path AND on a catch-all suffix. Envoy's HTTP
     # ext_authz builds the check path as `path_prefix` + the original request path
     # (path_prefix "/authz" + "/api/x" -> "/authz/api/x"), so the sidecar must
-    # answer any path under /authz; the decision reads only headers, never the path.
+    # answer any path under /authz. A suffix-path request is inline by
+    # construction and is decided only by a body-deriving extractor (above).
     app.add_api_route("/authz", _authz_handler, methods=["POST"])
     app.add_api_route("/authz/{rest:path}", _authz_handler, methods=["POST"])
 

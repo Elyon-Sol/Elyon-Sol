@@ -63,7 +63,7 @@ def admit(tool, args):
     captured = {}
     class _R:
         status_code = 200; text = "{}"
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         captured["headers"] = headers or {}; return _R()
     orig = pep.requests.post
     pep.requests.post = fake_post

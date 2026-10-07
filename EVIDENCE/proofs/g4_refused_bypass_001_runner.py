@@ -45,7 +45,7 @@ def _route_through_pep_capture_push(interaction_body, target_url):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         captured["url"] = url
         captured["json"] = json
         captured["headers"] = headers or {}

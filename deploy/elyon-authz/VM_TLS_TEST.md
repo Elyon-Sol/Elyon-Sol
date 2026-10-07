@@ -176,8 +176,12 @@ To test the two-filter chain (elyon-authz then OPA) in front of the target:
    bottom of `docker-compose.authz.tls.yml`) so Envoy verifies the sidecar leaf
    under `ca.crt`, and switch the `http_service` server_uri to https.
 3. `envoy --mode validate -c deploy/envoy.example.yaml` before `up`.
-4. Hit Envoy's public listener (`:10000`) with the attestation headers; admissibility
-   (sidecar) is enforced before policy (OPA).
+4. Declare the sidecar inline first (`ELYON_EXT_AUTHZ_INLINE=1` plus the
+   `ELYON_INLINE_*` mapping, see `docker-compose.authz.yml`): a request Envoy
+   forwards (`/authz/<path>`) is never decided from the interaction header and is
+   DENIED `REF_TARGET_NOT_CONFIGURED` until the body-binding mapping is set. Then
+   hit Envoy's public listener (`:10000`) with the envelope and a body matching
+   the minted args; admissibility (sidecar) is enforced before policy (OPA).
 
 ## Troubleshooting
 

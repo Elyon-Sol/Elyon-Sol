@@ -213,7 +213,7 @@ def _gate_sign_via_production_path(interaction, target_url, priv, key_id):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         captured["headers"] = headers or {}
         return _Resp()
 

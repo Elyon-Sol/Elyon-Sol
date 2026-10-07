@@ -65,7 +65,7 @@ def upstream(monkeypatch):
     """Capture the ELIGIBLE push instead of performing real HTTP."""
     calls = []
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         calls.append({"url": url, "json": json, "headers": headers})
         return FakeResponse()
 

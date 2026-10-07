@@ -704,12 +704,15 @@ async def governed_call(request: Request):
             {"X-Elyon-Sol-Envelope": canonical_json(envelope)},
         )
     except Exception as e:
+        # Only the exception class is returned: the message of a failed forward
+        # (connection refused / timeout / reset, with host and port) would make
+        # the gate an oracle for probing which addresses it can reach.
         raise HTTPException(
             status_code=403,
             detail={
                 "terminal_state": "REFUSE",
                 "refusal_reason_code": "REF_PEP_FAIL_CLOSED",
-                "error": str(e),
+                "error": type(e).__name__,
             },
         )
 

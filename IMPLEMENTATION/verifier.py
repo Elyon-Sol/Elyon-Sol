@@ -140,6 +140,10 @@ REF_VERIFY_KEY_RECORD_STALE = "REF_VERIFY_KEY_RECORD_STALE"
 REF_VERIFY_KEY_UNKNOWN = "REF_VERIFY_KEY_UNKNOWN"
 REF_VERIFY_KEY_REVOKED = "REF_VERIFY_KEY_REVOKED"
 REF_VERIFY_KEY_OUT_OF_WINDOW = "REF_VERIFY_KEY_OUT_OF_WINDOW"
+# Role separation, the reverse of approver_trust's: a key whose SIGNED record
+# role is anything but "issuer" (e.g. an R1 approver key) never signs an
+# envelope. Role-less keys (pre-VL-119 records, the gate key) remain issuers.
+REF_VERIFY_KEY_ROLE_NOT_ISSUER = "REF_VERIFY_KEY_ROLE_NOT_ISSUER"
 
 # B-prime-3 root-record codes (VL-044). Same canonical home. ROOT_RECORD_INVALID /
 # ROOT_RECORD_STALE are EMITTED by root_record_source.py (the root reader) and
@@ -362,6 +366,8 @@ def verify_envelope(
                 return _reject(REF_VERIFY_KEY_UNKNOWN)
             if entry.get("revoked"):
                 return _reject(REF_VERIFY_KEY_REVOKED)
+            if entry.get("role") not in (None, "issuer"):
+                return _reject(REF_VERIFY_KEY_ROLE_NOT_ISSUER)
             current = now if now is not None else datetime.now(timezone.utc)
             key_not_before = entry.get("not_before")
             key_not_after = entry.get("not_after")

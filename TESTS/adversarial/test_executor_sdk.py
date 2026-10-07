@@ -37,7 +37,7 @@ def _admit(tool, args):
         status_code = 200
         text = "{}"
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         return _R()
 
     orig = pep.requests.post
@@ -149,3 +149,27 @@ def test_shared_replay_cache_catches_cross_instance_replay(gate_signing):
 def test_missing_record_args_raises():
     with pytest.raises(ValueError):
         ExecutorGate(pinned_public_keys={}, target_id=TARGET_ID)
+
+
+def test_replay_refused_inside_clock_skew_window(gate_signing):
+    """verify_envelope honors an envelope until not_after + clock_skew, so the
+    replay claim must be retained that long. Two presentations AFTER not_after
+    but inside the skew: the first is honored, the second is a REPLAY. Fails if
+    the SDK claims with the bare not_after (the claim would already be expired
+    and the id re-claimable on every call in the window)."""
+    from datetime import datetime, timedelta
+    record_bytes = open("EVIDENCE/published_hashes.json", "rb").read()
+    gate = ExecutorGate(
+        pinned_public_keys={gate_signing["key_id"]: gate_signing["public_key"]},
+        target_id=TARGET_ID,
+        record_bytes=record_bytes,
+        clock_skew=timedelta(seconds=30),
+    )
+    args = {"amount": 100, "to": "acct-42"}
+    env = _admit("transfer_funds", args)
+    inside_skew = datetime.fromisoformat(env["not_after"]) + timedelta(seconds=5)
+    first = gate.check(env, interaction_for("transfer_funds", args), now=inside_skew)
+    assert first.honored is True
+    second = gate.check(env, interaction_for("transfer_funds", args), now=inside_skew)
+    assert second.honored is False
+    assert second.reason == REF_VERIFY_REPLAY

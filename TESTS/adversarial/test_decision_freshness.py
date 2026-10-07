@@ -40,7 +40,7 @@ def _drive_gate(monkeypatch):
         status_code = 200
         text = '{"ok": true}'
 
-    def fake_post(url, json, timeout, headers=None, verify=None, cert=None):
+    def fake_post(url, json, timeout, headers=None, verify=None, cert=None, **_):
         return _R()
 
     monkeypatch.setattr("IMPLEMENTATION.pep.requests.post", fake_post)
