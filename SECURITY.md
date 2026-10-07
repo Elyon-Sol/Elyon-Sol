@@ -1,6 +1,6 @@
 # Security Policy
 
-> **Paused — 2026-07-20.** Active development is paused, not ended — the author may resume it. The public test nodes are offline. The
+> **The public test nodes are offline (retired 2026-07-20).** The
 > credited red-team challenge is **closed** — there is no live public surface, no active engagement,
 > and no CVE / safe-harbor program for one. You can still stand up the open-source surface yourself
 > and test it ([`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md)); a genuine security report
@@ -45,9 +45,9 @@ self-check before you submit.
 - Stealing the signing key, or compromising the host OS / cloud / TLS by means outside the
   request protocol. These are welcome as separate infrastructure reports.
 
-## Reports (project paused)
+## Reports
 
-The project is paused, so the former credited-challenge mechanics — the 90-day coordinated-
+The former credited-challenge mechanics — the 90-day coordinated-
 disclosure window, ledger / CVE credit, and acknowledgment in a next Zenodo Enforcement-Evidence
 Addendum — are wound down. A genuine security report is still welcome at the address above and
 will be handled on a best-effort basis.

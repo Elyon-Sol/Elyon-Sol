@@ -1,7 +1,7 @@
 # Spin up your own Elyon-Sol surface
 
 The public demo surface at **elyon-sol.io** (gate / target / sidecar / publisher) was taken offline
-on **2026-07-20**, when active development was paused. Everything it ran is open source (AGPL-3.0), so you can stand up the identical
+on **2026-07-20**. Everything it ran is open source (AGPL-3.0), so you can stand up the identical
 four-service admission surface yourself — locally in about two commands, or on your own hosts —
 and run the same "break-it" walkthrough against your own instance.
 
@@ -95,8 +95,7 @@ bring-up the public surface used, and `deploy/tls/` + `docker-compose.tls.yml` a
 
 ## Note
 
-Active development of this project is paused, not ended — the author may resume it. The code is
-AGPL-3.0 and yours to run, fork, and build on. Spinning this up reproduces the reference surface — it
+The code is AGPL-3.0 and yours to run, fork, and build on. Spinning this up reproduces the reference surface — it
 does **not** re-open the credited red-team challenge, which is closed.
 
 **Honest scope:** Elyon-Sol has never been validated by an external party (G5 is not met). A

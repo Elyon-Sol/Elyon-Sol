@@ -60,7 +60,7 @@ is the single source of readiness truth; STATE.md only references it.
 - **GR-6** - the same, for STATE.md history. See `docs/MAINTENANCE_PROTOCOL.md`.
 - **G5 is NOT-MET** and is the finish line: a blind external attacker against
   a deployed surface. There has been no live surface since the public nodes
-  were retired on 2026-07-20 (the project is paused, not ended), so G5 cannot
+  were retired on 2026-07-20, so G5 cannot
   advance until one exists again. Never write a claim that implies otherwise.
   Every artifact carries the honest-scope line.
 

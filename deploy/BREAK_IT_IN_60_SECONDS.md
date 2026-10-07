@@ -1,7 +1,7 @@
 # Break Elyon-Sol in 60 seconds
 
-> **Self-host edition.** Active development is paused (2026-07-20) and the four public
-> `elyon-sol.io` test hosts are **offline**; the credited challenge is closed. Run this walkthrough
+> **Self-host edition.** The four public `elyon-sol.io` test hosts were retired on 2026-07-20 and
+> are **offline**; the credited challenge is closed. Run this walkthrough
 > against your own instance — stand one up with [`SPIN_UP_YOUR_OWN.md`](SPIN_UP_YOUR_OWN.md).
 > You need nothing but `curl` and `jq`.
 
@@ -115,8 +115,8 @@ before you report it — see `INSPECT_YOUR_BREAK.md` (the inspector decides, not
 ## 4. You found something
 
 Email **security@elyon-sol.io** with: the category (target / sidecar), the exact requests
-in order, and what you saw (status codes, the `/received` count). While the project is paused,
-reports are handled best-effort; the former credit / wall-of-fame mechanics are wound down (see
+in order, and what you saw (status codes, the `/received` count). Reports are handled
+best-effort; the former credit / wall-of-fame mechanics are wound down (see
 [`SECURITY.md`](../SECURITY.md)).
 
 Test only instances you run yourself — there are no in-scope public hosts. Testing the
