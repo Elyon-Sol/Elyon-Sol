@@ -1,8 +1,7 @@
 # Elyon-Sol
 
-> **Paused — 2026-07-20.** Active development of Elyon-Sol is paused, not ended — the author may
-> resume it. The public test nodes are offline. The code is open source (AGPL-3.0) and preserved for anyone to read, run, fork, or
-> carry forward — you can stand up the whole surface yourself (see
+> **The public test nodes are offline (retired 2026-07-20).** The code is open source (AGPL-3.0) for
+> anyone to read, run, fork, or carry forward — you can stand up the whole surface yourself (see
 > [`deploy/SPIN_UP_YOUR_OWN.md`](deploy/SPIN_UP_YOUR_OWN.md)). The break-it challenge below is
 > preserved as documentation: it is no longer a live, credited engagement, and the four public
 > hosts referenced further down are **down**. The companion operator console
@@ -13,8 +12,8 @@ decides — cryptographically — whether it is *authorized* under an explicit, 
 and refuses everything else. Every allowed action leaves a signed, single-use receipt of exactly
 why it was allowed.
 
-AGPL-3.0 · canon v0.9.8.4 · test suite green (616 published at Rev 8; 651 at repo HEAD, unpublished — count of record in `STATE.md`) · **paused 2026-07-20** ·
-**never externally validated** (the open finish line the project never reached — see below).
+AGPL-3.0 · canon v0.9.8.4 · test suite green (616 published at Rev 8; 651 at repo HEAD, unpublished — count of record in `STATE.md`) ·
+**never externally validated** (the open finish line, not yet reached — see below).
 
 ---
 
@@ -209,7 +208,6 @@ or dual-licensed components** (`LICENSING.md`). Contributions require a DCO sign
 
 ## Security & contact
 
-Report findings privately to **security@elyon-sol.io** — handled best-effort while the project is
-paused (the former 90-day window and credit mechanics are wound down). Please don't open public issues
+Report findings privately to **security@elyon-sol.io** — handled best-effort (the former 90-day window and credit mechanics are wound down). Please don't open public issues
 for security findings. Full policy and the in/out-of-scope
 list: [`SECURITY.md`](SECURITY.md).
