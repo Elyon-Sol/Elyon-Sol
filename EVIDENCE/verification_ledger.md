@@ -2347,3 +2347,14 @@ Prior substantive entry: VL-153. Cites VL-144 (SES-6 declare-or-fail, which this
 
 #### Environment note
 Native Linux clone, Python 3.14 `.venv`. Two review subagents surfaced the candidates; each break above was reproduced by execution before it was fixed, and the assistant spot-checked the cited code. GR-4: appended, not edited.
+
+### VL-154 follow-up — Live site, CI and three-way continuity verified after the fixes (2026-10-07)
+
+**Claim.** After `8a18c21`..`697b5d0`: CI is green; elyon-sol.io serves `site/index.html` as committed; GitHub, the live site and the `/elyon` checkout agree.
+
+**Referent.** Execution, 2026-10-07. CI: every pushed head green, last run 37694389364 on `697b5d0` — 651 passed, all hermetic runners passed. Live site, cache-busted (Cloudflare `MISS`): visible text identical to `site/index.html` at `c3d2699` after typography normalization (WordPress curly quotes/dashes), 4/4 code blocks byte-identical, the October 2026 changelog and the corrected claims present, no "paused" wording, footer honest-scope line last; only the WordPress-owned `<title>` differs, unchanged from before. GitHub: `main` = local HEAD, README blob identical, tag `v0.9.8.5-post-enforcement` matches. Repo: published-hash pins equal the evaluator / manifest / canon blobs and `canon.lock`; every readiness proof exists; ledger append-only since `e68d05f` (16 commits, no violations); repo links in README, site, SECURITY, LICENSING and the deploy guides resolve; the Zenodo concept DOI resolves to Rev 8 (`21364720`), as the site states.
+
+**Status.** RECORDED. Open, unchanged: the `e68d05f` in-place edit and the missing VL-026 index line (GR-4 remedy is the author's); `main` has no branch protection. Environment (commit + STATE only, not verification): checkout moved to `/elyon/Elyon-Sol`, `.venv` rebuilt by `scripts/rebuild_venv.sh`, the `elyon` account deleted. NOT external validation; NOT G5.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-154. Does not cite its own hashes. GR-4: appended, not edited.
