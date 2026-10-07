@@ -129,9 +129,8 @@ apply.
   hashes of record are still defined over the **git blob**
   (`git show HEAD:<path>`, GR-6 clause 5); on this checkout the working-tree
   file hashes the same, but use the blob form in anything you record.
-- Docker: `elyon` is in the `docker` group (since 2026-09-27; only `vboxuser`
-  has sudo). A shell started before that change lacks the group - wrap
-  commands as `sg docker -c "docker compose ..."` until the next login.
+- Docker: `vboxuser` (the only account; it has sudo) is in the `docker` group.
+  The former `elyon` account was deleted on 2026-10-07.
   Compose reads `deploy/.env` (from `deploy/bootstrap_config.py`); the TLS
   overlay needs `deploy/tls/certs/` (`gen_certs.py localhost 127.0.0.1` so
   host-side curl verifies); the governance overlay needs the R1 ceremony
