@@ -116,11 +116,12 @@ push work directly. `docs/SESSION_PROTOCOL.md`'s "Environment / sandbox recovery
 section is historical (the Windows-mounted container sandbox) and does not
 apply.
 
-- Python 3.14 in `.venv/` (git-ignored). It was created under the old
-  `/home/elyon` path: `.venv/bin/python` works, but the console scripts
-  (`pip`, `pytest`, ...) have a dead shebang - use `.venv/bin/python -m <tool>`,
-  or recreate with
-  `python3 -m venv --clear .venv && .venv/bin/python -m pip install -r requirements-dev.txt`.
+- Python 3.14 in `.venv/` (git-ignored). Rebuild it with
+  `scripts/rebuild_venv.sh` (`--skip-tests` to skip the proof): `venv --clear`
+  on python3.14, the pinned `requirements-dev.txt`, a shebang check, then the
+  suite + `repo_health.py`. Re-run it whenever the checkout moves - console
+  scripts (`pip`, `pytest`) embed the absolute path. Rebuilt at `/elyon` on
+  2026-10-07.
   CI (`.github/workflows/ci.yml`) and the image (`deploy/Dockerfile`) use the
   same Python version and the same pinned `requirements*.txt`.
 - Line endings: `.gitattributes` (`* text=auto eol=lf`) makes the working tree
