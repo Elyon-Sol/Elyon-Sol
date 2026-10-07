@@ -110,13 +110,17 @@ fail closed.
 
 **Linux is the development environment** (from 2026-09-27; the former native
 Windows checkout is deprecated and is not a source of truth). The working copy
-is a plain clone of `origin/main` at `/home/elyon/Elyon-Sol`; git and push work
-directly. `docs/SESSION_PROTOCOL.md`'s "Environment / sandbox recovery"
+is a plain clone of `origin/main` at `/elyon/Elyon-Sol` (from 2026-10-07: the
+former `/home/elyon` was moved to `/elyon`; sessions run as `vboxuser`); git and
+push work directly. `docs/SESSION_PROTOCOL.md`'s "Environment / sandbox recovery"
 section is historical (the Windows-mounted container sandbox) and does not
 apply.
 
-- Python 3.14 in `.venv/` (git-ignored). Recreate with
-  `python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt`.
+- Python 3.14 in `.venv/` (git-ignored). It was created under the old
+  `/home/elyon` path: `.venv/bin/python` works, but the console scripts
+  (`pip`, `pytest`, ...) have a dead shebang - use `.venv/bin/python -m <tool>`,
+  or recreate with
+  `python3 -m venv --clear .venv && .venv/bin/python -m pip install -r requirements-dev.txt`.
   CI (`.github/workflows/ci.yml`) and the image (`deploy/Dockerfile`) use the
   same Python version and the same pinned `requirements*.txt`.
 - Line endings: `.gitattributes` (`* text=auto eol=lf`) makes the working tree
@@ -132,9 +136,10 @@ apply.
   host-side curl verifies); the governance overlay needs the R1 ceremony
   outputs in `deploy/governance/` (see `deploy/GOVERNANCE_DEPLOYMENT.md`).
   All three are git-ignored and hold private keys - never print them.
-- `gh` is not authenticated; read CI status from the public API
-  (`https://api.github.com/repos/Elyon-Sol/Elyon-Sol/actions/runs`), or run
-  `gh auth login`.
+- `gh` (as `vboxuser`) is authenticated as the `Elyon-Sol` GitHub account and
+  is git's credential helper (`gh auth setup-git`), so `git push` and
+  `gh run list` work. A second stored account, `secadaIO`, has no write access
+  to the repo - `gh auth status` must show `Elyon-Sol` active before a push.
 - The public website (elyon-sol.io) is served by WordPress, not from this repo.
   `site/index.html` is its source: paste the WHOLE file and confirm the
   published page ends with the footer honest-scope line (a truncated paste has
