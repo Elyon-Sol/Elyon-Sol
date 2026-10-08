@@ -2377,3 +2377,16 @@ Prior substantive entry: VL-154 (whose Status named every item here). Cites VL-1
 
 #### Environment note
 Native Linux clone at `/elyon/Elyon-Sol`, Python 3.14 `.venv`, Docker 29.1.3; the ledger append-only check (byte-prefix over every ledger blob since `e68d05f`) was re-run first, 17 commits, no violation. The approver key was read from its git-ignored file into process environment for the approver container only; the self-approval grants were built in-process from the gate key; nothing secret was printed. One narration turn during the stack run was interrupted by the harness's safety classifier after the probes had returned; the results were reconstructed from the captured outputs, with no effect on the referents. GR-4: appended, not edited.
+
+### VL-155 follow-up — Enforcement census re-run at snapshot `2d5c6bf` with a committed hermetic harness; Revision 9 addendum drafted (2026-10-08)
+
+**Claim.** The Revision 8 addendum (Zenodo 10.5281/zenodo.21364720) Section 2: 204 HTTP calls, 102 REFUSE → 403 with zero external side effects, 102 ELIGIBLE → 200 with exactly one external POST each — measured by a loopback receiver in a separate process, for which Revision 8 named no committed harness.
+
+**Referent.** Execution, 2026-10-08, at `2d5c6bf` (which adds `EVIDENCE/proofs/enforcement_census_local_001_runner.py`: gate as a subprocess with an ephemeral key, receiver an HTTP server in the runner's process on a free loopback port, the webhook runner's call pattern verbatim): 204 / 102→403 / 102→200 / 0 unexpected; 102 forwards observed, every one carrying a signed envelope, 102 distinct `decision_id` values, 0 from REFUSE, 0 duplicates; exit 0. Run twice (at `918f6f5` before the file was committed, and at `2d5c6bf`), identical. Suite at `2d5c6bf`: 689 passed. CONFIRMED: the Revision 8 census figures reproduce at the new snapshot from the repository alone.
+
+**Status.** RECORDED. The Revision 9 addendum (`docs/zenodo/enforcement_evidence_addendum_rev9.md`, commit `f5fae8d`; its PDF is a derived, git-ignored artifact) is drafted against this snapshot and corrects Revision 8 on licensing, the retired surface, the evaluator pin and the test count; its deposit under the concept DOI is the author's. Not run: the third-party (webhook) census leg; Revision 8's 2026-07-14 run stands as the last external confirmation. Authoring of the addendum itself is commit + STATE (GR-4 clause 1); this entry records the census execution only.
+
+**Honest scope.** Loopback receiver, single host, author-side, assistant-executed. NOT external validation; NOT G5.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-155. Cites VL-083 (the census method's external-receiver origin) and VL-030 (the first enforcement census, `g3_enforcement_evidence_001`). Does not cite its own hashes. GR-4: appended, not edited.
