@@ -49,6 +49,12 @@ jobs:
               *external_interception_webhook*)
                 echo "::notice::SKIP non-hermetic (external webhook.site): $r"
                 continue ;;
+              *envoy_inline_path*)
+                # Drives the REAL compose stack (Envoy, OPA, the inline sidecar,
+                # the plain upstream) over published ports; no docker stack in
+                # CI, so it exits 2 (unconfigured) by design. Author/assistant-run.
+                echo "::notice::SKIP compose-stack Envoy path runner (needs the running stack): $r"
+                continue ;;
               *attack_suite_live*)
                 # AUTHOR-executed against a REAL deployed surface (C3-live); there
                 # is no live gate/target in CI, so it exits 2 (unconfigured) by

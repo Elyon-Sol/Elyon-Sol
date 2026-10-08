@@ -35,6 +35,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 # Importable so the round-trip test can build a config without writing a file.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from IMPLEMENTATION.published_source import anchor_sha256  # noqa: E402
+from IMPLEMENTATION.evaluator import manifest_sha256  # noqa: E402
 
 DEFAULT_RECORD = "EVIDENCE/published_hashes.json"
 DEFAULT_TARGET_URL = "http://target:9000/target"
@@ -62,6 +63,9 @@ def build_config(record_path=DEFAULT_RECORD, target_url=DEFAULT_TARGET_URL,
         "ELYON_PINNED_ROOT_SHA256": pinned_root,
         "ELYON_TARGET_URL": target_url,
         "ELYON_PUBLISHER_URL": publisher_url,
+        # public: sha256 of MANIFEST/manifest.json, the pin an inline sidecar
+        # route admits under (docker-compose.authz.yml, elyon-authz-inline).
+        "ELYON_MANIFEST_SHA256": manifest_sha256(),
     }
 
 

@@ -16,8 +16,14 @@ import rego.v1
 
 default allow := false
 
-# Allow read-only methods through the policy layer; everything else is denied
-# HERE (admissibility was already enforced upstream by elyon-authz).
+# Allow read-only methods through the policy layer, and the example's action
+# route (POST /act/...) that elyon-authz has already admitted; everything else
+# is denied HERE (admissibility was already enforced upstream by elyon-authz).
 allow if {
 	input.attributes.request.http.method == "GET"
+}
+
+allow if {
+	input.attributes.request.http.method == "POST"
+	startswith(input.attributes.request.http.path, "/act/")
 }

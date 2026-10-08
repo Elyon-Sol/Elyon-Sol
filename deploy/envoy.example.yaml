@@ -16,7 +16,7 @@
 # times out, or errors DENIES the request - never opens. This is the Envoy-level
 # expression of the project's fail-closed invariant (canon section 9).
 #
-# `envoy --mode validate` passes on this file (envoy v1.31, 2026-09-27). Validate
+# `envoy --mode validate` passes on this file (envoy 1.31.10, 2026-10-08). Validate
 # again after any edit:
 #     envoy --mode validate -c deploy/envoy.example.yaml
 # Stand up via deploy/docker-compose.authz.yml. This is an EXAMPLE: addresses,
@@ -56,24 +56,24 @@ static_resources:
                       with_request_body:
                         max_request_bytes: 65536
                         allow_partial_message: false
+                      # Forward the attestation header the sidecar verifies (the
+                      # interaction is derived from the body + path inline, so the
+                      # client interaction header is not forwarded). This is the
+                      # ExtAuthz-level field; the older
+                      # authorization_request.allowed_headers is deprecated.
+                      allowed_headers:
+                        patterns:
+                          - exact: "x-elyon-sol-envelope"
+                            ignore_case: true
                       http_service:
                         server_uri:
-                          uri: elyon-authz:9200
+                          uri: elyon-authz-inline:9200
                           cluster: elyon_authz
                           timeout: 2s
                         # Envoy appends the original path to this prefix; the
-                        # sidecar answers any path under /authz.
+                        # sidecar answers any path under /authz, and binds the
+                        # tool identity to that forwarded path ("/authz" + path).
                         path_prefix: /authz
-                        authorization_request:
-                          # Forward the attestation + interaction headers the
-                          # sidecar verifies. Without these the sidecar sees an
-                          # un-attested call and denies (REF_VERIFY_ENVELOPE_ABSENT).
-                          allowed_headers:
-                            patterns:
-                              - exact: "x-elyon-sol-envelope"
-                                ignore_case: true
-                              - exact: "x-elyon-sol-interaction"
-                                ignore_case: true
                         authorization_response:
                           # Surface the decision reason to logs / the upstream.
                           allowed_upstream_headers:
@@ -108,7 +108,7 @@ static_resources:
           - lb_endpoints:
               - endpoint:
                   address:
-                    socket_address: { address: elyon-authz, port_value: 9200 }
+                    socket_address: { address: elyon-authz-inline, port_value: 9200 }
 
     - name: opa_ext_authz
       type: STRICT_DNS
