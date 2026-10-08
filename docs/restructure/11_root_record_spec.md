@@ -242,10 +242,13 @@ this is not closeable without a trusted time source (out of scope); it is stated
 as an assumption. Separately, per-root WINDOW enforcement (`not_before` /
 `not_after` of each root entry, parsed at section 7 step 7) is CONSUMER-layer:
 the loader parses each window into the status view but does not compare it
-against `now`, and the cross-record status gate (section 8) consults `status`,
-not the window. Enforcing the per-root window is delegated to the consuming
-layer (the analog of the per-key `REF_VERIFY_KEY_OUT_OF_WINDOW` check); it is a
-stated, by-design delegation, not a gap.
+against `now`. The consuming layer is the cross-record gate (section 8), which
+from 2026-10-07 (the VL-154 open item) enforces it: when the signing root comes
+from the status view, `now` and the key record's `issued_at` must both lie in
+`[not_before - clock_skew, not_after + clock_skew)`, else
+`REF_VERIFY_ROOT_OUT_OF_WINDOW` (the analog of the per-key
+`REF_VERIFY_KEY_OUT_OF_WINDOW` check). Before 2026-10-07 the delegation was
+stated but no consumer discharged it - the gate consulted `status` only.
 
 ### 6.2 The bootstrap floor (self-revocation is meaningless in-band)
 
@@ -379,6 +382,10 @@ Root resolution and status gate (fail-closed), when `root_status_view` is suppli
    - `retired` -> accept only if `key_record.issued_at < root.retired_at` AND the
      key record is fresh; otherwise `REF_VERIFY_ROOT_RETIRED`.
    - `active` -> proceed with the status-view public key.
+   - In every accepted case the root's validity WINDOW is then enforced
+     (2026-10-07): `now` and `key_record.issued_at` must both lie in
+     `[not_before - clock_skew, not_after + clock_skew)`, else
+     `REF_VERIFY_ROOT_OUT_OF_WINDOW`.
 2. Else if `root_key_id` is in `pinned_root_keys`: bootstrap/active-by-pinning;
    proceed with the pinned key (a pinned root with no status assertion is trusted
    active).
@@ -411,6 +418,10 @@ New, defined in verifier.py (the REF_VERIFY_* home), emitted by the readers:
   `issued_at >= retired_at` (a forbidden new record; past records age via freshness,
   not this code).
 - `REF_VERIFY_ROOT_REVOKED` - a key record signed by a revoked root.
+- `REF_VERIFY_ROOT_OUT_OF_WINDOW` (added 2026-10-07) - a key record whose signing
+  root is in the status view but whose window, skew-widened, does not cover `now`
+  or the key record's `issued_at`; a missing window bound in the view also lands
+  here (fail-closed).
 
 Folded, NOT a new code (artifact 09 section 6 precedent, the closed set stays
 tight): an unknown signing root folds into `REF_VERIFY_ROOT_RECORD_INVALID`; an

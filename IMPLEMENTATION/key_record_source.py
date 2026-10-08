@@ -59,6 +59,7 @@ from IMPLEMENTATION.verifier import (
     REF_VERIFY_KEY_RECORD_STALE,
     REF_VERIFY_ROOT_REVOKED,
     REF_VERIFY_ROOT_RETIRED,
+    REF_VERIFY_ROOT_OUT_OF_WINDOW,
 )
 
 KEY_RECORD_FORMAT = "elyon-sol-key-record"
@@ -150,7 +151,13 @@ def load_key_record_from_bytes(
     root's status: a revoked root refuses (REF_VERIFY_ROOT_REVOKED), a retired
     root refuses a NEW record (REF_VERIFY_ROOT_RETIRED; issued_at >= retired_at)
     while past records age via freshness, and a designated-active successor's key
-    comes from the view. root_status_view=None is VL-042 byte-behavior.
+    comes from the view. The signing root's own validity WINDOW from the view is
+    enforced too (REF_VERIFY_ROOT_OUT_OF_WINDOW): `now` and the key record's
+    issued_at must both fall inside [not_before - clock_skew, not_after +
+    clock_skew) - a root signs nothing before its window opens, and nothing it
+    signed is trusted once the window has closed (the X.509 chain rule; the
+    per-key KEY_OUT_OF_WINDOW analog one layer up). root_status_view=None is
+    VL-042 byte-behavior.
 
     The trust view carries STATUS per key (decision 2: richer view) so
     verify_envelope can later discriminate UNKNOWN / REVOKED / OUT_OF_WINDOW:
@@ -197,6 +204,26 @@ def load_key_record_from_bytes(
                 return _reject(REF_VERIFY_ROOT_RETIRED)
         elif rstatus != "active":
             return _reject(REF_VERIFY_KEY_RECORD_INVALID)
+        # Per-root validity window (VL-154 open item; 11_root_record_spec.md
+        # sections 6.1 / 8 / 9). The view parsed the window; this is the
+        # consuming layer that compares it. Both `now` and the record's
+        # issued_at must be inside the (skew-widened) window: before
+        # not_before the root had no authority to sign; after not_after
+        # nothing it signed is trusted any longer. Missing or unparseable
+        # bounds fail closed.
+        root_not_before = rinfo.get("not_before")
+        root_not_after = rinfo.get("not_after")
+        if root_not_before is None or root_not_after is None:
+            return _reject(REF_VERIFY_ROOT_OUT_OF_WINDOW)
+        try:
+            issued_at = _parse_aware(record["issued_at"])
+        except (ValueError, TypeError, KeyError):
+            return _reject(REF_VERIFY_KEY_RECORD_INVALID)
+        window_open = root_not_before - clock_skew
+        window_close = root_not_after + clock_skew
+        for moment in (now, issued_at):
+            if not (window_open <= moment < window_close):
+                return _reject(REF_VERIFY_ROOT_OUT_OF_WINDOW)
         root_key = rinfo.get("public_key")
         if root_key is None:
             return _reject(REF_VERIFY_KEY_RECORD_INVALID)

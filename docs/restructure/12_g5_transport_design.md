@@ -256,8 +256,9 @@ Map each claim-sheet challenge to a runnable attack against the step-2/3 surface
   signing_forgery_defeated_001_runner.py is the in-process precedent).
 - Revoked / out-of-window issuer key: Expected REF_VERIFY_KEY_REVOKED /
   REF_VERIFY_KEY_OUT_OF_WINDOW (key-record gate).
-- Key record signed by a revoked / retired root: Expected REF_VERIFY_ROOT_REVOKED
-  / REF_VERIFY_ROOT_RETIRED (root gate).
+- Key record signed by a revoked / retired / out-of-window root: Expected
+  REF_VERIFY_ROOT_REVOKED / REF_VERIFY_ROOT_RETIRED / REF_VERIFY_ROOT_OUT_OF_WINDOW
+  (root gate).
 - Verbatim replay and target_url-swap: Expected REF_VERIFY_BINDING_MISMATCH
   (binding check; test_verifier / test_findings_001 are the in-process
   precedents).

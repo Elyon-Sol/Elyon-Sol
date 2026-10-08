@@ -53,10 +53,13 @@ get_published(url) equals published_source.py's current
 The proof runner asserts this resolution explicitly.
 """
 
+import ipaddress
 import os
 from typing import Any, Dict, Optional, Tuple, Union
+from urllib.parse import urlsplit
 
 import requests
+from requests.adapters import HTTPAdapter
 
 
 # Environment variable names for out-of-band TLS material (never in the repo).
@@ -102,6 +105,44 @@ def _resolve_cert(
     return cc
 
 
+class _PinnedHostAdapter(HTTPAdapter):
+    """HTTPS adapter for a URL whose host has been rewritten to a pinned IP
+    address. TLS still presents `server_hostname` as the SNI name and verifies
+    the peer certificate against it, so pinning the connection address never
+    weakens certificate verification: the peer must still prove it is the name
+    the caller asked for."""
+
+    def __init__(self, server_hostname: str, **kwargs: Any) -> None:
+        self._server_hostname = server_hostname
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+        pool_kwargs["server_hostname"] = self._server_hostname
+        pool_kwargs["assert_hostname"] = self._server_hostname
+        super().init_poolmanager(connections, maxsize, block=block, **pool_kwargs)
+
+
+def _pin_url(url: str, pinned_ip: str) -> Tuple[str, str, str]:
+    """Rewrite `url` so the connection goes to `pinned_ip` (port preserved).
+    Returns (pinned_url, hostname, host_header): `hostname` is the name the URL
+    carried (for SNI / certificate matching) and `host_header` is the Host
+    header a client would have sent for that name (port included only when it
+    is explicit and not the scheme default, as http.client does)."""
+    parts = urlsplit(url)
+    hostname = parts.hostname
+    if not hostname:
+        raise ValueError("url has no host")
+    ip = ipaddress.ip_address(pinned_ip)
+    ip_literal = f"[{ip}]" if ip.version == 6 else str(ip)
+    port = parts.port
+    default_port = 443 if parts.scheme == "https" else 80
+    port_suffix = f":{port}" if port is not None else ""
+    host_header = hostname if port in (None, default_port) else f"{hostname}:{port}"
+    userinfo = parts.netloc.rsplit("@", 1)[0] + "@" if "@" in parts.netloc else ""
+    pinned_url = parts._replace(netloc=f"{userinfo}{ip_literal}{port_suffix}").geturl()
+    return pinned_url, hostname, host_header
+
+
 def post_to_target(
     url: str,
     json_body: Any,
@@ -110,6 +151,7 @@ def post_to_target(
     verify: Optional[Union[bool, str]] = None,
     client_cert: Optional[Union[str, Tuple[str, str]]] = None,
     timeout: int = 10,
+    pinned_ip: Optional[str] = None,
 ) -> requests.Response:
     """
     The gate-to-target push hop, transport-configured.
@@ -124,16 +166,33 @@ def post_to_target(
     Redirects are NOT followed: the SSRF guard vetted only `url`, and following a
     3xx would carry the signed envelope to a host it never checked (e.g. a public
     host answering 307 -> 127.0.0.1). A 3xx is returned as-is, unfollowed.
+
+    `pinned_ip` closes the other guard/forward seam, DNS rebinding: the guard
+    resolved the URL's name to an address it vetted, and a second resolution
+    here could be answered differently (a public address for the guard, an
+    internal one for the forward). When `pinned_ip` is given the connection is
+    made to THAT address - the name is never resolved again - while the Host
+    header, the TLS SNI name and the certificate check all still use the name
+    from `url`. With `pinned_ip=None` (the default) the request is byte-identical
+    to the un-pinned call above.
     """
-    return requests.post(
-        url,
+    kwargs: Dict[str, Any] = dict(
         json=json_body,
-        headers=headers,
         verify=_resolve_verify(verify),
         cert=_resolve_cert(client_cert),
         timeout=timeout,
         allow_redirects=False,
     )
+    if pinned_ip is None:
+        return requests.post(url, headers=headers, **kwargs)
+
+    pinned_url, hostname, host_header = _pin_url(url, pinned_ip)
+    pinned_headers = dict(headers)
+    pinned_headers.setdefault("Host", host_header)
+    with requests.Session() as session:
+        if pinned_url.startswith("https://"):
+            session.mount("https://", _PinnedHostAdapter(hostname))
+        return session.post(pinned_url, headers=pinned_headers, **kwargs)
 
 
 def get_published(

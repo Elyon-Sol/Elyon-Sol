@@ -241,3 +241,46 @@ def test_non_high_impact_forwards_without_202(fresh_state, monkeypatch):
     assert r.status_code == 200
     assert r.json()["decision"] == "ELIGIBLE"
     assert calls == [TARGET]
+
+
+# ==========================================================================
+# hold TTL (VL-154 open item): a 202 hold expires; the approved grant must come
+# back inside ELYON_PENDING_HOLD_TTL_SECONDS
+# ==========================================================================
+
+def test_hold_is_issued_with_a_ttl_and_expires(force_high_impact, fresh_state, approver, monkeypatch):
+    """The gate issues every 202 with a not_after derived from
+    PENDING_HOLD_TTL_SECONDS; once it passes, a valid grant for that hold is
+    refused REQUEST_UNKNOWN and nothing is forwarded. Fails on a pep that
+    issues the hold with no expiry (the hold would still be consumable)."""
+    captured = {}
+    real_issue = pep._PENDING.issue
+
+    def spy_issue(request_id, decision_sha256, **kw):
+        captured.update(kw)
+        return real_issue(request_id, decision_sha256, **kw)
+
+    monkeypatch.setattr(pep._PENDING, "issue", spy_issue)
+    monkeypatch.setattr(pep, "PENDING_HOLD_TTL_SECONDS", 1)
+
+    request_id, decision_sha256, _ = _hold(monkeypatch)
+    assert captured.get("not_after") is not None
+    assert captured["not_after"] - captured["now"] == timedelta(seconds=1)
+
+    import time
+    time.sleep(1.1)
+    r, calls = _resubmit(_signed_grant(approver, decision_sha256, request_id), monkeypatch)
+    assert r.status_code == 403
+    assert r.json()["detail"]["refusal_reason_code"] == REF_APPROVAL_REQUEST_UNKNOWN
+    assert calls == []
+
+
+def test_hold_body_and_log_carry_hold_expires_at(force_high_impact, fresh_state, monkeypatch):
+    calls = _spy_post(monkeypatch)
+    r = client.post("/governed-call", json=_body())
+    assert r.status_code == 202
+    exp = datetime.fromisoformat(r.json()["hold_expires_at"])
+    assert exp.tzinfo is not None
+    remaining = exp - datetime.now(timezone.utc)
+    assert timedelta(seconds=0) < remaining <= timedelta(seconds=pep.PENDING_HOLD_TTL_SECONDS)
+    assert calls == []

@@ -319,3 +319,86 @@ def test_pinned_not_in_view_is_active_by_pinning(roots, pinned, issuer):
         key_record_bytes(roots, issuer, "r1", "root-1", NOW),
         pinned, now=NOW, root_status_view=sv)
     assert res["reason"] is None and "issuer-a" in res["trust_view"]
+
+
+# --------------------------------------------------------------------------
+# Per-root validity window, enforced at the consuming (cross-record) gate
+# (spec sections 6.1 / 8 / 9; the VL-154 open item). The view already parsed
+# each root's window; the key reader now compares it.
+# --------------------------------------------------------------------------
+
+def test_root_not_yet_valid_refuses_its_key_record(roots, pinned, issuer):
+    """A designated root whose window has not opened yet has no signing
+    authority: a key record it signs now is refused ROOT_OUT_OF_WINDOW."""
+    from IMPLEMENTATION.verifier import REF_VERIFY_ROOT_OUT_OF_WINDOW
+    sv = status_view_for(roots, pinned, [
+        active("root-1", roots["r1"].public_key()),
+        make_root_entry("root-2", roots["r2"].public_key(), "active",
+                        NOW + timedelta(hours=1), NOW + timedelta(days=365),
+                        successor_of="root-1"),
+    ])
+    res = load_key_record_from_bytes(
+        key_record_bytes(roots, issuer, "r2", "root-2", NOW),
+        pinned, now=NOW, root_status_view=sv)
+    assert res["reason"] == REF_VERIFY_ROOT_OUT_OF_WINDOW
+
+
+def test_root_window_closed_refuses_even_a_past_key_record(roots, pinned, issuer):
+    """Once a root's window has closed, nothing it signed is trusted any longer
+    (the chain rule), even a key record issued while the window was open and
+    still inside its own freshness ceiling."""
+    from IMPLEMENTATION.verifier import REF_VERIFY_ROOT_OUT_OF_WINDOW
+    sv = status_view_for(roots, pinned, [
+        active("root-1", roots["r1"].public_key()),
+        make_root_entry("root-2", roots["r2"].public_key(), "active",
+                        NOW - timedelta(days=1), NOW - timedelta(hours=1),
+                        successor_of="root-1"),
+    ])
+    res = load_key_record_from_bytes(
+        key_record_bytes(roots, issuer, "r2", "root-2", NOW - timedelta(hours=2)),
+        pinned, now=NOW, root_status_view=sv)
+    assert res["reason"] == REF_VERIFY_ROOT_OUT_OF_WINDOW
+
+
+def test_key_record_issued_before_root_window_refused(roots, pinned, issuer):
+    """The root is inside its window NOW, but the key record claims an
+    issued_at from before the window opened: the root had no authority then,
+    so the record is refused."""
+    from IMPLEMENTATION.verifier import REF_VERIFY_ROOT_OUT_OF_WINDOW
+    sv = status_view_for(roots, pinned, [
+        active("root-1", roots["r1"].public_key()),
+        make_root_entry("root-2", roots["r2"].public_key(), "active",
+                        NOW - timedelta(hours=1), NOW + timedelta(days=365),
+                        successor_of="root-1"),
+    ])
+    res = load_key_record_from_bytes(
+        key_record_bytes(roots, issuer, "r2", "root-2", NOW - timedelta(hours=2)),
+        pinned, now=NOW, root_status_view=sv)
+    assert res["reason"] == REF_VERIFY_ROOT_OUT_OF_WINDOW
+
+
+def test_root_window_is_skew_widened(roots, pinned, issuer):
+    """A configured clock_skew widens the root window symmetrically (VL-075,
+    as for the per-key window): a root opening in one hour is accepted under a
+    two-hour skew, and refused under none."""
+    from IMPLEMENTATION.verifier import REF_VERIFY_ROOT_OUT_OF_WINDOW
+    sv = status_view_for(roots, pinned, [
+        active("root-1", roots["r1"].public_key()),
+        make_root_entry("root-2", roots["r2"].public_key(), "active",
+                        NOW + timedelta(hours=1), NOW + timedelta(days=365),
+                        successor_of="root-1"),
+    ])
+    rec = key_record_bytes(roots, issuer, "r2", "root-2", NOW)
+    strict = load_key_record_from_bytes(rec, pinned, now=NOW, root_status_view=sv)
+    assert strict["reason"] == REF_VERIFY_ROOT_OUT_OF_WINDOW
+    tolerant = load_key_record_from_bytes(rec, pinned, now=NOW, root_status_view=sv,
+                                          clock_skew=timedelta(hours=2))
+    assert tolerant["reason"] is None and "issuer-a" in tolerant["trust_view"]
+
+
+def test_root_window_not_consulted_on_the_pinned_only_path(roots, pinned, issuer):
+    """root_status_view=None stays VL-042 byte-behavior: a pinned root has no
+    window to enforce (there is no record asserting one)."""
+    res = load_key_record_from_bytes(
+        key_record_bytes(roots, issuer, "r1", "root-1", NOW), pinned, now=NOW)
+    assert res["reason"] is None

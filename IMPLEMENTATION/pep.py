@@ -114,42 +114,134 @@ from fastapi.concurrency import run_in_threadpool
 REF_PEP_TARGET_URL_BLOCKED = "REF_PEP_TARGET_URL_BLOCKED"
 
 
-def _target_url_allowed(url):
-    """SSRF guard: reject non-http(s) schemes and hosts resolving to loopback,
-    link-local (incl. metadata 169.254.169.254), private, reserved, multicast or
-    unspecified space. ELYON_TARGET_URL_ALLOWLIST -> strict allowlist;
-    ELYON_ALLOW_PRIVATE_TARGETS=1 -> dev/test opt-out. Fail-closed on error."""
+def _address_blocked(ip):
+    """The SSRF guard's address predicate: anything that is not globally
+    routable is blocked. The named flags (loopback, link-local incl. the
+    169.254.169.254 metadata address, private, reserved, multicast,
+    unspecified) are kept explicit; `not is_global` additionally covers the
+    ranges those flags miss - in particular the shared address space
+    100.64.0.0/10 (RFC 6598, carrier-grade NAT; VL-154 open item), which
+    is_private does not report. An IPv6 address that embeds an IPv4 address
+    (IPv4-mapped ::ffff:a.b.c.d, 6to4 2002::/16) is judged by the embedded
+    address as well, so the wrapping cannot launder an internal target."""
+    if (ip.is_loopback or ip.is_link_local or ip.is_private or ip.is_reserved
+            or ip.is_multicast or ip.is_unspecified or not ip.is_global):
+        return True
+    for inner in (getattr(ip, "ipv4_mapped", None), getattr(ip, "sixtofour", None)):
+        if inner is not None and _address_blocked(inner):
+            return True
+    return False
+
+
+def _allowlist_admits(allow, scheme, host, port):
+    """ELYON_TARGET_URL_ALLOWLIST matching (VL-154 open item: the list matched
+    the hostname only, so an allowlisted host admitted ANY port and scheme on
+    it - a different service on the same box). Entries, comma-separated:
+        scheme://host[:port]  exact scheme; port = the given one, else the
+                              scheme's default
+        host:port             that port, over http or https
+        host                  that host on the scheme's DEFAULT port only
+                              (80 for http, 443 for https)
+    `port` is the request's effective port (explicit, else the scheme default).
+    Hostnames compare case-insensitively; no entry form admits a port that was
+    not written down or implied by a default."""
+    host = host.lower()
+    default_port = 443 if scheme == "https" else 80
+    for raw in allow.split(","):
+        entry = raw.strip().lower()
+        if not entry:
+            continue
+        if "://" in entry:
+            try:
+                e = _urlparse(entry)
+            except Exception:
+                continue
+            if e.scheme != scheme or not e.hostname or e.hostname != host:
+                continue
+            try:
+                e_port = e.port
+            except ValueError:
+                continue
+            if (e_port if e_port is not None else default_port) == port:
+                return True
+            continue
+        try:
+            e = _urlparse("//" + entry)
+            e_host, e_port = e.hostname, e.port
+        except ValueError:
+            continue
+        if not e_host or e_host != host:
+            continue
+        if e_port is None:
+            if port == default_port:
+                return True
+        elif e_port == port:
+            return True
+    return False
+
+
+def _resolve_target(url):
+    """SSRF guard: reject non-http(s) schemes and hosts resolving to anything
+    that is not globally routable - loopback, link-local (incl. metadata
+    169.254.169.254), private, shared 100.64.0.0/10, reserved, multicast or
+    unspecified space (see _address_blocked). ELYON_TARGET_URL_ALLOWLIST ->
+    strict allowlist of origins (see _allowlist_admits);
+    ELYON_ALLOW_PRIVATE_TARGETS=1 -> dev/test opt-out. Fail-closed on error.
+
+    Returns (allowed, pinned_ip). When the guard had to resolve a DNS name,
+    `pinned_ip` is the address it vetted, and the forward connects to that
+    address (transport.post_to_target pinned_ip) so the name is resolved ONCE:
+    a resolver that answers a public address to this check and an internal one
+    to the forward (DNS rebinding) cannot steer the signed envelope past the
+    guard. `pinned_ip` is None when no resolution happened here (non-http(s),
+    allowlist mode, the dev opt-out, or an IP-literal host), and the forward is
+    then unchanged."""
     try:
         p = _urlparse(url)
     except Exception:
-        return False
+        return False, None
     if p.scheme not in ("http", "https"):
-        return True  # not an http(s) forward -> not an SSRF-to-internal vector
+        return True, None  # not an http(s) forward -> not an SSRF-to-internal vector
     host = p.hostname
     if not host:
-        return False
+        return False, None
+    try:
+        port = p.port or (443 if p.scheme == "https" else 80)
+    except ValueError:
+        return False, None  # a malformed port is not a URL we forward to
     allow = os.environ.get("ELYON_TARGET_URL_ALLOWLIST")
     if allow:
-        return host.lower() in {h.strip().lower() for h in allow.split(",") if h.strip()}
+        return _allowlist_admits(allow, p.scheme, host, port), None
     if os.environ.get("ELYON_ALLOW_PRIVATE_TARGETS", "").strip().lower() in ("1", "true", "yes"):
-        return True
+        return True, None
+    resolved = False
     try:
         addrs = [str(_ipaddress.ip_address(host))]
     except ValueError:
         try:
-            port = p.port or (443 if p.scheme == "https" else 80)
             addrs = [i[4][0] for i in _socket.getaddrinfo(host, port, proto=_socket.IPPROTO_TCP)]
+            resolved = True
         except Exception:
-            return False
+            return False, None
+    if not addrs:
+        return False, None
     for a in addrs:
         try:
             ip = _ipaddress.ip_address(a)
         except ValueError:
-            return False
-        if (ip.is_loopback or ip.is_link_local or ip.is_private
-                or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
-            return False
-    return True
+            return False, None
+        if _address_blocked(ip):
+            return False, None
+    # Every answer passed; the forward connects to the first one, exactly as
+    # vetted. (This also means the forward does not fall through the address
+    # list on a connect failure - a connect failure is a fail-closed refusal.)
+    return True, (addrs[0] if resolved else None)
+
+
+def _target_url_allowed(url):
+    """The boolean half of _resolve_target (kept for callers and tests that
+    only ask whether the URL is allowed)."""
+    return _resolve_target(url)[0]
 
 
 # ===========================================================================
@@ -271,6 +363,16 @@ _PendingApprovals = InMemoryPendingApprovals
 
 _PENDING = pending_store_from_env()
 _GRANT_REPLAY = replay_cache_from_env()
+
+# How long a 202 PENDING_APPROVAL hold stays consumable (VL-154 open item: the
+# pending set had no TTL, so a hold was consumable forever and the set grew by
+# one entry per unanswered 202). The approved grant must come back inside this
+# window; after it the resubmit is REF_APPROVAL_REQUEST_UNKNOWN and the caller
+# must be re-held. Default one hour; the approver's grant TTL (approver_cli
+# --ttl, default 300 s) is a separate, shorter bound on the grant itself.
+PENDING_HOLD_TTL_SECONDS = int(os.environ.get("ELYON_PENDING_HOLD_TTL_SECONDS", "3600"))
+if PENDING_HOLD_TTL_SECONDS <= 0:
+    raise RuntimeError("ELYON_PENDING_HOLD_TTL_SECONDS must be a positive integer")
 
 
 def _extract_grant(request):
@@ -460,8 +562,12 @@ async def governed_call(request: Request):
         )
 
     # ----- SSRF guard (L1 fix): block a caller-supplied target_url pointing at
-    # internal/loopback/link-local/metadata space BEFORE minting or forwarding. -----
-    if not await run_in_threadpool(_target_url_allowed, body["target_url"]):
+    # internal/loopback/link-local/metadata space BEFORE minting or forwarding.
+    # The address the guard vetted is pinned for the forward (DNS rebinding). -----
+    target_allowed, target_pinned_ip = await run_in_threadpool(
+        _resolve_target, body["target_url"]
+    )
+    if not target_allowed:
         raise HTTPException(
             status_code=403,
             detail={
@@ -550,7 +656,10 @@ async def governed_call(request: Request):
             # post_to_target. Issue an approval_request_id bound to this
             # decision and record it pending ([FIX H4]).
             approval_request_id = uuid.uuid4().hex
-            _PENDING.issue(approval_request_id, decision_sha256)
+            held_at = datetime.now(timezone.utc)
+            hold_expires_at = held_at + timedelta(seconds=PENDING_HOLD_TTL_SECONDS)
+            _PENDING.issue(approval_request_id, decision_sha256,
+                           not_after=hold_expires_at, now=held_at)
             # [FIX H8] record the hold so reconcile_approvals can later prove a
             # forwarded high-impact decision had a recorded grant. Fail closed on
             # a CONFIGURED log (do not acknowledge a hold you cannot record).
@@ -565,7 +674,8 @@ async def governed_call(request: Request):
                         # operator surface can show a human what is being held -
                         # additive keys; reconcile_approvals keys only on
                         # type/decision_sha256/approval_request_id.
-                        "requested_at": datetime.now(timezone.utc).isoformat(),
+                        "requested_at": held_at.isoformat(),
+                        "hold_expires_at": hold_expires_at.isoformat(),
                     }
                     for _ctx_key in ("target_url", "not_after"):
                         if envelope.get(_ctx_key):
@@ -586,6 +696,7 @@ async def governed_call(request: Request):
                     "terminal_state": "PENDING_APPROVAL",
                     "approval_request_id": approval_request_id,
                     "decision_sha256": decision_sha256,
+                    "hold_expires_at": hold_expires_at.isoformat(),
                 },
             )
         # A grant is present: verify provenance/binding/SoD/freshness (pure),
@@ -702,6 +813,7 @@ async def governed_call(request: Request):
             body["target_url"],
             normalized_interaction,
             {"X-Elyon-Sol-Envelope": canonical_json(envelope)},
+            pinned_ip=target_pinned_ip,
         )
     except Exception as e:
         # Only the exception class is returned: the message of a failed forward

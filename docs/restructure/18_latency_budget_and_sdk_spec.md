@@ -41,7 +41,14 @@ Out of scope (named, not built):
   reassert/currency -> binding -> freshness) AND the `decision_id` is a fresh replay claim.
 - `honored=False, reason=<REF_*>` on any refusal, fail-closed: a missing / anchor-mismatched
   record (`REF_TARGET_ANCHOR_MISMATCH`), a `verify_envelope` non-accept (its `REF_VERIFY_*`
-  reason surfaced unchanged), or a replay (`REF_VERIFY_REPLAY`). The SDK adds no new reason code.
+  reason surfaced unchanged), an envelope without a `decision_id` (`REF_TARGET_NO_DECISION_ID`,
+  the reference target's F2 rule - single-use cannot be enforced, so it is not honored; added
+  2026-10-07 for the VL-154 open item), or a replay (`REF_VERIFY_REPLAY`). The SDK adds no new
+  reason code; it reuses the target's.
+- The signature check always runs. Constructing an `ExecutorGate` with no issuer-key trust at
+  all (`pinned_public_keys=None` and no key-record view or source) is a `ValueError`, and
+  `check` never hands `verify_envelope` a `None` key map, so the verifier's unsigned path is
+  unreachable from the SDK (2026-10-07, VL-154 open item).
 
 The integrator acts on the side effect only when `honored` is True - the SDK never performs the
 side effect itself; it only decides.

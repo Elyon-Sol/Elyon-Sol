@@ -28,6 +28,15 @@ performs the side effect; it only decides. Fail-closed (canon section 9): every 
 returns `honored=False`. No new canonical invariant (canon section 14); the SDK changes WHERE the
 sequence is packaged, not WHAT the gate decides.
 
+Two fail-closed rules the SDK shares with the reference enforcing target (VL-154 open items):
+  - the signature check ALWAYS runs. `verify_envelope` has an unsigned path when it is given no
+    key material at all; the SDK never takes it. A gate needs issuer-key trust (a
+    `pinned_public_keys` map, a `key_record_view`, or a `key_record_source`) to be constructed,
+    and `check` hands the verifier an empty map rather than None, so an unsigned envelope is
+    refused (`REF_VERIFY_SIGNATURE_INVALID` / `REF_VERIFY_SIGNATURE_UNKNOWN_KEY`), never honored.
+  - an envelope without a `decision_id` is refused (`REF_TARGET_NO_DECISION_ID`, the
+    reference target's F2 rule): single-use cannot be enforced for it, so it is not honored.
+
 Build-then-wire: no caller on the default pep.py path this increment; the existing surfaces keep
 their inline sequences until a later adopt-the-SDK refactor.
 """
@@ -37,7 +46,10 @@ from typing import Any, Callable, Dict, NamedTuple, Optional
 
 from IMPLEMENTATION.published_source import anchor_sha256, load_record_from_bytes
 from IMPLEMENTATION.replay_cache import InMemoryReplayCache
-from IMPLEMENTATION.reference_target import REF_TARGET_ANCHOR_MISMATCH
+from IMPLEMENTATION.reference_target import (
+    REF_TARGET_ANCHOR_MISMATCH,
+    REF_TARGET_NO_DECISION_ID,
+)
 from IMPLEMENTATION.verifier import (
     verify_envelope,
     REF_VERIFY_REPLAY,
@@ -103,6 +115,14 @@ class ExecutorGate:
             raise ValueError(
                 "supply key_record_view OR key_record_source, not both"
             )
+        if (pinned_public_keys is None and key_record_view is None
+                and key_record_source is None):
+            # No issuer-key trust at all would put verify_envelope on its
+            # unsigned path; an executor gate must never run there.
+            raise ValueError(
+                "supply issuer-key trust: pinned_public_keys, key_record_view "
+                "or key_record_source"
+            )
         self.key_record_view = key_record_view
         self._key_record_source = key_record_source
         self.pinned_public_keys = pinned_public_keys
@@ -152,12 +172,18 @@ class ExecutorGate:
                 return Decision(False, reason or REF_VERIFY_KEY_RECORD_INVALID)
             key_record_view = view
 
+        # The signature check always runs: an empty map (not None) keeps
+        # verify_envelope off its unsigned path, so a gate whose key map was
+        # cleared after construction still refuses an unsigned envelope.
+        pinned_public_keys = (
+            self.pinned_public_keys if self.pinned_public_keys is not None else {}
+        )
         result = verify_envelope(
             envelope,
             interaction,
             self.target_id,
             record_source=record,
-            pinned_public_keys=self.pinned_public_keys,
+            pinned_public_keys=pinned_public_keys,
             now=now,
             key_record_view=key_record_view,
             clock_skew=self.clock_skew,
@@ -165,16 +191,21 @@ class ExecutorGate:
         if not result["accepted"]:
             return Decision(False, result["reason"])
 
+        # Single-use (exactly-once over the freshness window). decision_id is
+        # inside the signed region, so it is tamper-proof once verified; an
+        # envelope WITHOUT one cannot be single-use-enforced and is refused
+        # (the reference_target F2 rule) - never "no id, so skip the check".
         decision_id = envelope.get("decision_id")
-        if decision_id is not None:
-            # Retain the claim through the whole HONORED window: verify_envelope
-            # accepts until not_after + clock_skew, so expiring the claim at the
-            # bare not_after would let the id be re-claimed inside the skew (the
-            # reference_target F3 rule).
-            exp = _parse_not_after(envelope)
-            if exp is not None:
-                exp = exp + self.clock_skew
-            if not self.replay_cache.check_and_claim(decision_id, exp, now=now):
-                return Decision(False, REF_VERIFY_REPLAY)
+        if not isinstance(decision_id, str) or not decision_id:
+            return Decision(False, REF_TARGET_NO_DECISION_ID)
+        # Retain the claim through the whole HONORED window: verify_envelope
+        # accepts until not_after + clock_skew, so expiring the claim at the
+        # bare not_after would let the id be re-claimed inside the skew (the
+        # reference_target F3 rule).
+        exp = _parse_not_after(envelope)
+        if exp is not None:
+            exp = exp + self.clock_skew
+        if not self.replay_cache.check_and_claim(decision_id, exp, now=now):
+            return Decision(False, REF_VERIFY_REPLAY)
 
         return Decision(True, result["reason"])

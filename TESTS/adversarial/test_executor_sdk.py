@@ -173,3 +173,65 @@ def test_replay_refused_inside_clock_skew_window(gate_signing):
     second = gate.check(env, interaction_for("transfer_funds", args), now=inside_skew)
     assert second.honored is False
     assert second.reason == REF_VERIFY_REPLAY
+
+
+# ---------------------------------------------------------------------------
+# VL-154 open items: the SDK must not honor an envelope without a decision_id,
+# and must never skip the signature check.
+# ---------------------------------------------------------------------------
+
+def _hand_signed_envelope(gate_signing, *, decision_id, signed=True):
+    """A real envelope (build_envelope over the live manifest) signed by the
+    test gate key, with or without a decision_id - what a gate that omits the
+    id would issue. `signed=False` leaves the issuer fields off entirely."""
+    from IMPLEMENTATION.envelope import build_envelope, sign_envelope
+    from IMPLEMENTATION.evaluator import load_manifest
+    interaction = interaction_for("transfer_funds", {"amount": 100, "to": "acct-42"})
+    env = build_envelope(decision="ELIGIBLE", target_url=TARGET_ID,
+                         normalized_interaction=interaction, manifest=load_manifest(),
+                         ac3=True, t26=True, manifest_integrity=True)
+    if not signed:
+        return env
+    return sign_envelope(env, gate_signing["private_key"], gate_signing["key_id"],
+                         decision_id=decision_id)
+
+
+def test_envelope_without_decision_id_refused(gate_signing):
+    """A validly signed envelope that carries no decision_id cannot be
+    single-use-enforced, so it is refused with the reference target's
+    REF_TARGET_NO_DECISION_ID - never honored because 'there is no id to
+    de-dup'. The same envelope WITH an id is honored, so the refusal is the
+    id's absence and nothing else."""
+    from IMPLEMENTATION.reference_target import REF_TARGET_NO_DECISION_ID
+    gate = _gate(gate_signing)
+    args = {"amount": 100, "to": "acct-42"}
+    no_id = _hand_signed_envelope(gate_signing, decision_id=None)
+    assert "decision_id" not in no_id
+    assert _check(gate, "transfer_funds", args, no_id) == \
+        Decision(False, REF_TARGET_NO_DECISION_ID)
+    with_id = _hand_signed_envelope(gate_signing, decision_id="d-present")
+    assert _check(gate, "transfer_funds", args, with_id).honored is True
+
+
+def test_gate_without_issuer_key_trust_fails_loud():
+    """No pinned keys, no key-record view, no key-record source: the gate
+    would have nothing to verify a signature against, which is verify_envelope's
+    unsigned path. Construction fails loud instead."""
+    record_bytes = open("EVIDENCE/published_hashes.json", "rb").read()
+    with pytest.raises(ValueError):
+        ExecutorGate(pinned_public_keys=None, target_id=TARGET_ID,
+                     record_bytes=record_bytes)
+
+
+def test_unsigned_envelope_never_honored_even_with_keys_cleared(gate_signing):
+    """Belt and braces for the same rule at check time: a gate whose key map
+    was cleared after construction (an integrator mistake) still refuses an
+    envelope that carries no signature, because check() never hands the
+    verifier a None key map."""
+    from IMPLEMENTATION.verifier import REF_VERIFY_SIGNATURE_INVALID
+    gate = _gate(gate_signing)
+    gate.pinned_public_keys = None
+    unsigned = _hand_signed_envelope(gate_signing, decision_id=None, signed=False)
+    unsigned["decision_id"] = "d-unsigned"
+    d = _check(gate, "transfer_funds", {"amount": 100, "to": "acct-42"}, unsigned)
+    assert d == Decision(False, REF_VERIFY_SIGNATURE_INVALID)

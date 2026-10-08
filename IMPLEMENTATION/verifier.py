@@ -155,6 +155,11 @@ REF_VERIFY_ROOT_RECORD_INVALID = "REF_VERIFY_ROOT_RECORD_INVALID"
 REF_VERIFY_ROOT_RECORD_STALE = "REF_VERIFY_ROOT_RECORD_STALE"
 REF_VERIFY_ROOT_RETIRED = "REF_VERIFY_ROOT_RETIRED"
 REF_VERIFY_ROOT_REVOKED = "REF_VERIFY_ROOT_REVOKED"
+# Per-root validity window (2026-10-07, VL-154 open item): the analog of
+# KEY_OUT_OF_WINDOW one layer up, emitted by key_record_source.py's cross-record
+# gate when the signing root's [not_before, not_after) window (skew-widened)
+# does not cover `now` or the key record's issued_at.
+REF_VERIFY_ROOT_OUT_OF_WINDOW = "REF_VERIFY_ROOT_OUT_OF_WINDOW"
 
 # B-prime-1 signed published-record codes (VL-074, B1; A3b sub-case b). Same
 # canonical home. PUBLISHED_RECORD_INVALID / PUBLISHED_RECORD_STALE are EMITTED

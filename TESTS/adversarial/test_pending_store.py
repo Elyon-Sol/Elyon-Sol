@@ -239,3 +239,44 @@ def test_from_env_multi_instance_with_store_ok(monkeypatch):
                         classmethod(lambda cls, url: object()))
     out = ps.pending_store_from_env()
     assert isinstance(out, ExternalStorePendingApprovals)
+
+
+# ---------------------------------------------------------------------------
+# Hold TTL (VL-154 open item): an unexpired hold is honored, an expired one is
+# refused and dropped, and expired holds are pruned so the set stays bounded.
+# ---------------------------------------------------------------------------
+
+def test_in_memory_expired_hold_refused_and_dropped():
+    p = InMemoryPendingApprovals()
+    t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    p.issue("r1", DS_A, not_after=t0 + timedelta(seconds=60), now=t0)
+    assert p.check_and_consume("r1", DS_A, now=t0 + timedelta(seconds=60)) is False
+    assert len(p) == 0  # dropped on the expired consume, not left behind
+
+
+def test_in_memory_unexpired_hold_honored_once():
+    p = InMemoryPendingApprovals()
+    t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    p.issue("r1", DS_A, not_after=t0 + timedelta(seconds=60), now=t0)
+    assert p.check_and_consume("r1", DS_A, now=t0 + timedelta(seconds=59)) is True
+    assert p.check_and_consume("r1", DS_A, now=t0 + timedelta(seconds=59)) is False
+
+
+def test_in_memory_issue_prunes_expired_holds():
+    """Each unanswered 202 is one entry; without pruning the set grows by one
+    per unauthenticated request forever. Issuing prunes everything expired."""
+    p = InMemoryPendingApprovals()
+    t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    for i in range(50):
+        p.issue(f"old-{i}", DS_A, not_after=t0 + timedelta(seconds=10), now=t0)
+    assert len(p) == 50
+    p.issue("new", DS_B, not_after=t0 + timedelta(seconds=70), now=t0 + timedelta(seconds=60))
+    assert len(p) == 1
+    assert p.check_and_consume("new", DS_B, now=t0 + timedelta(seconds=61)) is True
+
+
+def test_in_memory_no_not_after_keeps_entry_until_consumed():
+    p = InMemoryPendingApprovals()
+    t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    p.issue("r1", DS_A, now=t0)
+    assert p.check_and_consume("r1", DS_A, now=t0 + timedelta(days=365)) is True

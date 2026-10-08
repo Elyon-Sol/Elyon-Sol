@@ -25,10 +25,12 @@ False = unknown request_id OR bound to a DIFFERENT decision  -> refuse
         NOTHING is consumed - a wrong-decision probe must not burn a legitimate
         pending slot (compare-AND-delete, never delete-then-compare).
 
-Build-then-wire + default byte-behavior: InMemoryPendingApprovals reproduces the
-pep `_PendingApprovals` dict EXACTLY (lock + dict, no pruning), and
-pending_store_from_env() returns it when no shared store is configured, so a
-single-instance gate is byte-behavior-unchanged.
+InMemoryPendingApprovals is the single-instance default (pending_store_from_env()
+returns it when no shared store is configured). Since 2026-10-07 every hold
+carries a not_after: pep issues each 202 with a hold TTL
+(ELYON_PENDING_HOLD_TTL_SECONDS, default 3600) and both stores enforce it - the
+in-memory set refuses and prunes expired holds, the Redis store sets an EX - so
+an unanswered hold neither stays consumable nor accumulates without bound.
 
 Fail-closed (canon section 9): check_and_consume never returns True on doubt; a
 backing store that cannot decide raises through to pep's fail-closed handler
@@ -89,40 +91,64 @@ def _utcnow(now: Optional[datetime]) -> datetime:
 
 
 class InMemoryPendingApprovals:
-    """Process-local pending set - behavior-IDENTICAL to pep's VL-115
-    `_PendingApprovals` (a lock + a dict, no time-pruning). issue() records the
-    binding; check_and_consume() honors exactly once and only for the SAME
-    decision (the get/compare/delete is serialized so it is atomic). not_after /
-    now are accepted for seam-compatibility and ignored here (parity with the
-    pre-R2 dict, which carried no TTL); the cross-process store is where a TTL
-    belongs.
+    """Process-local pending set (a lock + a dict). issue() records the binding
+    with an optional expiry; check_and_consume() honors exactly once, only for
+    the SAME decision, and only while the hold is unexpired (the get/compare/
+    expire/delete is serialized so it is atomic).
 
-    Constructed fresh and injected as the default, this reproduces today's
-    behavior exactly. Injected as a SINGLE shared instance it closes the gap
+    Hold TTL (2026-10-07, VL-154 open item): the pre-R2 dict had no TTL, so a
+    202 hold stayed consumable forever and the set grew without bound (one
+    entry per unanswered 202 - an unauthenticated caller can mint those at
+    will). With `not_after`, a hold is refused once `now >= not_after` and
+    expired entries are pruned on every issue(), so the set is bounded by the
+    holds issued inside one TTL. pep always passes a not_after
+    (ELYON_PENDING_HOLD_TTL_SECONDS); `not_after=None` keeps an entry until
+    consumed, for callers that manage lifetime themselves.
+
+    Injected as a SINGLE shared instance it closes the cross-instance gap
     in-process; a true cross-PROCESS store is the ExternalStorePendingApprovals
-    path."""
+    path (its Redis backing applies the same not_after as an EX)."""
 
     def __init__(self) -> None:
-        self._d: Dict[str, str] = {}
+        self._d: Dict[str, tuple] = {}  # request_id -> (decision_sha256, expiry|None)
         self._lock = threading.Lock()
+
+    def _prune_expired(self, now: datetime) -> None:
+        expired = [rid for rid, (_, exp) in self._d.items()
+                   if exp is not None and now >= exp]
+        for rid in expired:
+            del self._d[rid]
 
     def issue(
         self, request_id: str, decision_sha256: str, *,
         not_after: Optional[datetime] = None, now: Optional[datetime] = None,
     ) -> None:
+        current = _utcnow(now)
         with self._lock:
-            self._d[request_id] = decision_sha256
+            self._prune_expired(current)
+            self._d[request_id] = (decision_sha256, not_after)
 
     def check_and_consume(
         self, request_id: str, decision_sha256: str, *,
         now: Optional[datetime] = None,
     ) -> bool:
+        current = _utcnow(now)
         with self._lock:
-            ds = self._d.get(request_id)
-            if ds is None or ds != decision_sha256:
+            entry = self._d.get(request_id)
+            if entry is None:
+                return False
+            ds, exp = entry
+            if exp is not None and current >= exp:
+                del self._d[request_id]  # expired: gone, whatever the decision
+                return False
+            if ds != decision_sha256:
                 return False
             del self._d[request_id]
             return True
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._d)
 
 
 class ExternalStorePendingApprovals:
