@@ -2390,3 +2390,14 @@ Native Linux clone at `/elyon/Elyon-Sol`, Python 3.14 `.venv`, Docker 29.1.3; th
 
 #### Citation discipline (VL-012)
 Prior substantive entry: VL-155. Cites VL-083 (the census method's external-receiver origin) and VL-030 (the first enforcement census, `g3_enforcement_evidence_001`). Does not cite its own hashes. GR-4: appended, not edited.
+
+### VL-155 follow-up 2 — Revision 9 deposited (10.5281/zenodo.23228423) and verified against the repository by checksum (2026-10-08)
+
+**Claim.** The Zenodo record for Revision 9 carries the addendum as committed, under the concept DOI, with the corrected statements present.
+
+**Referent.** Fetches of the record API on 2026-10-08 (final at revision counter 6, 04:37 UTC): status published; DOI 10.5281/zenodo.23228423; concept DOI 10.5281/zenodo.19367848 resolves to it; publication date 2026-10-08; title, creator (ORCID), type Report, CC BY 4.0, English, repository related identifier, 17 references inherited from Revision 8. Files: `enforcement_evidence_addendum_rev9.md` 15,090 bytes and `.pdf` 212,355 bytes, both MD5-identical to the repository copy at `f5fae8d` and the locally rendered PDF; the two Revision 8 architecture diagrams re-attached unchanged; the Revision 8 webhook screenshot not carried. Description: all twelve checked facts present (snapshot `2d5c6bf`, the superseded Revision 8 DOI, the 2026-07-20 retirement, the VL-150 evaluator move, 689, the AGPL-only licensing sentence, CC BY 4.0, the 204 / 102 / 102 census, the third-party leg not re-run, six of six, single-host / no external validation, the default-port qualifier). DISPUTED, then resolved: the first paste of the Description (revision counter 3) had lost 97 words at 34 line-wrap cut points, including the retirement date, the CC BY 4.0 clause and the default-port qualifier; the author re-pasted it (counter 4) and the diff against `docs/zenodo/ZENODO_REV9_POST.md` section 5 then showed only literal bold markers. Version chain: Revision 9 at the head of 28 versions. The Revision 8 record's description was corrected in place the same day (licensing paragraph + erratum; verified at its counter 8).
+
+**Status.** RECORDED. Item (g) closed; `site/index.html` and README moved to the published figure 689 / Revision 9 in `c0c7f42` (the live page needs the author's republish, item (f)). NOT external validation; NOT G5.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-155 (follow-up 1 recorded the census execution the deposit cites). Cites VL-147 (the concept-DOI adoption that makes the chain resolve to the current revision). Does not cite its own hashes. GR-4: appended, not edited.
