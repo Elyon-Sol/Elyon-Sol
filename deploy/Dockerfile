@@ -2,7 +2,13 @@
 # uvicorn entrypoints (gate / target / publisher) by command override in
 # docker-compose.yml. Built and run with every compose overlay except authz.tls on
 # 2026-09-27 (Python 3.14.7 in the image).
-FROM python:3.14-slim
+# Pinned by digest (VL-154 open item, 2026-10-08): python 3.14.8 on Debian 13
+# (trixie), the manifest-list digest of python:3.14-slim on that date. A floating
+# tag would let a registry push change the runtime under the hash-pinned record.
+# Refresh deliberately: docker pull python:3.14-slim &&
+#   docker image inspect python:3.14-slim --format '{{index .RepoDigests 0}}'
+# then re-run the suite in the rebuilt image.
+FROM python:3.14-slim@sha256:f85c5697265c178cc6887276c55fe16cf3d14ca35c3df6a5eab3b360534a55d2
 
 WORKDIR /app
 

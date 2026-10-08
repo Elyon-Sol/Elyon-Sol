@@ -83,6 +83,12 @@ A horizontally-scaled gate must keep ONE shared store, or it must refuse to star
    `ELYON_PENDING_REDIS_URL=redis://<redis>:6379/0`,
    `ELYON_REPLAY_REDIS_URL=redis://<redis>:6379/0`.
    (`docker-compose.governance.yml` wires `gate` + `gate2` + `redis` this way.)
+3. Optionally set `ELYON_PENDING_HOLD_TTL_SECONDS` (default `3600`): how long a 202
+   hold stays approvable. The approved grant must be presented inside this window;
+   afterwards the resubmit is refused `REF_APPROVAL_REQUEST_UNKNOWN` and the call must be
+   re-held. Expired holds are dropped from the pending set (Redis `EX`; in-memory prune),
+   so unanswered holds do not accumulate. The 202 body and the `approval_request` log
+   record carry `hold_expires_at`.
 
 **Acceptance (R2).**
 - **Declare-or-fail guard:** start a replica with `ELYON_REPLAY_MULTI_INSTANCE=1` but

@@ -15,7 +15,7 @@ point at. None of it needs the retired public nodes.
 | gate      | `http://localhost:8000` | PEP: validates schema, evaluates admissibility, signs every ELIGIBLE, forwards |
 | target    | `http://localhost:9000` | reference enforcing target: verifies the envelope, acts exactly once on honor |
 | publisher | `http://localhost:9100` | serves the hash-locked published record                      |
-| sidecar   | `http://localhost:9200` | OPA-style ext-authz ALLOW/DENY (optional overlay)            |
+| sidecar   | `http://localhost:9200` | OPA-style ext-authz ALLOW/DENY (optional overlay; bound to loopback only - not reachable from other machines) |
 
 ## Fast path — local, with Docker
 
@@ -66,7 +66,9 @@ export AUTHZ=http://localhost:9200     # only if you brought up the sidecar over
 
 One detail matters: the gate forwards to the target **inside the compose network**, so the
 `target_url` you send to `$GATE/governed-call` is the target's in-network identity,
-`http://target:9000/target` (the only host the compose gate's `ELYON_TARGET_URL_ALLOWLIST` admits).
+`http://target:9000/target` (the only origin the compose gate's `ELYON_TARGET_URL_ALLOWLIST`
+admits: `target:9000`; allowlist entries are `scheme://host[:port]`, `host:port`, or a bare
+`host`, which admits that host on the scheme's default port only).
 Tokens you present yourself go to `$TARGET/target` on your host; the target binds to its configured
 identity, not to the address you reached it by.
 

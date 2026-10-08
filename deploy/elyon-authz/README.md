@@ -82,7 +82,8 @@ docker compose -f docker-compose.yml -f docker-compose.authz.yml up --build
 ```
 
 Smoke test (a real attested request is minted by the gate on `/governed-call`,
-then presented to the sidecar with the two headers):
+then presented to the sidecar with the two headers; the overlay publishes `:9200`
+on the host's loopback only, so run this on the compose host):
 
 ```
 # ALLOW: present a freshly-minted envelope + its interaction.

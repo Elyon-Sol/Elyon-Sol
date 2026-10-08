@@ -94,7 +94,9 @@ answers every request `403 REF_TARGET_NOT_CONFIGURED` (fail closed).
 **Compose overlay (VM-B):**
 
 ```
-cd deploy && docker compose \
+# The overlay binds the sidecar's :9200 to loopback by default; VM-A must reach
+# it across the host-only network, so publish it on all interfaces for this test.
+cd deploy && ELYON_AUTHZ_BIND=0.0.0.0 docker compose \
   -f docker-compose.yml \
   -f docker-compose.authz.yml \
   -f docker-compose.authz.tls.yml \

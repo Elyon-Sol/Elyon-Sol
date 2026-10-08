@@ -16,6 +16,23 @@
 # environment from the out-of-band .env (deploy/bootstrap_config.py); nothing is
 # baked into the image. failure_mode_allow is FALSE in envoy.example.yaml: a
 # sidecar that is down or errors DENIES, never opens.
+#
+# Images are pinned by DIGEST (VL-154 open item, 2026-10-08). `v1.31-latest` and
+# `latest-envoy` floated: a registry push could change Envoy or OPA under a stack
+# whose own record is hash-pinned - and Envoy already warns that a field this
+# example uses (ext_authz `allowed_headers`) is deprecated and will be removed.
+# To refresh a pin: docker pull <repo>:<exact tag>, then
+#   docker image inspect <repo>:<exact tag> --format '{{index .RepoDigests 0}}'
+# and re-run `envoy --mode validate -c envoy.example.yaml` in the new image.
+#
+# Published ports (VL-154 open item, 2026-10-08): only Envoy's listener (:10000)
+# is the public surface. The sidecar's decision endpoint (:9200) is bound to the
+# host's LOOPBACK only - the walkthrough's `localhost:9200` keeps working, but
+# nothing on the LAN can ask the sidecar for ALLOW/DENY directly or probe its
+# refusal codes. Override the bind address for a cross-host test
+# (ELYON_AUTHZ_BIND=0.0.0.0, see deploy/elyon-authz/VM_TLS_TEST.md). OPA's
+# ext-authz gRPC port (:9191) is NOT published at all: Envoy reaches it on the
+# compose network, and nobody on the host needs it.
 services:
   elyon-authz:
     build:
@@ -43,10 +60,13 @@ services:
       # ELYON_INLINE_TOOL: path            # binds the forwarded path + query
       # ELYON_INLINE_ARGS_FIELD: ""         # optional: digest body[field]
     ports:
-      - "9200:9200"
+      # loopback only by default; ELYON_AUTHZ_BIND=0.0.0.0 publishes it on the LAN
+      - "${ELYON_AUTHZ_BIND:-127.0.0.1}:9200:9200"
 
   envoy:
-    image: envoyproxy/envoy:v1.31-latest
+    # Pinned by digest (2026-10-08): Envoy 1.31.10. `v1.31-latest` resolved to this
+    # same digest on that date; the tag is now a label, the digest is what pulls.
+    image: envoyproxy/envoy:v1.31.10@sha256:caa5b411be1633b90023592a34a7e010c933d6e60206c758f631485e53006865
     command: ["envoy", "-c", "/etc/envoy/envoy.yaml"]
     volumes:
       - ./envoy.example.yaml:/etc/envoy/envoy.yaml:ro
@@ -58,7 +78,8 @@ services:
       - "10000:10000"   # the public listener clients hit
 
   opa:
-    image: openpolicyagent/opa:latest-envoy
+    # Pinned by digest (2026-10-08): OPA 1.21.0 (envoy plugin build, commit b84c68c).
+    image: openpolicyagent/opa:1.21.0-envoy@sha256:8525be248fbadd6728f0fac46ac07cdfe051d736d64f558c83f5de960338b315
     command:
       - "run"
       - "--server"
@@ -70,8 +91,9 @@ services:
       - "/policy/policy.rego"
     volumes:
       - ./opa-policy.example.rego:/policy/policy.rego:ro
-    ports:
-      - "9191:9191"
+    # No published ports: Envoy's opa_ext_authz cluster reaches opa:9191 on the
+    # compose network. The REST (:8181) and diagnostic (:8282) listeners are
+    # likewise internal.
 
   upstream:
     # The service the proxy fronts. Reuses the reference target image only as a

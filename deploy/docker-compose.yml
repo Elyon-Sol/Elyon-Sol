@@ -45,11 +45,13 @@ services:
       ELYON_SIGNING_KEY_HEX: ${ELYON_SIGNING_KEY_HEX}
       ELYON_SIGNING_KEY_ID: ${ELYON_SIGNING_KEY_ID}
       ELYON_DECISION_MAX_AGE_SECONDS: "300"
-      # SSRF guard (pep._target_url_allowed) refuses private/loopback forwards by
+      # SSRF guard (pep._resolve_target) refuses private/loopback forwards by
       # default, and `target` resolves to a private compose-network address.
-      # Allow exactly the target service; clients send target_url
+      # Allow exactly the target service ON ITS PORT (host:port admits http or
+      # https there, so the TLS overlay works too; a bare hostname would admit
+      # only the default port 80/443). Clients send target_url
       # http://target:9000/target (the identity the target binds to).
-      ELYON_TARGET_URL_ALLOWLIST: target
+      ELYON_TARGET_URL_ALLOWLIST: target:9000
     depends_on:
       - target
     ports:

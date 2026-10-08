@@ -35,7 +35,8 @@
 # Env comes from deploy/.env (see deploy/governance.env.example).
 services:
   redis:
-    image: redis:7-alpine
+    # Pinned by digest (2026-10-08): Redis 7.4.11 on Alpine.
+    image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
 
   publisher:
     environment:
@@ -94,7 +95,7 @@ services:
       ELYON_REPLAY_REDIS_URL: redis://redis:6379/0
       ELYON_ISSUANCE_LOG_PATH: /app/EVIDENCE/runtime/gate2.issuance.log
       ELYON_APPROVAL_LOG_PATH: /app/EVIDENCE/runtime/gate2.approval.log
-      ELYON_TARGET_URL_ALLOWLIST: target
+      ELYON_TARGET_URL_ALLOWLIST: target:9000
       # gate2 is defined only here, so it does not inherit the TLS overlay's CA bundle
       # and /certs mount the way `gate` does; without them its forward to the TLS
       # target fails closed (CERTIFICATE_VERIFY_FAILED -> REF_PEP_FAIL_CLOSED).

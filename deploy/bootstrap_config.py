@@ -17,8 +17,11 @@ docker); standing it up is the author's (artifact 13 C1, locus AUTHOR).
 
 This module performs NO crypto secrecy beyond generating an ephemeral key; the
 private key is written to .env for the operator and is never committed (deploy/
-.env is git-ignored). Secure distribution of the pinned anchor itself remains the
-named G5 floor.
+.env is git-ignored). The file is created owner-read/write only (0600) and an
+existing .env is tightened to the same mode before the key is written (VL-154
+open item: it used to be created under the process umask, typically 0644, so
+every local account could read the gate's signing key). Secure distribution of
+the pinned anchor itself remains the named G5 floor.
 
 Run:  python deploy/bootstrap_config.py   # writes deploy/.env
 """
@@ -69,12 +72,31 @@ def render_env(config):
     return header + body
 
 
+ENV_FILE_MODE = 0o600  # owner read/write only: the file holds the gate's private key
+
+
+def write_env(path, config):
+    """Write the rendered config to `path` with owner-only permissions. The file
+    is opened with mode 0600 at creation and, because O_CREAT's mode does not
+    apply to a file that already exists, chmod'ed to 0600 as well before any
+    key material is written - so a pre-existing world-readable .env is
+    tightened, not inherited. Same pattern as deploy/rotate_publisher_key.py."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, ENV_FILE_MODE)
+    try:
+        os.fchmod(fd, ENV_FILE_MODE)
+        with os.fdopen(fd, "w", encoding="ascii", newline="\n") as f:
+            fd = None  # fdopen owns it now
+            f.write(render_env(config))
+    finally:
+        if fd is not None:
+            os.close(fd)
+
+
 def main():
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     config = build_config()
-    with open(out, "w", encoding="ascii", newline="\n") as f:
-        f.write(render_env(config))
-    print("wrote", out)
+    write_env(out, config)
+    print("wrote", out, "(mode %o)" % ENV_FILE_MODE)
     print("  ELYON_SIGNING_KEY_ID     =", config["ELYON_SIGNING_KEY_ID"])
     print("  ELYON_GATE_PUBLIC_KEY_HEX=", config["ELYON_GATE_PUBLIC_KEY_HEX"])
     print("  ELYON_PINNED_ROOT_SHA256 =", config["ELYON_PINNED_ROOT_SHA256"])

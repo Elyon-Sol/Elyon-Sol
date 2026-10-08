@@ -33,5 +33,7 @@ services:
     environment:
       # The gate's ELIGIBLE forward to the target trusts the target via the CA bundle.
       ELYON_TLS_CA_BUNDLE: /certs/ca.crt
+      # Under TLS the forward origin is exact: scheme, host and port.
+      ELYON_TARGET_URL_ALLOWLIST: https://target:9000
     volumes:
       - ./tls/certs:/certs:ro

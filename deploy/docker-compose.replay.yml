@@ -9,7 +9,8 @@
 # record mode; both fetch a valid record and the only cross-instance difference is the shared claim.
 services:
   redis:
-    image: redis:7-alpine
+    # Pinned by digest (2026-10-08): Redis 7.4.11 on Alpine.
+    image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
 
   target:
     environment:
