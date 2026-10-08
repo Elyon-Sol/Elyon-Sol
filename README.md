@@ -12,7 +12,7 @@ decides — cryptographically — whether it is *authorized* under an explicit, 
 and refuses everything else. Every allowed action leaves a signed, single-use receipt of exactly
 why it was allowed.
 
-AGPL-3.0 · canon v0.9.8.4 · test suite green (616 published at Rev 8; 689 at repo HEAD, unpublished — count of record in `STATE.md`) ·
+AGPL-3.0 · canon v0.9.8.4 · test suite green (689, published at Rev 9 and at repo HEAD — count of record in `STATE.md`) ·
 **never externally validated** (the open finish line, not yet reached — see below).
 
 ---
@@ -151,8 +151,8 @@ ext-authz + a signing step?": [`docs/COMPARISON_capability_tokens.md`](docs/COMP
 
 We report exactly what we can back with a referent, and no more.
 
-- **Proven in-repo:** the full test suite passes (616 published at Rev 8; 689 at repo HEAD,
-  unpublished; the authoritative count is pinned in `STATE.md`), including revert-catchers that fail when the guard they defend is removed. A
+- **Proven in-repo:** the full test suite passes (689, published at Rev 9 and at repo HEAD;
+  the authoritative count is pinned in `STATE.md`), including revert-catchers that fail when the guard they defend is removed. A
   carried-forward enforcement run showed 102 refusals → 403 with zero external executions and 102
   eligible calls → 200 with exactly 102 executions, each gate-signed.
 - **Live self-test (while the surface ran):** the four public nodes passed the author's attack suite
