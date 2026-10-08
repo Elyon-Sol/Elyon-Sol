@@ -2401,3 +2401,18 @@ Prior substantive entry: VL-155. Cites VL-083 (the census method's external-rece
 
 #### Citation discipline (VL-012)
 Prior substantive entry: VL-155 (follow-up 1 recorded the census execution the deposit cites). Cites VL-147 (the concept-DOI adoption that makes the chain resolve to the current revision). Does not cite its own hashes. GR-4: appended, not edited.
+
+## VL-156 — Correcting record for the 2026-07-05 in-place edit of six active-ledger Author lines (`e68d05f`); the GR-4 remedy (2026-10-08)
+
+**Claim.** GR-4 clause 2 and GR-5: the verification ledger is append-only, and its active region from the GR-5 split onward is a byte-prefix of every later state. VL-154 DISPUTED this once: commit `e68d05f` (2026-07-05, "genericize AI-assistant references; remove internal AI-workflow docs and review transcripts") rewrote six `**Author:**` lines in place in entries already on the active ledger.
+
+**Construct.** A line-by-line comparison of the ledger blob at `e68d05f^` against `e68d05f` (same line count; six lines differ), mapped to their entries.
+
+**Referent.** Execution, 2026-10-08. The six lines are the Author lines of VL-108 (two lines: the main entry and its follow-up), VL-109, VL-110, VL-111 and VL-112. Each edit replaced the name of the AI assistant product with "an AI assistant", and, in VL-111 and VL-112, the name of its session product with "a build session"; no other byte in any entry changed, no entry was added, removed or renumbered, and the entries' claims, referents and statuses are untouched. The pre-edit bytes remain recoverable from the repository history at `e68d05f^` and are deliberately not reproduced here: the edit's purpose was to keep product names out of the public record, and restoring them would undo that purpose. CONFIRMED: the edit was a wording genericization of attribution lines only.
+
+**Status.** RECORDED. Remedy under GR-4 clause 2: this NEW entry is the correction; the six lines are left as `e68d05f` wrote them (an in-place reversal would be a second in-place edit). The archive invariant is restated accordingly: the active region is a byte-prefix of every later state from `e68d05f` onward (re-verified at VL-154 and at every close since). Also closed in the same commit: VL-025 and VL-026 (archived in vol_001) lacked index lines, which `scripts/repo_health.py` could not see because it read only the active ledger; both lines are backfilled and the check now covers every archived volume. Item (c) of the 2026-10-07 Next-open-action block is closed.
+
+**Honest scope.** Bookkeeping correction of the record about the record; no code, canon, manifest or test change. NOT external validation; NOT G5.
+
+#### Citation discipline (VL-012)
+Prior substantive entry: VL-155. Cites VL-154 (which found both the in-place edit and the missing index line), VL-046 (the precedent: the recorded VL-042 duplicate removal), GR-4 clause 2 and GR-5. Does not cite its own hashes. GR-4: appended, not edited.

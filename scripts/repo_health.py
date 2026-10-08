@@ -44,6 +44,14 @@ index_nums = set(int(n) for n in re.findall(r"^- VL-(\d+)\b", index, re.M))
 missing = [n for n in entry_nums if n not in index_nums]
 check(f"all {len(entry_nums)} active-ledger VL entries are indexed", not missing,
       f"missing from index: {missing}")
+# 2b. The archived volumes too (VL-154 found VL-026 unindexed because this check
+#     read only the active ledger; backfilled 2026-10-08 with VL-025).
+for vol in sorted((REPO / "EVIDENCE/ledger_archive").glob("vol_*.md")):
+    vol_nums = sorted(set(int(n) for n in re.findall(r"^#{2,3} VL-(\d+)\b",
+                                                      vol.read_text(encoding="utf-8"), re.M)))
+    vol_missing = [n for n in vol_nums if n not in index_nums]
+    check(f"all {len(vol_nums)} VL entries in {vol.name} are indexed", not vol_missing,
+          f"missing from index: {vol_missing}")
 
 # 3. STATE.md ordering (GR-6 clause 1)
 print("3. STATE.md ordering (GR-6: Next open action leads)")
