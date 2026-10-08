@@ -179,7 +179,7 @@
            Showing only the published figure hides current work; showing only HEAD would
            break citability. Both, labelled, is the honest form. -->
       <span class="badge"><b>616</b> tests green <span class="sub">· published (Rev 8)</span></span>
-      <span class="badge"><b>651</b> at repo HEAD <span class="sub">· unpublished</span></span>
+      <span class="badge"><b>689</b> at repo HEAD <span class="sub">· unpublished</span></span>
       <span class="badge">Human-oversight <b>governance layer</b></span>
       <span class="badge">AGPL-3.0 open source</span>
     </div>
@@ -333,7 +333,7 @@
         <div class="chip">Docker / Compose <span>· packaging</span></div>
         <div class="chip">GitHub Actions <span>· CI (suite + runners)</span></div>
         <div class="chip">Hetzner <span>· multi-continent nodes (2026, now offline)</span></div>
-        <div class="chip">651 tests at HEAD <span>· 616 published (Rev 8) · incl. revert-catchers</span></div>
+        <div class="chip">689 tests at HEAD <span>· 616 published (Rev 8) · incl. revert-catchers</span></div>
         <div class="chip">63 test files <span>· 49 adversarial</span></div>
         <div class="chip">Cross-model review <span>· internal evidence — not external validation</span></div>
       </div>
@@ -616,7 +616,7 @@ curl -s -o /dev/null -D - -X POST $AUTHZ/authz -H "X-Elyon-Sol-Envelope: $FRESH"
         <tr><td><span class="sev crit">High</span></td><td>The SSRF guard checked only the first URL: the gate's forward followed redirects, so a vetted host could bounce the signed token to an internal address. A failed forward also echoed connection detail</td><td>Forwards no longer follow redirects; a failed forward reports only the error class</td><td>Fixed</td></tr>
       </tbody>
     </table>
-    <p class="muted" style="font-size:.85rem;margin-top:12px">Still open from the same review: DNS rebinding between the guard's lookup and the forward's, and several medium and low items. They are listed in the repository's STATE.md. Internal, author-side work — not external validation.</p>
+    <p class="muted" style="font-size:.85rem;margin-top:12px">The remaining items from that review — DNS rebinding between the guard's lookup and the forward's, an SDK path that honored a token without a single-use id, root validity windows that were parsed but not enforced, approval holds without an expiry, two gaps in the forward-target guard, the generated secrets file's permissions, two published sidecar ports, and floating container images — were closed on 2026-10-08, each pinned by a test that fails if the fix is removed, and the full self-host stack was then run end to end (walkthrough, live attack suite over HTTP and TLS, governance approval legs) against the fixed code. Internal, author-side work — not external validation.</p>
 
     <h3 style="margin-top:30px;font-size:1.05rem">Since that pass — gate-key revocation moved in-band</h3>
     <p class="muted" style="font-size:.9rem;max-width:78ch">Signed key-record trust is now wired into the enforce path and <b>was enabled on the former live target and sidecar</b>. Revoking a gate key was previously an out-of-band re-pin of every consumer; it is now a <span class="mono">revoked</span> flip in a single publisher-signed record, verified per request against an out-of-band-pinned root. A revoked, expired, stale, invalid, or serial-rolled-back record fails <b>closed</b> — never a silent downgrade to the static pin. Exercised live over real transport: honored via the record, six of six tampering attacks refused, a revocation drill returning <span class="mono">REF_VERIFY_KEY_REVOKED</span>, then restore at a higher serial.</p>
